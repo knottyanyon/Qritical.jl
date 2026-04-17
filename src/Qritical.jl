@@ -1,5 +1,7 @@
 module Qritical
 
-# Write your package code here.
+export plusTwo
 
-end
+plusTwo(x) = return x + 2
+
+end # end module
