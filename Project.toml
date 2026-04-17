@@ -4,6 +4,7 @@ version = "1.0.0-DEV"
 authors = ["Bavithra Govintharajah"]
 
 [deps]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -14,6 +15,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Weave = "44d3d7a6-8a23-5bf8-98c5-b353f8df5ec9"
 
 [compat]
+Aqua = "0.8.14"
 DataFrames = "1.8.2"
 JuMP = "1.30.0"
 LinearAlgebra = "1.12.0"
