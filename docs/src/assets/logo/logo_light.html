@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8">
+<!-- \definecolor{jlred}{HTML}{CB3C33}
+\definecolor{jlblu}{HTML}{4063D8}
+\definecolor{jlgrn}{HTML}{389826}
+\definecolor{jlprp}{HTML}{9558B2} -->
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Nabla&display=swap');
+
+    /* Combining Blue and Purple for the main body */
+    @font-palette-values --julia-main {
+        font-family: Nabla;
+        override-colors:
+            0 #4063D8,
+            /* Face: Julia Blue (Legible on white) */
+            1 #9558B2,
+            /* Depth: Julia Purple */
+            2 #643A78,
+            /* Shadow: Deep Purple */
+            3 #432751,
+            4 #4063D8,
+            /* Bevel: Blue */
+            5 #9558B2,
+            /* Bevel: Purple */
+            6 #4063D8,
+            7 #B3C1EF,
+            /* Highlight: Stronger Blue Tint */
+            8 #613776,
+            9 #FFFFFF;
+        /* Glint */
+        /* Glint: White */
+    }
+
+    /* Dedicated Green Accent for "i" and "!" */
+    @font-palette-values --julia-accent-pop {
+        font-family: Nabla;
+        override-colors:
+            0 #CB3C33,
+            /* Face: Julia Red (Legible on white) */
+            1 #432751,
+            /* Depth: Deep Purple Shadow */
+            2 #2E1A37,
+            3 #2E1A37,
+            4 #CB3C33,
+            5 #CB3C33,
+            6 #CB3C33,
+            7 #E58D87,
+            /* Highlight: Stronger Red Tint */
+            8 #E58D87,
+            9 #FFFFFF;
+    }
+
+    body {
+        margin: 0;
+        /* height: 100vh; */
+        background: transparent !important;
+        display: grid;
+        place-content: center;
+        background-color: transparent;
+    }
+
+    .nabla-base {
+        font-family: "Nabla";
+        font-optical-sizing: auto;
+        font-weight: 40;
+        font-style: normal;
+        font-palette: --julia-main;
+        font-size: 100px;
+        overflow: visible;
+    }
+
+
+    .nabla-light {
+        font-family: "Nabla";
+        font-optical-sizing: auto;
+        font-weight: 400;
+        font-style: normal;
+        font-palette: --julia-accent-pop;
+        overflow: visible;
+    }
+</style>
+
+
+<body>
+    <svg viewBox="0 -150 380 170" overflow="visible" height="auto" width="100%"
+        xmlns="http://www.w3.org/2000/svg"><text>
+            <tspan class="nabla-base">QR<tspan class="nabla-light">¡</tspan>T<tspan class="nabla-light">!</tspan>CAL
+            </tspan>
+        </text></svg>
+</body>
+
+</html>
