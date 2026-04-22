@@ -31,7 +31,7 @@ makedocs(;
         edit_link="main",
         assets=String[],
     ),
-    pages=["Home" => "index.md", "Tutorials" => ["Example" => "generated/example.md"]],
+    pages=["Home" => "index.md", "Tutorials" => ["Example" => "generated/example.md", "01 Tensor Contractions" => "generated/01_Tensor Contractions.md"]],
 )
 
 deploydocs(; repo="github.com/knottyanyon/Qritical.jl", devbranch="main")
