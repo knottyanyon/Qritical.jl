@@ -27,6 +27,13 @@ Literate.markdown(
     flavor=Literate.DocumenterFlavor(),
     documenter=true,
 )
+# Exercise 02
+Literate.markdown(
+    joinpath(TUTORIALS, "02_Canonical_Decomposition", "02_Canonical_Decomposition.jl"),
+    OUTPUT_DIR;
+    flavor=Literate.DocumenterFlavor(),
+    documenter=true,
+)
 
 # Set up doctest 
 DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
