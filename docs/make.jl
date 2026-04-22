@@ -3,8 +3,9 @@ using Documenter
 using Literate
 
 # Process Literate files
+EXAMPLE = joinpath(@__DIR__, "src", "literate", "01_Tensor Contractions.ipynb")
 literate_dir = joinpath(@__DIR__, "src", "literate")
-output_dir = joinpath(@__DIR__, "src", "generated")
+OUTPUT_DIR = joinpath(@__DIR__, "src", "generated")
 
 # Only process if directory exists
 if isdir(literate_dir)
@@ -13,6 +14,8 @@ if isdir(literate_dir)
         Literate.markdown(input_path; flavor=Documenter(), documenter=true)
     end
 end
+
+Literate.notebook(EXAMPLE, OUTPUT_DIR; preprocess=preprocess)
 
 # Set up doctest 
 DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
