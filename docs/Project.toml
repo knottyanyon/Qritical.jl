@@ -1,5 +1,9 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+ITensorMakie = "72ca75eb-df6f-4d6b-80c5-d5eab17be3f9"
+ITensorUnicodePlots = "73163f41-4a9e-479f-8353-73bf94dbd758"
+ITensors = "9136182c-28ba-11e9-034c-db9fb085ebd5"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
 Qritical = "4d77d595-865b-4fe8-9046-dbce8046f658"
 
