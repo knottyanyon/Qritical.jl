@@ -3,24 +3,8 @@ uuid = "4d77d595-865b-4fe8-9046-dbce8046f658"
 version = "1.0.0-DEV"
 authors = ["Bavithra Govintharajah"]
 
-[deps]
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
-GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
-ITensorMPS = "0d1a4710-d33b-49a5-8f18-73bdf49b47e2"
-ITensorMakie = "72ca75eb-df6f-4d6b-80c5-d5eab17be3f9"
-ITensorUnicodePlots = "73163f41-4a9e-479f-8353-73bf94dbd758"
-ITensors = "9136182c-28ba-11e9-034c-db9fb085ebd5"
-PackageCompiler = "9b87118b-4619-50d2-8e1e-99f35a4d4d9d"
-
 [compat]
 Aqua = "0.8"
-CairoMakie = "0.15.9"
-GLMakie = "0.13.9"
-ITensorMPS = "0.3.45"
-ITensorMakie = "0.2.2"
-ITensorUnicodePlots = "0.1.7"
-ITensors = "0.9.25"
-PackageCompiler = "2.2.5"
 Test = "1.10.10"
 julia = "1.10.10"
 

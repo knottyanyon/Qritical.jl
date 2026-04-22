@@ -3,7 +3,7 @@ using Documenter
 using Literate
 
 # Process Literate files
-EXAMPLE = joinpath(@__DIR__, "src", "literate", "01_Tensor Contractions.ipynb")
+EXAMPLE = joinpath(@__DIR__, "src", "literate", "01_Tensor Contractions.jl")
 literate_dir = joinpath(@__DIR__, "src", "literate")
 OUTPUT_DIR = joinpath(@__DIR__, "src", "generated")
 
@@ -15,8 +15,8 @@ if isdir(literate_dir)
     end
 end
 
-Literate.notebook(EXAMPLE, OUTPUT_DIR; preprocess=preprocess)
-
+Literate.notebook(EXAMPLE, OUTPUT_DIR)
+Literate.markdown(EXAMPLE, OUTPUT_DIR; flavor=Documenter(), documenter=true)
 # Set up doctest 
 DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
 
