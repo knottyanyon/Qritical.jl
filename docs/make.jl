@@ -42,11 +42,12 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Exercises" => ["01 SVD" => "generated/01_SVD.md"],
-        "Tutorials" => [
-            "Example" => "generated/example.md",
-            "01 Tensor Contractions" => "generated/01_Tensor Contractions.md",
+        "Exercises" => [
+            "01 SVD" => "generated/01_SVD.md",
+            "02 Canonical Decomposition" => "generated/02_Canonical_Decomposition.md",
         ],
+        "Julia Playground" =>
+            ["01 Tensor Contractions" => "generated/01_Tensor Contractions.md"],
     ],
 )
 
