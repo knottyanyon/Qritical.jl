@@ -3,11 +3,9 @@ using Documenter
 using Literate
 
 ## Process Literate files
-EXAMPLE = joinpath(@__DIR__, "src", "literate", "01_Tensor Contractions.jl");
 TUTORIALS = joinpath(@__DIR__, "src", "tutorials");
 literate_dir = joinpath(@__DIR__, "src", "literate");
 OUTPUT_DIR = joinpath(@__DIR__, "src", "generated");
-@__DIR__
 
 ##
 # Only process if directory exists
@@ -29,7 +27,7 @@ Literate.markdown(
 )
 # Exercise 02
 Literate.markdown(
-    joinpath(TUTORIALS, "02_Canonical_Decomposition", "02_Canonical_Decomposition.jl"),
+    joinpath(TUTORIALS, "02_Canonical_decomposition", "02_Canonical_decomposition.jl"),
     OUTPUT_DIR;
     flavor=Literate.DocumenterFlavor(),
     documenter=true,
@@ -51,7 +49,7 @@ makedocs(;
         "Home" => "index.md",
         "Exercises" => [
             "01 SVD" => "generated/01_SVD.md",
-            "02 Canonical Decomposition" => "generated/02_Canonical_Decomposition.md",
+            "02 Canonical Decomposition" => "generated/02_Canonical_decomposition.md",
         ],
         "Julia Playground" =>
             ["01 Tensor Contractions" => "generated/01_Tensor Contractions.md"],
