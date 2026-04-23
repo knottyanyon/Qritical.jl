@@ -1,5 +1,10 @@
-# # Understanding Indices and Contractions
+# # Understanding Contractions
 
+#md #!!! info How to do multilinear algebra on computers built and optimized for linear algebra?
+#md #   See for myself how matrix multiplication is just a special case of the more general operation of tensor contraction. How to make use of this information to view the required contractions as matrix multiplications to perform the calculations on a modern computer.
+
+# ## Sources
+# - R. Shaw, Linear Algebra and Group Representations 2: Multilinear Algebra and Group Representations, Vol. 2 (Acad. Pr, London, 1983).
 # - [Tensors.net turotial 1](https://www.tensors.net/j-tutorial-1)
 # - [ITensor examples](https://docs.itensor.org/ITensors/stable/examples/ITensor.html)
 
