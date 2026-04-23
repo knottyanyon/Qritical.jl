@@ -1,4 +1,4 @@
-name: Format suggestions
+name: Format
 # on:
 #   pull_request:
 #     # this argument is not required if you don't use the `suggestion-label` input
