@@ -66,7 +66,7 @@ makedocs(;
             "Week 02" => "htn-sose26/notes/week_02.md",
         ],
         "Exercises" => [
-            "01 Singular Value Decomposition" => "generated/htn-sose26/exercises/01_SVD/week_01.md",
+            "01 Singular Value Decomposition" => "generated/htn-sose26/exercises/01_SVD/01_SVD.md",
             "02 Canonical Decomposition" => "generated/htn-sose26/exercises/02_Canonical_decomposition/02_Canonical_decomposition.md",
         ],
         "Julia Playground" => [
