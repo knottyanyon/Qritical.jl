@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>01 Understanding Contractions · Qritical.jl</title><meta name="title" content="01 Understanding Contractions · Qritical.jl"/><meta property="og:title" content="01 Understanding Contractions · Qritical.jl"/><meta property="twitter:title" content="01 Understanding Contractions · Qritical.jl"/><meta name="description" content="Documentation for Qritical.jl."/><meta property="og:description" content="Documentation for Qritical.jl."/><meta property="twitter:description" content="Documentation for Qritical.jl."/><meta property="og:url" content="https://knottyanyon.github.io/Qritical.jl/generated/code_playground/01_Tensor Contractions/"/><meta property="twitter:url" content="https://knottyanyon.github.io/Qritical.jl/generated/code_playground/01_Tensor Contractions/"/><link rel="canonical" href="https://knottyanyon.github.io/Qritical.jl/generated/code_playground/01_Tensor Contractions/"/><script data-outdated-warner src="../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../search_index.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../../"><img class="docs-light-only" src="../../../assets/logo.svg" alt="Qritical.jl logo"/><img class="docs-dark-only" src="../../../assets/logo-dark.svg" alt="Qritical.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../../">Qritical.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../../">Home</a></li><li><span class="tocitem">Hands-on Tensor Networks</span><ul><li><a class="tocitem" href="../../../htn-sose26/notes/week_01/">Week 01</a></li><li><a class="tocitem" href="../../../htn-sose26/notes/week_02/">Week 02</a></li></ul></li><li><span class="tocitem">Exercises</span><ul><li><a class="tocitem" href="../../htn-sose26/exercises/01_SVD/01_SVD/">01 Singular Value Decomposition</a></li><li><a class="tocitem" href="../../htn-sose26/exercises/02_Canonical_decomposition/02_Canonical_decomposition/">02 Canonical Decomposition</a></li></ul></li><li><span class="tocitem">Julia Playground</span><ul><li class="is-active"><a class="tocitem" href>01 Understanding Contractions</a><ul class="internal"><li><a class="tocitem" href="#Contractions"><span>Contractions</span></a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Julia Playground</a></li><li class="is-active"><a href>01 Understanding Contractions</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>01 Understanding Contractions</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/knottyanyon/Qritical.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/knottyanyon/Qritical.jl/blob/main/docs/src/code_playground/01_Tensor Contractions.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Understanding-Indices-and-Contractions"><a class="docs-heading-anchor" href="#Understanding-Indices-and-Contractions">Understanding Indices and Contractions</a><a id="Understanding-Indices-and-Contractions-1"></a><a class="docs-heading-anchor-permalink" href="#Understanding-Indices-and-Contractions" title="Permalink"></a></h1><ul><li><a href="https://www.tensors.net/j-tutorial-1">Tensors.net turotial 1</a></li><li><a href="https://docs.itensor.org/ITensors/stable/examples/ITensor.html">ITensor examples</a></li></ul><p>Let&#39;s do this first with base Julia</p><pre><code class="language-julia hljs">using LinearAlgebra
+
+# tensor with randomly generated entries
+# order 3, dims: 2-by-3-by-4
+A = rand(2, 3, 4);
+display(A)
+
+# identity matrix, order 2, dims: 5-by-5 (New syntax in Julia 0.7+)
+B_int = Matrix{Int64}(I, 5, 5);
+B_float = Matrix{Float64}(I, 5, 5);
+display(B_int)
+display(B_float)
+
+# matrix of 0&#39;s, order 2, dims: 3-by-5
+D = zeros(3, 5);
+display(D)
+
+# initialize complex random tensor
+E = rand(2, 3) + im * rand(2, 3);
+display(E)
+
+# creating column vectors (default)
+col_vec = [0.2, 0.5, 0.3];
+rand_col_vec = rand(3);
+display(col_vec)
+display(rand_col_vec)
+
+# creating row vectors
+# notice the absence of commas between the entries
+row_vec = [0.2 0.5 0.3];
+display(row_vec)
+
+# stacking two column vectors horizontally
+stacked_hcol_vec = [col_vec rand_col_vec]; # we are creating a &quot;row vector&quot; of with elements col_vec and rand_col_vec
+display(stacked_hcol_vec)
+@show size(stacked_hcol_vec);
+@show ndims(stacked_hcol_vec);
+@show length(stacked_hcol_vec); ## number of entries in the vector
+
+# stacking two column vectors vertically. Note the shape and dimensions of the result
+stacked_vcol_vec = [col_vec, rand_col_vec];
+display(stacked_vcol_vec)
+@show size(stacked_vcol_vec);
+@show ndims(stacked_vcol_vec);
+@show length(stacked_vcol_vec); ## number of entries in the vector
+
+# stacking the elements of two column vectors vertically. Note the shape and dimensions of the result
+stacked_vcol_vec_el = [col_vec; rand_col_vec]; # the ; between the elements to stack the elements
+display(stacked_vcol_vec_el)
+@show size(stacked_vcol_vec_el);
+@show ndims(stacked_vcol_vec_el);
+@show length(stacked_vcol_vec_el); ## number of entries in the vector</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">size(stacked_hcol_vec) = (3, 2)
+ndims(stacked_hcol_vec) = 2
+length(stacked_hcol_vec) = 6
+size(stacked_vcol_vec) = (2,)
+ndims(stacked_vcol_vec) = 1
+length(stacked_vcol_vec) = 2
+size(stacked_vcol_vec_el) = (6,)
+ndims(stacked_vcol_vec_el) = 1
+length(stacked_vcol_vec_el) = 6</code></pre><p>Practice :  create Pauli matrices by specifying the entries going column-wise unlike Numpy</p><pre><code class="language-julia hljs">sigma_x = [[0, 1.0] [1.0, 0]];
+sigma_y = [[0.0, im] [-im, 0.0]];
+sigma_z = [[1.0, 0] [0, -1.0]];
+
+display(sigma_x)
+display(sigma_y)
+display(sigma_z)
+
+# tensor of 1&#39;s, order 4, dims: 3 x 4 x 2 x 1
+C = ones(3, 4, 2, 1);
+display(C); ## notice how the tensor is displayed. it will print higher order tensors as slices across the dimensions
+
+# Permute allows the index ordering of a tensor to be changed (but does not change the number of indices).
+A_ijkl = rand(4, 4, 4, 4);
+A_lijk = permutedims(A_ijkl, [4, 1, 2, 3]);
+display(A_ijkl);
+display(A_lijk);
+
+# The reshape function which allows a collection of tensor indices to be combined into a single larger index (or vice-versa), thus can change the number of indices but not the total dimension.
+B = rand(3, 3, 3);
+Btilda = reshape(B, 3, 3^2);</code></pre><h2 id="Contractions"><a class="docs-heading-anchor" href="#Contractions">Contractions</a><a id="Contractions-1"></a><a class="docs-heading-anchor-permalink" href="#Contractions" title="Permalink"></a></h2><p>The usefulness of permute and reshape functions is that they allow a contraction between a pair of tensors (which we call a binary tensor contraction) to be recast as a matrix multiplication. Although the computational cost (measured in number of scalar multiplications) is the same both ways, it is usually preferable to recast as multiplication as modern hardware performs vectorized operations much faster than when using the equivalent FOR loop.</p><pre><code class="language-julia hljs">d = 3;
+A = rand(d, d, d, d);
+B = rand(d, d, d, d);
+
+display(A);
+display(B);
+
+# Contraction example : C_ijkl = A_imjn * B_mkln
+
+# Simple Julia
+Ap = permutedims(A, [1, 3, 2, 4]); ## imjn -&gt; ijmn
+Bp = permutedims(B, [1, 4, 2, 3]); ## mkln -&gt; mnkl
+App = reshape(Ap, d^2, d^2);
+Bpp = reshape(Bp, d^2, d^2);
+Cpp = App * Bpp;
+C = reshape(Cpp, d, d, d, d);
+display(C)
+
+# The same example but using ITensors
+using ITensors
+using ITensorUnicodePlots
+
+# Use the Let block : code written in the Julia global scope can have some surprising behaviors. Putting your code into a let block avoids these issues
+let
+    # open indices of A_imjn
+    i = Index(d, &quot;i&quot;)
+    j = Index(d, &quot;j&quot;)
+
+    # open indices of B_mkln
+    k = Index(d, &quot;k&quot;)
+    l = Index(d, &quot;l&quot;)
+
+    # contracted indices
+    m = Index(d, &quot;m&quot;)
+    n = Index(d, &quot;n&quot;)
+
+    # create the tensors with the appropriate labels
+    A_ITensor = ITensor(A, i, m, j, n)
+    B_ITensor = ITensor(B, m, k, l, n)
+
+    # Contract over shared indices m and n
+    C_ITensor = @visualize A_ITensor * B_ITensor edge_labels = (tags=true,)
+
+    # if our contraction is correct, the resulting tensor C should have open indices i, j, k, l
+    @show inds(C_ITensor)
+
+    # convert the C_ITensor to a regular Julia array and check that it matches the result from simple Julia
+    C_ITensor_arr = Array(C_ITensor, i, j, k, l)
+
+    @show (C_ITensor_arr ≈ C)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../htn-sose26/exercises/02_Canonical_decomposition/02_Canonical_decomposition/">« 02 Canonical Decomposition</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 23 April 2026 13:49">Thursday 23 April 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
