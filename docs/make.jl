@@ -5,34 +5,48 @@ using Literate
 ## Process Literate files
 TUTORIALS = joinpath(@__DIR__, "src", "tutorials");
 literate_dir = joinpath(@__DIR__, "src", "literate");
-OUTPUT_DIR = joinpath(@__DIR__, "src", "generated");
+OUTPUT_ROOT = joinpath(@__DIR__, "src", "generated");
+
+PLAYGROUND_ROOT = joinpath(@__DIR__, "src", "code_playground");
+PLAYGROUND_OUTROOT = joinpath(OUTPUT_ROOT, "code_playground");
+
+HTN_ROOT = joinpath(@__DIR__, "src", "htn-sose26");
+HTN_OUTROOT = joinpath(OUTPUT_ROOT, "htn-sose26");
+
+EXERCISES_ROOT = joinpath(HTN_ROOT, "exercises");
+EXERCISES_OUTROOT = joinpath(HTN_OUTROOT, "exercises");
 
 ##
-# Only process if directory exists
-if isdir(literate_dir)
-    for file in filter(f -> endswith(f, ".jl"), readdir(literate_dir))
-        input_path = joinpath(literate_dir, file)
-        Literate.markdown(
-            input_path, OUTPUT_DIR; flavor=Literate.DocumenterFlavor(), documenter=true
-        )
+# TODO: create an object similar to y python dictionry? where I can collect the names of the generated files that can be later included in the pages argument of the makedocs function.
+# Check the exercises directories
+for (dpath, dirs, files) in walkdir(EXERCISES_ROOT)
+    if !isempty(files)
+        dirname = first(splitext(last(splitdir(dpath)))) # get the directory name only
+        out_path = joinpath(EXERCISES_OUTROOT, dirname)
+
+        # process the files in the directory
+
+        for f in filter(f -> endswith(f, ".jl"), files)
+            in_path = joinpath(dpath, f) # input path of the file to be processed
+            Literate.markdown(
+                in_path, out_path; flavor=Literate.DocumenterFlavor(), documenter=true
+            )
+        end
     end
 end
+##
+# TODO: create an object similar to y python dictionry? where I can collect the names of the generated files that can be later included in the pages argument of the makedocs function.
+# Check the code playground directory
 
-# Exercise 01
-Literate.markdown(
-    joinpath(TUTORIALS, "01_SVD", "01_SVD.jl"),
-    OUTPUT_DIR;
-    flavor=Literate.DocumenterFlavor(),
-    documenter=true,
-)
-# Exercise 02
-Literate.markdown(
-    joinpath(TUTORIALS, "02_Canonical_decomposition", "02_Canonical_decomposition.jl"),
-    OUTPUT_DIR;
-    flavor=Literate.DocumenterFlavor(),
-    documenter=true,
-)
+for f in filter(f -> endswith(f, ".jl"), readdir(PLAYGROUND_ROOT))
+    in_path = joinpath(PLAYGROUND_ROOT, f) # input path of the file to be processed
+    @show in_path
+    Literate.markdown(
+        in_path, PLAYGROUND_OUTROOT; flavor=Literate.DocumenterFlavor(), documenter=true
+    )
+end
 
+##
 # Set up doctest 
 DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
 
@@ -47,12 +61,17 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Exercises" => [
-            "01 SVD" => "generated/01_SVD.md",
-            "02 Canonical Decomposition" => "generated/02_Canonical_decomposition.md",
+        "Hands-on Tensor Networks" => [
+            "Week 01" => "htn-sose26/notes/week_01.md",
+            "Week 02" => "htn-sose26/notes/week_02.md",
         ],
-        "Julia Playground" =>
-            ["01 Tensor Contractions" => "generated/01_Tensor Contractions.md"],
+        "Exercises" => [
+            "01 Singular Value Decomposition" => "generated/htn-sose26/exercises/01_SVD/week_01.md",
+            "02 Canonical Decomposition" => "generated/htn-sose26/exercises/02_Canonical_decomposition/02_Canonical_decomposition.md",
+        ],
+        "Julia Playground" => [
+            "01 Understanding Contractions" => "generated/code_playground/01_Tensor Contractions.md",
+        ],
     ],
 )
 
