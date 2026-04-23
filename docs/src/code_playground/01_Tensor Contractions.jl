@@ -1,6 +1,6 @@
 # # Understanding Contractions
 
-#md #!!! info How to do multilinear algebra on computers built and optimized for linear algebra?
+#md # !!! info "How to do multilinear algebra on computers built and optimized for linear algebra?"
 #md #   See for myself how matrix multiplication is just a special case of the more general operation of tensor contraction. How to make use of this information to view the required contractions as matrix multiplications to perform the calculations on a modern computer.
 
 # ## Sources
