@@ -1,5 +1,5 @@
 ```@meta
-EditURL = "../../../../htn-sose26/exercises/01/1_SVD_a_matrix.jl"
+EditURL = "1_SVD_a_matrix.jl"
 ```
 
 # 1. SVD a matrix
@@ -7,38 +7,45 @@ EditURL = "../../../../htn-sose26/exercises/01/1_SVD_a_matrix.jl"
 Perform an SVD on the matrix $A$ given in Moodle as `A.txt` and find the Schmidt rank
 needed if singular values below $10^{−3}$ are discarded.
 
-Loads variables from .env
+````julia
+DATA_ROOT = normpath(joinpath(@__FILE__, "..")) ## A workaround to ensure that the data can be read during local testing as well as pages deployment build
+````
 
-````@example 1_SVD_a_matrix
-using DotEnv
-ENVCFG = DotEnv.config(joinpath(ENV["PROJECT_ROOT"], ".env"));
+````
+"/Users/bavithra/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/01/"
+````
 
-EXDIR = joinpath(ENVCFG["EXERCISES_ROOT"], "01")
-FPATH_A = joinpath(EXDIR, "A.txt")
-
+````julia
+FPATH_A = normpath(joinpath(DATA_ROOT, "A.txt"))
 println("File path for A: $FPATH_A")
 
 using LinearAlgebra
 using DelimitedFiles
-
 A_mat = readdlm(FPATH_A)
 
 tolerance = 10E-3
 ````
 
+````
+0.01
+````
+
 Compute the singular value decomposition (SVD) of `A_mat` and return an SVD object.
 
-````@example 1_SVD_a_matrix
+````julia
 A_svd = LinearAlgebra.svd(A_mat);
-nothing #hide
 ````
 
 Store the Factorization Object
 
-````@example 1_SVD_a_matrix
+````julia
 typeof(A_svd)
 Σ_cleaned = A_svd.S .> tolerance
 rank_Schmidt = count(Σ_cleaned)
+````
+
+````
+6
 ````
 
 ---

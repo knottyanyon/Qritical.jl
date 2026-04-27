@@ -7,9 +7,11 @@ using LaTeXStrings
 
 export hinton, hinton!, draw_complex_hinton, draw_svd_hinton
 export setup_size_N_rand_input, contract_N_ijk
+
 # export estimate_multiplication_cost
 # Include the separate files
 include("hinton_recipe.jl")
 include("contraction_benchmaking.jl")
+
 # include("contraction_utils.jl")
 end # module
