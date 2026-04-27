@@ -1,0 +1,40 @@
+name: Build & Push docs container
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'docs/Project.toml'
+      - 'docs/Manifest.toml'
+      - 'Dockerfile'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Qritical repo variables
+        run: echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/qritical-docs:latest" >> $GITHUB_ENV
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_NAME }}
+          platforms: linux/amd64
