@@ -64,17 +64,20 @@ makedocs(;
     plugins=[bib],
     pages=[
         "Home" => "index.md",
-        "Hands-on Tensor Networks" => [
-            "Week 01" => "htn-sose26/notes/week_01.md",
-            "Week 02" => "htn-sose26/notes/week_02.md",
-        ],
+        # "Hands-on Tensor Networks" => [
+        #     "Week 01" => "htn-sose26/notes/week_01.md",
+        #     "Week 02" => "htn-sose26/notes/week_02.md",
+        # ],
         "Exercises" => [
-            "01 Singular Value Decomposition" => "generated/htn-sose26/exercises/01_SVD/01_SVD.md",
-            "02 Canonical Decomposition" => "generated/htn-sose26/exercises/02_Canonical_decomposition/02_Canonical_decomposition.md",
+            "Exercise 01" => [
+                "1.1 SVD a matrix" => "generated/htn-sose26/exercises/01/1_SVD_a_matrix.md",
+                "1.4 Contractions" => "generated/htn-sose26/exercises/01/4_Contractions.md",
+            ],
+            "Exercise 02" => "generated/htn-sose26/exercises/02/02_Canonical_decomposition.md",
         ],
-        "Julia Playground" => [
-            "01 Understanding Contractions" => "generated/code_playground/01_Tensor Contractions.md",
-        ],
+        # "Julia Playground" => [
+        #     "01 Understanding Contractions" => "generated/code_playground/01_Tensor Contractions.md",
+        # ],
         "References" => "references.md",
     ],
 )
