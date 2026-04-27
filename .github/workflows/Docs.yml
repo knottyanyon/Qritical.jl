@@ -15,10 +15,18 @@ jobs:
       image: ghcr.io/knottyanyon/qritical-docs:latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Ensure project activated and build docs
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v3
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-docdeploy@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+      - name: Run doctests
+        shell: julia --project=docs --color=yes {0}
         run: |
           julia --project=docs -e 'using Pkg; Pkg.activate("docs"); Pkg.instantiate()'
           julia --project=docs docs/make.jl

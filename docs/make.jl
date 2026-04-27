@@ -4,17 +4,11 @@ using Literate
 using DocumenterCitations
 ## Process Literate files
 TUTORIALS = joinpath(@__DIR__, "src", "tutorials");
-literate_dir = joinpath(@__DIR__, "src", "literate");
-OUTPUT_ROOT = joinpath(@__DIR__, "src", "generated");
-
 PLAYGROUND_ROOT = joinpath(@__DIR__, "src", "code_playground");
-PLAYGROUND_OUTROOT = joinpath(OUTPUT_ROOT, "code_playground");
+# PLAYGROUND_OUTROOT = joinpath(OUTPUT_ROOT, "code_playground");
 
-HTN_ROOT = joinpath(@__DIR__, "src", "htn-sose26");
-HTN_OUTROOT = joinpath(OUTPUT_ROOT, "htn-sose26");
-
-EXERCISES_ROOT = joinpath(HTN_ROOT, "exercises");
-EXERCISES_OUTROOT = joinpath(HTN_OUTROOT, "exercises");
+EXERCISES_ROOT = joinpath(@__DIR__, "src", "exercises");
+# EXERCISES_OUTROOT = joinpath(OUTPUT_ROOT, "exercises");
 
 bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authoryear)
 ##
@@ -23,14 +17,18 @@ bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authory
 for (dpath, dirs, files) in walkdir(EXERCISES_ROOT)
     if !isempty(files)
         dirname = first(splitext(last(splitdir(dpath)))) # get the directory name only
-        out_path = joinpath(EXERCISES_OUTROOT, dirname)
-
+        # out_path = joinpath(EXERCISES_OUTROOT, dirname)
         # process the files in the directory
 
         for f in filter(f -> endswith(f, ".jl"), files)
             in_path = joinpath(dpath, f) # input path of the file to be processed
+            println("Processing file: $dpath")
             Literate.markdown(
-                in_path, out_path; flavor=Literate.DocumenterFlavor(), documenter=true
+                in_path,
+                dpath;
+                flavor=Literate.DocumenterFlavor(),
+                documenter=true,
+                execute=true,
             )
         end
     end
@@ -60,6 +58,10 @@ makedocs(;
         edit_link="main",
         assets=String[],
     ),
+    build="build",
+    workdir=normpath(joinpath(@__DIR__, "src")),
+    clean=true,
+    warnonly=true,
     plugins=[bib],
     pages=[
         "Home" => "index.md",
@@ -69,7 +71,7 @@ makedocs(;
         # ],
         "Exercises" => [
             "Exercise 01" => [
-                "1.1 SVD a matrix" => "generated/htn-sose26/exercises/01/1_SVD_a_matrix.md",
+                "1.1 SVD a matrix" => "exercises/01/1_SVD_a_matrix.md",
                 # "1.4 Contractions" => "generated/htn-sose26/exercises/01/4_Contractions.md",
             ],
             # "Exercise 02" => "generated/htn-sose26/exercises/02/02_Canonical_decomposition.md",
