@@ -1,11 +1,17 @@
-# #1.4. Contractions
+```@meta
+EditURL = "../../../../htn-sose26/exercises/01/4_Contractions.jl"
+```
 
-# Generate two random matrices $A, B$ each of size $N \times N$ and calculate the product
-# $C_{i,j} = A_{i,k} B_{k,j}$,
-# - (a) once without using any libraries
-# - (b) once using a library of your choice
+#1.4. Contractions
 
-# Loads variables from .env 
+Generate two random matrices $A, B$ each of size $N \times N$ and calculate the product
+$C_{i,j} = A_{i,k} B_{k,j}$,
+- (a) once without using any libraries
+- (b) once using a library of your choice
+
+Loads variables from .env
+
+````@example 4_Contractions
 using DotEnv
 ENVCFG = DotEnv.config(joinpath(ENV["PROJECT_ROOT"], ".env"));
 
@@ -19,24 +25,33 @@ Ns = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
 results = []
 
 for N in Ns
-    ## We use 'setup' to prepare data. 
+    # We use 'setup' to prepare data.
     bench = @benchmarkable contract_N_ijk($N, A=in_data[1], B=in_data[2], C=in_data[3]) setup = (
         in_data = setup_size_N_rand_input($N)
     )
-    ## Run the benchmark
-    ## run() returns a Trial object; we take the median time in seconds
+    # Run the benchmark
+    # run() returns a Trial object; we take the median time in seconds
     t = median(run(bench)).time / 1e9
     push!(results, t)
     println("N = $N: Completed in $t s")
 end
+````
 
-# Curve Fitting
+Curve Fitting
+
+````@example 4_Contractions
 using LsqFit
+````
 
-# Define the model: p[1]=a, p[2]=x, p[3]=b
+Define the model: p[1]=a, p[2]=x, p[3]=b
+
+````@example 4_Contractions
 @. model(n, p) = p[1] * n^p[2] + p[3]
+````
 
-# Initial guess: a small value for a, 3 for exponent x (since it's ijk loop), 0 for b
+Initial guess: a small value for a, 3 for exponent x (since it's ijk loop), 0 for b
+
+````@example 4_Contractions
 p0 = [1e-9, 3.0, 0.0]
 fit = curve_fit(model, Ns, results, p0)
 a, x, b = coef(fit)
@@ -48,11 +63,17 @@ ax_1 = Axis(
     xlabel="Matrix Size (N)",
     ylabel="Time (seconds)",
 )
+````
 
-# Scatter the measured points
+Scatter the measured points
+
+````@example 4_Contractions
 scatter!(ax_1, Ns, results; color=:blue, markersize=15, label="Measured")
+````
 
-#  Smooth line for the fitted curve
+ Smooth line for the fitted curve
+
+````@example 4_Contractions
 Ns_smooth = range(minimum(Ns), maximum(Ns); length=100)
 lines!(
     ax_1,
@@ -63,9 +84,12 @@ lines!(
     label="Fit: $(round(a, sigdigits=2))N^{$(round(x, digits=2))} + $(round(b, sigdigits=2))",
 )
 axislegend(ax_1; position=:lt)
+````
 
-# Comparing with theoretical reference log axes visualization
-# Setup the Axis with Log10 scaling
+Comparing with theoretical reference log axes visualization
+Setup the Axis with Log10 scaling
+
+````@example 4_Contractions
 ax_2 = Axis(
     fig[1, 2];
     title="Performance Scaling: O(N³) Complexity",
@@ -87,13 +111,22 @@ line_measured = scatterlines!(
     markersize=12,
     label="Measured contract_N_ijk",
 )
-# Anchor the reference line to the first data point for comparison
+````
 
+Anchor the reference line to the first data point for comparison
+
+````@example 4_Contractions
 ref_O3 = [results[1] * (n / Ns[1])^3 for n in Ns]
 
 line_ref = lines!(
     ax_2, Ns, ref_O3; color=:red, linestyle=:dash, linewidth=2, label="Theoretical O(N³)"
 )
 axislegend(ax_2; position=:lt)
+````
 
-# fig
+fig
+
+---
+
+*This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
+

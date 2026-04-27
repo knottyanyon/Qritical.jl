@@ -1,5 +1,3 @@
-using CairoMakie
-
 """
     setup_size_N_rand_input(N::Int)
 
