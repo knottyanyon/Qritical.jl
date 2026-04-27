@@ -7,3 +7,6 @@
 /docs/build/
 # /docs/src/generated/
 .CondaPkg
+/docs/src/code_playground/playground_draft.ipynb
+.env
+.vscode

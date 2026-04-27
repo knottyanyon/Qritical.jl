@@ -1,7 +1,7 @@
 using Qritical
 using Documenter
 using Literate
-
+using DocumenterCitations
 ## Process Literate files
 TUTORIALS = joinpath(@__DIR__, "src", "tutorials");
 literate_dir = joinpath(@__DIR__, "src", "literate");
@@ -16,6 +16,7 @@ HTN_OUTROOT = joinpath(OUTPUT_ROOT, "htn-sose26");
 EXERCISES_ROOT = joinpath(HTN_ROOT, "exercises");
 EXERCISES_OUTROOT = joinpath(HTN_OUTROOT, "exercises");
 
+bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authoryear)
 ##
 # TODO: create an object similar to y python dictionry? where I can collect the names of the generated files that can be later included in the pages argument of the makedocs function.
 # Check the exercises directories
@@ -54,11 +55,13 @@ makedocs(;
     modules=[Qritical],
     authors="Bavithra Govintharajah",
     sitename="Qritical.jl",
+    prettyurls=true,
     format=Documenter.HTML(;
         canonical="https://knottyanyon.github.io/Qritical.jl",
         edit_link="main",
         assets=String[],
     ),
+    plugins=[bib],
     pages=[
         "Home" => "index.md",
         "Hands-on Tensor Networks" => [
@@ -72,6 +75,7 @@ makedocs(;
         "Julia Playground" => [
             "01 Understanding Contractions" => "generated/code_playground/01_Tensor Contractions.md",
         ],
+        "References" => "references.md",
     ],
 )
 
