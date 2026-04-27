@@ -1,5 +1,5 @@
 ```@meta
-EditURL = "../../../../htn-sose26/exercises/01/4_Contractions.jl"
+EditURL = "4_Contractions.jl"
 ```
 
 #1.4. Contractions
@@ -11,12 +11,15 @@ $C_{i,j} = A_{i,k} B_{k,j}$,
 
 Loads variables from .env
 
-````@example 4_Contractions
+````julia
 using DotEnv
+````
+
 ENVCFG = DotEnv.config(joinpath(ENV["PROJECT_ROOT"], ".env"));
 
 EXDIR = joinpath(ENVCFG["EXERCISES_ROOT"], "01")
 
+````julia
 using BenchmarkTools
 using Qritical
 using CairoMakie
@@ -37,21 +40,39 @@ for N in Ns
 end
 ````
 
+````
+N = 2: Completed in 4.1e-8 s
+N = 4: Completed in 1.25e-7 s
+N = 8: Completed in 1.541e-6 s
+N = 16: Completed in 1.3125e-5 s
+N = 32: Completed in 0.00010825 s
+N = 64: Completed in 0.000883791 s
+N = 128: Completed in 0.007248667 s
+N = 256: Completed in 0.058443771 s
+N = 512: Completed in 0.470526209 s
+N = 1024: Completed in 4.1820384165 s
+
+````
+
 Curve Fitting
 
-````@example 4_Contractions
+````julia
 using LsqFit
 ````
 
 Define the model: p[1]=a, p[2]=x, p[3]=b
 
-````@example 4_Contractions
+````julia
 @. model(n, p) = p[1] * n^p[2] + p[3]
+````
+
+````
+model (generic function with 1 method)
 ````
 
 Initial guess: a small value for a, 3 for exponent x (since it's ijk loop), 0 for b
 
-````@example 4_Contractions
+````julia
 p0 = [1e-9, 3.0, 0.0]
 fit = curve_fit(model, Ns, results, p0)
 a, x, b = coef(fit)
@@ -65,15 +86,24 @@ ax_1 = Axis(
 )
 ````
 
+````
+Makie.Axis with 0 plots:
+
+````
+
 Scatter the measured points
 
-````@example 4_Contractions
+````julia
 scatter!(ax_1, Ns, results; color=:blue, markersize=15, label="Measured")
+````
+
+````
+Makie.Scatter{Tuple{Vector{GeometryBasics.Point{2, Float64}}}}
 ````
 
  Smooth line for the fitted curve
 
-````@example 4_Contractions
+````julia
 Ns_smooth = range(minimum(Ns), maximum(Ns); length=100)
 lines!(
     ax_1,
@@ -86,10 +116,14 @@ lines!(
 axislegend(ax_1; position=:lt)
 ````
 
+````
+Makie.Legend()
+````
+
 Comparing with theoretical reference log axes visualization
 Setup the Axis with Log10 scaling
 
-````@example 4_Contractions
+````julia
 ax_2 = Axis(
     fig[1, 2];
     title="Performance Scaling: O(N³) Complexity",
@@ -113,15 +147,23 @@ line_measured = scatterlines!(
 )
 ````
 
+````
+Makie.ScatterLines{Tuple{Vector{GeometryBasics.Point{2, Float64}}}}
+````
+
 Anchor the reference line to the first data point for comparison
 
-````@example 4_Contractions
+````julia
 ref_O3 = [results[1] * (n / Ns[1])^3 for n in Ns]
 
 line_ref = lines!(
     ax_2, Ns, ref_O3; color=:red, linestyle=:dash, linewidth=2, label="Theoretical O(N³)"
 )
 axislegend(ax_2; position=:lt)
+````
+
+````
+Makie.Legend()
 ````
 
 fig

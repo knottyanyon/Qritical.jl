@@ -7,9 +7,9 @@
 
 # Loads variables from .env 
 using DotEnv
-ENVCFG = DotEnv.config(joinpath(ENV["PROJECT_ROOT"], ".env"));
+# ENVCFG = DotEnv.config(joinpath(ENV["PROJECT_ROOT"], ".env"));
 
-EXDIR = joinpath(ENVCFG["EXERCISES_ROOT"], "01")
+# EXDIR = joinpath(ENVCFG["EXERCISES_ROOT"], "01")
 
 using BenchmarkTools
 using Qritical

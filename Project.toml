@@ -1,6 +1,6 @@
 name = "Qritical"
 uuid = "4d77d595-865b-4fe8-9046-dbce8046f658"
-version = "1.0.0-DEV"
+version = "0.0.1-DEV"
 authors = ["Bavithra Govintharajah"]
 
 [workspace]
