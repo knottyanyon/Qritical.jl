@@ -28,6 +28,7 @@ WORKDIR /opt/julia_env
 # the instantiate step will resolve and download package versions at build time.
 COPY docs/Project.toml ./
 # COPY docs/Project.toml docs/Manifest.toml ./
+RUN pwd
 
 # Instantiate and precompile the docs environment at image build time.
 # Using --project=. ensures the docs environment is used.
