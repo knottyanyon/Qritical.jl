@@ -16,3 +16,4 @@ Qritical = "4d77d595-865b-4fe8-9046-dbce8046f658"
 
 [compat]
 Documenter = "1.17.0"
+ITensors = "0.9.26"
