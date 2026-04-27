@@ -26,7 +26,8 @@ WORKDIR /opt/julia_env
 # Copy docs Project + Manifest (Manifest is recommended for reproducible install).
 # Make sure docs/Manifest.toml is committed; if not available the image will still work but
 # the instantiate step will resolve and download package versions at build time.
-COPY docs/Project.toml docs/Manifest.toml ./
+COPY docs/Project.toml ./
+# COPY docs/Project.toml docs/Manifest.toml ./
 
 # Instantiate and precompile the docs environment at image build time.
 # Using --project=. ensures the docs environment is used.
