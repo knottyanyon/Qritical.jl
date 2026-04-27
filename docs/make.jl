@@ -55,7 +55,6 @@ makedocs(;
     modules=[Qritical],
     authors="Bavithra Govintharajah",
     sitename="Qritical.jl",
-    prettyurls=true,
     format=Documenter.HTML(;
         canonical="https://knottyanyon.github.io/Qritical.jl",
         edit_link="main",
