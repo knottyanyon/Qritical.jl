@@ -39,13 +39,13 @@ end
 # TODO: create an object similar to y python dictionry? where I can collect the names of the generated files that can be later included in the pages argument of the makedocs function.
 # Check the code playground directory
 
-for f in filter(f -> endswith(f, ".jl"), readdir(PLAYGROUND_ROOT))
-    in_path = joinpath(PLAYGROUND_ROOT, f) # input path of the file to be processed
-    @show in_path
-    Literate.markdown(
-        in_path, PLAYGROUND_OUTROOT; flavor=Literate.DocumenterFlavor(), documenter=true
-    )
-end
+# for f in filter(f -> endswith(f, ".jl"), readdir(PLAYGROUND_ROOT))
+#     in_path = joinpath(PLAYGROUND_ROOT, f) # input path of the file to be processed
+#     @show in_path
+#     Literate.markdown(
+#         in_path, PLAYGROUND_OUTROOT; flavor=Literate.DocumenterFlavor(), documenter=true
+#     )
+# end
 
 ##
 # Set up doctest 
@@ -55,7 +55,6 @@ makedocs(;
     modules=[Qritical],
     authors="Bavithra Govintharajah",
     sitename="Qritical.jl",
-    prettyurls=true,
     format=Documenter.HTML(;
         canonical="https://knottyanyon.github.io/Qritical.jl",
         edit_link="main",
@@ -71,9 +70,9 @@ makedocs(;
         "Exercises" => [
             "Exercise 01" => [
                 "1.1 SVD a matrix" => "generated/htn-sose26/exercises/01/1_SVD_a_matrix.md",
-                "1.4 Contractions" => "generated/htn-sose26/exercises/01/4_Contractions.md",
+                # "1.4 Contractions" => "generated/htn-sose26/exercises/01/4_Contractions.md",
             ],
-            "Exercise 02" => "generated/htn-sose26/exercises/02/02_Canonical_decomposition.md",
+            # "Exercise 02" => "generated/htn-sose26/exercises/02/02_Canonical_decomposition.md",
         ],
         # "Julia Playground" => [
         #     "01 Understanding Contractions" => "generated/code_playground/01_Tensor Contractions.md",
