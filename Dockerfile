@@ -21,7 +21,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /opt/julia_env COPY . .
+WORKDIR /opt/src COPY . /opt/src
+
+WORKDIR /opt/src/docs
 
 # Copy docs Project + Manifest (Manifest is recommended for reproducible install).
 # Make sure docs/Manifest.toml is committed; if not available the image will still work but
@@ -29,7 +31,7 @@ WORKDIR /opt/julia_env COPY . .
 
 # Instantiate and precompile the docs environment at image build time.
 # Using --project=. ensures the docs environment is used.
-RUN julia -e 'using Pkg; Pkg.activate("docs"); Pkg.develop(PackageSpec(path=abspath(".."))); Pkg.instantiate(); Pkg.precompile()'
+RUN julia -e 'using Pkg; Pkg.activate("."); Pkg.develop(PackageSpec(path=abspath(".."))); Pkg.instantiate(); Pkg.precompile()'
 
 # Keep the working dir for subsequent docs builds
 WORKDIR /github/workspace
