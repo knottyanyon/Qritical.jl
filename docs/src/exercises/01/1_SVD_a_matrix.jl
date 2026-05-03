@@ -18,3 +18,9 @@ tolerance = 10E-3;
 
 #--
 left_singular_mat, singular_mat, right_singular_mat = factorize_with_svd(A_mat; discard_below_threshold=true, threshold=tolerance);
+
+
+
+# # Sources
+# [1] L. N. Trefethen, Numerical Linear Algebra (Society for Industrial and Applied Mathematics (SIAM, 3600 Market Street, Floor 6, Philadelphia, PA 19104), Philadelphia, Pa, 1997).
+# [trefethen_1997](@cite)

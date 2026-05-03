@@ -26,13 +26,6 @@
 
 # ### (b) a bipartition of the system in the middle
 
-# ## 3. SVD an image
 
-# Reproduce an SVD based image compression (use the image in Moodle or anything else
-# you might like).
 
-# *Hint:* Perform an SVD on each color channel.
 
-# # Sources
-# [1] L. N. Trefethen, Numerical Linear Algebra (Society for Industrial and Applied Mathematics (SIAM, 3600 Market Street, Floor 6, Philadelphia, PA 19104), Philadelphia, Pa, 1997).
-# [trefethen_1997](@cite)
