@@ -9,18 +9,12 @@ DATA_ROOT = normpath(joinpath(@__FILE__, "..")) ## A workaround to ensure that t
 FPATH_A = normpath(joinpath(DATA_ROOT, "A.txt"))
 println("File path for A: $FPATH_A")
 
-using LinearAlgebra
+using Qritical: factorize_with_svd
 using DelimitedFiles
-A_mat = readdlm(FPATH_A)
+A_mat = readdlm(FPATH_A);
 
-tolerance = 10E-3
-# Compute the singular value decomposition (SVD) of `A_mat` and return an SVD object.
+tolerance = 10E-3;
+# Compute the singular value decomposition (SVD) of `A_mat` 
 
 #--
-A_svd = LinearAlgebra.svd(A_mat);
-
-# Store the Factorization Object
-#--
-typeof(A_svd)
-Σ_cleaned = A_svd.S .> tolerance
-rank_Schmidt = count(Σ_cleaned)
+left_singular_mat, singular_mat, right_singular_mat = factorize_with_svd(A_mat; discard_below_threshold=true, threshold=tolerance);
