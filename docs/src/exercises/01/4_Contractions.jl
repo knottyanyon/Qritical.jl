@@ -5,11 +5,10 @@
 # - (a) once without using any libraries
 # - (b) once using a library of your choice
 
-# Loads variables from .env 
-using DotEnv
-# ENVCFG = DotEnv.config(joinpath(ENV["PROJECT_ROOT"], ".env"));
+DATA_ROOT = normpath(joinpath(@__FILE__, "..")) ## A workaround to ensure that the data can be read during local testing as well as pages deployment build
 
-# EXDIR = joinpath(ENVCFG["EXERCISES_ROOT"], "01")
+#--
+
 
 using BenchmarkTools
 using Qritical
@@ -96,4 +95,7 @@ line_ref = lines!(
 )
 axislegend(ax_2; position=:lt)
 
+
 # fig
+FIG_PATH = normpath(joinpath(DATA_ROOT, "contraction_bench.png"))
+save(FIG_PATH, fig)
