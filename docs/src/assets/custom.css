@@ -1,0 +1,12 @@
+/* Custom admonition: question/exercise box (Julia logo purple) */
+.admonition.is-category-question {
+    border-color: #9558B2;
+}
+.admonition.is-category-question > .admonition-header {
+    background-color: #9558B2;
+    color: #fff;
+}
+.admonition.is-category-question > .admonition-body {
+    background-color: #f7f0fb;
+    color: #1a1a2e;
+}
