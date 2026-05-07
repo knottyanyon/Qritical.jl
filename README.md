@@ -6,3 +6,13 @@
 [![Coverage](https://codecov.io/gh/knottyanyon/Qritical.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/knottyanyon/Qritical.jl)
 [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
 [![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
+
+
+## Building documentation
+To build and view the documentation locally during development
+
+1. From the project root run:
+   - only to build without serving: `julia --project=docs docs/make.jl`
+   - to build and serve with live-reloading: `julia --project=docs -e 'using LiveServer; servedocs()'`
+
+2. Then open `docs/build/index.html` in a browser

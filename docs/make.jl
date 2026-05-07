@@ -83,4 +83,6 @@ makedocs(;
     ],
 )
 
-deploydocs(; repo="github.com/knottyanyon/Qritical.jl", devbranch="main")
+if get(ENV, "CI", "false") == "true"
+    deploydocs(; repo="github.com/knottyanyon/Qritical.jl", devbranch="main")
+end
