@@ -1,4 +1,17 @@
 /* Custom admonition: question/exercise box (Julia logo purple) */
+/* subquestion: same colour family, no header, for parts a/b/c */
+.admonition.is-category-subquestion {
+    border-color: #9558B2;
+}
+.admonition.is-category-subquestion > .admonition-header {
+    display: none;
+}
+.admonition.is-category-subquestion > .admonition-body {
+    background-color: #f7f0fb;
+    color: #1a1a2e;
+}
+
+
 .admonition.is-category-question {
     border-color: #9558B2;
 }
