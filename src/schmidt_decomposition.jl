@@ -193,3 +193,120 @@ function reshape_tensor_for_bipartition!(tensor, indices)
 
     return reshape!(tensor, permuted_tensor, left_dim, right_dim)
 end
+
+"""
+    get_schmidt_coefficients(tensor; discard_below_threshold=true, threshold=1e-3)
+
+Compute the Schmidt coefficients of a bipartite state from its matrix
+representation.
+
+The Schmidt coefficients `λ_i` are the normalised singular values of the
+reshaped state matrix:
+
+    λ_i = σ_i / ‖ψ‖,    ‖ψ‖ = √(Σ_j σ_j²)
+
+where the norm is always computed from the **full** set of singular values
+before any truncation, so that the truncation error is reflected in the
+returned coefficients (i.e. `Σ λ_i² ≤ 1` after truncation, with equality
+only when no values are discarded).
+
+# Arguments
+- `tensor`: A matrix representing the bipartite state. Must already be
+  reshaped for the desired bipartition via `reshape_tensor_for_bipartition`
+  before calling this function.
+- `discard_below_threshold`: If `true` (default), Schmidt coefficients whose
+  corresponding singular value is below `threshold` are discarded.
+- `threshold`: Cutoff for discarding singular values. Defaults to `1e-3`.
+
+# Returns
+A `Vector{Float64}` of Schmidt coefficients `λ_i`, sorted in descending
+order, satisfying `Σ λ_i² ≤ 1` (with equality when no truncation occurs or
+the state is exactly represented by the kept terms).
+
+# Logs
+When `discard_below_threshold=true`, emits two `@info` messages:
+- The threshold being applied.
+- The Schmidt rank before and after truncation.
+
+# Examples
+```julia-repl
+julia> ψ_reshaped = reshape_tensor_for_bipartition(ψ, [(1,)]);  # (2, 512)
+julia> λ = get_schmidt_coefficients(ψ_reshaped; threshold=1e-6);
+julia> sum(λ .^ 2)   # ≈ 1.0 if no significant values were discarded
+julia> length(λ)     # Schmidt rank
+```
+
+# Notes
+- Uses `LinearAlgebra.svdvals` rather than the full `svd`, which is more
+  efficient when the left/right singular vectors are not needed.
+- For a normalised state `‖ψ‖ ≈ 1`, so `λ_i ≈ σ_i` directly.
+"""
+function get_schmidt_coefficients(tensor; discard_below_threshold=true, threshold=1e-3)
+    singular_vals = LinearAlgebra.svdvals(tensor)
+
+    # compute full norm before any truncation — must not be recomputed after
+    norm_ψ = sqrt(sum(singular_vals .^ 2))
+
+    if discard_below_threshold
+        @info "Discarding Schmidt coefficients below $threshold"
+        mask_keep = singular_vals .> threshold
+        @info "Schmidt rank" before = length(singular_vals) after = count(mask_keep)
+        singular_vals = singular_vals[mask_keep]
+    end
+
+    return singular_vals ./ norm_ψ
+end
+
+"""
+    get_entanglement_entropy(schmidt_coeffs)
+
+Compute the von Neumann entanglement entropy from a vector of Schmidt
+coefficients.
+
+The entropy is defined as:
+
+    S = -Σ_i  λ_i²  log(λ_i²)
+
+where `p_i = λ_i²` are the eigenvalues of the reduced density matrix.
+The result is in **nats** (natural logarithm). Divide by `log(2)` for bits.
+
+# Arguments
+- `schmidt_coeffs`: A `Vector` of Schmidt coefficients `λ_i` as returned by
+  `get_schmidt_coefficients`. Must satisfy `Σ λ_i² ≈ 1`.
+
+# Returns
+A non-negative `Float64`. Returns `0.0` for a product state (single non-zero
+Schmidt coefficient). Reaches its maximum of `log(d)` for a maximally
+entangled state across a `d`-dimensional bipartition.
+
+# Throws
+- `AssertionError` if `Σ λ_i²` deviates from 1 by more than `1e-6`,
+  indicating unnormalised input (e.g. raw singular values were passed instead
+  of Schmidt coefficients).
+
+# Examples
+```julia-repl
+julia> λ = get_schmidt_coefficients(ψ_reshaped; threshold=1e-6);
+julia> S = get_entanglement_entropy(λ)
+
+# convert nats → bits
+julia> S / log(2)
+
+# product state → zero entropy
+julia> get_entanglement_entropy([1.0])
+0.0
+```
+
+# Notes
+- Zero-valued coefficients are excluded before taking the logarithm to avoid
+  `NaN` from `0 * log(0)` (the limit is 0 by continuity).
+- For the middle bipartition of a strongly entangled state, `S` will be
+  significantly larger than for an edge bipartition, directly reflecting the
+  entanglement structure of the state.
+"""
+function get_entanglement_entropy(schmidt_coeffs)
+    @assert abs(sum(schmidt_coeffs .^ 2) - 1.0) < 1e-6 "schmidt_coeffs must be normalised: Σλ² must equal 1"
+
+    p = schmidt_coeffs[schmidt_coeffs .> 0] .^ 2
+    return -sum(p .* log2.(p))
+end

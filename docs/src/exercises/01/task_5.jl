@@ -1,14 +1,20 @@
-# #1.4. Contractions
 
-# Generate two random matrices $A, B$ each of size $N \times N$ and calculate the product
-# $C_{i,j} = A_{i,k} B_{k,j}$,
-# - (a) once without using any libraries
-# - (b) once using a library of your choice
 
-DATA_ROOT = normpath(joinpath(@__FILE__, "..")) ## A workaround to ensure that the data can be read during local testing as well as pages deployment build
+# !!! question "Task 1.4 — Contractions"
+#     Generate two random matrices $A, B$ each of size $N \times N$ and calculate the product $$C_{i,j} = A_{i,k} B_{k,j}$$, for a reasonable range of $N$ (this should still run in a reasonable amount of time).
 
+# A workaround to ensure that the data can be read during local testing as well as pages deployment build
+DATA_ROOT = normpath(joinpath(@__FILE__, ".."))
 #--
 
+# !!! subquestion
+#     ** A)** Without using any libraries
+
+# !!! subquestion
+#     ** B)** Using a library of your choice
+
+# !!! subquestion
+#     Compare the run-time of the two approaches, as well as their scaling in $N$. Plot time vs. $N$ and try to fit $$ f(N) = aN^x + b).$$ What do you observe?
 
 using BenchmarkTools
 using Qritical

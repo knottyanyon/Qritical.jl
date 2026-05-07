@@ -71,11 +71,16 @@ makedocs(;
         # ],
         "Exercises" => [
             "Exercise 01" => [
-                "1.1 SVD a matrix" => "exercises/01/1_SVD_a_matrix.md",
+                "1.1 Julia install party" => "exercises/01/task_1.md",
+                "1.2 SVD a matrix" => "exercises/01/task_2.md",
+                "1.3 SVD a state" => "exercises/01/task_3.md",
+                "1.4 SVD an image" => "exercises/01/task_4.md",
+                "1.5 Contractions" => "exercises/01/task_5.md",
                 # "1.4 Contractions" => "generated/htn-sose26/exercises/01/4_Contractions.md",
             ],
-            # "Exercise 02" => "generated/htn-sose26/exercises/02/02_Canonical_decomposition.md",
-        ],
+            "Exercise 01" => [],
+            "Exercise 03" => [],],
+            
         # "Julia Playground" => [
         #     "01 Understanding Contractions" => "generated/code_playground/01_Tensor Contractions.md",
         # ],
