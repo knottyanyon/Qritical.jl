@@ -2,6 +2,8 @@
 EditURL = "task_3.jl"
 ```
 
+# Task 1.3 — SVD a state
+
 !!! question "Task 1.3 — SVD a state"
     Perform an SVD on the state `psi.jls` given in Moodle. The format is a tensor of rank ten, dimensions $2^{10} = 1024$. Find the Schmidt rank needed if singular values below $10^{−6}$ are discarded.
 

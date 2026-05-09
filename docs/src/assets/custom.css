@@ -1,3 +1,29 @@
+/* Custom admonition: theorem box (Julia logo red) */
+.admonition.is-category-theorem {
+    border-color: #CB3C33;
+}
+.admonition.is-category-theorem > .admonition-header {
+    background-color: #CB3C33;
+    color: #fff;
+}
+.admonition.is-category-theorem > .admonition-body {
+    background-color: #fdf0ef;
+    color: #1a1a2e;
+}
+
+/* Custom admonition: definition box (Julia logo blue) */
+.admonition.is-category-definition {
+    border-color: #4063D8;
+}
+.admonition.is-category-definition > .admonition-header {
+    background-color: #4063D8;
+    color: #fff;
+}
+.admonition.is-category-definition > .admonition-body {
+    background-color: #eef1fd;
+    color: #1a1a2e;
+}
+
 /* Custom admonition: question/exercise box (Julia logo purple) */
 /* subquestion: same colour family, no header, for parts a/b/c */
 .admonition.is-category-subquestion {
@@ -21,5 +47,19 @@
 }
 .admonition.is-category-question > .admonition-body {
     background-color: #f7f0fb;
+    color: #1a1a2e;
+}
+
+/* Custom admonition: algorithm box (dark grey) */
+.admonition.is-category-algorithm {
+    border-color: #555;
+}
+.admonition.is-category-algorithm > .admonition-header {
+    background-color: #555;
+    color: #fff;
+    font-family: monospace;
+}
+.admonition.is-category-algorithm > .admonition-body {
+    background-color: #f8f8f8;
     color: #1a1a2e;
 }

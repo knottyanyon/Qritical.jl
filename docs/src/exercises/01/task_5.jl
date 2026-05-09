@@ -1,20 +1,44 @@
 
+# # Task 1.5 — Contractions
 
-# !!! question "Task 1.4 — Contractions"
-#     Generate two random matrices $A, B$ each of size $N \times N$ and calculate the product $$C_{i,j} = A_{i,k} B_{k,j}$$, for a reasonable range of $N$ (this should still run in a reasonable amount of time).
+# !!! question "Task 1.5 — Contractions"
+#     Generate two random matrices $A, B$ each of size $N \times N$ and calculate the product 
+#     ```math 
+#     C_{i,j} = A_{i,k} B_{k,j},
+#     ```
+#     for a reasonable range of $N$ (this should still run in a reasonable amount of time).
 
 # A workaround to ensure that the data can be read during local testing as well as pages deployment build
-DATA_ROOT = normpath(joinpath(@__FILE__, ".."))
+DATA_ROOT = normpath(joinpath(@__FILE__, ".."));
 #--
 
 # !!! subquestion
-#     ** A)** Without using any libraries
+#     **A)** Without using any libraries
+
+# A naive implementation employs a explicit triple loop to individually compute the scalar multiplications and additions required to get the values of the resulting matrix. This straightforward approach can be specified in the form of a pseudocode algorithm [cormen_2009](@cite):
+
+# !!! algorithm "Square matrix multiply procedure"
+#     ```
+#     1  n = A.rows
+#     2  let C be a new n × n matrix
+#     3  for i = 1 to n
+#     4      for j = 1 to n
+#     5          c_ij = 0
+#     6          for k = 1 to n
+#     7              c_ij = c_ij + a_ik · b_kj
+#     8  return C
+#     ```
+
 
 # !!! subquestion
-#     ** B)** Using a library of your choice
+#     **B)** Using a library of your choice
 
 # !!! subquestion
-#     Compare the run-time of the two approaches, as well as their scaling in $N$. Plot time vs. $N$ and try to fit $$ f(N) = aN^x + b).$$ What do you observe?
+#     Compare the run-time of the two approaches, as well as their scaling in $N$. Plot time vs. ``N`` and try to fit 
+#     ```math 
+#     f(N) = aN^x + b
+#     ``` 
+#     What do you observe?
 
 using BenchmarkTools
 using Qritical
@@ -105,3 +129,48 @@ axislegend(ax_2; position=:lt)
 # fig
 FIG_PATH = normpath(joinpath(DATA_ROOT, "contraction_bench.png"))
 save(FIG_PATH, fig)
+# ![Contraction Benchmark](contraction_bench.png)
+
+
+
+# ## Notes
+
+# On most computers there is a sizable difference between real and complex arithmetic. But no such distinction is made in what is given below.
+
+
+
+# !!! tip "How to do multilinear algebra on computers built and optimized for linear algebra?"
+#     Matrix multiplication is nothing but a special scenario of the more general operation of tensor contraction [shaw_1983](@cite). We can use this information to re-cast the required tensor contractions in the form of matrix multiplications which can be performed efficiently on modern computers. 
+
+# Useful numerics related notes from [golub_vanloan_2013](@cite).
+
+# !!! algorithm "Dot Product"
+#     If ``x, y \in \mathbb{R}^n``, compute the dot product 
+#
+#     ```math
+#     c = x^j y_j
+#     ```
+#
+#     ```
+#     c = 0
+#     for i = 1:n
+#         c = c + x[i]*y[i]
+#     end
+#     ```
+#
+#     - Involves ``n`` multiplications and ``n`` additions.
+#     - It is an ``O(n)`` operation i.e. it scales linearly with dimension
+
+
+# !!! algorithm "Single-precision A times X Plus Y (SAXPY)"
+#     If ``x, y \in \mathbb{R}^n`` and ``a \in \mathbb{R}``, then this algorithm overwrites ``y_i`` with ``y_i + ax_i``.
+#
+#
+#     ```
+#     for i = 1:n
+#         y[i] = y[i] + a*x[i]
+#     end
+#     ```
+#
+#     - It is also an ``O(n)`` operation
+#

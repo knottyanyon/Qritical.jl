@@ -2,6 +2,7 @@ using Qritical
 using Documenter
 using Literate
 using DocumenterCitations
+
 ## Process Literate files
 TUTORIALS = joinpath(@__DIR__, "src", "tutorials");
 PLAYGROUND_ROOT = joinpath(@__DIR__, "src", "code_playground");
@@ -56,8 +57,7 @@ makedocs(;
     format=Documenter.HTML(;
         canonical="https://knottyanyon.github.io/Qritical.jl",
         edit_link="main",
-        assets=["assets/custom.css"],
-    ),
+        assets=["assets/custom.css"]),
     build="build",
     workdir=normpath(joinpath(@__DIR__, "src")),
     clean=true,
@@ -78,9 +78,13 @@ makedocs(;
                 "1.5 Contractions" => "exercises/01/task_5.md",
                 # "1.4 Contractions" => "generated/htn-sose26/exercises/01/4_Contractions.md",
             ],
-            "Exercise 01" => [],
+            "Exercise 02" => [
+                "2.1 Left canonical form" => "exercises/02/task_1.md",
+                "2.2 Right canonical form" => "exercises/02/task_2.md",
+                "2.3 Mixed canonical form" => "exercises/02/task_3.md",
+            ],
             "Exercise 03" => [],],
-            
+
         # "Julia Playground" => [
         #     "01 Understanding Contractions" => "generated/code_playground/01_Tensor Contractions.md",
         # ],
