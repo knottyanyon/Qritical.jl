@@ -21,6 +21,8 @@ include("contraction_benchmaking.jl")
 
 include("schmidt_decomposition.jl")
 
+export Bisection
+
 export factorize_with_svd,
     validate_bipartition_indices,
     reshape_tensor_for_bipartition,

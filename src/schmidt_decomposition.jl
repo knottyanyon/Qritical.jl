@@ -1,6 +1,54 @@
 using LinearAlgebra
 
 """
+    Bisection(left, right)
+    Bisection(left, ndims)
+
+A partition of a tensor's indices into two disjoint sets `left` and `right`.
+
+The two-argument form takes explicit index sets; the convenience form infers
+`right` as the complement of `left` within `1:ndims`.
+
+# Examples
+```jldoctest
+julia> b = Bisection([1, 2], 5)
+Bisection([1, 2], [3, 4, 5])
+
+julia> b.left
+2-element Vector{Int64}:
+ 1
+ 2
+
+julia> b.right
+3-element Vector{Int64}:
+ 3
+ 4
+ 5
+
+julia> Bisection([1], [1, 2])
+ERROR: ArgumentError: Indices [1] appear in both partitions.
+[...]
+```
+"""
+struct Bisection
+    left::Vector{Int}
+    right::Vector{Int}
+
+    function Bisection(left::Vector{Int}, right::Vector{Int})
+        shared = intersect(left, right)
+        isempty(shared) || throw(ArgumentError("Indices $shared appear in both partitions."))
+        length(unique(left)) == length(left) || throw(ArgumentError("left indices contain duplicates."))
+        length(unique(right)) == length(right) || throw(ArgumentError("right indices contain duplicates."))
+        all(>(0), left) || throw(ArgumentError("left indices must be positive integers."))
+        all(>(0), right) || throw(ArgumentError("right indices must be positive integers."))
+        new(left, right)
+    end
+end
+
+Bisection(left::AbstractVector{Int}, right::AbstractVector{Int}) = Bisection(collect(left), collect(right))
+Bisection(left::AbstractVector{Int}, ndims::Int) = Bisection(collect(left), setdiff(1:ndims, left))
+
+"""
     factorize_with_svd(tensor; discard_below_threshold=true, threshold=1e-3)
 
 Compute the SVD of `tensor` and optionally truncate singular values below a
@@ -167,6 +215,15 @@ function reshape_tensor_for_bipartition(tensor, indices)
     left_dim = prod(sz[i] for i in left_indices)
     right_dim = prod(sz[i] for i in right_indices)
 
+    return reshape(permuted_tensor, left_dim, right_dim)
+end
+
+function reshape_tensor_for_bipartition(tensor, b::Bisection)
+    sz = size(tensor)
+    perm = vcat(b.left, b.right)
+    permuted_tensor = permutedims(tensor, perm)
+    left_dim = prod(sz[i] for i in b.left)
+    right_dim = prod(sz[i] for i in b.right)
     return reshape(permuted_tensor, left_dim, right_dim)
 end
 
