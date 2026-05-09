@@ -20,8 +20,18 @@ include("hinton_recipe.jl")
 include("contraction_benchmaking.jl")
 
 include("schmidt_decomposition.jl")
+include("tensor_index.jl")
 
 export Bisection
+
+export IndexDirection, Contravariant, Covariant
+export Ket, Bra, UpIndex, DownIndex, CoDomain, Domain
+export flip
+export AbstractIndex, PhysicalIndex, BondIndex
+export is_physical, is_bond
+export dual, isdual, as_covariant, as_contravariant
+export IndexedTensor
+export kronecker_delta
 
 export factorize_with_svd,
     validate_bipartition_indices,

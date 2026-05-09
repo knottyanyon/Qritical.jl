@@ -7,6 +7,8 @@ using Aqua
         Aqua.test_all(Qritical)
     end
 
+    include("test_tensor_index.jl")
+
     @testset "Bisection" begin
         @testset "construction" begin
             b = Bisection([1, 2], 5)
