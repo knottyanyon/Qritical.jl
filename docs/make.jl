@@ -69,7 +69,7 @@ makedocs(;
         #     "Week 01" => "htn-sose26/notes/week_01.md",
         #     "Week 02" => "htn-sose26/notes/week_02.md",
         # ],
-        "Exercises" => [
+        "Notation" => "notation.md", "Hands-on-TN" => ["Exercises" => [
             "Exercise 01" => [
                 "1.1 Julia install party" => "exercises/01/task_1.md",
                 "1.2 SVD a matrix" => "exercises/01/task_2.md",
@@ -83,12 +83,12 @@ makedocs(;
                 "2.2 Right canonical form" => "exercises/02/task_2.md",
                 "2.3 Mixed canonical form" => "exercises/02/task_3.md",
             ],
-            "Exercise 03" => [],],
+            "Exercise 03" => [],],],
 
         # "Julia Playground" => [
         #     "01 Understanding Contractions" => "generated/code_playground/01_Tensor Contractions.md",
         # ],
-        "References" => "references.md",
+        "Bibliography" => "references.md",
     ],
 )
 
