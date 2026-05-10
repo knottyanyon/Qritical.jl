@@ -2,6 +2,7 @@ using Qritical
 using Documenter
 using Literate
 using DocumenterCitations
+
 ## Process Literate files
 TUTORIALS = joinpath(@__DIR__, "src", "tutorials");
 PLAYGROUND_ROOT = joinpath(@__DIR__, "src", "code_playground");
@@ -56,31 +57,57 @@ makedocs(;
     format=Documenter.HTML(;
         canonical="https://knottyanyon.github.io/Qritical.jl",
         edit_link="main",
-        assets=String[],
-    ),
+        mathengine=MathJax3(Dict(
+            :loader => Dict("load" => ["[tex]/physics"]),
+            :tex => Dict(
+                "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
+                "tags" => "ams",
+                "packages" => ["base", "ams", "autoload", "physics"],
+            ),
+        )),
+        assets=["assets/custom.css"]),
     build="build",
     workdir=normpath(joinpath(@__DIR__, "src")),
     clean=true,
     warnonly=true,
-    plugins=[bib],
-    pages=[
+    plugins=[bib], pages=[
         "Home" => "index.md",
         # "Hands-on Tensor Networks" => [
         #     "Week 01" => "htn-sose26/notes/week_01.md",
         #     "Week 02" => "htn-sose26/notes/week_02.md",
         # ],
-        "Exercises" => [
+        "Notation" => "notation.md", "Hands-on-TN" => ["Exercises" => [
             "Exercise 01" => [
-                "1.1 SVD a matrix" => "exercises/01/1_SVD_a_matrix.md",
+                "1.1 Julia install party" => "exercises/01/task_1.md",
+                "1.2 SVD a matrix" => "exercises/01/task_2.md",
+                "1.3 SVD a state" => "exercises/01/task_3.md",
+                "1.4 SVD an image" => "exercises/01/task_4.md",
+                "1.5 Contractions" => "exercises/01/task_5.md",
                 # "1.4 Contractions" => "generated/htn-sose26/exercises/01/4_Contractions.md",
             ],
-            # "Exercise 02" => "generated/htn-sose26/exercises/02/02_Canonical_decomposition.md",
-        ],
+            "Exercise 02" => [
+                "2.1 Left canonical form" => "exercises/02/task_1.md",
+                "2.2 Right canonical form" => "exercises/02/task_2.md",
+                "2.3 Mixed canonical form" => "exercises/02/task_3.md",
+            ],
+            "Exercise 03" => [
+                "3.1 From Left to Right" => "exercises/03/task_1.md",
+                "3.2 From Right to Left" => "exercises/03/task_2.md",
+                "3.3 Checking the Normalization" => "exercises/03/task_3.md",
+            ],
+            "Exercise 04" => [
+                "4.2 MPS Overlap" => "exercises/04/task_1.md",
+                "4.3 Observables" => "exercises/04/task_2.md",
+                "4.4 Adding MPS" => "exercises/04/task_3.md",
+            ],],],
+
         # "Julia Playground" => [
         #     "01 Understanding Contractions" => "generated/code_playground/01_Tensor Contractions.md",
         # ],
-        "References" => "references.md",
+        "Bibliography" => "references.md",
     ],
 )
 
-deploydocs(; repo="github.com/knottyanyon/Qritical.jl", devbranch="main")
+if get(ENV, "CI", "false") == "true"
+    deploydocs(; repo="github.com/knottyanyon/Qritical.jl", devbranch="main")
+end

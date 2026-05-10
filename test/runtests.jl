@@ -6,5 +6,6 @@ using Aqua
     @testset "Code quality (Aqua.jl)" begin
         Aqua.test_all(Qritical)
     end
-    # Write your tests here.
+
+    include("test_tensor_index.jl")
 end

@@ -19,12 +19,26 @@ export QriticalUtils
 include("hinton_recipe.jl")
 include("contraction_benchmaking.jl")
 
-include("schmidt_rank.jl")
+include("tensor_index.jl")
+include("schmidt_decomposition.jl")
+
+export Bisection
+
+export IndexDirection, Contravariant, Covariant
+export Ket, Bra, UpIndex, DownIndex, CoDomain, Domain
+export flip
+export AbstractIndex, PhysicalIndex, BondIndex
+export is_physical, is_bond
+export dual, isdual, as_covariant, as_contravariant
+export IndexedTensor
+export kronecker_delta
 
 export factorize_with_svd,
     validate_bipartition_indices,
     reshape_tensor_for_bipartition,
-    reshape_tensor_for_bipartition!
+    reshape_tensor_for_bipartition!,
+    get_schmidt_coefficients,
+    get_entanglement_entropy
 
 export hinton, hinton!, draw_complex_hinton, draw_svd_hinton
 export setup_size_N_rand_input, contract_N_ijk
