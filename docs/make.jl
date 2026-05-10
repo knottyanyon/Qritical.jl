@@ -57,13 +57,20 @@ makedocs(;
     format=Documenter.HTML(;
         canonical="https://knottyanyon.github.io/Qritical.jl",
         edit_link="main",
+        mathengine=MathJax3(Dict(
+            :loader => Dict("load" => ["[tex]/physics"]),
+            :tex => Dict(
+                "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
+                "tags" => "ams",
+                "packages" => ["base", "ams", "autoload", "physics"],
+            ),
+        )),
         assets=["assets/custom.css"]),
     build="build",
     workdir=normpath(joinpath(@__DIR__, "src")),
     clean=true,
     warnonly=true,
-    plugins=[bib],
-    pages=[
+    plugins=[bib], pages=[
         "Home" => "index.md",
         # "Hands-on Tensor Networks" => [
         #     "Week 01" => "htn-sose26/notes/week_01.md",

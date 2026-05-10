@@ -50,6 +50,11 @@
     color: #1a1a2e;
 }
 
+/* Prevent Bulma from shrinking SVG diagrams inside table cells */
+.content table td img {
+    max-width: none;
+}
+
 /* Custom admonition: algorithm box (dark grey) */
 .admonition.is-category-algorithm {
     border-color: #555;

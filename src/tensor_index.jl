@@ -208,17 +208,24 @@ struct Bisection
 
     function Bisection(left::Vector{Int}, right::Vector{Int})
         shared = intersect(left, right)
-        isempty(shared) || throw(ArgumentError("Indices $shared appear in both partitions."))
-        length(unique(left)) == length(left) || throw(ArgumentError("left indices contain duplicates."))
-        length(unique(right)) == length(right) || throw(ArgumentError("right indices contain duplicates."))
+        isempty(shared) ||
+            throw(ArgumentError("Indices $shared appear in both partitions."))
+        length(unique(left)) == length(left) ||
+            throw(ArgumentError("left indices contain duplicates."))
+        length(unique(right)) == length(right) ||
+            throw(ArgumentError("right indices contain duplicates."))
         all(>(0), left) || throw(ArgumentError("left indices must be positive integers."))
         all(>(0), right) || throw(ArgumentError("right indices must be positive integers."))
-        new(left, right)
+        return new(left, right)
     end
 end
 
-Bisection(left::AbstractVector{Int}, right::AbstractVector{Int}) = Bisection(collect(left), collect(right))
-Bisection(left::AbstractVector{Int}, ndims::Int) = Bisection(collect(left), setdiff(1:ndims, left))
+function Bisection(left::AbstractVector{Int}, right::AbstractVector{Int})
+    return Bisection(collect(left), collect(right))
+end
+function Bisection(left::AbstractVector{Int}, ndims::Int)
+    return Bisection(collect(left), setdiff(1:ndims, left))
+end
 
 function Bisection(tensor::IndexedTensor, left::AbstractVector{<:AbstractIndex})
     left_positions = map(left) do idx
@@ -226,11 +233,11 @@ function Bisection(tensor::IndexedTensor, left::AbstractVector{<:AbstractIndex})
         isnothing(pos) && throw(ArgumentError("Index $idx not found in tensor"))
         pos
     end
-    Bisection(left_positions, ndims(tensor))
+    return Bisection(left_positions, ndims(tensor))
 end
 
-function Bisection(tensor::IndexedTensor, ::Type{T}) where {T <: AbstractIndex}
+function Bisection(tensor::IndexedTensor, ::Type{T}) where {T<:AbstractIndex}
     left_positions = findall(i -> i isa T, collect(tensor.indices))
     isempty(left_positions) && throw(ArgumentError("No indices of type $T found in tensor"))
-    Bisection(left_positions, ndims(tensor))
+    return Bisection(left_positions, ndims(tensor))
 end
