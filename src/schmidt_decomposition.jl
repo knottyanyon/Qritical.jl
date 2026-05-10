@@ -3,11 +3,16 @@ using LinearAlgebra
 """
     Bisection(left, right)
     Bisection(left, ndims)
+    Bisection(tensor::IndexedTensor, left_indices)
+    Bisection(tensor::IndexedTensor, T::Type{<:AbstractIndex})
 
 A partition of a tensor's indices into two disjoint sets `left` and `right`.
 
-The two-argument form takes explicit index sets; the convenience form infers
-`right` as the complement of `left` within `1:ndims`.
+The integer forms take explicit dimension positions; `ndims` infers `right` as
+the complement of `left` within `1:ndims`. The `IndexedTensor` forms resolve
+positions automatically: pass a vector of `AbstractIndex` objects to specify
+the left set by identity, or pass an index type (`PhysicalIndex`/`BondIndex`)
+to put all legs of that kind on the left.
 
 # Examples
 ```jldoctest
@@ -47,6 +52,21 @@ end
 
 Bisection(left::AbstractVector{Int}, right::AbstractVector{Int}) = Bisection(collect(left), collect(right))
 Bisection(left::AbstractVector{Int}, ndims::Int) = Bisection(collect(left), setdiff(1:ndims, left))
+
+function Bisection(tensor::IndexedTensor, left::AbstractVector{<:AbstractIndex})
+    left_positions = map(left) do idx
+        pos = findfirst(==(idx), tensor.indices)
+        isnothing(pos) && throw(ArgumentError("Index $idx not found in tensor"))
+        pos
+    end
+    Bisection(left_positions, ndims(tensor))
+end
+
+function Bisection(tensor::IndexedTensor, ::Type{T}) where {T <: AbstractIndex}
+    left_positions = findall(i -> i isa T, collect(tensor.indices))
+    isempty(left_positions) && throw(ArgumentError("No indices of type $T found in tensor"))
+    Bisection(left_positions, ndims(tensor))
+end
 
 """
     factorize_with_svd(tensor; discard_below_threshold=true, threshold=1e-3)

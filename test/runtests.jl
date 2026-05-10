@@ -37,5 +37,34 @@ using Aqua
             result_tuple     = reshape_tensor_for_bipartition(T, [(1,)])
             @test result_bisection == result_tuple
         end
+
+        @testset "construction from IndexedTensor" begin
+            σ  = PhysicalIndex(:σ, 2, 1, Contravariant)
+            αL = BondIndex(:αL, 4, Covariant)
+            αR = BondIndex(:αR, 4, Contravariant)
+            A  = IndexedTensor(rand(2, 4, 4), (σ, αL, αR))
+
+            # by index object: put σ on the left
+            b1 = Bisection(A, [σ])
+            @test b1.left  == [1]
+            @test b1.right == [2, 3]
+
+            # by index type: all PhysicalIndex legs on the left
+            b2 = Bisection(A, PhysicalIndex)
+            @test b2.left  == [1]
+            @test b2.right == [2, 3]
+
+            # by index type: all BondIndex legs on the left
+            b3 = Bisection(A, BondIndex)
+            @test b3.left  == [2, 3]
+            @test b3.right == [1]
+
+            # index not in tensor
+            other = BondIndex(:β, 4, Contravariant)
+            @test_throws ArgumentError Bisection(A, [other])
+
+            # type not present in tensor
+            @test_throws ArgumentError Bisection(IndexedTensor(rand(4, 4), (αL, αR)), PhysicalIndex)
+        end
     end
 end

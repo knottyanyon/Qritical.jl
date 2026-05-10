@@ -19,8 +19,8 @@ export QriticalUtils
 include("hinton_recipe.jl")
 include("contraction_benchmaking.jl")
 
-include("schmidt_decomposition.jl")
 include("tensor_index.jl")
+include("schmidt_decomposition.jl")
 
 export Bisection
 
