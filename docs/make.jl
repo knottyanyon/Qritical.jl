@@ -90,7 +90,11 @@ makedocs(;
                 "2.2 Right canonical form" => "exercises/02/task_2.md",
                 "2.3 Mixed canonical form" => "exercises/02/task_3.md",
             ],
-            "Exercise 03" => [],],],
+            "Exercise 03" => [
+                "3.1 From Left to Right" => "exercises/03/task_1.md",
+                "3.2 From Right to Left" => "exercises/03/task_2.md",
+                "3.3 Checking the Normalization" => "exercises/03/task_3.md",
+            ],],],
 
         # "Julia Playground" => [
         #     "01 Understanding Contractions" => "generated/code_playground/01_Tensor Contractions.md",
