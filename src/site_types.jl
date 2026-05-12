@@ -3,10 +3,40 @@ using TensorKit: TensorKit
 
 # ── AbstractSite ──────────────────────────────────────────────────────────────
 
+"""
+    AbstractSite
+
+Abstract base type for all lattice site kinds. Concrete subtypes encode the
+local Hilbert space structure (dimension, symmetry sectors) at a single site
+in a lattice model.
+
+Subtypes: `SpinSite`, `SpinlessFermionicSite`, `SpinlessHardCoreBosonicSite`,
+`SpinlessBosonicSite`.
+"""
 abstract type AbstractSite end
 
 # ── SpinSite ──────────────────────────────────────────────────────────────────
 
+"""
+    SpinSite(spin_quantum_number::HalfInt, lattice_ordinal::Int; symmetry=:none)
+
+A spin-S lattice site. The local Hilbert space has dimension `2S+1` with basis
+states `|Sz = -S⟩, ..., |Sz = +S⟩`.
+
+# Arguments
+- `spin_quantum_number`: total spin S as a `HalfInt` (e.g. `half(1)` for spin-1/2)
+- `lattice_ordinal`: ordered position of this site in the lattice (`i = 1, 2, ..., N`)
+- `symmetry=:none`: symmetry to exploit for block-diagonal structure
+  - `:U1`  — conserves Sz; sectors are `Sz = -S, ..., +S`, each multiplicity 1
+  - `:SU2` — full rotational invariance; one sector labeled by total spin j = S
+  - `:none` — no symmetry, plain `ℂ^(2S+1)`
+
+# Example
+```julia
+SpinSite(half(1), 3; symmetry=:U1)   # spin-1/2 at site 3, U(1) symmetry
+SpinSite(half(2), 1; symmetry=:SU2)  # spin-1 at site 1, SU(2) symmetry
+```
+"""
 struct SpinSite <: AbstractSite
     spin_quantum_number::HalfInt
     lattice_ordinal::Int
@@ -40,6 +70,28 @@ end
 
 # ── SpinlessFermionicSite ─────────────────────────────────────────────────────
 
+"""
+    SpinlessFermionicSite(lattice_ordinal::Int; symmetry=:none)
+
+A spinless fermionic site with two basis states: empty `|0⟩` and occupied `|1⟩`.
+Local Hilbert space dimension is 2. Obeys fermionic (antisymmetric) exchange
+statistics — distinct from `SpinlessHardCoreBosonicSite` despite the same
+Hilbert space dimension.
+
+# Arguments
+- `lattice_ordinal`: ordered position of this site in the lattice
+- `symmetry=:none`: symmetry to exploit for block-diagonal structure
+  - `:U1` — conserves particle number; sectors `n=0` and `n=1`
+  - `:Z2` — conserves fermionic parity (even/odd occupation); useful for
+             superconductors where particle number fluctuates but parity is fixed
+  - `:none` — no symmetry, plain `ℂ²`
+
+# Example
+```julia
+SpinlessFermionicSite(2; symmetry=:U1)  # site 2, particle number conservation
+SpinlessFermionicSite(1; symmetry=:Z2)  # site 1, parity conservation only
+```
+"""
 struct SpinlessFermionicSite <: AbstractSite
     lattice_ordinal::Int
     space::TensorKit.ElementarySpace
@@ -64,6 +116,27 @@ end
 
 # ── SpinlessHardCoreBosonicSite ───────────────────────────────────────────────
 
+"""
+    SpinlessHardCoreBosonicSite(lattice_ordinal::Int; symmetry=:none)
+
+A spinless hard-core bosonic site. The hard-core constraint limits occupation
+to at most 1 boson per site, giving two basis states: `|0⟩` and `|1⟩`.
+Local Hilbert space dimension is 2.
+
+Shares the same Hilbert space as `SpinlessFermionicSite` but obeys bosonic
+(symmetric) exchange statistics. The creation operator satisfies `(b†)² = 0`
+and is equivalent to the Pauli raising operator S⁺ — the basis of the
+Holstein-Primakoff mapping between spin-1/2 chains and hard-core bosons.
+
+# Arguments
+- `lattice_ordinal`: ordered position of this site in the lattice
+- `symmetry=:none`: `:U1` (conserves particle number) or `:none`
+
+# Example
+```julia
+SpinlessHardCoreBosonicSite(3; symmetry=:U1)  # site 3, particle number conservation
+```
+"""
 struct SpinlessHardCoreBosonicSite <: AbstractSite
     lattice_ordinal::Int
     space::TensorKit.ElementarySpace
@@ -86,9 +159,31 @@ end
 
 # ── SpinlessBosonicSite ───────────────────────────────────────────────────────
 
+"""
+    SpinlessBosonicSite(lattice_ordinal::Int; n_max_occ::Int, symmetry=:none)
+
+A spinless soft-core bosonic site allowing up to `n_max_occ` bosons per site.
+Basis states are `|0⟩, |1⟩, ..., |n_max_occ⟩`, giving local Hilbert space
+dimension `n_max_occ + 1`.
+
+The creation operator satisfies `b†|n⟩ = √(n+1)|n+1⟩` — the `√(n+1)` factor
+distinguishes soft-core from hard-core bosons and allows multiple occupancy.
+
+# Arguments
+- `lattice_ordinal`: ordered position of this site in the lattice
+- `n_max_occ`: maximum occupation number (must be ≥ 0)
+- `symmetry=:none`: `:U1` (conserves particle number, sectors `n=0,...,n_max_occ`)
+                    or `:none`
+
+# Example
+```julia
+SpinlessBosonicSite(1; n_max_occ=4, symmetry=:U1)  # up to 4 bosons, U(1) symmetry
+SpinlessBosonicSite(2; n_max_occ=10)                # up to 10 bosons, no symmetry
+```
+"""
 struct SpinlessBosonicSite <: AbstractSite
     lattice_ordinal::Int
-    n_max_occ::Int # occupation cutoff
+    n_max_occ::Int
     space::TensorKit.ElementarySpace
 end
 
@@ -101,7 +196,6 @@ function SpinlessBosonicSite(lattice_ordinal::Int; n_max_occ::Int, symmetry::Sym
     elseif symmetry == :U1
         pairs = [m => 1 for m in 0:n_max_occ]
         TensorKit.U1Space(pairs...)
-
     else
         throw(
             ArgumentError(
