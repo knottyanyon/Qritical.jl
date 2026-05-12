@@ -36,6 +36,14 @@ states `|Sz = -S⟩, ..., |Sz = +S⟩`.
 SpinSite(half(1), 3; symmetry=:U1)   # spin-1/2 at site 3, U(1) symmetry
 SpinSite(half(2), 1; symmetry=:SU2)  # spin-1 at site 1, SU(2) symmetry
 ```
+
+```jldoctest
+julia> local_hilbert_dim(SpinSite(half(1), 1))  # spin-1/2: 2*(1/2)+1 = 2
+2
+
+julia> local_hilbert_dim(SpinSite(half(2), 1))  # spin-1: 2*1+1 = 3
+3
+```
 """
 struct SpinSite <: AbstractSite
     spin_quantum_number::HalfInt
@@ -91,6 +99,11 @@ Hilbert space dimension.
 SpinlessFermionicSite(2; symmetry=:U1)  # site 2, particle number conservation
 SpinlessFermionicSite(1; symmetry=:Z2)  # site 1, parity conservation only
 ```
+
+```jldoctest
+julia> local_hilbert_dim(SpinlessFermionicSite(1))  # empty |0⟩ or occupied |1⟩
+2
+```
 """
 struct SpinlessFermionicSite <: AbstractSite
     lattice_ordinal::Int
@@ -136,6 +149,11 @@ Holstein-Primakoff mapping between spin-1/2 chains and hard-core bosons.
 ```julia
 SpinlessHardCoreBosonicSite(3; symmetry=:U1)  # site 3, particle number conservation
 ```
+
+```jldoctest
+julia> local_hilbert_dim(SpinlessHardCoreBosonicSite(1))  # hard-core: at most 1 boson, dim = 2
+2
+```
 """
 struct SpinlessHardCoreBosonicSite <: AbstractSite
     lattice_ordinal::Int
@@ -179,6 +197,14 @@ distinguishes soft-core from hard-core bosons and allows multiple occupancy.
 ```julia
 SpinlessBosonicSite(1; n_max_occ=4, symmetry=:U1)  # up to 4 bosons, U(1) symmetry
 SpinlessBosonicSite(2; n_max_occ=10)                # up to 10 bosons, no symmetry
+```
+
+```jldoctest
+julia> local_hilbert_dim(SpinlessBosonicSite(1; n_max_occ=3))  # |0⟩,|1⟩,|2⟩,|3⟩: n_max_occ+1 = 4
+4
+
+julia> local_hilbert_dim(SpinlessBosonicSite(1; n_max_occ=0))  # vacuum only: dim = 1
+1
 ```
 """
 struct SpinlessBosonicSite <: AbstractSite
