@@ -19,11 +19,14 @@ export QriticalUtils
 include("hinton_recipe.jl")
 include("contraction_benchmaking.jl")
 
+include("site_types.jl")
 include("tensor_index.jl")
 include("schmidt_decomposition.jl")
 
 export Bisection
-
+export AbstractSite
+export SpinSite, SpinlessFermionicSite, SpinlessHardCoreBosonicSite, SpinlessBosonicSite
+export local_hilbert_dim
 export IndexDirection, Contravariant, Covariant
 export Ket, Bra, UpIndex, DownIndex, CoDomain, Domain
 export flip
