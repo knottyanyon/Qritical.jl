@@ -46,17 +46,30 @@ using TensorKit: TensorKit
         @test local_hilbert_dim(f_z2) == 2
     end
 
-    @testset "SpinlessHardCoreBosonicSite" begin
+    @testset "SpinlessHardCoreBosonicSite" begin # b† |0⟩ = |1⟩, b† |1⟩ = 0
         # at most 1 per site - similar to 2 state basis like fermions but obeying bosonic statistics
-        b = SpinlessHardCoreBosonicSite(4)
-        @test b.lattice_ordinal == 4
-        @test local_hilbert_dim(b) == 2 # hard-core-> 2 possible states: occupied/unoccupied
+        a = SpinlessHardCoreBosonicSite(4)
+        @test a.lattice_ordinal == 4
+        @test local_hilbert_dim(a) == 2 # hard-core-> 2 possible states: occupied/unoccupied
 
         ## With U(1) - conserve total particle number.[Ĥ,N̂]=0 --> systems remains in fixed N sector blocks
-        b_u1 = SpinlessHardCoreBosonicSite(2; symmetry=:U1)
-        @test b_u1.space == TensorKit.U1Space(0 => 1, 1 => 1) # occupied/unoccupied single site
-        @test local_hilbert_dim(b_u1) == 2
+        a_u1 = SpinlessHardCoreBosonicSite(2; symmetry=:U1)
+        @test a_u1.space == TensorKit.U1Space(0 => 1, 1 => 1) # occupied/unoccupied single site
+        @test local_hilbert_dim(a_u1) == 2
+    end
 
-    
+    @testset "SpinlessBosonicSite" begin # b† |n⟩ = √(n+1) |n+1⟩
+        b = SpinlessBosonicSite(1; n_max_occ=3)
+        @test b.lattice_ordinal == 1
+        @test b.n_max_occ == 3
+        @test local_hilbert_dim(b) == 4 # n_max_occ + 1
+
+        ## With U(1) - conserve total particle number.[Ĥ,N̂]=0 --> systems remains in fixed N sector blocks
+        b_u1 = SpinlessBosonicSite(1; n_max_occ=3, symmetry=:U1)
+        @test b_u1.n_max_occ == 3
+        @test local_hilbert_dim(b_u1) == 4 # n_max_occ + 1
+        @test b_u1.space == TensorKit.U1Space(0 => 1, 1 => 1, 2 => 1, 3 => 1) # different particle number sectors
+
+        @test_throws ArgumentError SpinlessBosonicSite(1; n_max_occ=-1)  # negative occupation meaningless
     end
 end
