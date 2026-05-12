@@ -1,33 +1,34 @@
 using LinearAlgebra
 using TensorOperations
+using TensorKit: TensorKit
 
 @testset "TensorIndex" begin
 
-    # ── Phase 1: IndexDirection ───────────────────────────────────────────────
+    # ── Direction enum: Contravariant / Covariant ────────────────────────────
 
     @testset "IndexDirection enum and aliases" begin
         @test Contravariant != Covariant
 
-        @test Ket      === Contravariant
-        @test UpIndex  === Contravariant
+        @test Ket === Contravariant
+        @test UpIndex === Contravariant
         @test CoDomain === Contravariant
 
-        @test Bra       === Covariant
+        @test Bra === Covariant
         @test DownIndex === Covariant
-        @test Domain    === Covariant
+        @test Domain === Covariant
 
         @test flip(Contravariant) == Covariant
-        @test flip(Covariant)     == Contravariant
+        @test flip(Covariant) == Contravariant
     end
 
-    # ── Phase 2: PhysicalIndex and BondIndex ─────────────────────────────────
+    # ── Index structs: PhysicalIndex, BondIndex ──────────────────────────────
 
     @testset "PhysicalIndex" begin
         σ = PhysicalIndex(:σ, 2, 1, Contravariant)
         @test σ.label == :σ
-        @test σ.dim   == 2
-        @test σ.site  == 1
-        @test σ.dir   == Contravariant
+        @test σ.dim == 2
+        @test σ.site == 1
+        @test σ.dir == Contravariant
         @test is_physical(σ)
         @test !is_bond(σ)
     end
@@ -35,31 +36,31 @@ using TensorOperations
     @testset "BondIndex" begin
         α = BondIndex(:α, 4, Contravariant)
         @test α.label == :α
-        @test α.dim   == 4
-        @test α.dir   == Contravariant
+        @test α.dim == 4
+        @test α.dir == Contravariant
         @test is_bond(α)
         @test !is_physical(α)
     end
 
-    # ── Phase 3: dual, adjoint, directional helpers ───────────────────────────
+    # ── Index algebra: dual, adjoint, direction helpers ──────────────────────
 
     @testset "dual and adjoint" begin
         α = BondIndex(:α, 4, Contravariant)
-        @test dual(α).dir   == Covariant
+        @test dual(α).dir == Covariant
         @test dual(α).label == α.label
-        @test dual(α).dim   == α.dim
-        @test α'            == dual(α)
+        @test dual(α).dim == α.dim
+        @test α' == dual(α)
         @test dual(dual(α)) == α
 
         σ = PhysicalIndex(:σ, 2, 1, Covariant)
-        @test dual(σ).dir  == Contravariant
+        @test dual(σ).dir == Contravariant
         @test dual(σ).site == σ.site
-        @test dual(σ).dim  == σ.dim
+        @test dual(σ).dim == σ.dim
     end
 
     @testset "isdual" begin
         α = BondIndex(:α, 4, Contravariant)
-        @test  isdual(α, dual(α))
+        @test isdual(α, dual(α))
         @test !isdual(α, α)
         @test !isdual(α, BondIndex(:α, 4, Contravariant))  # same direction
         @test !isdual(α, BondIndex(:α, 3, Covariant))      # different dim
@@ -69,13 +70,13 @@ using TensorOperations
 
     @testset "as_covariant and as_contravariant" begin
         α = BondIndex(:α, 4, Contravariant)
-        @test as_covariant(α).dir       == Covariant
-        @test as_covariant(dual(α))     == dual(α)   # idempotent
-        @test as_contravariant(α)       == α          # idempotent
+        @test as_covariant(α).dir == Covariant
+        @test as_covariant(dual(α)) == dual(α)   # idempotent
+        @test as_contravariant(α) == α          # idempotent
         @test as_contravariant(dual(α)).dir == Contravariant
     end
 
-    # ── Phase 4: IndexedTensor + TensorOperations integration ─────────────────
+    # ── Tensor layer: IndexedTensor and TensorOperations ─────────────────────
 
     @testset "IndexedTensor construction" begin
         σ = PhysicalIndex(:σ, 2, 1, Contravariant)
@@ -83,7 +84,7 @@ using TensorOperations
         β = BondIndex(:β, 4, Contravariant)
         A = IndexedTensor(rand(2, 4, 4), (σ, α, β))
 
-        @test size(A)  == (2, 4, 4)
+        @test size(A) == (2, 4, 4)
         @test ndims(A) == 3
         @test TensorOperations.tensorstructure(A, 1, false) === σ
         @test TensorOperations.tensorstructure(A, 2, false) === α
@@ -95,15 +96,21 @@ using TensorOperations
         @test_nowarn TensorOperations.checkcontractible(α, dual(α), false, false, :α)
 
         # same direction
-        @test_throws ArgumentError TensorOperations.checkcontractible(α, α, false, false, :α)
+        @test_throws ArgumentError TensorOperations.checkcontractible(
+            α, α, false, false, :α
+        )
 
         # different kinds
         σ = PhysicalIndex(:σ, 4, 1, Covariant)
-        @test_throws ArgumentError TensorOperations.checkcontractible(α, σ, false, false, :x)
+        @test_throws ArgumentError TensorOperations.checkcontractible(
+            α, σ, false, false, :x
+        )
 
         # dimension mismatch
         γ = BondIndex(:γ, 3, Covariant)
-        @test_throws DimensionMismatch TensorOperations.checkcontractible(α, γ, false, false, :x)
+        @test_throws DimensionMismatch TensorOperations.checkcontractible(
+            α, γ, false, false, :x
+        )
     end
 
     @testset "@tensor contraction" begin
@@ -116,7 +123,7 @@ using TensorOperations
         @test size(C) == (2, 3, 5)
     end
 
-    # ── Phase 5: kronecker_delta ──────────────────────────────────────────────
+    # ── Tensor operations: Kronecker delta ───────────────────────────────────
 
     @testset "kronecker_delta" begin
         α = BondIndex(:α, 4, Contravariant)
@@ -160,33 +167,34 @@ using TensorOperations
         @testset "reshape consistency with tuple API" begin
             T = reshape(1.0:8.0, 2, 2, 2)
             result_bisection = reshape_tensor_for_bipartition(T, Bisection([1], 3))
-            result_tuple     = reshape_tensor_for_bipartition(T, [(1,)])
+            result_tuple = reshape_tensor_for_bipartition(T, [(1,)])
             @test result_bisection == result_tuple
         end
 
         @testset "construction from IndexedTensor" begin
-            σ  = PhysicalIndex(:σ, 2, 1, Contravariant)
+            σ = PhysicalIndex(:σ, 2, 1, Contravariant)
             αL = BondIndex(:αL, 4, Covariant)
             αR = BondIndex(:αR, 4, Contravariant)
-            A  = IndexedTensor(rand(2, 4, 4), (σ, αL, αR))
+            A = IndexedTensor(rand(2, 4, 4), (σ, αL, αR))
 
             b1 = Bisection(A, [σ])
-            @test b1.left  == [1]
+            @test b1.left == [1]
             @test b1.right == [2, 3]
 
             b2 = Bisection(A, PhysicalIndex)
-            @test b2.left  == [1]
+            @test b2.left == [1]
             @test b2.right == [2, 3]
 
             b3 = Bisection(A, BondIndex)
-            @test b3.left  == [2, 3]
+            @test b3.left == [2, 3]
             @test b3.right == [1]
 
             other = BondIndex(:β, 4, Contravariant)
             @test_throws ArgumentError Bisection(A, [other])
 
-            @test_throws ArgumentError Bisection(IndexedTensor(rand(4, 4), (αL, αR)), PhysicalIndex)
+            @test_throws ArgumentError Bisection(
+                IndexedTensor(rand(4, 4), (αL, αR)), PhysicalIndex
+            )
         end
     end
-
 end

@@ -8,4 +8,5 @@ using Aqua
     end
 
     include("test_tensor_index.jl")
+    include("test_site_types.jl")
 end
