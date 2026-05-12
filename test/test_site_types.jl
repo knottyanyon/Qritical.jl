@@ -45,4 +45,18 @@ using TensorKit: TensorKit
         @test f_z2.space == TensorKit.Z2Space(0 => 1, 1 => 1)  # even parity/odd parity sectors
         @test local_hilbert_dim(f_z2) == 2
     end
+
+    @testset "SpinlessHardCoreBosonicSite" begin
+        # at most 1 per site - similar to 2 state basis like fermions but obeying bosonic statistics
+        b = SpinlessHardCoreBosonicSite(4)
+        @test b.lattice_ordinal == 4
+        @test local_hilbert_dim(b) == 2 # hard-core-> 2 possible states: occupied/unoccupied
+
+        ## With U(1) - conserve total particle number.[Ĥ,N̂]=0 --> systems remains in fixed N sector blocks
+        b_u1 = SpinlessHardCoreBosonicSite(2; symmetry=:U1)
+        @test b_u1.space == TensorKit.U1Space(0 => 1, 1 => 1) # occupied/unoccupied single site
+        @test local_hilbert_dim(b_u1) == 2
+
+    
+    end
 end
