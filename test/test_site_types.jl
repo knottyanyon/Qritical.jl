@@ -26,6 +26,10 @@ using TensorKit: TensorKit
         s1 = SpinSite(half(2), 2)
         @test local_hilbert_dim(s1) == 3 #2S+1 = 2*(1)+1 = 3 => -1,0,1
 
+        ## no symmetry — plain ℂ², no block structure
+        s_none = SpinSite(half(1), 1; symmetry=:none)
+        @test s_none.space == TensorKit.ComplexSpace(2)  # unstructured ℂ², useful for debugging or symmetry-free Hamiltonians
+
         # validation tests
         @test_throws ArgumentError SpinSite(half(-1), 1) # 2S+1 would be 0 or negative, giving an empty or nonsensical Hilbert space
     end
@@ -44,6 +48,11 @@ using TensorKit: TensorKit
         f_z2 = SpinlessFermionicSite(1; symmetry=:Z2)
         @test f_z2.space == TensorKit.Z2Space(0 => 1, 1 => 1)  # even parity/odd parity sectors
         @test local_hilbert_dim(f_z2) == 2
+
+        ## no symmetry — plain ℂ², useful for Hamiltonians with no conserved quantities
+        f_none = SpinlessFermionicSite(1; symmetry=:none)
+        @test f_none.space == TensorKit.ComplexSpace(2)
+        @test local_hilbert_dim(f_none) == 2
     end
 
     @testset "SpinlessHardCoreBosonicSite" begin # b† |0⟩ = |1⟩, b† |1⟩ = 0
@@ -56,6 +65,11 @@ using TensorKit: TensorKit
         a_u1 = SpinlessHardCoreBosonicSite(2; symmetry=:U1)
         @test a_u1.space == TensorKit.U1Space(0 => 1, 1 => 1) # occupied/unoccupied single site
         @test local_hilbert_dim(a_u1) == 2
+
+        ## no symmetry — plain ℂ², useful for debugging or symmetry-free Hamiltonians
+        a_none = SpinlessHardCoreBosonicSite(1; symmetry=:none)
+        @test a_none.space == TensorKit.ComplexSpace(2)
+        @test local_hilbert_dim(a_none) == 2
     end
 
     @testset "SpinlessBosonicSite" begin # b† |n⟩ = √(n+1) |n+1⟩
@@ -71,5 +85,10 @@ using TensorKit: TensorKit
         @test b_u1.space == TensorKit.U1Space(0 => 1, 1 => 1, 2 => 1, 3 => 1) # different particle number sectors
 
         @test_throws ArgumentError SpinlessBosonicSite(1; n_max_occ=-1)  # negative occupation meaningless
+
+        ## no symmetry — plain ℂⁿ, useful for debugging or symmetry-free Hamiltonians
+        b_none = SpinlessBosonicSite(1; n_max_occ=3, symmetry=:none)
+        @test b_none.space == TensorKit.ComplexSpace(4)  # dim = n_max_occ + 1 = 4
+        @test local_hilbert_dim(b_none) == 4
     end
 end
