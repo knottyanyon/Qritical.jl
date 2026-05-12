@@ -29,4 +29,20 @@ using TensorKit: TensorKit
         # validation tests
         @test_throws ArgumentError SpinSite(half(-1), 1) # 2S+1 would be 0 or negative, giving an empty or nonsensical Hilbert space
     end
+
+    @testset "SpinlessFermionicSite" begin
+        f = SpinlessFermionicSite(3)
+        @test f.lattice_ordinal == 3
+        @test local_hilbert_dim(f) == 2 # 2 possible states: occupied/unoccupied
+
+        ## With U(1) - conserve total particle number.[Ĥ,N̂]=0 --> systems remains in fixed N sector blocks.
+        f_u1 = SpinlessFermionicSite(2; symmetry=:U1)
+        @test f_u1.space == TensorKit.U1Space(0 => 1, 1 => 1) # occupied/unoccupied single site
+        @test local_hilbert_dim(f_u1) == 2
+
+        ## With Z2 - conserve parity (whether total number of particles even or odd) but might not conserve the total number N. Eg: superconductors with Cooper pairs
+        f_z2 = SpinlessFermionicSite(1; symmetry=:Z2)
+        @test f_z2.space == TensorKit.Z2Space(0 => 1, 1 => 1)  # even parity/odd parity sectors
+        @test local_hilbert_dim(f_z2) == 2
+    end
 end
