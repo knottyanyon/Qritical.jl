@@ -6,7 +6,6 @@ on:
       - Project.toml
       - Manifest.toml
       - docs/Project.toml
-      - docs/Manifest.toml
       - docker/docs/Dockerfile
   workflow_dispatch:
 
@@ -24,6 +23,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
 
       - uses: docker/build-push-action@v6
         with:
