@@ -4,7 +4,7 @@ using Aqua
 
 @testset "Qritical.jl" begin
     @testset "Code quality (Aqua.jl)" begin
-        Aqua.test_all(Qritical)
+        Aqua.test_all(Qritical; persistent_tasks=false)
     end
 
     include("test_tensor_index.jl")
