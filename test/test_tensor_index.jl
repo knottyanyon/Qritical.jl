@@ -15,16 +15,6 @@ using HalfIntegers: half
 
     # ── Index structs: PhysicalIndex, BondIndex ──────────────────────────────
 
-    @testset "PhysicalIndex" begin
-        σ = PhysicalIndex(:σ, 2, 1, UpIndex)
-        @test σ.label == :σ
-        @test σ.dim == 2
-        @test σ.site == 1
-        @test σ.dir == UpIndex
-        @test is_physical(σ)
-        @test !is_bond(σ)
-    end
-
     @testset "BondIndex" begin
         α = BondIndex(:α, 4, UpIndex)
         @test α.label == :α
@@ -70,10 +60,10 @@ using HalfIntegers: half
         @test α' == dual(α)
         @test dual(dual(α)) == α
 
-        σ = PhysicalIndex(:σ, 2, 1, DownIndex)
+        σ = PhysicalIndex(:σ, SpinSite(half(1), 1), DownIndex)
         @test dual(σ).dir == UpIndex
-        @test dual(σ).site == σ.site
-        @test dual(σ).dim == σ.dim
+        @test dual(σ).site === σ.site
+        @test local_hilbert_dim(dual(σ)) == local_hilbert_dim(σ)
     end
 
     @testset "isdual" begin
@@ -82,7 +72,7 @@ using HalfIntegers: half
         @test !isdual(α, α)
         @test !isdual(α, BondIndex(:α, 4, UpIndex))  # same direction
         @test !isdual(α, BondIndex(:α, 3, DownIndex))      # different dim
-        σ = PhysicalIndex(:σ, 4, 1, DownIndex)
+        σ = PhysicalIndex(:σ, SpinSite(half(3), 1), DownIndex)   # spin-3/2: dim 4
         @test !isdual(α, σ)                                 # different kind
     end
 
@@ -97,7 +87,7 @@ using HalfIntegers: half
     # ── Tensor layer: IndexedTensor and TensorOperations ─────────────────────
 
     @testset "IndexedTensor construction" begin
-        σ = PhysicalIndex(:σ, 2, 1, UpIndex)
+        σ = PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)
         α = BondIndex(:α, 4, DownIndex)
         β = BondIndex(:β, 4, UpIndex)
         A = IndexedTensor(rand(2, 4, 4), (σ, α, β))
@@ -119,7 +109,7 @@ using HalfIntegers: half
         )
 
         # different kinds
-        σ = PhysicalIndex(:σ, 4, 1, DownIndex)
+        σ = PhysicalIndex(:σ, SpinSite(half(3), 1), DownIndex)   # spin-3/2: dim 4
         @test_throws ArgumentError TensorOperations.checkcontractible(
             α, σ, false, false, :x
         )
@@ -134,7 +124,7 @@ using HalfIntegers: half
     @testset "@tensor contraction" begin
         α = BondIndex(:α, 4, UpIndex)
         β = BondIndex(:β, 3, UpIndex)
-        σ = PhysicalIndex(:σ, 2, 1, UpIndex)
+        σ = PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)
         A = IndexedTensor(rand(2, 4, 3), (σ, dual(α), β))
         B = IndexedTensor(rand(4, 5), (α, BondIndex(:γ, 5, UpIndex)))
         @tensor C[s, b, g] := A[s, a, b] * B[a, g]
@@ -154,7 +144,7 @@ using HalfIntegers: half
         @test_throws ArgumentError kronecker_delta(α, α)
 
         # different kinds
-        σ = PhysicalIndex(:σ, 4, 1, DownIndex)
+        σ = PhysicalIndex(:σ, SpinSite(half(3), 1), DownIndex)   # spin-3/2: dim 4
         @test_throws ArgumentError kronecker_delta(α, σ)
     end
 
@@ -190,7 +180,7 @@ using HalfIntegers: half
         end
 
         @testset "construction from IndexedTensor" begin
-            σ = PhysicalIndex(:σ, 2, 1, UpIndex)
+            σ = PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)
             αL = BondIndex(:αL, 4, DownIndex)
             αR = BondIndex(:αR, 4, UpIndex)
             A = IndexedTensor(rand(2, 4, 4), (σ, αL, αR))
