@@ -1,3 +1,9 @@
+# Tensor index machinery for covariant notation.
+#
+# Design is inspired by SymPy's TensorIndex / TensorIndexType and by the
+# hand-calculation conventions in Altland & von Delft (2019). The priority
+# here is pedagogical clarity — making the index algebra match the notation
+# on paper — rather than raw computational performance.
 using TensorOperations
 using LinearAlgebra
 
@@ -6,31 +12,25 @@ using LinearAlgebra
 """
     IndexDirection
 
-Direction of a tensor index, distinguishing contravariant (upper) from covariant
-(lower) indices. The following aliases all refer to the same two values:
+Direction of a tensor index in covariant notation, corresponding to the index
+position (superscript vs subscript) and its arrow direction in tensor network
+diagrams:
 
-| Altland & Simons | Dirac  | TensorKit | Visual      | This library    |
-|:-----------------|:-------|:----------|:------------|:----------------|
-| Contravariant    | Ket    | CoDomain  | `UpIndex`   | `Contravariant` |
-| Covariant        | Bra    | Domain    | `DownIndex` | `Covariant`     |
+| Index position    | Arrow in diagram | Value       |
+|:------------------|:-----------------|:------------|
+| Superscript (up)  | incoming → •     | `UpIndex`   |
+| Subscript (down)  | outgoing • →     | `DownIndex` |
 
-Contractions must always pair one `Contravariant` index with one `Covariant` index.
+Contractions must always pair one `UpIndex` index with one `DownIndex` index.
 """
-@enum IndexDirection Contravariant Covariant
-
-const Ket = Contravariant;
-const Bra = Covariant;
-const UpIndex = Contravariant;
-const DownIndex = Covariant;
-const CoDomain = Contravariant;
-const Domain = Covariant;
+@enum IndexDirection UpIndex DownIndex
 
 """
     flip(dir::IndexDirection)
 
 Raise or lower the index.
 """
-flip(dir::IndexDirection) = dir == Contravariant ? Covariant : Contravariant
+flip(dir::IndexDirection) = dir == UpIndex ? DownIndex : UpIndex
 
 # ── AbstractIndex and concrete subtypes ──────────────────────────────────────
 
@@ -43,16 +43,15 @@ Supertype for all tensor index/leg types. Concrete subtypes: `PhysicalIndex`,
 abstract type AbstractIndex end
 
 """
-    PhysicalIndex(label, dim, site, dir)
+    PhysicalIndex(label, site, dir)
 
-An index representing the local Hilbert space at `site` in a spin chain.
-`dim` is the local dimension (2 for spin-1/2). `dir` is `Contravariant` (ket)
-or `Covariant` (bra).
+An index representing the local Hilbert space at a lattice `site`.
+`dir` is `UpIndex` (superscript) or `DownIndex` (subscript). The local
+Hilbert space dimension is computed from `site` via `local_hilbert_dim`.
 """
 struct PhysicalIndex <: AbstractIndex
     label::Symbol
-    dim::Int
-    site::Int
+    site::AbstractSite
     dir::IndexDirection
 end
 
@@ -60,7 +59,7 @@ end
     BondIndex(label, dim, dir)
 
 A virtual/bond index carrying entanglement between tensors. `dim` is the bond
-dimension D. `dir` is `Contravariant` (outgoing) or `Covariant` (incoming).
+dimension D. `dir` is `UpIndex` (superscript) or `DownIndex` (subscript).
 """
 struct BondIndex <: AbstractIndex
     label::Symbol
@@ -72,6 +71,31 @@ is_physical(::PhysicalIndex) = true
 is_physical(::BondIndex) = false
 is_bond(i::AbstractIndex) = !is_physical(i)
 
+
+"""
+    local_hilbert_dim(i::PhysicalIndex)
+    local_hilbert_dim(i::BondIndex)
+
+Return the local Hilbert space dimension of index `i`.
+
+For a `PhysicalIndex` the dimension is delegated to the site:
+`local_hilbert_dim(i.site)`. For a `BondIndex` it is the stored bond dimension.
+
+```jldoctest
+julia> local_hilbert_dim(PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex))   # spin-1/2: 2S+1 = 2
+2
+
+julia> local_hilbert_dim(PhysicalIndex(:n, SpinlessBosonicSite(1; n_max_occ=3), DownIndex))  # |0⟩…|3⟩: dim = 4
+4
+
+julia> local_hilbert_dim(BondIndex(:α, 16, DownIndex))   # stored directly, no site involved
+16
+```
+"""
+local_hilbert_dim(i::PhysicalIndex) = local_hilbert_dim(i.site)
+local_hilbert_dim(i::BondIndex) = i.dim  # bond dimension is a free parameter, not derived from a site type
+
+
 # ── dual, adjoint, directional helpers ───────────────────────────────────────
 
 """
@@ -80,7 +104,7 @@ is_bond(i::AbstractIndex) = !is_physical(i)
 Return a copy of `i` with the `IndexDirection` flipped. Also available as `i'`
 via `Base.adjoint`.
 """
-dual(i::PhysicalIndex) = PhysicalIndex(i.label, i.dim, i.site, flip(i.dir))
+dual(i::PhysicalIndex) = PhysicalIndex(i.label, i.site, flip(i.dir))
 dual(i::BondIndex) = BondIndex(i.label, i.dim, flip(i.dir))
 
 Base.adjoint(i::AbstractIndex) = dual(i)
@@ -92,15 +116,15 @@ Return `true` if `i` and `j` are the same kind (`PhysicalIndex`/`BondIndex`),
 have equal `dim`, and have opposite `dir` — i.e. they form a valid contraction
 pair.
 """
-isdual(i::T, j::T) where {T<:AbstractIndex} = i.dir != j.dir && i.dim == j.dim
+isdual(i::T, j::T) where {T<:AbstractIndex} = i.dir != j.dir && local_hilbert_dim(i) == local_hilbert_dim(j)
 isdual(::AbstractIndex, ::AbstractIndex) = false
 
 """
-    as_covariant(i)    → index with `dir == Covariant`  (idempotent)
-    as_contravariant(i) → index with `dir == Contravariant` (idempotent)
+    as_down(i) → index with `dir == DownIndex` (idempotent)
+    as_up(i)   → index with `dir == UpIndex`   (idempotent)
 """
-as_covariant(i::AbstractIndex) = i.dir == Covariant ? i : dual(i)
-as_contravariant(i::AbstractIndex) = i.dir == Contravariant ? i : dual(i)
+as_down(i::AbstractIndex) = i.dir == DownIndex ? i : dual(i)
+as_up(i::AbstractIndex) = i.dir == UpIndex ? i : dual(i)
 
 # ── IndexedTensor ─────────────────────────────────────────────────────────────
 
@@ -139,8 +163,8 @@ function TensorOperations.checkcontractible(
             "Both legs on index $label are $(sA.dir) — contraction requires a dual pair"
         ),
     )
-    return sA.dim == sB.dim || throw(
-        DimensionMismatch("Dimension mismatch on index $label: $(sA.dim) vs $(sB.dim)")
+    return local_hilbert_dim(sA) == local_hilbert_dim(sB) || throw(
+        DimensionMismatch("Dimension mismatch on index $label: $(local_hilbert_dim(sA)) vs $(local_hilbert_dim(sB))")
     )
 end
 
@@ -158,7 +182,8 @@ function kronecker_delta(i::T, j::T) where {T<:AbstractIndex}
             "kronecker_delta requires a dual index pair — got $(i.dir) and $(j.dir)"
         ),
     )
-    return IndexedTensor(Matrix{Float64}(I, i.dim, i.dim), (i, j))
+    d = local_hilbert_dim(i)
+    return IndexedTensor(Matrix{Float64}(I, d, d), (i, j))
 end
 
 function kronecker_delta(::AbstractIndex, ::AbstractIndex)

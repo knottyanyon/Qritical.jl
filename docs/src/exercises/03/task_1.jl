@@ -1,7 +1,7 @@
 # # Task 3.1 — From Left to Right
 
 # !!! question "Task 3.1 — From Left to Right"
-#     Write a function that takes a left canonical representation of `psi.jls` and transforms it into a right canonical one **without** recovering the full wave-function as an intermediate step. The function should allow for a maximum matrix dimension ``D`` to truncate the state after each SVD.
+#     Write a function that takes a left canonical representation of `psi.jls` and transforms it into a right canonical one *without* recovering the full wave-function as an intermediate step. The function should allow for a maximum matrix dimension ``D`` to truncate the state after each SVD.
 
 using Qritical: QriticalUtils, factorize_with_svd
 #--

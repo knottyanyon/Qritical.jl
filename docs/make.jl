@@ -48,7 +48,7 @@ end
 
 ##
 # Set up doctest 
-DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
+DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical; using HalfIntegers); recursive=true)
 
 makedocs(;
     modules=[Qritical],
