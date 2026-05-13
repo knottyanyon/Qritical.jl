@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>1.3 SVD a state · Qritical.jl</title><meta name="title" content="1.3 SVD a state · Qritical.jl"/><meta property="og:title" content="1.3 SVD a state · Qritical.jl"/><meta property="twitter:title" content="1.3 SVD a state · Qritical.jl"/><meta name="description" content="Documentation for Qritical.jl."/><meta property="og:description" content="Documentation for Qritical.jl."/><meta property="twitter:description" content="Documentation for Qritical.jl."/><meta property="og:url" content="https://knottyanyon.github.io/Qritical.jl/exercises/01/task_3/"/><meta property="twitter:url" content="https://knottyanyon.github.io/Qritical.jl/exercises/01/task_3/"/><link rel="canonical" href="https://knottyanyon.github.io/Qritical.jl/exercises/01/task_3/"/><script data-outdated-warner src="../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../search_index.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script><link href="../../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../../"><img class="docs-light-only" src="../../../assets/logo.svg" alt="Qritical.jl logo"/><img class="docs-dark-only" src="../../../assets/logo-dark.svg" alt="Qritical.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../../">Qritical.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../../">Home</a></li><li><a class="tocitem" href="../../../notation/">Notation</a></li><li><span class="tocitem">Hands-on-TN</span><ul><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox" checked/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Exercises</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-3-1-1" type="checkbox" checked/><label class="tocitem" for="menuitem-3-1-1"><span class="docs-label">Exercise 01</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../task_1/">1.1 Julia install party</a></li><li><a class="tocitem" href="../task_2/">1.2 SVD a matrix</a></li><li class="is-active"><a class="tocitem" href>1.3 SVD a state</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#Notes"><span>Notes</span></a></li></ul></li><li><a class="tocitem" href="../task_4/">1.4 SVD an image</a></li><li><a class="tocitem" href="../task_5/">1.5 Contractions</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-1-2" type="checkbox"/><label class="tocitem" for="menuitem-3-1-2"><span class="docs-label">Exercise 02</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../02/task_1/">2.1 Left canonical form</a></li><li><a class="tocitem" href="../../02/task_2/">2.2 Right canonical form</a></li><li><a class="tocitem" href="../../02/task_3/">2.3 Mixed canonical form</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-1-3" type="checkbox"/><label class="tocitem" for="menuitem-3-1-3"><span class="docs-label">Exercise 03</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../03/task_1/">3.1 From Left to Right</a></li><li><a class="tocitem" href="../../03/task_2/">3.2 From Right to Left</a></li><li><a class="tocitem" href="../../03/task_3/">3.3 Checking the Normalization</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-1-4" type="checkbox"/><label class="tocitem" for="menuitem-3-1-4"><span class="docs-label">Exercise 04</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../04/task_1/">4.2 MPS Overlap</a></li><li><a class="tocitem" href="../../04/task_2/">4.3 Observables</a></li><li><a class="tocitem" href="../../04/task_3/">4.4 Adding MPS</a></li></ul></li></ul></li></ul></li><li><a class="tocitem" href="../../../references/">Bibliography</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Hands-on-TN</a></li><li><a class="is-disabled">Exercises</a></li><li><a class="is-disabled">Exercise 01</a></li><li class="is-active"><a href>1.3 SVD a state</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>1.3 SVD a state</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/knottyanyon/Qritical.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/knottyanyon/Qritical.jl/blob/main/docs/src/exercises/01/task_3.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Task-1.3-—-SVD-a-state"><a class="docs-heading-anchor" href="#Task-1.3-—-SVD-a-state">Task 1.3 — SVD a state</a><a id="Task-1.3-—-SVD-a-state-1"></a><a class="docs-heading-anchor-permalink" href="#Task-1.3-—-SVD-a-state" title="Permalink"></a></h1><div class="admonition is-category-question" id="Task-1.3-—-SVD-a-state-59b327aa7b7dc589"><header class="admonition-header">Task 1.3 — SVD a state<a class="admonition-anchor" href="#Task-1.3-—-SVD-a-state-59b327aa7b7dc589" title="Permalink"></a></header><div class="admonition-body"><p>Perform an SVD on the state <code>psi.jls</code> given in Moodle. The format is a tensor of rank ten, dimensions <span>$2^{10} = 1024$</span>. Find the Schmidt rank needed if singular values below <span>$10^{−6}$</span> are discarded.</p></div></div><p>A workaround to ensure that the data can be read during local testing as well as pages deployment build</p><pre><code class="language-julia hljs">DATA_ROOT = normpath(joinpath(@__FILE__, &quot;..&quot;));
+FPATH_PSI = normpath(joinpath(DATA_ROOT, &quot;psi.jls&quot;));</code></pre><pre><code class="language-julia hljs">using Qritical: QriticalUtils, factorize_with_svd, reshape_tensor_for_bipartition, get_schmidt_coefficients, get_entanglement_entropy</code></pre><pre><code class="language-julia hljs">tolerance = 1e-6;
+ψ = QriticalUtils.load_state_from_file(FPATH_PSI);</code></pre><div class="admonition is-category-subquestion" id="Subquestion-c3e7e377ea8bbfac"><header class="admonition-header">Subquestion<a class="admonition-anchor" href="#Subquestion-c3e7e377ea8bbfac" title="Permalink"></a></header><div class="admonition-body"><p><strong>A)</strong> For a bipartition of the system after the first site</p></div></div><pre><code class="language-julia hljs">partition_1 = [(1,)]
+ψ_reshaped_1 = reshape_tensor_for_bipartition(ψ, partition_1);
+
+U_1, Σ_1, Vt_1 = factorize_with_svd(ψ_reshaped_1; discard_below_threshold=true, threshold=tolerance);</code></pre><pre><code class="nohighlight hljs">[ Info: Discarding singular values below 1.0e-6
+┌ Info: Schmidt rank
+│   before = 2
+└   after = 2
+</code></pre><div class="admonition is-category-subquestion" id="Subquestion-e951ad9dfa424960"><header class="admonition-header">Subquestion<a class="admonition-anchor" href="#Subquestion-e951ad9dfa424960" title="Permalink"></a></header><div class="admonition-body"><p><strong>B)</strong> For a bipartition of the system in the middle</p></div></div><pre><code class="language-julia hljs">partition_2 = [(1, 2, 3, 4, 5)];
+ψ_reshaped_2 = reshape_tensor_for_bipartition(ψ, partition_2);
+
+U_2, Σ_2, Vt_2 = factorize_with_svd(ψ_reshaped_2; discard_below_threshold=true, threshold=tolerance);</code></pre><pre><code class="nohighlight hljs">[ Info: Discarding singular values below 1.0e-6
+┌ Info: Schmidt rank
+│   before = 32
+└   after = 24
+</code></pre><h1 id="Notes"><a class="docs-heading-anchor" href="#Notes">Notes</a><a id="Notes-1"></a><a class="docs-heading-anchor-permalink" href="#Notes" title="Permalink"></a></h1><ul><li><p>A small Schmidt rank means that the state can be approximated with fewer terms.</p></li><li><p>The Schmidt rank is higher in the case of middle partition because the entanglement is also higher compared to case 1.</p></li></ul><p>Can I explain it with Monogamy of entanglement? More particles to share –&gt; lower entanglement how can I test this hypothesis? I can simply calculate the entanglement entropy but how can I know for sure that this difference is indeed due to monogamy and not some other reason? How so I do a control? falsifiability?</p><pre><code class="language-julia hljs">using CairoMakie</code></pre><pre><code class="language-julia hljs">function plot_entanglement_entropy(ψ; discard_below_threshold=true, threshold=1e-6, units=:bits)
+    N = ndims(ψ)
+    sites = 1:N-1
+
+    entropies = map(sites) do i
+        partition = [Tuple(1:i)]
+        ψ_reshaped = reshape_tensor_for_bipartition(ψ, partition)
+        λ = get_schmidt_coefficients(ψ_reshaped; discard_below_threshold=discard_below_threshold, threshold=threshold)
+        S = get_entanglement_entropy(λ)
+    end
+
+    unit_label = &quot;bits&quot;
+
+    fig = Figure(size=(600, 380), fontsize=13)
+    ax = Axis(
+        fig[1, 1],
+        xlabel=&quot;partition boundary after site i&quot;,
+        ylabel=&quot;S ($unit_label)&quot;,
+        title=&quot;entanglement entropy across bipartitions&quot;,
+        xticks=collect(sites),
+    )
+
+    lines!(ax, collect(sites), entropies; color=:teal, linewidth=2.2)
+    scatter!(ax, collect(sites), entropies;
+        color=:teal, markersize=10, strokewidth=0.5, strokecolor=:white)
+
+    return fig, collect(entropies)
+end</code></pre><pre><code class="nohighlight hljs">plot_entanglement_entropy (generic function with 1 method)</code></pre><pre><code class="language-julia hljs">fig_truncated, entropies_trunc = plot_entanglement_entropy(ψ; discard_below_threshold=true, threshold=tolerance)
+save(normpath(joinpath(DATA_ROOT, &quot;entropy_truncated.png&quot;)), fig_truncated)</code></pre><pre><code class="nohighlight hljs">[ Info: Discarding Schmidt coefficients below 1.0e-6
+┌ Info: Schmidt rank
+│   before = 2
+└   after = 2
+[ Info: Discarding Schmidt coefficients below 1.0e-6
+┌ Info: Schmidt rank
+│   before = 4
+└   after = 4
+[ Info: Discarding Schmidt coefficients below 1.0e-6
+┌ Info: Schmidt rank
+│   before = 8
+└   after = 8
+[ Info: Discarding Schmidt coefficients below 1.0e-6
+┌ Info: Schmidt rank
+│   before = 16
+└   after = 16
+[ Info: Discarding Schmidt coefficients below 1.0e-6
+┌ Info: Schmidt rank
+│   before = 32
+└   after = 24
+[ Info: Discarding Schmidt coefficients below 1.0e-6
+┌ Info: Schmidt rank
+│   before = 16
+└   after = 16
+[ Info: Discarding Schmidt coefficients below 1.0e-6
+┌ Info: Schmidt rank
+│   before = 8
+└   after = 8
+[ Info: Discarding Schmidt coefficients below 1.0e-6
+┌ Info: Schmidt rank
+│   before = 4
+└   after = 4
+[ Info: Discarding Schmidt coefficients below 1.0e-6
+┌ Info: Schmidt rank
+│   before = 2
+└   after = 2
+</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../task_2/">« 1.2 SVD a matrix</a><a class="docs-footer-nextpage" href="../task_4/">1.4 SVD an image »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 13 May 2026 19:19">Wednesday 13 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

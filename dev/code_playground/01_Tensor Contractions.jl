@@ -141,3 +141,11 @@ let
 
     @show (C_ITensor_arr ≈ C)
 end
+
+##
+
+
+A = rand(2, 3)
+B = rand(3, 2)
+
+estimate_multiplication_cost(A, B)
