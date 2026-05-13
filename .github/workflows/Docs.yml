@@ -22,6 +22,7 @@ jobs:
       actions: write
       contents: write
       statuses: write
+      packages: read
     steps:
       - uses: actions/checkout@v6
 
