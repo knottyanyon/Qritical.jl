@@ -10,3 +10,4 @@
 /docs/src/code_playground/playground_draft.ipynb
 .env
 .vscode
+LocalPreferences.toml
