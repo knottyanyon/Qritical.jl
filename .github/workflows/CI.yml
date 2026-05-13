@@ -74,5 +74,6 @@ jobs:
         run: |
           using Documenter: DocMeta, doctest
           using Qritical
-          DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
+          using HalfIntegers
+          DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical; using HalfIntegers); recursive=true)
           doctest(Qritical)
