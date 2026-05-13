@@ -1,87 +1,105 @@
 using LinearAlgebra
 using TensorOperations
 using TensorKit: TensorKit
+using HalfIntegers: half
 
 @testset "TensorIndex" begin
 
-    # ── Direction enum: Contravariant / Covariant ────────────────────────────
+    # ── Direction enum: UpIndex / DownIndex ────────────────────────────
 
-    @testset "IndexDirection enum and aliases" begin
-        @test Contravariant != Covariant
-
-        @test Ket === Contravariant
-        @test UpIndex === Contravariant
-        @test CoDomain === Contravariant
-
-        @test Bra === Covariant
-        @test DownIndex === Covariant
-        @test Domain === Covariant
-
-        @test flip(Contravariant) == Covariant
-        @test flip(Covariant) == Contravariant
+    @testset "IndexDirection enum" begin
+        @test UpIndex != DownIndex
+        @test flip(UpIndex) == DownIndex
+        @test flip(DownIndex) == UpIndex
     end
 
     # ── Index structs: PhysicalIndex, BondIndex ──────────────────────────────
 
     @testset "PhysicalIndex" begin
-        σ = PhysicalIndex(:σ, 2, 1, Contravariant)
+        σ = PhysicalIndex(:σ, 2, 1, UpIndex)
         @test σ.label == :σ
         @test σ.dim == 2
         @test σ.site == 1
-        @test σ.dir == Contravariant
+        @test σ.dir == UpIndex
         @test is_physical(σ)
         @test !is_bond(σ)
     end
 
     @testset "BondIndex" begin
-        α = BondIndex(:α, 4, Contravariant)
+        α = BondIndex(:α, 4, UpIndex)
         @test α.label == :α
         @test α.dim == 4
-        @test α.dir == Contravariant
+        @test α.dir == UpIndex
         @test is_bond(α)
         @test !is_physical(α)
+    end
+
+    # ── Step 4: PhysicalIndex with AbstractSite + local_hilbert_dim ─────────
+
+    @testset "PhysicalIndex with site" begin
+        σ = PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)
+        @test σ.label == :σ
+        @test σ.site === SpinSite(half(1), 1)
+        @test σ.site.lattice_ordinal == 1
+        @test σ.dir == UpIndex
+        @test is_physical(σ)
+        @test !is_bond(σ)
+    end
+
+    @testset "local_hilbert_dim on indices" begin
+        @test local_hilbert_dim(PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)) == 2
+        @test local_hilbert_dim(PhysicalIndex(:σ, SpinSite(half(2), 1), DownIndex)) == 3
+        @test local_hilbert_dim(PhysicalIndex(:n, SpinlessBosonicSite(1; n_max_occ=3), DownIndex)) == 4
+        @test local_hilbert_dim(BondIndex(:α, 16, DownIndex)) == 16
+    end
+
+    @testset "dual preserves site" begin
+        σ = PhysicalIndex(:σ, SpinSite(half(1), 3), UpIndex)
+        @test dual(σ).dir == DownIndex
+        @test dual(σ).site === σ.site
+        @test dual(dual(σ)) == σ
     end
 
     # ── Index algebra: dual, adjoint, direction helpers ──────────────────────
 
     @testset "dual and adjoint" begin
-        α = BondIndex(:α, 4, Contravariant)
-        @test dual(α).dir == Covariant
+        α = BondIndex(:α, 4, UpIndex)
+        @test dual(α).dir == DownIndex
         @test dual(α).label == α.label
         @test dual(α).dim == α.dim
         @test α' == dual(α)
         @test dual(dual(α)) == α
 
-        σ = PhysicalIndex(:σ, 2, 1, Covariant)
-        @test dual(σ).dir == Contravariant
+        σ = PhysicalIndex(:σ, 2, 1, DownIndex)
+        @test dual(σ).dir == UpIndex
         @test dual(σ).site == σ.site
         @test dual(σ).dim == σ.dim
     end
 
     @testset "isdual" begin
-        α = BondIndex(:α, 4, Contravariant)
+        α = BondIndex(:α, 4, UpIndex)
         @test isdual(α, dual(α))
         @test !isdual(α, α)
-        @test !isdual(α, BondIndex(:α, 4, Contravariant))  # same direction
-        @test !isdual(α, BondIndex(:α, 3, Covariant))      # different dim
-        σ = PhysicalIndex(:σ, 4, 1, Covariant)
+        @test !isdual(α, BondIndex(:α, 4, UpIndex))  # same direction
+        @test !isdual(α, BondIndex(:α, 3, DownIndex))      # different dim
+        σ = PhysicalIndex(:σ, 4, 1, DownIndex)
         @test !isdual(α, σ)                                 # different kind
     end
 
-    @testset "as_covariant and as_contravariant" begin
-        α = BondIndex(:α, 4, Contravariant)
-        @test as_covariant(α).dir == Covariant
-        @test as_covariant(dual(α)) == dual(α)   # idempotent
-        @test as_contravariant(α) == α          # idempotent
-        @test as_contravariant(dual(α)).dir == Contravariant
+    @testset "as_up and as_down" begin
+        α = BondIndex(:α, 4, UpIndex)
+        @test as_down(α).dir == DownIndex
+        @test as_down(dual(α)) == dual(α)   # idempotent
+        @test as_up(α) == α                 # idempotent
+        @test as_up(dual(α)).dir == UpIndex
     end
 
     # ── Tensor layer: IndexedTensor and TensorOperations ─────────────────────
 
     @testset "IndexedTensor construction" begin
-        σ = PhysicalIndex(:σ, 2, 1, Contravariant)
-        α = BondIndex(:α, 4, Covariant)
-        β = BondIndex(:β, 4, Contravariant)
+        σ = PhysicalIndex(:σ, 2, 1, UpIndex)
+        α = BondIndex(:α, 4, DownIndex)
+        β = BondIndex(:β, 4, UpIndex)
         A = IndexedTensor(rand(2, 4, 4), (σ, α, β))
 
         @test size(A) == (2, 4, 4)
@@ -92,7 +110,7 @@ using TensorKit: TensorKit
     end
 
     @testset "checkcontractible" begin
-        α = BondIndex(:α, 4, Contravariant)
+        α = BondIndex(:α, 4, UpIndex)
         @test_nowarn TensorOperations.checkcontractible(α, dual(α), false, false, :α)
 
         # same direction
@@ -101,24 +119,24 @@ using TensorKit: TensorKit
         )
 
         # different kinds
-        σ = PhysicalIndex(:σ, 4, 1, Covariant)
+        σ = PhysicalIndex(:σ, 4, 1, DownIndex)
         @test_throws ArgumentError TensorOperations.checkcontractible(
             α, σ, false, false, :x
         )
 
         # dimension mismatch
-        γ = BondIndex(:γ, 3, Covariant)
+        γ = BondIndex(:γ, 3, DownIndex)
         @test_throws DimensionMismatch TensorOperations.checkcontractible(
             α, γ, false, false, :x
         )
     end
 
     @testset "@tensor contraction" begin
-        α = BondIndex(:α, 4, Contravariant)
-        β = BondIndex(:β, 3, Contravariant)
-        σ = PhysicalIndex(:σ, 2, 1, Contravariant)
+        α = BondIndex(:α, 4, UpIndex)
+        β = BondIndex(:β, 3, UpIndex)
+        σ = PhysicalIndex(:σ, 2, 1, UpIndex)
         A = IndexedTensor(rand(2, 4, 3), (σ, dual(α), β))
-        B = IndexedTensor(rand(4, 5), (α, BondIndex(:γ, 5, Contravariant)))
+        B = IndexedTensor(rand(4, 5), (α, BondIndex(:γ, 5, UpIndex)))
         @tensor C[s, b, g] := A[s, a, b] * B[a, g]
         @test size(C) == (2, 3, 5)
     end
@@ -126,7 +144,7 @@ using TensorKit: TensorKit
     # ── Tensor operations: Kronecker delta ───────────────────────────────────
 
     @testset "kronecker_delta" begin
-        α = BondIndex(:α, 4, Contravariant)
+        α = BondIndex(:α, 4, UpIndex)
         δ = kronecker_delta(α, dual(α))
         @test size(δ.data) == (4, 4)
         @test δ.data ≈ Matrix(I, 4, 4)
@@ -136,7 +154,7 @@ using TensorKit: TensorKit
         @test_throws ArgumentError kronecker_delta(α, α)
 
         # different kinds
-        σ = PhysicalIndex(:σ, 4, 1, Covariant)
+        σ = PhysicalIndex(:σ, 4, 1, DownIndex)
         @test_throws ArgumentError kronecker_delta(α, σ)
     end
 
@@ -172,9 +190,9 @@ using TensorKit: TensorKit
         end
 
         @testset "construction from IndexedTensor" begin
-            σ = PhysicalIndex(:σ, 2, 1, Contravariant)
-            αL = BondIndex(:αL, 4, Covariant)
-            αR = BondIndex(:αR, 4, Contravariant)
+            σ = PhysicalIndex(:σ, 2, 1, UpIndex)
+            αL = BondIndex(:αL, 4, DownIndex)
+            αR = BondIndex(:αR, 4, UpIndex)
             A = IndexedTensor(rand(2, 4, 4), (σ, αL, αR))
 
             b1 = Bisection(A, [σ])
@@ -189,7 +207,7 @@ using TensorKit: TensorKit
             @test b3.left == [2, 3]
             @test b3.right == [1]
 
-            other = BondIndex(:β, 4, Contravariant)
+            other = BondIndex(:β, 4, UpIndex)
             @test_throws ArgumentError Bisection(A, [other])
 
             @test_throws ArgumentError Bisection(

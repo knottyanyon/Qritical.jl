@@ -27,12 +27,11 @@ export Bisection
 export AbstractSite
 export SpinSite, SpinlessFermionicSite, SpinlessHardCoreBosonicSite, SpinlessBosonicSite
 export local_hilbert_dim
-export IndexDirection, Contravariant, Covariant
-export Ket, Bra, UpIndex, DownIndex, CoDomain, Domain
+export IndexDirection, UpIndex, DownIndex
 export flip
 export AbstractIndex, PhysicalIndex, BondIndex
 export is_physical, is_bond
-export dual, isdual, as_covariant, as_contravariant
+export dual, isdual, as_up, as_down
 export IndexedTensor
 export kronecker_delta
 
