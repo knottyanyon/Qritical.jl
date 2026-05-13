@@ -23,16 +23,16 @@ for N in Ns
     t = median(run(bench)).time / 1e9
     push!(results, t)
     println(&quot;N = $N: Completed in $t s&quot;)
-end</code></pre><pre><code class="nohighlight hljs">N = 2: Completed in 4.8e-8 s
-N = 4: Completed in 1.41e-7 s
-N = 8: Completed in 7.23e-7 s
-N = 16: Completed in 6.357e-6 s
-N = 32: Completed in 5.6409e-5 s
-N = 64: Completed in 0.000507207 s
-N = 128: Completed in 0.004724875 s
-N = 256: Completed in 0.041163096 s
-N = 512: Completed in 0.44587857 s
-N = 1024: Completed in 3.803829286 s
+end</code></pre><pre><code class="nohighlight hljs">N = 2: Completed in 6.0e-8 s
+N = 4: Completed in 1.8e-7 s
+N = 8: Completed in 1.002e-6 s
+N = 16: Completed in 8.964e-6 s
+N = 32: Completed in 7.949e-5 s
+N = 64: Completed in 0.000802783 s
+N = 128: Completed in 0.0076486735 s
+N = 256: Completed in 0.066665812 s
+N = 512: Completed in 1.0177931205 s
+N = 1024: Completed in 11.445016029 s
 </code></pre><p>Curve Fitting</p><pre><code class="language-julia hljs">using LsqFit</code></pre><p>Define the model: p[1]=a, p[2]=x, p[3]=b</p><pre><code class="language-julia hljs">@. model(n, p) = p[1] * n^p[2] + p[3]</code></pre><pre><code class="nohighlight hljs">model (generic function with 1 method)</code></pre><p>Initial guess: a small value for a, 3 for exponent x (since it&#39;s ijk loop), 0 for b</p><pre><code class="language-julia hljs">p0 = [1e-9, 3.0, 0.0]
 fit = curve_fit(model, Ns, results, p0)
 a, x, b = coef(fit)
@@ -84,4 +84,4 @@ for i = 1:n
     c = c + x[i]*y[i]
 end</code></pre><ul><li>Involves <span>$n$</span> multiplications and <span>$n$</span> additions.</li><li>It is an <span>$O(n)$</span> operation i.e. it scales linearly with dimension</li></ul></div></div><div class="admonition is-category-algorithm" id="Single-precision-A-times-X-Plus-Y-(SAXPY)-2018bce909d8d12f"><header class="admonition-header">Single-precision A times X Plus Y (SAXPY)<a class="admonition-anchor" href="#Single-precision-A-times-X-Plus-Y-(SAXPY)-2018bce909d8d12f" title="Permalink"></a></header><div class="admonition-body"><p>If <span>$x, y \in \mathbb{R}^n$</span> and <span>$a \in \mathbb{R}$</span>, then this algorithm overwrites <span>$y_i$</span> with <span>$y_i + ax_i$</span>.</p><pre><code class="nohighlight hljs">for i = 1:n
     y[i] = y[i] + a*x[i]
-end</code></pre><ul><li>It is also an <span>$O(n)$</span> operation</li></ul></div></div><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../task_4/">« 1.4 SVD an image</a><a class="docs-footer-nextpage" href="../../02/task_1/">2.1 Left canonical form »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 13 May 2026 19:19">Wednesday 13 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><ul><li>It is also an <span>$O(n)$</span> operation</li></ul></div></div><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../task_4/">« 1.4 SVD an image</a><a class="docs-footer-nextpage" href="../../02/task_1/">2.1 Left canonical form »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 13 May 2026 21:36">Wednesday 13 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
