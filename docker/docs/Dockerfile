@@ -19,3 +19,12 @@ RUN mkdir -p src && printf 'module Qritical\nend\n' > src/Qritical.jl
 # to compile every package into /julia-depot. Consider: should you also precompile
 # the main project env, or only the docs env?
 RUN julia --project=docs -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+
+# Patch safe.directory into the bundled git's own system config so it can
+# operate inside GitHub Actions containers where the workspace is owned by a
+# different UID than the runner process.
+RUN for git_bin in /julia-depot/artifacts/*/bin/git; do \
+    git_etc="$(dirname $(dirname "$git_bin"))/etc"; \
+    mkdir -p "$git_etc"; \
+    printf '[safe]\n\tdirectory = *\n' >> "$git_etc/gitconfig"; \
+done
