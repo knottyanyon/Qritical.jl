@@ -53,6 +53,7 @@ DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical; using HalfInteger
 makedocs(;
     modules=[Qritical],
     authors="Bavithra Govintharajah",
+    repo="github.com/knottyanyon/Qritical.jl",
     sitename="Qritical.jl",
     format=Documenter.HTML(;
         canonical="https://knottyanyon.github.io/Qritical.jl",
