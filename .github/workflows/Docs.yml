@@ -26,17 +26,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Fix workspace ownership for git
-        run: chown -R $(id -u):$(id -g) "$GITHUB_WORKSPACE"
-
-      - name: Diagnose git setup
-        run: |
-          echo "=== Current user ===" && id
-          echo "=== Workspace contents ===" && ls -la "$GITHUB_WORKSPACE"
-          echo "=== .git exists? ===" && test -d "$GITHUB_WORKSPACE/.git" && echo "YES - .git is a directory" || (test -f "$GITHUB_WORKSPACE/.git" && echo "YES - .git is a FILE (worktree?)" || echo "NO - .git does not exist")
-          echo "=== Bundled git version ===" && /julia-depot/artifacts/2df598d357fa753db451320a645da90b5d9d7223/bin/git --version
-          echo "=== Bundled git rev-parse ===" && /julia-depot/artifacts/2df598d357fa753db451320a645da90b5d9d7223/bin/git -C "$GITHUB_WORKSPACE" rev-parse --show-toplevel 2>&1 || echo "FAILED with exit $?"
-
       - name: Instantiate and precompile
         run: julia --project=docs -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
 
