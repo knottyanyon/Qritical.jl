@@ -23,12 +23,11 @@ jobs:
       contents: write
       statuses: write
       packages: read
-    env:
-      GIT_CONFIG_COUNT: 1
-      GIT_CONFIG_KEY_0: safe.directory
-      GIT_CONFIG_VALUE_0: '*'
     steps:
       - uses: actions/checkout@v6
+
+      - name: Fix workspace ownership for git
+        run: chown -R $(id -u):$(id -g) "$GITHUB_WORKSPACE"
 
       - name: Instantiate and precompile
         run: julia --project=docs -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
