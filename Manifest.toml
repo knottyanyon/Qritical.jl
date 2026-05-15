@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "13207471f7c4807325d043e461ce83e5ca41c115"
+project_hash = "37d8adfd8ea2e6ed672e2d8e9f1aa8702528bb1a"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "bbc22a9a08a0ef6460041086d8a7b27940ed4ffd"
@@ -1447,7 +1447,7 @@ weakdeps = ["Markdown"]
     MarkdownExt = "Markdown"
 
 [[deps.OpenBLAS32_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl"]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "libblastrampoline_jll"]
 git-tree-sha1 = "dd0d9979377e43918a80486a562ddedcc6d9bdf3"
 uuid = "656ef2d0-ae68-5445-9ca0-591084a874a2"
 version = "0.3.33+0"
