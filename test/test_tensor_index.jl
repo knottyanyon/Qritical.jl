@@ -16,8 +16,10 @@ using HalfIntegers: half
     # ── Index structs: PhysicalIndex, BondIndex ──────────────────────────────
 
     @testset "BondIndex" begin
-        α = BondIndex(:α, 4, UpIndex)
+        α = BondIndex(:α, 2, 3, 4, UpIndex)
         @test α.label == :α
+        @test α.from == 2
+        @test α.to == 3
         @test α.dim == 4
         @test α.dir == UpIndex
         @test is_bond(α)
@@ -40,7 +42,7 @@ using HalfIntegers: half
         @test local_hilbert_dim(PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)) == 2
         @test local_hilbert_dim(PhysicalIndex(:σ, SpinSite(half(2), 1), DownIndex)) == 3
         @test local_hilbert_dim(PhysicalIndex(:n, SpinlessBosonicSite(1; n_max_occ=3), DownIndex)) == 4
-        @test local_hilbert_dim(BondIndex(:α, 16, DownIndex)) == 16
+        @test local_hilbert_dim(BondIndex(:α, 2, 3, 16, DownIndex)) == 16
     end
 
     @testset "dual preserves site" begin
@@ -53,9 +55,11 @@ using HalfIntegers: half
     # ── Index algebra: dual, adjoint, direction helpers ──────────────────────
 
     @testset "dual and adjoint" begin
-        α = BondIndex(:α, 4, UpIndex)
+        α = BondIndex(:α, 2, 3, 4, UpIndex)
         @test dual(α).dir == DownIndex
         @test dual(α).label == α.label
+        @test dual(α).from == α.from
+        @test dual(α).to == α.to
         @test dual(α).dim == α.dim
         @test α' == dual(α)
         @test dual(dual(α)) == α
@@ -67,17 +71,29 @@ using HalfIntegers: half
     end
 
     @testset "isdual" begin
-        α = BondIndex(:α, 4, UpIndex)
+        α = BondIndex(:α, 2, 3, 4, UpIndex)
         @test isdual(α, dual(α))
         @test !isdual(α, α)
-        @test !isdual(α, BondIndex(:α, 4, UpIndex))  # same direction
-        @test !isdual(α, BondIndex(:α, 3, DownIndex))      # different dim
+        @test !isdual(α, BondIndex(:α, 2, 3, 4, UpIndex))     # same direction
+        @test !isdual(α, BondIndex(:α, 2, 3, 3, DownIndex))   # different dim
+        @test !isdual(α, BondIndex(:β, 2, 3, 4, DownIndex))   # different label
+        @test !isdual(α, BondIndex(:α, 3, 4, 4, DownIndex))   # different bond endpoints
         σ = PhysicalIndex(:σ, SpinSite(half(3), 1), DownIndex)   # spin-3/2: dim 4
         @test !isdual(α, σ)                                 # different kind
+
+        site1 = SpinSite(half(1), 1)
+        σ_up  = PhysicalIndex(:σ, site1, UpIndex)
+        σ_dn  = PhysicalIndex(:σ, site1, DownIndex)
+        @test  isdual(σ_up, σ_dn)                                                 # same site, opposite dir
+        @test !isdual(σ_up, σ_up)                                                 # same dir
+        # SpinSite is immutable: === is value equality, so same-field sites are ===
+        @test  isdual(σ_up, PhysicalIndex(:σ, SpinSite(half(1), 1), DownIndex))  # value-equal sites are ===
+        @test !isdual(σ_up, PhysicalIndex(:σ, SpinSite(half(1), 2), DownIndex))  # different ordinal
+        @test !isdual(σ_up, PhysicalIndex(:n, site1, DownIndex))                  # different label
     end
 
     @testset "as_up and as_down" begin
-        α = BondIndex(:α, 4, UpIndex)
+        α = BondIndex(:α, 2, 3, 4, UpIndex)
         @test as_down(α).dir == DownIndex
         @test as_down(dual(α)) == dual(α)   # idempotent
         @test as_up(α) == α                 # idempotent
@@ -88,8 +104,8 @@ using HalfIntegers: half
 
     @testset "IndexedTensor construction" begin
         σ = PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)
-        α = BondIndex(:α, 4, DownIndex)
-        β = BondIndex(:β, 4, UpIndex)
+        α = BondIndex(:α, 1, 2, 4, DownIndex)   # bond 1→2, outgoing from site 1
+        β = BondIndex(:β, 2, 3, 4, UpIndex)     # bond 2→3, incoming to site 2
         A = IndexedTensor(rand(2, 4, 4), (σ, α, β))
 
         @test size(A) == (2, 4, 4)
@@ -100,7 +116,7 @@ using HalfIntegers: half
     end
 
     @testset "checkcontractible" begin
-        α = BondIndex(:α, 4, UpIndex)
+        α = BondIndex(:α, 2, 3, 4, UpIndex)
         @test_nowarn TensorOperations.checkcontractible(α, dual(α), false, false, :α)
 
         # same direction
@@ -114,19 +130,23 @@ using HalfIntegers: half
             α, σ, false, false, :x
         )
 
-        # dimension mismatch
-        γ = BondIndex(:γ, 3, DownIndex)
+        # label mismatch (same endpoints, same dim, opposite dir)
+        @test_throws ArgumentError TensorOperations.checkcontractible(
+            α, BondIndex(:β, 2, 3, 4, DownIndex), false, false, :x
+        )
+
+        # dimension mismatch (same label, same endpoints, opposite dir)
         @test_throws DimensionMismatch TensorOperations.checkcontractible(
-            α, γ, false, false, :x
+            α, BondIndex(:α, 2, 3, 3, DownIndex), false, false, :x
         )
     end
 
     @testset "@tensor contraction" begin
-        α = BondIndex(:α, 4, UpIndex)
-        β = BondIndex(:β, 3, UpIndex)
+        α = BondIndex(:α, 2, 3, 4, UpIndex)
+        β = BondIndex(:β, 1, 2, 3, UpIndex)
         σ = PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)
         A = IndexedTensor(rand(2, 4, 3), (σ, dual(α), β))
-        B = IndexedTensor(rand(4, 5), (α, BondIndex(:γ, 5, UpIndex)))
+        B = IndexedTensor(rand(4, 5), (α, BondIndex(:γ, 3, 4, 5, UpIndex)))
         @tensor C[s, b, g] := A[s, a, b] * B[a, g]
         @test size(C) == (2, 3, 5)
     end
@@ -134,7 +154,7 @@ using HalfIntegers: half
     # ── Tensor operations: Kronecker delta ───────────────────────────────────
 
     @testset "kronecker_delta" begin
-        α = BondIndex(:α, 4, UpIndex)
+        α = BondIndex(:α, 2, 3, 4, UpIndex)
         δ = kronecker_delta(α, dual(α))
         @test size(δ.data) == (4, 4)
         @test δ.data ≈ Matrix(I, 4, 4)
@@ -181,8 +201,8 @@ using HalfIntegers: half
 
         @testset "construction from IndexedTensor" begin
             σ = PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)
-            αL = BondIndex(:αL, 4, DownIndex)
-            αR = BondIndex(:αR, 4, UpIndex)
+            αL = BondIndex(:αL, 1, 2, 4, DownIndex)   # bond 1→2, outgoing from site 1
+            αR = BondIndex(:αR, 2, 3, 4, UpIndex)     # bond 2→3, incoming to site 2
             A = IndexedTensor(rand(2, 4, 4), (σ, αL, αR))
 
             b1 = Bisection(A, [σ])
@@ -197,7 +217,7 @@ using HalfIntegers: half
             @test b3.left == [2, 3]
             @test b3.right == [1]
 
-            other = BondIndex(:β, 4, UpIndex)
+            other = BondIndex(:β, 1, 2, 4, UpIndex)
             @test_throws ArgumentError Bisection(A, [other])
 
             @test_throws ArgumentError Bisection(
