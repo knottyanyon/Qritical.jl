@@ -41,3 +41,7 @@ A few things worth keeping in mind when reading these:
 - [ADR 0001 — Covariant index type system](0001-covariant-index-type-system.md)
 - [ADR 0002 — Bond index arrow orientation](0002-bond-index-arrow-orientation.md)
 - [ADR 0003 — Backend dispatch via scoped context](0003-backend-dispatch-scoped-context.md)
+- [ADR 0004 — Special tensor types](0004-special-tensor-types.md)
+- [ADR 0005 — SVD truncation tracking](0005-svd-truncation-tracking.md)
+- [ADR 0006 — Schmidt spectrum type](0006-schmidt-spectrum-type.md)
+- [ADR 0007 — MPS type](0007-mps-type.md)
