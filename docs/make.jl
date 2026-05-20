@@ -73,6 +73,11 @@ makedocs(;
     warnonly=true,
     plugins=[bib], pages=[
         "Home" => "index.md",
+        "Getting Started" => [
+            "getting_started/index.md",
+            "Installation" => "getting_started/installation.md",
+            "Backend Modes" => "getting_started/backends.md",
+        ],
         # "Hands-on Tensor Networks" => [
         #     "Week 01" => "htn-sose26/notes/week_01.md",
         #     "Week 02" => "htn-sose26/notes/week_02.md",
@@ -111,6 +116,12 @@ makedocs(;
         # "Julia Playground" => [
         #     "01 Understanding Contractions" => "generated/code_playground/01_Tensor Contractions.md",
         # ],
+        "ADR" => [
+            "adr/index.md",
+            "ADR 0001 — Covariant index type system" => "adr/0001-covariant-index-type-system.md",
+            "ADR 0002 — Bond index arrow orientation" => "adr/0002-bond-index-arrow-orientation.md",
+            "ADR 0003 — Backend dispatch via scoped context" => "adr/0003-backend-dispatch-scoped-context.md",
+        ],
         "Bibliography" => "references.md",
     ],
 )
