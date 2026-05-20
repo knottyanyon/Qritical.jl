@@ -121,6 +121,7 @@ makedocs(;
             "ADR 0001 — Covariant index type system" => "adr/0001-covariant-index-type-system.md",
             "ADR 0002 — Bond index arrow orientation" => "adr/0002-bond-index-arrow-orientation.md",
             "ADR 0003 — Backend dispatch via scoped context" => "adr/0003-backend-dispatch-scoped-context.md",
+            "ADR 0004 — Special tensor types" => "adr/0004-special-tensor-types.md",
         ],
         "Bibliography" => "references.md",
     ],
