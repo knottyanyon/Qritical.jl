@@ -76,6 +76,7 @@ makedocs(;
         "Getting Started" => [
             "getting_started/index.md",
             "Installation" => "getting_started/installation.md",
+            "IndexedTensor" => "getting_started/indexed_tensor.md",
             "Backend Modes" => "getting_started/backends.md",
         ],
         # "Hands-on Tensor Networks" => [
