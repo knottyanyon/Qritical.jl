@@ -25,10 +25,6 @@ struct IndexedTensor{Element, Order, D<:AbstractArray{Element,Order}} <: Abstrac
     indices::NTuple{Order, AbstractIndex}
 end
 
-function IndexedTensor(data::Array{Element,Order}, indices::NTuple{Order,AbstractIndex}) where {Element,Order}
-    return IndexedTensor{Element,Order,Array{Element,Order}}(data, indices)
-end
-
 Base.size(t::IndexedTensor) = size(t.data)
 Base.getindex(t::IndexedTensor, i...) = getindex(t.data, i...)
 Base.setindex!(t::IndexedTensor, v, i...) = setindex!(t.data, v, i...)

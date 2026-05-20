@@ -22,6 +22,7 @@ include("contraction_benchmaking.jl")
 include("site_types.jl")
 include("tensor_index.jl")
 include("tensor_core.jl")
+include("backend.jl")
 include("schmidt_decomposition.jl")
 
 export Bisection
@@ -35,6 +36,8 @@ export is_physical, is_bond
 export dual, isdual, as_up, as_down
 export IndexedTensor
 export kronecker_delta
+
+export with_backend, current_backend
 
 export factorize_with_svd,
     validate_bipartition_indices,
