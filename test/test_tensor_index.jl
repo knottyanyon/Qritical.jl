@@ -41,7 +41,9 @@ using HalfIntegers: half
     @testset "local_hilbert_dim on indices" begin
         @test local_hilbert_dim(PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)) == 2
         @test local_hilbert_dim(PhysicalIndex(:σ, SpinSite(half(2), 1), DownIndex)) == 3
-        @test local_hilbert_dim(PhysicalIndex(:n, SpinlessBosonicSite(1; n_max_occ=3), DownIndex)) == 4
+        @test local_hilbert_dim(
+            PhysicalIndex(:n, SpinlessBosonicSite(1; n_max_occ=3), DownIndex)
+        ) == 4
         @test local_hilbert_dim(BondIndex(:α, 2, 3, 16, DownIndex)) == 16
     end
 
@@ -82,12 +84,12 @@ using HalfIntegers: half
         @test !isdual(α, σ)                                 # different kind
 
         site1 = SpinSite(half(1), 1)
-        σ_up  = PhysicalIndex(:σ, site1, UpIndex)
-        σ_dn  = PhysicalIndex(:σ, site1, DownIndex)
-        @test  isdual(σ_up, σ_dn)                                                 # same site, opposite dir
+        σ_up = PhysicalIndex(:σ, site1, UpIndex)
+        σ_dn = PhysicalIndex(:σ, site1, DownIndex)
+        @test isdual(σ_up, σ_dn)                                                 # same site, opposite dir
         @test !isdual(σ_up, σ_up)                                                 # same dir
         # SpinSite is immutable: === is value equality, so same-field sites are ===
-        @test  isdual(σ_up, PhysicalIndex(:σ, SpinSite(half(1), 1), DownIndex))  # value-equal sites are ===
+        @test isdual(σ_up, PhysicalIndex(:σ, SpinSite(half(1), 1), DownIndex))  # value-equal sites are ===
         @test !isdual(σ_up, PhysicalIndex(:σ, SpinSite(half(1), 2), DownIndex))  # different ordinal
         @test !isdual(σ_up, PhysicalIndex(:n, site1, DownIndex))                  # different label
     end
@@ -113,6 +115,13 @@ using HalfIntegers: half
         @test TensorOperations.tensorstructure(A, 1, false) === σ
         @test TensorOperations.tensorstructure(A, 2, false) === α
         @test TensorOperations.tensorstructure(A, 3, false) === β
+    end
+
+    @testset "IndexedTensor construction (explicit backend)" begin
+        σ = PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)
+        α = BondIndex(:α, 1, 2, 4, DownIndex)
+        A = IndexedTensor(rand(2, 4), (σ, α); backend=:native)
+        @test A.data isa Array
     end
 
     @testset "checkcontractible" begin
