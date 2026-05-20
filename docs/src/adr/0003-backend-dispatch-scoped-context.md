@@ -1,28 +1,35 @@
-# ADR 0002: Backend Dispatch via Scoped Context
+# ADR 0003: Backend Dispatch via Scoped Context
 
 ## Status
 
-Proposed (not yet implemented)
+Accepted (implementation in progress)
 
 ## Why this exists
 
-The immediate goal of this package is pedagogical — I want to be able to
-write tensor network contractions in a readable way that matches my hand
-derivations and check that the index algebra is correct. For that, plain
-Julia arrays are fine and keeping things simple matters more than speed.
+The immediate goal of this package is learning — I want to be able to write
+tensor network contractions in a readable way that matches my hand derivations
+and check that the index algebra is correct. For that, plain Julia arrays are
+fine and keeping things simple matters more than speed.
 
-But the longer-term goal is to actually simulate physical systems. That means
-dealing with symmetries. A spin chain with U(1) symmetry (conserved total Sz)
-or SU(2) symmetry (full rotational invariance) has a block-sparse structure
-that makes contractions dramatically cheaper at large bond dimensions. The
-Schollwöck review barely touches symmetries; von Delft's supplementary notes go deeper, and
-I eventually want to use this package to explore that. At that point, plain
-dense arrays won't cut it.
+The longer-term picture is less clear. Implementing symmetries (U(1), SU(2))
+is not a goal of the course — Prof. Kennes was upfront that it's a lot of
+work to do properly — and I'm not planning to go there right now. But I also
+don't want to close the door. A spin chain with U(1) symmetry (conserved
+total Sz) has a block-sparse tensor structure that makes contractions
+dramatically cheaper at large bond dimensions. The Schollwöck review touches
+on this, and it's exactly what the QuantumKitHub ecosystem is built around.
+
+The key observation is that `TensorKit.jl` — introduced indirectly by our
+tutor via `TensorOperations.jl`, which wraps it — already has all of this
+symmetry-aware, block-sparse machinery built in. It would be a shame to write
+code now that can never use it. So the goal is: keep the `:native` (plain
+array) path working exactly as it does today, and leave a clearly-labelled
+`:tensorkit` door that a future version of this package can walk through
+without breaking anything.
 
 The tension is: I don't want to throw away the easy-to-understand `@tensor`
-Einstein-notation code I wrote in the past days now that I'm slowly starting
-to get the hang of it. I want the same algorithm code to work in both modes,
-just with a different backing tensor type underneath.
+Einstein-notation code I've been writing. I want the same algorithm code to
+work in both modes, just with a different backing tensor type underneath.
 
 This is the same problem PennyLane solves for quantum circuits — you write
 your circuit once and choose whether to run it on NumPy, PyTorch, or an actual
@@ -31,11 +38,11 @@ does.
 
 ## The options I considered
 
-**Global flag** (`set_backend!(:production)` at the top of a file): simple,
+**Global flag** (`set_backend!(:tensorkit)` at the top of a file): simple,
 matches the PennyLane mental model, but not safe if I ever want to run two
 backends in the same session — say, benchmarking one against the other.
 
-**Scoped context** (`with_backend(:production) do ... end`): the backend
+**Scoped context** (`with_backend(:tensorkit) do ... end`): the backend
 choice is explicit and local. Two independent code blocks can use different
 backends without interfering. This is how JAX handles device placement with
 `with jax.default_device(...)`. Julia has a built-in mechanism for this called
@@ -53,7 +60,7 @@ rules out any in-session comparison of the two modes.
 ```julia
 using ScopedValues
 
-const _BACKEND = ScopedValue{Symbol}(:pedagogical)
+const _BACKEND = ScopedValue{Symbol}(:native)
 
 with_backend(f, b::Symbol) = with(_BACKEND => b, f)
 current_backend()          = _BACKEND[]
@@ -66,13 +73,13 @@ Usage looks like:
 A = IndexedTensor(rand(2, 4, 4), (σ, αL, αR))
 
 # Opt in to production backend for a block of code
-with_backend(:production) do
+with_backend(:tensorkit) do
     A = IndexedTensor(rand(2, 4, 4), (σ, αL, αR))  # TensorKit-backed
     @tensor C[s,g] := A[s,a] * B[a,g]              # same syntax, faster execution
 end
 ```
 
-The `:pedagogical` default means existing code never breaks. Moving to
+The `:native` default means existing code never breaks. Moving to
 production is always an explicit opt-in.
 
 ## How `IndexedTensor` plugs into this
@@ -87,7 +94,7 @@ end
 ```
 
 The constructor reads `current_backend()` and picks the right backing type.
-In `:pedagogical` mode `D = Array{T,N}`. In `:production` mode `D` becomes
+In `:native` mode `D = Array{T,N}`. In `:tensorkit` mode `D` becomes
 whatever the production backing type is — initially likely
 `TensorKit.TensorMap`, but this is left open deliberately (see below).
 
