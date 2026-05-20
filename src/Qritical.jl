@@ -21,6 +21,7 @@ include("contraction_benchmaking.jl")
 
 include("site_types.jl")
 include("tensor_index.jl")
+include("tensor_core.jl")
 include("schmidt_decomposition.jl")
 
 export Bisection
