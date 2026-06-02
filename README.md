@@ -8,6 +8,12 @@
 [![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 
+## Running tests
+
+```
+julia --project -e "using Pkg; Pkg.test()"
+```
+
 ## Building documentation
 To build and view the documentation locally during development
 

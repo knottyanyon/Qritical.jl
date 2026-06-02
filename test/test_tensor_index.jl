@@ -1,102 +1,89 @@
-using HalfIntegers: half
+@testset "TIx" begin
 
-@testset "TensorIndex" begin
-
-    # ── Direction enum: UpIndex / DownIndex ────────────────────────────
-
-    @testset "IndexDirection enum" begin
-        @test UpIndex != DownIndex
-        @test flip(UpIndex) == DownIndex
-        @test flip(DownIndex) == UpIndex
+    @testset "ndim" begin
+        @test ndim(TIx{Upper}(:σ, 2)) == 2
+        @test ndim(TIx{Lower}(:α, 3)) == 3
+        @test ndim(TIx{Upper}(:vL, 1)) == 1   # boundary bond
     end
 
-    # ── Index structs: PhysicalIndex, BondIndex ──────────────────────────────
-
-    @testset "BondIndex" begin
-        α = BondIndex(:α, 2, 3, 4, UpIndex)
-        @test α.label == :α
-        @test α.from == 2
-        @test α.to == 3
-        @test α.dim == 4
-        @test α.dir == UpIndex
-        @test is_bond(α)
-        @test !is_physical(α)
+    @testset "direction is semantically meaningful" begin
+        @test TIx{Upper}(:α, 4) != TIx{Lower}(:α, 4)
+        @test TIx{Upper}(:α, 4) == TIx{Upper}(:α, 4)
     end
 
-    # ── Step 4: PhysicalIndex with AbstractSite + local_hilbert_dim ─────────
+end
 
-    @testset "PhysicalIndex with site" begin
-        σ = PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)
-        @test σ.label == :σ
-        @test σ.site === SpinSite(half(1), 1)
-        @test σ.site.lattice_ordinal == 1
-        @test σ.dir == UpIndex
-        @test is_physical(σ)
-        @test !is_bond(σ)
+@testset "Edge cases" begin
+
+    @testset "TIx: ndim must be positive" begin
+        @test_throws ArgumentError TIx{Upper}(:α, 0)
+        @test_throws ArgumentError TIx{Upper}(:α, -1)
+        @test_throws ArgumentError upper(:σ, 0)
+        @test_throws ArgumentError lower(:β, -3)
     end
 
-    @testset "local_hilbert_dim on indices" begin
-        @test local_hilbert_dim(PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex)) == 2
-        @test local_hilbert_dim(PhysicalIndex(:σ, SpinSite(half(2), 1), DownIndex)) == 3
-        @test local_hilbert_dim(
-            PhysicalIndex(:n, SpinlessBosonicSite(1; n_max_occ=3), DownIndex)
-        ) == 4
-        @test local_hilbert_dim(BondIndex(:α, 2, 3, 16, DownIndex)) == 16
+    @testset "MultiIx: empty constituents yields ndim 1" begin
+        g = MultiIx(:empty, ())
+        @test ndim(g) == 1
     end
 
-    @testset "dual preserves site" begin
-        σ = PhysicalIndex(:σ, SpinSite(half(1), 3), UpIndex)
-        @test dual(σ).dir == DownIndex
-        @test dual(σ).site === σ.site
-        @test dual(dual(σ)) == σ
+    @testset "uppers/lowers: no arguments yields empty tuple" begin
+        @test uppers() === ()
+        @test lowers() === ()
     end
 
-    # ── Index algebra: dual, adjoint, direction helpers ──────────────────────
-
-    @testset "dual and adjoint" begin
-        α = BondIndex(:α, 2, 3, 4, UpIndex)
-        @test dual(α).dir == DownIndex
-        @test dual(α).label == α.label
-        @test dual(α).from == α.from
-        @test dual(α).to == α.to
-        @test dual(α).dim == α.dim
-        @test α' == dual(α)
-        @test dual(dual(α)) == α
-
-        σ = PhysicalIndex(:σ, SpinSite(half(1), 1), DownIndex)
-        @test dual(σ).dir == UpIndex
-        @test dual(σ).site === σ.site
-        @test local_hilbert_dim(dual(σ)) == local_hilbert_dim(σ)
+    @testset "uppers/lowers: duplicate labels are allowed" begin
+        a, b = uppers(:α => 2, :α => 3)
+        @test a.label == :α && ndim(a) == 2
+        @test b.label == :α && ndim(b) == 3
     end
 
-    @testset "isdual" begin
-        α = BondIndex(:α, 2, 3, 4, UpIndex)
-        @test isdual(α, dual(α))
-        @test !isdual(α, α)
-        @test !isdual(α, BondIndex(:α, 2, 3, 4, UpIndex))     # same direction
-        @test !isdual(α, BondIndex(:α, 2, 3, 3, DownIndex))   # different dim
-        @test !isdual(α, BondIndex(:β, 2, 3, 4, DownIndex))   # different label
-        @test !isdual(α, BondIndex(:α, 3, 4, 4, DownIndex))   # different bond endpoints
-        σ = PhysicalIndex(:σ, SpinSite(half(3), 1), DownIndex)   # spin-3/2: dim 4
-        @test !isdual(α, σ)                                 # different kind
+end
 
-        site1 = SpinSite(half(1), 1)
-        σ_up = PhysicalIndex(:σ, site1, UpIndex)
-        σ_dn = PhysicalIndex(:σ, site1, DownIndex)
-        @test isdual(σ_up, σ_dn)                                                 # same site, opposite dir
-        @test !isdual(σ_up, σ_up)                                                 # same dir
-        # SpinSite is immutable: === is value equality, so same-field sites are ===
-        @test isdual(σ_up, PhysicalIndex(:σ, SpinSite(half(1), 1), DownIndex))  # value-equal sites are ===
-        @test !isdual(σ_up, PhysicalIndex(:σ, SpinSite(half(1), 2), DownIndex))  # different ordinal
-        @test !isdual(σ_up, PhysicalIndex(:n, site1, DownIndex))                  # different label
+@testset "upper / lower constructors" begin
+
+    @testset "single index" begin
+        σ = upper(:σ, 2)
+        α = lower(:α, 4)
+        @test σ == TIx{Upper}(:σ, 2)
+        @test α == TIx{Lower}(:α, 4)
+        @test ndim(σ) == 2
+        @test ndim(α) == 4
     end
 
-    @testset "as_up and as_down" begin
-        α = BondIndex(:α, 2, 3, 4, UpIndex)
-        @test as_down(α).dir == DownIndex
-        @test as_down(dual(α)) == dual(α)   # idempotent
-        @test as_up(α) == α                 # idempotent
-        @test as_up(dual(α)).dir == UpIndex
+    @testset "uppers / lowers batch" begin
+        vL, vR = uppers(:vL => 4, :vR => 4)
+        @test vL == TIx{Upper}(:vL, 4)
+        @test vR == TIx{Upper}(:vR, 4)
+
+        (σ,) = lowers(:σ => 2)
+        @test σ == TIx{Lower}(:σ, 2)
+    end
+
+end
+
+@testset "MultiIx" begin
+
+    @testset "ndim is the product of constituent ndims" begin
+        idx_α = TIx{Upper}(:α, 2)
+        idx_β = TIx{Lower}(:β, 3)
+        g = MultiIx(:αβ, (idx_α, idx_β))
+        @test ndim(g) == ndim(idx_α) * ndim(idx_β)
+        @test ndim(g) == 6
+    end
+
+    @testset "single constituent: ndim passes through" begin
+        idx = TIx{Upper}(:α, 5)
+        g = MultiIx(:α, (idx,))
+        @test ndim(g) == ndim(idx)
+    end
+
+    @testset "triple constituent" begin
+        a = TIx{Upper}(:a, 2)
+        b = TIx{Lower}(:b, 3)
+        c = TIx{Upper}(:c, 4)
+        g = MultiIx(:abc, (a, b, c))
+        @test ndim(g) == 24
     end
 
 end
