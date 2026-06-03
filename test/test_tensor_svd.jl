@@ -358,4 +358,43 @@ end
         @test ε == 0
     end
 
+    @testset "KeepMachineEps: all retained σ satisfy σ/σ₁ > sqrt(eps(T))" begin
+        A       = _site_tensor()
+        bp      = _site_bipartition()
+        M       = group_legs(A, bp)
+        σ₁      = svdvals(M.data)[1]
+        (; S)   = tensor_svd(A, bp, KeepMachineEps())
+        @test all(s -> s / σ₁ > sqrt(eps(eltype(M.data))), S)
+    end
+
+    @testset "KeepMachineEps: ε equals 2-norm of discarded singular values" begin
+        A       = _site_tensor()
+        bp      = _site_bipartition()
+        M       = group_legs(A, bp)
+        all_svs = svdvals(M.data)
+        σ₁      = all_svs[1]
+        tol     = sqrt(eps(eltype(M.data))) * σ₁
+        (; S, ε) = tensor_svd(A, bp, KeepMachineEps())
+        discarded = filter(s -> s <= tol, all_svs)
+        @test ε ≈ norm(discarded) atol=1e-12
+    end
+
+    @testset "KeepMachineEps: Float32 threshold is larger than Float64" begin
+        # Construct a matrix with a singular value ratio of 1e-5:
+        #   Float64 threshold ≈ 1.5e-8  → σ₂/σ₁ = 1e-5 is KEPT
+        #   Float32 threshold ≈ 3.5e-4  → σ₂/σ₁ = 1e-5 is DISCARDED
+        U    = [1.0 0.0; 0.0 1.0; 0.0 0.0]
+        data = U * Diagonal([1.0, 1e-5]) * [1.0 0.0 0.0; 0.0 1.0 0.0]
+        bp   = Bipartition(Partition(upper(:row, 3)), Partition(upper(:col, 3)))
+
+        A64  = IndexedTensor(Float64.(data), (upper(:row, 3), upper(:col, 3)))
+        A32  = IndexedTensor(Float32.(data), (upper(:row, 3), upper(:col, 3)))
+
+        S64 = tensor_svd(A64, bp, KeepMachineEps()).S
+        S32 = tensor_svd(A32, bp, KeepMachineEps()).S
+
+        @test length(S64) == 2   # 1e-5 > sqrt(eps(Float64)) ≈ 1.5e-8 → kept
+        @test length(S32) == 1   # 1e-5 < sqrt(eps(Float32)) ≈ 3.5e-4 → discarded
+    end
+
 end

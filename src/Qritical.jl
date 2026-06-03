@@ -11,7 +11,7 @@ export MultiIx
 export Partition, Bipartition, complement, bipartition, group_legs
 export IndexedTensor
 export BondIndex
-export AbstractTruncation, KeepFirst, KeepAbove, KeepRelative
+export AbstractTruncation, KeepFirst, KeepAbove, KeepRelative, KeepMachineEps
 export tensor_svd
 
 end
