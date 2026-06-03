@@ -12,3 +12,5 @@
 .vscode
 LocalPreferences.toml
 /plans/
+/CLAUDE.md
+/.claude/

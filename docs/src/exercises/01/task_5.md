@@ -66,16 +66,16 @@ end
 ````
 
 ````
-N = 2: Completed in 4.2e-8 s
+N = 2: Completed in 4.1e-8 s
 N = 4: Completed in 1.25e-7 s
 N = 8: Completed in 1.625e-6 s
-N = 16: Completed in 1.35e-5 s
+N = 16: Completed in 1.3125e-5 s
 N = 32: Completed in 0.000108333 s
-N = 64: Completed in 0.000885958 s
-N = 128: Completed in 0.0072196665 s
-N = 256: Completed in 0.057742208 s
-N = 512: Completed in 0.471094167 s
-N = 1024: Completed in 4.140527479 s
+N = 64: Completed in 0.000883333 s
+N = 128: Completed in 0.00724975 s
+N = 256: Completed in 0.058127417 s
+N = 512: Completed in 0.479874542 s
+N = 1024: Completed in 4.0921708335 s
 
 ````
 
