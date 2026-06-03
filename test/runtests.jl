@@ -11,4 +11,5 @@ using Test
     include("test_backend.jl")
     include("test_tensor_svd.jl")
     include("test_finite_mps.jl")
+    include("test_finite_mpo.jl")
 end

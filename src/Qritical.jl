@@ -5,6 +5,7 @@ include("tensor_core.jl")
 include("tensor_svd.jl")
 include("dof.jl")
 include("finite_mps.jl")
+include("finite_mpo.jl")
 
 export AbstractIndex, ndim, label
 export IndexLoc, Upper, Lower
@@ -26,5 +27,10 @@ export AbstractMPS, AbstractMPSForm, CanonicalForm, VidalForm, ArbitraryForm
 export FiniteMPS
 export left_canonical_sweep!, right_canonical_sweep!, move_center!
 export overlap, entanglement_entropy
+
+# v0.4 — FiniteMPO
+export FiniteMPO
+export heisenberg_mpo, identity_mpo
+export expectation_value, apply
 
 end
