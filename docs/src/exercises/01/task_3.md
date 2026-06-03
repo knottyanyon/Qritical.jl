@@ -11,41 +11,41 @@ EditURL = "task_3.jl"
     - **(a)** a bipartition after the first site;
     - **(b)** a bipartition at the middle (5 | 5).
 
-````@example task_3
+```julia
 DATA_ROOT = normpath(joinpath(@__FILE__, "..", "..", "data"))
 FPATH_PSI = joinpath(DATA_ROOT, "psi.jls")
-````
+```
 
-````@example task_3
+```julia
 using Serialization, LinearAlgebra, Qritical, CairoMakie
 
 ψ = deserialize(FPATH_PSI)    # shape (2,2,...,2): 10 sites, each dim-2
 N = ndims(ψ)
-````
+```
 
 Attach a named upper index to each site leg.  All sites share dimension 2.
 Using `Symbol(:s, i)` gives labels `:s1, :s2, …, :s10`.
 
-````@example task_3
+```julia
 sites = [upper(Symbol(:s, i), 2) for i in 1:N]
 A     = IndexedTensor(ψ, Tuple(sites))
-````
+```
 
 ## Part (a) — bipartition after the first site (1 | 9)
 
-````@example task_3
+```julia
 bp_a  = bipartition(Partition(sites[1]), A)
 res_a = tensor_svd(A, bp_a, KeepAbove(1e-6); normalize=true)
 println("Schmidt rank (1 | 9): ", length(res_a.S))
-````
+```
 
 ## Part (b) — bipartition at the middle (5 | 5)
 
-````@example task_3
+```julia
 bp_b  = bipartition(Partition(sites[1:N÷2]...), A)
 res_b = tensor_svd(A, bp_b, KeepAbove(1e-6); normalize=true)
 println("Schmidt rank (5 | 5): ", length(res_b.S))
-````
+```
 
 ## Entanglement entropy profile
 
@@ -66,17 +66,17 @@ A product state has ``S = 0``; a maximally entangled state across a
 - Choose a logarithm base (and note what units the result is in).
 - Guard against ``\lambda_i = 0`` to avoid ``0 \log 0``.
 
-````@example task_3
+```julia
 function entanglement_entropy(λ::AbstractVector{<:Real})
     # TODO: implement S = -∑ᵢ λᵢ² log_b(λᵢ²)
     # Hint: use log2 for bits or log for nats; skip terms where λᵢ = 0
 end
-````
+```
 
 Once `entanglement_entropy` is implemented, the cell below sweeps every
 bipartition boundary and plots the resulting entropy profile.
 
-````@example task_3
+```julia
 entropies = map(1:N-1) do i
     bp  = bipartition(Partition(sites[1:i]...), A)
     res = tensor_svd(A, bp, KeepMachineEps(); normalize=true)
@@ -93,7 +93,7 @@ ax  = Axis(fig[1, 1];
 lines!(ax, 1:N-1, entropies; color=:teal, linewidth=2.5)
 scatter!(ax, 1:N-1, entropies; color=:teal, markersize=9)
 fig
-````
+```
 
 ## Notes
 

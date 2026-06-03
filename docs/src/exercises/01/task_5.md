@@ -11,9 +11,9 @@ EditURL = "task_5.jl"
     - **(b)** once using `LinearAlgebra` / BLAS.
     Compare run-time and scaling in ``N``.  Fit ``f(N) = aN^x + b``.
 
-````@example task_5
+```julia
 using LinearAlgebra, BenchmarkTools, LsqFit, CairoMakie
-````
+```
 
 ## (a) Naive triple-loop
 
@@ -24,7 +24,7 @@ misses.  For ``C[i,j] += A[i,k] * B[k,j]``, the contiguous dimensions are
 *columns* of ``A`` (fixed ``k``) and *columns* of ``C`` (fixed ``j``).
 A loop ordering of ``k → j → i`` keeps both innermost accesses contiguous.
 
-````@example task_5
+```julia
 function matmul_naive(A::AbstractMatrix, B::AbstractMatrix)
     m = size(A, 1)
     n = size(B, 2)
@@ -37,7 +37,7 @@ function matmul_naive(A::AbstractMatrix, B::AbstractMatrix)
     end
     return C
 end
-````
+```
 
 ## (b) BLAS (LinearAlgebra)
 
@@ -46,7 +46,7 @@ SIMD vectorisation, and multi-threading.  There is no kernel to write.
 
 ## Benchmark
 
-````@example task_5
+```julia
 Ns = [4, 8, 16, 32, 64, 128, 256]
 
 times_naive = Float64[]
@@ -59,20 +59,20 @@ for N in Ns
     push!(times_blas,  @belapsed($A * $B,              seconds=1))
     println("N=$N:  naive=$(round(times_naive[end]*1e6, digits=2)) µs  BLAS=$(round(times_blas[end]*1e6, digits=2)) µs")
 end
-````
+```
 
 ## Fit ``f(N) = aN^x + b``
 
-````@example task_5
+```julia
 @. model(n, p) = p[1] * n ^ p[2] + p[3]
 
 fit_naive = curve_fit(model, Float64.(Ns), times_naive, [1e-10, 3.0, 0.0])
 fit_blas  = curve_fit(model, Float64.(Ns), times_blas,  [1e-12, 3.0, 0.0])
 x_naive   = round(coef(fit_naive)[2]; digits=2)
 x_blas    = round(coef(fit_blas)[2];  digits=2)
-````
+```
 
-````@example task_5
+```julia
 fig = Figure(size=(700, 380))
 ax  = Axis(fig[1, 1];
     title  = "Matrix multiply scaling: naive vs BLAS",
@@ -85,7 +85,7 @@ scatterlines!(ax, Ns, times_naive; color=:crimson,    label="naive  ∼ O(N^$x_n
 scatterlines!(ax, Ns, times_blas;  color=:dodgerblue, label="BLAS   ∼ O(N^$x_blas)")
 axislegend(ax; position=:lt)
 fig
-````
+```
 
 ## Notes
 

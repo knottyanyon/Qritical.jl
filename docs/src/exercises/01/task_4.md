@@ -8,24 +8,24 @@ EditURL = "task_4.jl"
     Reproduce an SVD-based image compression.  Perform an SVD on each colour
     channel separately.
 
-````@example task_4
+```julia
 DATA_ROOT = normpath(joinpath(@__FILE__, "..", "..", "data"))
 FPATH_IMG = joinpath(DATA_ROOT, "Bahkauv.png")
-````
+```
 
-````@example task_4
+```julia
 using LinearAlgebra, CairoMakie, FileIO, PNGFiles, ColorTypes, FixedPointNumbers
 
 img = load(FPATH_IMG)    # Matrix{RGB{N0f8}}
-````
+```
 
 Extract the three colour channels as Float64 matrices.
 
-````@example task_4
+```julia
 R = Float64.(red.(img))
 G = Float64.(green.(img))
 B = Float64.(blue.(img))
-````
+```
 
 ## Rank-r compression
 
@@ -39,7 +39,7 @@ retaining only the ``r`` largest singular values.  The compression ratio
 (number of stored floats) compared to the original is approximately
 ``r(m + n + 1) / (mn)``.
 
-````@example task_4
+```julia
 function compress_channel(M::AbstractMatrix{<:Real}, r::Int)
     F  = svd(M)
     Mr = F.U[:, 1:r] * Diagonal(F.S[1:r]) * F.Vt[1:r, :]
@@ -49,11 +49,11 @@ end
 function compress_image(R, G, B, r::Int)
     colorview(RGB, compress_channel(R, r), compress_channel(G, r), compress_channel(B, r))
 end
-````
+```
 
 ## Comparison at increasing ranks
 
-````@example task_4
+```julia
 ranks = [5, 20, 50, minimum(size(R))]
 
 fig  = Figure(size=(220 * (1 + length(ranks)), 280))
@@ -69,7 +69,7 @@ for (i, r) in enumerate(ranks)
     image!(ax, rotr90(compress_image(R, G, B, r)))
 end
 fig
-````
+```
 
 ## Notes
 
