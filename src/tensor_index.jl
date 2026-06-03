@@ -141,6 +141,24 @@ julia> (σ,) = lowers(:σ => 2)
 uppers(pairs::Pair{Symbol,Int}...) = Tuple(TIx{Upper}(p.first, p.second) for p in pairs)
 lowers(pairs::Pair{Symbol,Int}...) = Tuple(TIx{Lower}(p.first, p.second) for p in pairs)
 
+"""
+    bond_label(base, site) -> Symbol
+
+Generate a site-indexed label by appending `site` to `base`.
+
+Used when constructing MPS/MPO tensors where each virtual bond needs a unique
+label derived from a shared base — e.g. `bond_label(:α, 3)` → `:α3`.
+
+```jldoctest
+julia> bond_label(:α, 1)
+:α1
+
+julia> bond_label(:χ, 5)
+:χ5
+```
+"""
+bond_label(base::Symbol, site::Int) = Symbol(base, site)
+
 # ── MultiIx ──────────────────────────────────────────────────────────────
 
 """

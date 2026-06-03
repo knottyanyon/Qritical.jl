@@ -29,15 +29,49 @@ struct IndexedTensor{Element,Order,D<:AbstractArray{Element,Order}} <:
 end
 
 # ── AbstractArray interface ───────────────────────────────────────────────────
+# All data operations delegate to `t.data`; `IndexedTensor` adds no storage
+# overhead and is fully transparent to Julia's array machinery, broadcasting,
+# and `@tensor` contractions.
 
 Base.size(t::IndexedTensor) = size(t.data)
 Base.getindex(t::IndexedTensor, i...) = getindex(t.data, i...)
 Base.setindex!(t::IndexedTensor, v, i...) = setindex!(t.data, v, i...)
+
+"""
+    Base.IndexStyle(::Type{<:IndexedTensor})
+
+Declare linear indexing for `IndexedTensor`.
+
+`IndexLinear()` tells Julia that elements are cheaply accessible via a single
+integer offset, which enables loop fusion, `@simd` vectorisation, and avoids
+the Cartesian-to-linear conversion overhead in inner loops. The choice is valid
+because the backing store `D` is always a strided array with contiguous linear
+storage (plain `Array` in `:native` mode).
+"""
 Base.IndexStyle(::Type{<:IndexedTensor}) = IndexLinear()
 
+"""
+    Base.strides(t::IndexedTensor)
 
+Return the memory strides of the backing array.
+
+Required alongside `unsafe_convert` so that BLAS/LAPACK routines (and any
+external C library expecting a raw pointer + stride descriptor) can operate
+directly on `IndexedTensor` data without an intermediate copy.
+"""
 Base.strides(t::IndexedTensor) = strides(t.data)
 
+"""
+    Base.unsafe_convert(::Type{Ptr{Element}}, t::IndexedTensor{Element})
+
+Return a raw pointer to the first element of the backing array.
+
+Together with `strides`, this makes `IndexedTensor` compatible with BLAS/LAPACK
+dispatch (e.g. via `LinearAlgebra.BLAS.gemm!`) and with AD frameworks such as
+Enzyme that operate on raw memory. The `unsafe` prefix is Julia's convention:
+the caller is responsible for ensuring the array is not garbage-collected and
+that accesses stay within bounds.
+"""
 function Base.unsafe_convert(
     ::Type{Ptr{Element}}, t::IndexedTensor{Element}
 ) where {Element}
@@ -85,6 +119,19 @@ bipartition(left::Partition, A::IndexedTensor) = Bipartition(left, complement(le
 
 # ── group_legs ────────────────────────────────────────────────────────────────
 
+"""
+    _resolve(idx, A) -> Int
+
+Return the dimension position of `idx` in `A.indices`.
+
+Equality is tested with `==`, which for `TIx` requires matching label, `ndim`,
+*and* `Upper`/`Lower` position — two indices with the same label but opposite
+covariance are distinct and will not match. This is intentional: a leg going
+in and a leg going out are different objects even if they share a name.
+
+Throws `ArgumentError` if `idx` is not found, so callers (`group_legs`) get a
+legible message rather than a `nothing`-dereference.
+"""
 function _resolve(idx::AbstractIndex, A::IndexedTensor)
     pos = findfirst(==(idx), A.indices)
     pos === nothing && throw(ArgumentError("index $idx not found in tensor"))

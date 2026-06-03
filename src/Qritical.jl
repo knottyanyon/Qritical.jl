@@ -6,7 +6,7 @@ include("tensor_svd.jl")
 
 export AbstractIndex, ndim, label
 export IndexLoc, Upper, Lower
-export TIx, upper, lower, uppers, lowers
+export TIx, upper, lower, uppers, lowers, bond_label
 export MultiIx
 export Partition, Bipartition, complement, bipartition, group_legs
 export IndexedTensor
