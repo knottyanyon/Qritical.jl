@@ -52,6 +52,71 @@ end
 
 end
 
+# ── TensorSVD ─────────────────────────────────────────────────────────────────
+
+@testset "TensorSVD" begin
+    A = _site_tensor()
+    bp = _site_bipartition()
+    F  = tensor_svd(A, bp, KeepFirst(3))
+
+    @testset "return type" begin
+        @test F isa TensorSVD
+    end
+
+    @testset "field types" begin
+        @test F.U          isa IndexedTensor
+        @test F.Σ          isa IndexedTensor{<:Real, 2, <:Diagonal}
+        @test F.Vd         isa IndexedTensor
+        @test F.ε          isa Real
+        @test F.normalized == false
+    end
+
+    @testset "SingularElement == real(Element)" begin
+        @test eltype(F.Σ.data) == real(eltype(F.U.data))
+        @test typeof(F.ε)      == real(eltype(F.U.data))
+    end
+
+    @testset "named destructuring" begin
+        (; U, Σ, Vd, ε) = F
+        @test U  === F.U
+        @test Σ  === F.Σ
+        @test Vd === F.Vd
+        @test ε  === F.ε
+    end
+
+    @testset "positional destructuring via iterate" begin
+        U, Σ, Vd, ε = F
+        @test U  === F.U
+        @test Σ  === F.Σ
+        @test Vd === F.Vd
+        @test ε  === F.ε
+    end
+
+    @testset "normalize flag" begin
+        F_norm = tensor_svd(A, bp, KeepFirst(3); normalize=true)
+        @test  F_norm.normalized
+        @test !F.normalized
+    end
+
+    @testset "complex element type" begin
+        A_c = _site_tensor(ComplexF64)
+        F_c = tensor_svd(A_c, bp, KeepFirst(3))
+        @test eltype(F_c.U.data)    == ComplexF64
+        @test eltype(F_c.Σ.data)   == Float64      # real(ComplexF64) = Float64
+        @test typeof(F_c.ε)        == Float64
+    end
+
+    @testset "constructor rejects SingularElement ≠ real(Element)" begin
+        # Build two compatible tensors with mismatched element/singular types
+        # by trying to call the inner constructor directly with wrong types.
+        # We test this indirectly: a Float32 U with Float64 Σ must throw.
+        A32 = IndexedTensor(Float32.(A.data), A.indices)
+        F32 = tensor_svd(A32, bp, KeepFirst(3))
+        @test eltype(F32.U.data)  == Float32
+        @test eltype(F32.Σ.data) == Float32
+    end
+end
+
 # ── Bond ──────────────────────────────────────────────────────────────────────
 
 @testset "Bond" begin

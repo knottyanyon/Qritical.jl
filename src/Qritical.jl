@@ -12,8 +12,8 @@ export TIx, upper, lower, uppers, lowers, bond_label
 export MultiIx
 export Partition, Bipartition, complement, bipartition, group_legs
 export IndexedTensor
-export Bond
 export AbstractTruncation, KeepFirst, KeepAbove, KeepRelative, KeepMachineEps
+export Bond, TensorSVD
 export tensor_svd
 
 # v0.3 — DoF hierarchy

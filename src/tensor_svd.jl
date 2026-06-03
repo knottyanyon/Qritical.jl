@@ -123,10 +123,81 @@ end
 label(b::Bond) = b.lower.label
 ndim(b::Bond)  = b.lower.ndim
 
+# ── TensorSVD ─────────────────────────────────────────────────────────────────
+
+"""
+    TensorSVD{Element, SingularElement, UOrder, VdOrder, UData, VdData}
+
+Result of [`tensor_svd`](@ref).  Stores the three factors of the decomposition
+``A^i_{\\ j} = U^i_{\\ \\lambda}\\,\\Sigma^\\lambda_{\\ \\lambda'}\\,
+{(V^\\dagger)}^{\\lambda'}_{\\ j}`` together with the accumulated truncation
+error and a flag indicating whether the singular values have been normalized.
+
+# Fields
+- `U`          — left isometry ``(U^\\dagger U = \\mathbb{1})``, order `UOrder`
+- `Σ`          — diagonal singular-value tensor, element type `SingularElement = real(Element)`
+- `Vd`         — right isometry ``(V^\\dagger (V^\\dagger)^\\dagger = \\mathbb{1})``, order `VdOrder`
+- `ε`          — 2-norm of the discarded singular values (raw, unnormalized)
+- `normalized` — `true` if `Σ.data.diag` contains Schmidt coefficients ``\\lambda_i = \\sigma_i/\\|A\\|_F``
+
+Supports both named (`(; U, Σ, Vd, ε) = F`) and positional (`U, Σ, Vd, ε = F`)
+destructuring.
+"""
+struct TensorSVD{
+    Element         <: Number,
+    SingularElement <: Real,
+    UOrder,
+    VdOrder,
+    UData  <: AbstractArray{Element,  UOrder},
+    VdData <: AbstractArray{Element, VdOrder},
+}
+    U          :: IndexedTensor{Element,         UOrder,  UData}
+    Σ          :: IndexedTensor{SingularElement, 2,       Diagonal{SingularElement, Vector{SingularElement}}}
+    Vd         :: IndexedTensor{Element,         VdOrder, VdData}
+    ε          :: SingularElement
+    normalized :: Bool
+
+    function TensorSVD(
+        U  :: IndexedTensor{Element,         UOrder,  UData},
+        Σ  :: IndexedTensor{SingularElement, 2,       Diagonal{SingularElement, Vector{SingularElement}}},
+        Vd :: IndexedTensor{Element,         VdOrder, VdData},
+        ε  :: SingularElement,
+        normalized :: Bool,
+    ) where {
+        Element         <: Number,
+        SingularElement <: Real,
+        UOrder, VdOrder,
+        UData  <: AbstractArray{Element,  UOrder},
+        VdData <: AbstractArray{Element, VdOrder},
+    }
+        SingularElement == real(Element) || throw(ArgumentError(
+            "SingularElement must equal real(Element); got $SingularElement ≠ $(real(Element))"
+        ))
+        new{Element, SingularElement, UOrder, VdOrder, UData, VdData}(U, Σ, Vd, ε, normalized)
+    end
+end
+
+# Positional destructuring: U, Σ, Vd, ε = F
+function Base.iterate(F::TensorSVD, i=1)
+    i == 1 && return (F.U,  2)
+    i == 2 && return (F.Σ,  3)
+    i == 3 && return (F.Vd, 4)
+    i == 4 && return (F.ε,  5)
+    return nothing
+end
+
+function Base.show(io::IO, F::TensorSVD)
+    r = size(F.Σ.data, 1)
+    print(io, "TensorSVD  r=$r  ε=$(round(F.ε; sigdigits=4))  normalized=$(F.normalized)")
+    print(io, "\n  U:  ", F.U.indices)
+    print(io, "\n  Σ:  ", F.Σ.indices)
+    print(io, "\n  Vd: ", F.Vd.indices)
+end
+
 # ── tensor_svd ───────────────────────────────────────────────────────────────
 
 """
-    tensor_svd(A, bp, trunc; normalize=false) -> (; U, Σ, Vd, ε)
+    tensor_svd(A, bp, trunc; normalize=false) -> TensorSVD
 
 Decompose `A` as ``A^i_{\\ j} = U^i_{\\ \\lambda}\\, \\Sigma^\\lambda_{\\ \\lambda'}\\,
 {(V^\\dagger)}^{\\lambda'}_{\\ j}`` according to the bipartition `bp` and the
@@ -183,10 +254,11 @@ function tensor_svd(
     Σ_indices  = (upper(λ_label, r), lower(λ′_label, r))
     Vd_indices = Tuple(AbstractIndex[upper(λ′_label, r); bp.right.indices...])
 
-    return (;
-        U  = IndexedTensor(U_data,  U_indices),
-        Σ  = IndexedTensor(Σ_data,  Σ_indices),
-        Vd = IndexedTensor(Vd_data, Vd_indices),
+    return TensorSVD(
+        IndexedTensor(U_data,  U_indices),
+        IndexedTensor(Σ_data,  Σ_indices),
+        IndexedTensor(Vd_data, Vd_indices),
         ε,
+        normalize,
     )
 end
