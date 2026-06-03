@@ -46,6 +46,11 @@ makedocs(;
                     "1.4 SVD an image"        => "exercises/01/task_4.md",
                     "1.5 Contractions"        => "exercises/01/task_5.md",
                 ],
+                "Exercise 02" => [
+                    "2.1 Left Canonical State"  => "exercises/02/task_1.md",
+                    "2.2 Right Canonical State" => "exercises/02/task_2.md",
+                    "2.3 Mixed Canonical State" => "exercises/02/task_3.md",
+                ],
             ],
         ],
         "Bibliography" => "references.md",
