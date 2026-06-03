@@ -10,4 +10,5 @@ using Test
     include("test_site_types.jl")
     include("test_backend.jl")
     include("test_tensor_svd.jl")
+    include("test_finite_mps.jl")
 end

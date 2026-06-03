@@ -3,6 +3,8 @@ module Qritical
 include("tensor_index.jl")
 include("tensor_core.jl")
 include("tensor_svd.jl")
+include("dof.jl")
+include("finite_mps.jl")
 
 export AbstractIndex, ndim, label
 export IndexLoc, Upper, Lower
@@ -13,5 +15,16 @@ export IndexedTensor
 export BondIndex
 export AbstractTruncation, KeepFirst, KeepAbove, KeepRelative, KeepMachineEps
 export tensor_svd
+
+# v0.3 — DoF hierarchy
+export AbstractDoF, Spin, Fermionic, HardCoreBoson
+export hilbert_space
+export AbstractSite, StateSite, OperatorSite
+
+# v0.3 — FiniteMPS
+export AbstractMPS, AbstractMPSForm, CanonicalForm, VidalForm, ArbitraryForm
+export FiniteMPS
+export left_canonical_sweep!, right_canonical_sweep!, move_center!
+export overlap, entanglement_entropy
 
 end
