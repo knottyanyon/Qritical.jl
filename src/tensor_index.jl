@@ -3,7 +3,7 @@
 """
     AbstractIndex
 
-Root of the index hierarchy. Every concrete subtype must implement `ndim`.
+Root of the index hierarchy. Every concrete subtype must implement `ndim` and `label`.
 """
 abstract type AbstractIndex end
 
@@ -24,7 +24,8 @@ julia> ndim(MultiIx(:αβ, (upper(:α, 2), lower(:β, 3))))
 6
 ```
 """
-ndim(i::AbstractIndex) = error("ndim not implemented for $(typeof(i))")
+ndim(i::AbstractIndex)   = error("ndim not implemented for $(typeof(i))")
+label(i::AbstractIndex)  = error("label not implemented for $(typeof(i))")
 
 # ── IndexLoc ─────────────────────────────────────────────────────────────────
 
@@ -90,7 +91,12 @@ struct TIx{L<:IndexLoc} <: AbstractIndex
     end
 end
 
-ndim(i::TIx) = i.ndim
+ndim(i::TIx)  = i.ndim
+label(i::TIx) = i.label
+
+Base.:(==)(a::TIx{L},  b::TIx{L})  where {L}       = a.label == b.label && a.ndim == b.ndim
+Base.:(==)(::TIx{L1},  ::TIx{L2})  where {L1, L2}   = false
+Base.hash(i::TIx{L}, h::UInt)      where {L}        = hash(i.label, hash(i.ndim, hash(L, h)))
 
 """
     upper(label, ndim) → TIx{Upper}
@@ -169,9 +175,55 @@ struct MultiIx <: AbstractIndex
     indices::Tuple{Vararg{AbstractIndex}}
 end
 
-# The dimension of a grouped index is the total number of distinct value
-# combinations across all constituents. Since the constituent indices are
-# independent, this equals the product of their individual ndims.
-#
-#
-ndim(g::MultiIx) = prod(ndim, g.indices; init=1)
+ndim(g::MultiIx)  = prod(ndim, g.indices; init=1)
+label(g::MultiIx) = g.label
+
+Base.:(==)(a::MultiIx, b::MultiIx) = a.label == b.label && a.indices == b.indices
+Base.hash(g::MultiIx, h::UInt)     = hash(g.label, hash(g.indices, h))
+
+_autolabel(indices::Tuple{Vararg{AbstractIndex}}) =
+    isempty(indices) ? :scalar : Symbol(join(String.(label.(indices))))
+
+MultiIx(indices::Tuple{Vararg{AbstractIndex}}) = MultiIx(_autolabel(indices), indices)
+MultiIx(indices::AbstractIndex...)             = MultiIx(indices)
+
+# ── Partition ─────────────────────────────────────────────────────────────────
+
+"""
+    Partition(indices)
+
+An ordered group of `AbstractIndex` objects representing one set of tensor legs.
+Used as one half of a `Bipartition` to describe how to split a tensor's indices
+for SVD, reduced density matrix, or other bilinear operations.
+"""
+struct Partition
+    indices::Vector{AbstractIndex}
+end
+
+Partition(indices::AbstractIndex...) = Partition(collect(AbstractIndex, indices))
+
+Base.:(==)(a::Partition, b::Partition) = a.indices == b.indices
+Base.hash(p::Partition, h::UInt)       = hash(p.indices, h)
+
+# ── Bipartition ───────────────────────────────────────────────────────────────
+
+"""
+    Bipartition(left, right)
+
+An ordered pair of mutually exclusive `Partition`s. The `left` partition maps to
+matrix rows and `right` to columns when a tensor is reshaped via `group_legs`.
+
+The constructor checks at construction time that the two partitions share no
+common indices. Coverage of all tensor legs is validated inside `group_legs`.
+"""
+struct Bipartition
+    left::Partition
+    right::Partition
+    function Bipartition(left::Partition, right::Partition)
+        overlap = intersect(left.indices, right.indices)
+        isempty(overlap) || throw(ArgumentError(
+            "Bipartition partitions overlap on: $overlap"
+        ))
+        new(left, right)
+    end
+end
