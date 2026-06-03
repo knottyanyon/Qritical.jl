@@ -4,7 +4,7 @@ using TensorOperations
 # Naming deviates from Julia convention ({T,N}) intentionally:
 #   Element — the scalar field (e.g. ComplexF64), not constrained to <:Number.
 #             
-#   Order   — number of indices; we reserve "rank" for the SVD / linear-algebra
+#   Order   — number of legs; we reserve "rank" for the SVD / linear-algebra
 #             sense
 """
     IndexedTensor{Element, Order, D<:AbstractArray{Element,Order}}
