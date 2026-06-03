@@ -61,6 +61,12 @@ makedocs(;
                     "4.3 Observables"    => "exercises/04/task_2.md",
                     "4.4 Adding MPS"     => "exercises/04/task_3.md",
                 ],
+                "Exercise 05" => [
+                    "5.1 Vidal Notation"    => "exercises/05/task_1.md",
+                    "5.2 Observables I"     => "exercises/05/task_2.md",
+                    "5.3 Observables II"    => "exercises/05/task_3.md",
+                    "5.4 Observables III"   => "exercises/05/task_4.md",
+                ],
             ],
         ],
         "Bibliography" => "references.md",
