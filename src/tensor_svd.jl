@@ -1,28 +1,4 @@
-using LinearAlgebra: svd, norm
-
-# ── BondIndex ─────────────────────────────────────────────────────────────────
-
-"""
-    BondIndex(label, ndim)
-
-An `AbstractIndex` produced by SVD. Represents a virtual bond whose dimension
-equals the Schmidt rank ``\\operatorname{Sch}(\\psi)`` of the decomposed state
-after applying the chosen truncation strategy.
-"""
-struct BondIndex <: AbstractIndex
-    label::Symbol
-    ndim::Int
-    function BondIndex(label::Symbol, ndim::Int)
-        ndim > 0 || throw(ArgumentError("BondIndex ndim must be positive, got $ndim"))
-        new(label, ndim)
-    end
-end
-
-ndim(b::BondIndex)  = b.ndim
-label(b::BondIndex) = b.label
-
-Base.:(==)(a::BondIndex, b::BondIndex) = a.label == b.label && a.ndim == b.ndim
-Base.hash(b::BondIndex, h::UInt)       = hash(b.label, hash(b.ndim, h))
+using LinearAlgebra: svd, norm, Diagonal, diag
 
 # ── AbstractTruncation ────────────────────────────────────────────────────────
 
@@ -111,42 +87,74 @@ function _truncate(S::AbstractVector{<:Real}, ::KeepMachineEps)
     return r, norm(@view S[(r+1):end])
 end
 
+# ── Bond ──────────────────────────────────────────────────────────────────────
+
+"""
+    Bond(lower, upper[, trunc, ε])
+
+Records a contraction between two tensors: `lower::TIx{Lower}` on the
+from-tensor and `upper::TIx{Upper}` on the to-tensor, both carrying the same
+label and dimension.
+
+When the bond is produced by an SVD, the optional fields `trunc` and `ε`
+store the truncation strategy and the 2-norm truncation error respectively.
+"""
+struct Bond
+    lower :: TIx{Lower}
+    upper :: TIx{Upper}
+    trunc :: Union{AbstractTruncation, Nothing}
+    ε     :: Float64
+
+    function Bond(
+        lower::TIx{Lower}, upper::TIx{Upper},
+        trunc::Union{AbstractTruncation, Nothing}=nothing,
+        ε::Real=0.0,
+    )
+        lower.label == upper.label || throw(ArgumentError(
+            "Bond legs must share a label; got $(lower.label) and $(upper.label)"
+        ))
+        lower.ndim == upper.ndim || throw(ArgumentError(
+            "Bond legs must have matching ndim; got $(lower.ndim) and $(upper.ndim)"
+        ))
+        new(lower, upper, trunc, Float64(ε))
+    end
+end
+
+label(b::Bond) = b.lower.label
+ndim(b::Bond)  = b.lower.ndim
+
 # ── tensor_svd ───────────────────────────────────────────────────────────────
 
 """
-    tensor_svd(A, bp, trunc; normalize=false) -> (; U, S, Vd, ε)
+    tensor_svd(A, bp, trunc; normalize=false) -> (; U, Σ, Vd, ε)
 
-Decompose `A` into `U * Diagonal(S) * Vd` according to the bipartition `bp`
-and the truncation strategy `trunc`.
+Decompose `A` as ``A^i_{\\ j} = U^i_{\\ \\lambda}\\, \\Sigma^\\lambda_{\\ \\lambda'}\\,
+{(V^\\dagger)}^{\\lambda'}_{\\ j}`` according to the bipartition `bp` and the
+truncation strategy `trunc`.
 
-- `U`  carries the original left-partition indices followed by a `BondIndex` of
-  dimension ``\\operatorname{Sch}(\\psi)``.
-- `Vd` carries a `BondIndex` of dimension ``\\operatorname{Sch}(\\psi)`` followed
-  by the original right-partition indices.
-- `S`  is a `Vector{<:Real}` of ``\\operatorname{Sch}(\\psi)`` retained singular
-  values, sorted descending.
-- `ε`  is the 2-norm of the discarded singular values (exact truncation error).
+Bond labels are derived from the `MultiIx` autolabels of the bipartition by
+prefixing with `:χ`: Bond₁ ``(U \\leftrightarrow \\Sigma)`` gets label
+``\\texttt{Symbol}(:\\chi, \\ell_L)`` and Bond₂ ``(\\Sigma \\leftrightarrow V^\\dagger)``
+gets ``\\texttt{Symbol}(:\\chi, \\ell_R)``, where ``\\ell_L, \\ell_R`` are the
+autolabels of the left and right grouped indices.
+
+- `U`   carries the original left-partition indices followed by a `TIx{Lower}`
+  bond leg (outward, label ``\\chi\\ell_L``).
+- `Σ`   is an `IndexedTensor{T,2,Diagonal}` with a `TIx{Upper}` leg (label
+  ``\\chi\\ell_L``) and a `TIx{Lower}` leg (label ``\\chi\\ell_R``).
+- `Vd`  carries a `TIx{Upper}` bond leg (label ``\\chi\\ell_R``) followed by the
+  original right-partition indices.
+- `ε`   is the 2-norm of the discarded singular values (exact truncation error).
 
 ## Normalization
 
-By default (`normalize=false`) `S` contains the raw singular values of `A`.
-Pass `normalize=true` to obtain proper Schmidt coefficients:
-
-```math
-\\lambda_i = \\frac{\\sigma_i}{\\|A\\|_F}
-```
-
-where ``\\|A\\|_F = \\sqrt{\\sum_i \\sigma_i^2}`` is the Frobenius norm computed
-from the full pre-truncation spectrum. The normalized `S` satisfies
-``\\sum_i \\lambda_i^2 \\leq 1``, with equality iff no singular values were
-discarded. `ε` is always returned in raw (unnormalized) form regardless of
-this flag; the full norm satisfies ``\\|A\\|_F^2 = \\texttt{norm(S)}^2 + \\varepsilon^2``.
+Pass `normalize=true` to obtain Schmidt coefficients ``\\lambda_i = \\sigma_i / \\|A\\|_F``.
+The diagonal of `Σ.data` then satisfies ``\\sum_i \\lambda_i^2 \\leq 1``.  `ε` is
+always returned in raw form; ``\\|A\\|_F^2 = \\operatorname{tr}(\\Sigma^2) + \\varepsilon^2``.
 
 !!! note
-    For MPS canonical-form sweeps the raw singular values are typically
-    absorbed into a neighbouring site tensor; `normalize=false` is the
-    right choice there. For Schmidt decompositions and entanglement entropy
-    calculations, use `normalize=true`.
+    For MPS canonical sweeps absorb `Σ` into a neighbouring site tensor and
+    use `normalize=false`.  For Schmidt decompositions use `normalize=true`.
 """
 function tensor_svd(
     A::IndexedTensor, bp::Bipartition, trunc::AbstractTruncation;
@@ -158,27 +166,26 @@ function tensor_svd(
     norm_full = norm(F.S)
     r, ε      = _truncate(F.S, trunc)
 
-    bond = BondIndex(:χ, r)
+    # Derive bond labels from the grouped MultiIx autolabels, prefixed with :χ
+    # so they never clash with original partition index labels.
+    λ_label  = Symbol(:χ, label(M.indices[1]))   # Bond₁: U ↔ Σ
+    λ′_label = Symbol(:χ, label(M.indices[2]))   # Bond₂: Σ ↔ Vd
 
     left_shape  = Tuple(ndim(idx) for idx in bp.left.indices)
     right_shape = Tuple(ndim(idx) for idx in bp.right.indices)
 
-    U_data  = reshape(F.U[:, 1:r],   left_shape...,  r)
+    svs    = normalize ? F.S[1:r] ./ norm_full : F.S[1:r]
+    U_data = reshape(F.U[:, 1:r],   left_shape..., r)
+    Σ_data = Diagonal(svs)
     Vd_data = reshape(F.Vt[1:r, :], r, right_shape...)
 
-    U_indices  = Tuple(AbstractIndex[bp.left.indices...;  bond])
-    Vd_indices = Tuple(AbstractIndex[bond; bp.right.indices...])
-
-    S_out = normalize ? F.S[1:r] ./ norm_full : F.S[1:r]
-
-    if !normalize
-        @debug "tensor_svd: S contains raw (unnormalized) singular values. " *
-               "Pass `normalize=true` to obtain Schmidt coefficients."
-    end
+    U_indices  = Tuple(AbstractIndex[bp.left.indices...;  lower(λ_label,  r)])
+    Σ_indices  = (upper(λ_label, r), lower(λ′_label, r))
+    Vd_indices = Tuple(AbstractIndex[upper(λ′_label, r); bp.right.indices...])
 
     return (;
         U  = IndexedTensor(U_data,  U_indices),
-        S  = S_out,
+        Σ  = IndexedTensor(Σ_data,  Σ_indices),
         Vd = IndexedTensor(Vd_data, Vd_indices),
         ε,
     )

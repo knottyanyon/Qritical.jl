@@ -12,7 +12,7 @@ export TIx, upper, lower, uppers, lowers, bond_label
 export MultiIx
 export Partition, Bipartition, complement, bipartition, group_legs
 export IndexedTensor
-export BondIndex
+export Bond
 export AbstractTruncation, KeepFirst, KeepAbove, KeepRelative, KeepMachineEps
 export tensor_svd
 

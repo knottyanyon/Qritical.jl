@@ -102,9 +102,9 @@ function FiniteMPS(dof::D, L::Int, χ::Int; T::Type{<:Number}=Float64) where {D<
         χL = bond_dims[i]
         χR = bond_dims[i + 1]
         data = randn(T, χL, d, χR)
-        vL = BondIndex(bond_label(:χ, i - 1), χL)
+        vL = upper(bond_label(:χ, i - 1), χL)
         σ  = lower(:σ, d)
-        vR = BondIndex(bond_label(:χ, i),     χR)
+        vR = lower(bond_label(:χ, i),     χR)
         tensors[i] = IndexedTensor(data, (vL, σ, vR))
     end
 
@@ -124,9 +124,9 @@ function _set_tensor!(mps::FiniteMPS, i::Int, data::AbstractArray{<:Number,3})
     old = mps.tensors[i]
     χL  = size(data, 1)
     χR  = size(data, 3)
-    vL  = BondIndex(bond_label(:χ, i - 1), χL)
+    vL  = upper(bond_label(:χ, i - 1), χL)
     σ   = old.indices[2]
-    vR  = BondIndex(bond_label(:χ, i),     χR)
+    vR  = lower(bond_label(:χ, i),     χR)
     mps.tensors[i] = IndexedTensor(data, (vL, σ, vR))
 end
 
@@ -379,9 +379,9 @@ function Base.:+(ψ::FiniteMPS{D, T, RT}, φ::FiniteMPS{D, T, RT}) where {D, T, 
             new[(χL_ψ+1):end, :, (χR_ψ+1):end] = B
         end
 
-        vL = BondIndex(bond_label(:χ, i - 1), size(new, 1))
+        vL = upper(bond_label(:χ, i - 1), size(new, 1))
         σ  = ψ.tensors[i].indices[2]
-        vR = BondIndex(bond_label(:χ, i),     size(new, 3))
+        vR = lower(bond_label(:χ, i),     size(new, 3))
         tensors[i] = IndexedTensor(new, (vL, σ, vR))
     end
 

@@ -6,7 +6,7 @@
 #     needed if singular values below ``10^{-3}`` are discarded.
 
 DATA_ROOT = normpath(joinpath(@__FILE__, "..", "..", "data"))
-FPATH_A   = joinpath(DATA_ROOT, "A.txt")
+FPATH_A = joinpath(DATA_ROOT, "A.txt")
 #--
 
 using DelimitedFiles, LinearAlgebra, Qritical
@@ -20,7 +20,9 @@ A_mat = readdlm(FPATH_A)
 # basics: how big is the matrix, and what type are the entries?
 
 println("type:     ", typeof(A_mat))
-println("size:     ", size(A_mat), "  →  ", size(A_mat,1), " rows × ", size(A_mat,2), " cols")
+println(
+    "size:     ", size(A_mat), "  →  ", size(A_mat, 1), " rows × ", size(A_mat, 2), " cols"
+)
 println("elements: ", length(A_mat))
 println("eltype:   ", eltype(A_mat))
 
@@ -54,9 +56,9 @@ println("eltype:   ", eltype(A_mat))
 # both sides *and* a physical leg: three legs, easy to mix up.
 #
 # `Qritical.jl` gives each leg a `TIx` struct that packs three things together:
-# a human-readable name, a direction (`Upper` or `Lower`), and the dimension.
+# a human-readable name, the index location (`Upper` or `Lower`), and the local imension.
 # Two indices can only be contracted if one is upper and the other is lower
-# *and* they share the same name — the type system enforces this at compile
+# *and* they share the same name. The type system enforces this at compile
 # time, so positional mistakes surface as errors rather than silent wrong
 # answers.
 #
@@ -72,7 +74,7 @@ println("col index: ", col)
 # data without copying anything.  The `bipartition` call tells `tensor_svd`
 # which legs go to the left factor (``U``) and which to the right (``V^\dagger``):
 
-A  = IndexedTensor(A_mat, (row, col))
+A = IndexedTensor(A_mat, (row, col))
 bp = bipartition(Partition(row), A)
 
 println("tensor indices: ", A.indices)
@@ -105,16 +107,16 @@ println("tensor indices: ", A.indices)
 res = tensor_svd(A, bp, KeepAbove(1e-3))
 
 println("full rank:    ", minimum(size(A_mat)))
-println("Schmidt rank: ", length(res.S))
+println("Schmidt rank: ", size(res.Σ.data, 1))
 println("ε ≈ ", round(res.ε; sigdigits=4))
 #--
 
 # ## The result — IndexedTensors with named bonds
 #
-# `tensor_svd` does not return bare matrices.  `U` and `Vd` come back as
-# `IndexedTensor`s: the original partition legs are re-attached, and a fresh
-# `BondIndex(:χ, r)` representing the virtual bond is added at the shared
-# interface:
+# `tensor_svd` does not return bare matrices.  `U`, `Σ`, and `Vd` come back as
+# `IndexedTensor`s: the original partition legs are re-attached, and fresh
+# `TIx{Lower}` / `TIx{Upper}` bond legs with derived labels are added at the
+# shared interfaces:
 
 println("typeof(res.U):  ", typeof(res.U))
 println("U  indices: ", res.U.indices)
@@ -134,9 +136,9 @@ println("Vd indices: ", res.Vd.indices)
 # `.data` keeps the multiplication in raw array space, avoiding any ambiguity
 # about how `IndexedTensor * Diagonal` dispatches):
 
-U, S, Vd = res.U, res.S, res.Vd
-A_approx  = U.data * Diagonal(S) * Vd.data
-frob_err  = norm(A_mat .- A_approx)
+U, Σ, Vd = res.U, res.Σ, res.Vd
+A_approx = U.data * Σ.data * Vd.data
+frob_err = norm(A_mat .- A_approx)
 println("‖A - A_r‖_F ≈ ", round(frob_err; sigdigits=4), "  (should match ε above)")
 
 # ## Notes
