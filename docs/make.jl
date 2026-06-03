@@ -51,6 +51,16 @@ makedocs(;
                     "2.2 Right Canonical State" => "exercises/02/task_2.md",
                     "2.3 Mixed Canonical State" => "exercises/02/task_3.md",
                 ],
+                "Exercise 03" => [
+                    "3.1 Left to Right"        => "exercises/03/task_1.md",
+                    "3.2 Right to Left"        => "exercises/03/task_2.md",
+                    "3.3 Check Normalization"  => "exercises/03/task_3.md",
+                ],
+                "Exercise 04" => [
+                    "4.2 MPS Overlap"    => "exercises/04/task_1.md",
+                    "4.3 Observables"    => "exercises/04/task_2.md",
+                    "4.4 Adding MPS"     => "exercises/04/task_3.md",
+                ],
             ],
         ],
         "Bibliography" => "references.md",
