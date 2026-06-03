@@ -9,4 +9,5 @@ using Test
     include("test_tensor_core.jl")
     include("test_site_types.jl")
     include("test_backend.jl")
+    include("test_tensor_svd.jl")
 end
