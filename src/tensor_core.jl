@@ -43,3 +43,62 @@ end
 # ── TensorOperations.jl interface ────────────────────────────────────────────
 
 TensorOperations.tensorstructure(t::IndexedTensor, i::Int, ::Bool) = t.indices[i]
+
+# ── Partition helpers ─────────────────────────────────────────────────────────
+
+"""
+    complement(p, A) -> Partition
+
+Return the `Partition` of all indices in `A` that are not in `p`.
+"""
+function complement(p::Partition, A::IndexedTensor)
+    remaining = filter(idx -> idx ∉ p.indices, collect(A.indices))
+    return Partition(remaining)
+end
+
+"""
+    bipartition(left, A) -> Bipartition
+
+Construct a `Bipartition` pairing `left` with `complement(left, A)`.
+"""
+bipartition(left::Partition, A::IndexedTensor) = Bipartition(left, complement(left, A))
+
+# ── group_legs ────────────────────────────────────────────────────────────────
+
+function _resolve(idx::AbstractIndex, A::IndexedTensor)
+    pos = findfirst(==(idx), A.indices)
+    pos === nothing && throw(ArgumentError("index $idx not found in tensor"))
+    return pos
+end
+
+"""
+    group_legs(A, bp) -> IndexedTensor{El, 2}
+
+Permute and reshape `A` into a 2-leg matrix according to `bp`. The left partition
+becomes the row axis (a `MultiIx` over `bp.left.indices`) and the right partition
+becomes the column axis. Frobenius norm is preserved exactly.
+
+Throws `ArgumentError` if any partition index is absent from `A`, or if the
+two partitions together do not cover all legs of `A`.
+"""
+function group_legs(A::IndexedTensor, bp::Bipartition)
+    left_pos  = [_resolve(idx, A) for idx in bp.left.indices]
+    right_pos = [_resolve(idx, A) for idx in bp.right.indices]
+    perm      = vcat(left_pos, right_pos)
+
+    if !(length(perm) == ndims(A) && isperm(perm))
+        uncovered = [A.indices[i] for i in setdiff(1:ndims(A), perm)]
+        msg = isempty(uncovered) ?
+            "bipartition has duplicate index positions" :
+            "bipartition covers $(length(unique(perm)))/$(ndims(A)) tensor indices — uncovered: $uncovered"
+        throw(ArgumentError(msg))
+    end
+
+    left_dim  = prod(i -> size(A.data, i), left_pos;  init=1)
+    right_dim = prod(i -> size(A.data, i), right_pos; init=1)
+    M_data    = reshape(permutedims(A.data, perm), left_dim, right_dim)
+
+    left_ix  = MultiIx(Tuple(bp.left.indices))
+    right_ix = MultiIx(Tuple(bp.right.indices))
+    return IndexedTensor(M_data, (left_ix, right_ix))
+end
