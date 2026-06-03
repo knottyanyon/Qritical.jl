@@ -1,150 +1,216 @@
-# IndexedTensor
+# Indices and IndexedTensor
 
-When I first drew a tensor network diagram on paper for the course exercises, the correspondence between the diagram and the code felt obvious — each node is a tensor, each line is an index, arrows show direction. Then I opened a Julia file and stared at `rand(2, 4, 4)`. The array has three slots, sure, but it has no idea that slot 1 is the physical spin degree of freedom and slots 2 and 3 are bond legs with arrows pointing in specific directions. Naming that `A` doesn't help: `A[2, 3, 1]` is just a number.
+When you draw a tensor network on paper, the correspondence between the diagram and the maths is obvious — each node is a tensor, each line is a leg with an index, and arrow directions encode covariant vs contravariant position. Opening a Julia file and staring at `rand(2, 4, 4)` breaks that correspondence: the array has three slots but no idea that slot 1 is a physical spin leg and slots 2–3 are left and right bond legs pointing in specific directions.
 
-`IndexedTensor` is what closes that gap. It pairs the backing array with a named, directed index for each leg — one index per dimension, in order — so the diagram and the code say the same thing.
+`IndexedTensor` closes that gap. It pairs a backing array with a named, directed index for each leg, so the diagram and the code say the same thing.
 
-## Defining indices
+## Index types
 
-Every leg is described by an `AbstractIndex`. There are two kinds:
+Every leg is described by a concrete subtype of [`AbstractIndex`](@ref). Two interface methods must be implemented by every subtype:
 
-| Type | What it represents |
-|:-----|:-------------------|
-| `PhysicalIndex` | local Hilbert space at a lattice site; dimension comes from the site type |
-| `BondIndex` | virtual/entanglement leg between two sites; dimension is set explicitly |
+| Method | Returns | Meaning |
+|:-------|:--------|:--------|
+| `ndim(i)` | `Int` | Number of distinct values the index can take |
+| `label(i)` | `Symbol` | Name of the leg (e.g. `:σ`, `:αL`) |
 
-Each index carries a **direction** (`UpIndex` or `DownIndex`) that matches the superscript/subscript notation from the [Notation](../notation.md) page:
+### `TIx` — a single named index
 
-| Direction    | Notation position | Arrow in diagram |
-|:-------------|:------------------|:-----------------|
-| `UpIndex`    | superscript       | incoming → •     |
-| `DownIndex`  | subscript         | outgoing • →     |
+[`TIx{L}`](@ref) is the workhorse index type. The type parameter `L` is either `Upper` or `Lower`, encoding whether the index sits in superscript (contravariant) or subscript (covariant) position. This is a **type-level** distinction: `TIx{Upper}` and `TIx{Lower}` are different types, so matching them up for contraction can be resolved by the compiler.
 
-Contractions always pair one `UpIndex` leg with one `DownIndex` leg — same as the Einstein summation convention where you sum over a repeated up-down pair.
+Use the constructor helpers `upper` and `lower` instead of the parametric form directly:
 
-### Physical indices
+```jldoctest tix
+julia> using Qritical
 
-```jldoctest indexed_tensor
-julia> using HalfIntegers: half
+julia> σ = upper(:σ, 2)       # physical spin-1/2: 2 values
+TIx{Upper}(:σ, 2)
 
-julia> σ = PhysicalIndex(:σ, SpinSite(half(1), 1), UpIndex);
+julia> αL = lower(:αL, 4)     # left bond: dimension 4
+TIx{Lower}(:αL, 4)
 
-julia> local_hilbert_dim(σ)   # spin-1/2: 2S+1 = 2
+julia> ndim(σ)
 2
+
+julia> label(αL)
+:αL
 ```
 
-### Bond indices
+Upper and lower indices with the same label are distinct — index position is semantically meaningful:
 
-A bond index lives on a directed bond from site `from` to site `to`. The convention (see [ADR 0002](../adr/0002-bond-index-arrow-orientation.md)) is:
-
-- the `from` site holds the leg with `DownIndex` (arrow leaves, outgoing)
-- the `to` site holds the leg with `UpIndex` (arrow arrives, incoming)
-
-```jldoctest indexed_tensor
-julia> α_out = BondIndex(:α, 1, 2, 4, DownIndex);   # bond α leaves site 1
-
-julia> α_in  = BondIndex(:α, 1, 2, 4, UpIndex);     # same bond, enters site 2
-
-julia> local_hilbert_dim(α_out)   # bond dimension
-4
-```
-
-### Dual indices
-
-`dual(i)` returns a copy of `i` with the direction flipped. The postfix `'` is also available. Two indices form a valid contraction pair when they are duals of each other:
-
-```jldoctest indexed_tensor
-julia> isdual(α_out, α_in)        # opposite directions, same label and bond
-true
-
-julia> isdual(α_out, dual(α_out))
-true
-
-julia> isdual(α_out, α_out)       # same direction — not a valid pair
+```jldoctest tix
+julia> upper(:α, 4) == lower(:α, 4)
 false
+
+julia> upper(:α, 4) == upper(:α, 4)
+true
 ```
 
-## Building a tensor
+The inner constructor rejects non-positive dimensions immediately:
 
-Pass the backing `Array` and a tuple of indices to `IndexedTensor`. The tuple must have exactly as many entries as the array has dimensions, in the same order:
+```jldoctest
+julia> using Qritical
 
-```jldoctest indexed_tensor
-julia> β = BondIndex(:β, 2, 3, 3, DownIndex);
+julia> TIx{Upper}(:σ, 0)
+ERROR: ArgumentError: TIx ndim must be positive, got 0
+[...]
+```
 
-julia> A = IndexedTensor(ones(2, 4), (σ, α_out))
-2×4 IndexedTensor{Float64, 2, Matrix{Float64}}:
- 1.0  1.0  1.0  1.0
- 1.0  1.0  1.0  1.0
+To build several indices of the same position at once, use [`uppers`](@ref) or [`lowers`](@ref):
+
+```jldoctest
+julia> using Qritical
+
+julia> vL, vR = uppers(:vL => 1, :vR => 4)
+(TIx{Upper}(:vL, 1), TIx{Upper}(:vR, 4))
+
+julia> ndim(vL)
+1
+```
+
+A dimension-1 index is the auxiliary boundary bond of a finite open MPS.
+
+### `MultiIx` — a composite index
+
+[`MultiIx`](@ref) bundles several constituent indices into one combined index whose dimension is the product of its parts. This is what you need when reshaping a high-order tensor into a matrix for SVD: the "row" group and "column" group each become one `MultiIx`.
+
+```jldoctest multiix
+julia> using Qritical
+
+julia> α, β = upper(:α, 2), lower(:β, 3)
+(TIx{Upper}(:α, 2), TIx{Lower}(:β, 3))
+
+julia> g = MultiIx(:αβ, (α, β))
+MultiIx(:αβ, (TIx{Upper}(:α, 2), TIx{Lower}(:β, 3)))
+
+julia> ndim(g)   # product: 2 × 3
+6
+
+julia> label(g)
+:αβ
+```
+
+When you omit the label, it is auto-generated by concatenating the constituent labels:
+
+```jldoctest multiix
+julia> MultiIx((α, β))
+MultiIx(:αβ, (TIx{Upper}(:α, 2), TIx{Lower}(:β, 3)))
+
+julia> MultiIx()    # empty product: scalar, dimension 1
+MultiIx(:scalar, ())
+
+julia> ndim(MultiIx())
+1
+```
+
+## `IndexedTensor`
+
+[`IndexedTensor`](@ref) pairs a backing `AbstractArray` with an `NTuple` of `AbstractIndex` values, one per dimension:
+
+```jldoctest it
+julia> using Qritical
+
+julia> vL, σ, vR = upper(:vL, 1), lower(:σ, 2), upper(:vR, 4);
+
+julia> A = IndexedTensor(rand(1, 2, 4), (vL, σ, vR));
 
 julia> size(A)
-(2, 4)
+(1, 2, 4)
 
+julia> A.indices
+(TIx{Upper}(:vL, 1), TIx{Lower}(:σ, 2), TIx{Upper}(:vR, 4))
+```
+
+`IndexedTensor` subtypes `AbstractArray`, so all standard array operations work — indexing, slicing, broadcasting, `size`, `ndims`:
+
+```jldoctest it
 julia> ndims(A)
+3
+
+julia> size(A, 2)
 2
+
+julia> length(A.indices) == ndims(A)
+true
 ```
 
-This represents the site tensor $A^{\sigma}_{\alpha}$ at site 1 — a physical leg $\sigma$ up (superscript) and bond leg $\alpha$ down (subscript).
+### Scalar tensors
 
-## Element access
+An order-0 `IndexedTensor` is a scalar: empty index tuple, 0-dimensional array:
 
-`IndexedTensor` behaves as a plain array for indexing and iteration. Everything from `Base.AbstractArray` works out of the box:
+```jldoctest
+julia> using Qritical
 
-```jldoctest indexed_tensor
-julia> A[1, 2]
-1.0
+julia> s = IndexedTensor(fill(3.14), ());
 
-julia> A[2, end]
-1.0
+julia> ndims(s)
+0
+
+julia> s[]
+3.14
 ```
 
-## Contracting tensors
+## Partition and Bipartition
 
-The named indices pay off when contracting. The `@tensor` macro from `TensorOperations.jl` uses the index labels in the expression to decide which legs to pair, and the `checkcontractible` rules enforce the pairing: the two legs must have opposite directions, the same label, and the same dimension.
+A [`Partition`](@ref) is an ordered list of indices representing one set of tensor legs. A [`Bipartition`](@ref) is an ordered pair of non-overlapping `Partition`s — the left one maps to matrix rows, the right to columns.
 
-```jldoctest indexed_tensor
-julia> using TensorOperations
+```jldoctest bp
+julia> using Qritical
 
-julia> B = IndexedTensor(ones(4, 3), (α_in, β));
+julia> vL, σ, vR = upper(:vL, 2), lower(:σ, 2), upper(:vR, 3);
 
-julia> @tensor C[s, b] := A[s, a] * B[a, b];
+julia> A = IndexedTensor(rand(2, 2, 3), (vL, σ, vR));
 
-julia> size(C)
-(2, 3)
+julia> left  = Partition(vL, σ)
+Partition(AbstractIndex[TIx{Upper}(:vL, 2), TIx{Lower}(:σ, 2)])
+
+julia> right = Partition(vR)
+Partition(AbstractIndex[TIx{Upper}(:vR, 3)])
+
+julia> bp = Bipartition(left, right)
+Bipartition(Partition(AbstractIndex[TIx{Upper}(:vL, 2), TIx{Lower}(:σ, 2)]), Partition(AbstractIndex[TIx{Upper}(:vR, 3)]))
 ```
 
-Here `a` contracts $\alpha_{\text{out}}$ (from `A`) with $\alpha_{\text{in}}$ (from `B`) — a valid up-down pair. The result is a `2×3` tensor $C^{\sigma}_{\beta}$.
+The constructor checks for overlap at construction time — two partitions sharing an index would make the bipartition ambiguous:
 
-If the directions don't form a valid pair, the error fires immediately at contraction time:
-
-```julia
-julia> B_wrong = IndexedTensor(ones(4, 3), (α_out, β));   # α_out on both sides
-
-julia> @tensor D[s, b] := A[s, a] * B_wrong[a, b]
-ERROR: ArgumentError: Both legs on index a are DownIndex — contraction requires a dual pair
+```jldoctest bp
+julia> Bipartition(Partition(vL, σ), Partition(σ, vR))
+ERROR: ArgumentError: Bipartition partitions overlap on: AbstractIndex[TIx{Lower}(:σ, 2)]
+[...]
 ```
 
-You get the error before any computation happens. This is the main advantage of carrying directions on the index objects rather than relying on convention.
+### `bipartition` convenience constructor
 
-## Kronecker delta
+When one side of the split is implicit (all legs not in the left partition), use [`bipartition`](@ref) with [`complement`](@ref):
 
-`kronecker_delta(i, j)` returns the identity tensor for a dual index pair. It is useful for inserting identities and for index relabelling:
+```jldoctest bp
+julia> bp2 = bipartition(Partition(vL, σ), A)   # right = complement = {vR}
+Bipartition(Partition(AbstractIndex[TIx{Upper}(:vL, 2), TIx{Lower}(:σ, 2)]), Partition(AbstractIndex[TIx{Upper}(:vR, 3)]))
 
-```jldoctest indexed_tensor
-julia> δ = kronecker_delta(α_out, α_in)
-4×4 IndexedTensor{Float64, 2, Matrix{Float64}}:
- 1.0  0.0  0.0  0.0
- 0.0  1.0  0.0  0.0
- 0.0  0.0  1.0  0.0
- 0.0  0.0  0.0  1.0
-
-julia> δ.indices
-(BondIndex(:α, 1, 2, 4, DownIndex), BondIndex(:α, 1, 2, 4, UpIndex))
+julia> bp2 == bp
+true
 ```
 
-Passing two indices that are not a dual pair throws:
+## `group_legs`
 
-```jldoctest indexed_tensor
-julia> kronecker_delta(α_out, α_out)
-ERROR: ArgumentError: kronecker_delta requires a dual index pair — got DownIndex and DownIndex
+[`group_legs`](@ref) permutes and reshapes an `IndexedTensor` into a matrix according to a `Bipartition`. Each axis of the output is tagged with an auto-labeled `MultiIx`:
+
+```jldoctest bp
+julia> M = group_legs(A, bp);
+
+julia> size(M)
+(4, 3)
+
+julia> ndims(M)
+2
+
+julia> label(M.indices[1])   # auto-label from vL and σ
+:vLσ
+```
+
+`group_legs` validates full index coverage — every leg in `A` must appear in exactly one side of the bipartition:
+
+```jldoctest bp
+julia> group_legs(A, Bipartition(Partition(vL), Partition(σ)))
+ERROR: ArgumentError: bipartition covers 2/3 tensor indices — uncovered: AbstractIndex[TIx{Upper}(:vR, 3)]
 [...]
 ```
