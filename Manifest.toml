@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "86bba480c5f98d17ca965a10dd5435901d668ee5"
+project_hash = "3852375f7b005a1545d1b5fa2138960634c6de29"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "bbc22a9a08a0ef6460041086d8a7b27940ed4ffd"
@@ -689,10 +689,10 @@ version = "2.31.0"
     StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [[deps.FixedPointNumbers]]
-deps = ["Statistics"]
-git-tree-sha1 = "05882d6995ae5c12bb5f36dd2ed3f61c98cbb172"
+deps = ["Random", "Statistics"]
+git-tree-sha1 = "59af96b98217c6ef4ae0dfe065ac7c20831d1a84"
 uuid = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
-version = "0.8.5"
+version = "0.8.6"
 
 [[deps.Fontconfig_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Expat_jll", "FreeType2_jll", "JLLWrappers", "Libdl", "Libuuid_jll", "Zlib_jll"]
@@ -1531,9 +1531,9 @@ weakdeps = ["StatsBase"]
 
 [[deps.PNGFiles]]
 deps = ["Base64", "CEnum", "ImageCore", "IndirectArrays", "OffsetArrays", "libpng_jll"]
-git-tree-sha1 = "cf181f0b1e6a18dfeb0ee8acc4a9d1672499626c"
+git-tree-sha1 = "32b657a0d57c310a1a172bfc8c8cf68c5e674323"
 uuid = "f57f5aa1-a3ce-4bc8-8ab9-96f992907883"
-version = "0.4.4"
+version = "0.4.5"
 
 [[deps.PackageExtensionCompat]]
 git-tree-sha1 = "fb28e33b8a95c4cee25ce296c817d89cc2e53518"
@@ -1646,7 +1646,7 @@ version = "1.0.2"
 deps = ["GeometryBasics", "HalfIntegers", "LaTeXStrings", "LinearAlgebra", "Logging", "Makie", "ScopedValues", "Serialization", "TensorKit", "TensorOperations"]
 path = "."
 uuid = "4d77d595-865b-4fe8-9046-dbce8046f658"
-version = "0.0.1-DEV"
+version = "0.2.1"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]

@@ -4,153 +4,108 @@ EditURL = "task_3.jl"
 
 # Task 1.3 — SVD a state
 
-!!! question "Task 1.3 — SVD a state"
-    Perform an SVD on the state `psi.jls` given in Moodle. The format is a tensor of rank ten, dimensions $2^{10} = 1024$. Find the Schmidt rank needed if singular values below $10^{−6}$ are discarded.
+!!! question "Task 1.3"
+    Perform an SVD on the state `psi.jls` — a rank-10 tensor with shape
+    ``(2, 2, \ldots, 2)`` representing a 10-qubit state. Find the Schmidt rank
+    needed if singular values below ``10^{-6}`` are discarded for:
+    - **(a)** a bipartition after the first site;
+    - **(b)** a bipartition at the middle (5 | 5).
 
-A workaround to ensure that the data can be read during local testing as well as pages deployment build
-
-````julia
-DATA_ROOT = normpath(joinpath(@__FILE__, ".."));
-FPATH_PSI = normpath(joinpath(DATA_ROOT, "psi.jls"));
+````@example task_3
+DATA_ROOT = normpath(joinpath(@__FILE__, "..", "..", "data"))
+FPATH_PSI = joinpath(DATA_ROOT, "psi.jls")
 ````
 
-````julia
-using Qritical: QriticalUtils, factorize_with_svd, reshape_tensor_for_bipartition, get_schmidt_coefficients, get_entanglement_entropy
+````@example task_3
+using Serialization, LinearAlgebra, Qritical, CairoMakie
+
+ψ = deserialize(FPATH_PSI)    # shape (2,2,...,2): 10 sites, each dim-2
+N = ndims(ψ)
 ````
 
-````julia
-tolerance = 1e-6;
-ψ = QriticalUtils.load_state_from_file(FPATH_PSI);
+Attach a named upper index to each site leg.  All sites share dimension 2.
+Using `Symbol(:s, i)` gives labels `:s1, :s2, …, :s10`.
+
+````@example task_3
+sites = [upper(Symbol(:s, i), 2) for i in 1:N]
+A     = IndexedTensor(ψ, Tuple(sites))
 ````
 
-!!! subquestion
-    **A)** For a bipartition of the system after the first site
+## Part (a) — bipartition after the first site (1 | 9)
 
-````julia
-partition_1 = [(1,)]
-ψ_reshaped_1 = reshape_tensor_for_bipartition(ψ, partition_1);
-
-U_1, Σ_1, Vt_1 = factorize_with_svd(ψ_reshaped_1; discard_below_threshold=true, threshold=tolerance);
+````@example task_3
+bp_a  = bipartition(Partition(sites[1]), A)
+res_a = tensor_svd(A, bp_a, KeepAbove(1e-6); normalize=true)
+println("Schmidt rank (1 | 9): ", length(res_a.S))
 ````
 
-````
-[ Info: Discarding singular values below 1.0e-6
-┌ Info: Schmidt rank
-│   before = 2
-└   after = 2
+## Part (b) — bipartition at the middle (5 | 5)
 
-````
-
-!!! subquestion
-    **B)** For a bipartition of the system in the middle
-
-````julia
-partition_2 = [(1, 2, 3, 4, 5)];
-ψ_reshaped_2 = reshape_tensor_for_bipartition(ψ, partition_2);
-
-U_2, Σ_2, Vt_2 = factorize_with_svd(ψ_reshaped_2; discard_below_threshold=true, threshold=tolerance);
+````@example task_3
+bp_b  = bipartition(Partition(sites[1:N÷2]...), A)
+res_b = tensor_svd(A, bp_b, KeepAbove(1e-6); normalize=true)
+println("Schmidt rank (5 | 5): ", length(res_b.S))
 ````
 
-````
-[ Info: Discarding singular values below 1.0e-6
-┌ Info: Schmidt rank
-│   before = 32
-└   after = 24
+## Entanglement entropy profile
 
-````
+The **von Neumann entanglement entropy** of a bipartition quantifies how much
+the two halves are correlated.  Given Schmidt coefficients
+``\lambda_i`` (normalised singular values with ``\sum_i \lambda_i^2 = 1``),
+the entropy is:
 
-# Notes
+```math
+S = -\sum_i \lambda_i^2 \log_b \lambda_i^2,
+```
 
-- A small Schmidt rank means that the state can be approximated with fewer terms.
+with base ``b = 2`` for **bits** or ``b = e`` for **nats**.
+A product state has ``S = 0``; a maximally entangled state across a
+2^k|2^k bipartition has ``S = k`` bits.
 
-- The Schmidt rank is higher in the case of middle partition because the entanglement is also higher compared to case 1.
+**Your implementation:** fill in the formula below.
+- Choose a logarithm base (and note what units the result is in).
+- Guard against ``\lambda_i = 0`` to avoid ``0 \log 0``.
 
-Can I explain it with Monogamy of entanglement? More particles to share --> lower entanglement
-how can I test this hypothesis? I can simply calculate the entanglement entropy but how can I know for sure that this difference is indeed due to monogamy and not some other reason? How so I do a control? falsifiability?
-
-````julia
-using CairoMakie
-````
-
-````julia
-function plot_entanglement_entropy(ψ; discard_below_threshold=true, threshold=1e-6, units=:bits)
-    N = ndims(ψ)
-    sites = 1:N-1
-
-    entropies = map(sites) do i
-        partition = [Tuple(1:i)]
-        ψ_reshaped = reshape_tensor_for_bipartition(ψ, partition)
-        λ = get_schmidt_coefficients(ψ_reshaped; discard_below_threshold=discard_below_threshold, threshold=threshold)
-        S = get_entanglement_entropy(λ)
-    end
-
-    unit_label = "bits"
-
-    fig = Figure(size=(600, 380), fontsize=13)
-    ax = Axis(
-        fig[1, 1],
-        xlabel="partition boundary after site i",
-        ylabel="S ($unit_label)",
-        title="entanglement entropy across bipartitions",
-        xticks=collect(sites),
-    )
-
-    lines!(ax, collect(sites), entropies; color=:teal, linewidth=2.2)
-    scatter!(ax, collect(sites), entropies;
-        color=:teal, markersize=10, strokewidth=0.5, strokecolor=:white)
-
-    return fig, collect(entropies)
+````@example task_3
+function entanglement_entropy(λ::AbstractVector{<:Real})
+    # TODO: implement S = -∑ᵢ λᵢ² log_b(λᵢ²)
+    # Hint: use log2 for bits or log for nats; skip terms where λᵢ = 0
 end
 ````
 
-````
-plot_entanglement_entropy (generic function with 1 method)
+Once `entanglement_entropy` is implemented, the cell below sweeps every
+bipartition boundary and plots the resulting entropy profile.
+
+````@example task_3
+entropies = map(1:N-1) do i
+    bp  = bipartition(Partition(sites[1:i]...), A)
+    res = tensor_svd(A, bp, KeepMachineEps(); normalize=true)
+    entanglement_entropy(res.S)
+end
+
+fig = Figure(size=(620, 360))
+ax  = Axis(fig[1, 1];
+    title  = "Entanglement entropy across bipartitions",
+    xlabel = "boundary position  i  (site i | i+1 … N)",
+    ylabel = "S (bits)",
+    xticks = 1:N-1,
+)
+lines!(ax, 1:N-1, entropies; color=:teal, linewidth=2.5)
+scatter!(ax, 1:N-1, entropies; color=:teal, markersize=9)
+fig
 ````
 
-````julia
-fig_truncated, entropies_trunc = plot_entanglement_entropy(ψ; discard_below_threshold=true, threshold=tolerance)
-save(normpath(joinpath(DATA_ROOT, "entropy_truncated.png")), fig_truncated)
-````
+## Notes
 
-````
-[ Info: Discarding Schmidt coefficients below 1.0e-6
-┌ Info: Schmidt rank
-│   before = 2
-└   after = 2
-[ Info: Discarding Schmidt coefficients below 1.0e-6
-┌ Info: Schmidt rank
-│   before = 4
-└   after = 4
-[ Info: Discarding Schmidt coefficients below 1.0e-6
-┌ Info: Schmidt rank
-│   before = 8
-└   after = 8
-[ Info: Discarding Schmidt coefficients below 1.0e-6
-┌ Info: Schmidt rank
-│   before = 16
-└   after = 16
-[ Info: Discarding Schmidt coefficients below 1.0e-6
-┌ Info: Schmidt rank
-│   before = 32
-└   after = 24
-[ Info: Discarding Schmidt coefficients below 1.0e-6
-┌ Info: Schmidt rank
-│   before = 16
-└   after = 16
-[ Info: Discarding Schmidt coefficients below 1.0e-6
-┌ Info: Schmidt rank
-│   before = 8
-└   after = 8
-[ Info: Discarding Schmidt coefficients below 1.0e-6
-┌ Info: Schmidt rank
-│   before = 4
-└   after = 4
-[ Info: Discarding Schmidt coefficients below 1.0e-6
-┌ Info: Schmidt rank
-│   before = 2
-└   after = 2
-
-````
+- A small Schmidt rank means the bipartition carries *low entanglement*: the
+  state can be represented faithfully with few terms in its Schmidt expansion.
+- The entropy at the middle bipartition is typically the highest because the
+  two halves can exchange information across every pair of consecutive bonds
+  between them.
+- Both `normalize=true` and `KeepMachineEps()` matter here: the former
+  produces proper Schmidt coefficients ``\sum_i \lambda_i^2 = 1``, while the
+  latter discards floating-point noise that would otherwise inflate the
+  entropy by tiny non-zero terms.
 
 ---
 
