@@ -227,3 +227,6 @@ struct Bipartition
         new(left, right)
     end
 end
+
+Base.:(==)(a::Bipartition, b::Bipartition) = a.left == b.left && a.right == b.right
+Base.hash(bp::Bipartition, h::UInt)        = hash(bp.left, hash(bp.right, h))
