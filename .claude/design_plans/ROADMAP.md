@@ -217,23 +217,23 @@ Within every minor, the TDD ordering is fixed:
 **New capability:** build the full `2^L × 2^L` sparse Hamiltonian matrix and find the ground state exactly. Used as a cross-check for MPS results on small systems.
 
 ### Physics behavior tests (write first)
-- [ ] `DenseHamiltonian` for `L = 2` Heisenberg matches the known 4×4 matrix exactly
-- [ ] `size(H.H) == (2^L, 2^L)` for `Spin{1//2}` on `L` sites
-- [ ] Ground state energy from ED matches `⟨ψ_GS|H|ψ_GS⟩` from MPS v0.4 (for `L ≤ 10`)
-- [ ] Sparse matrix has at most `O(L × 2^L)` non-zero entries (each two-site term contributes a fixed number)
-- [ ] Ground state is real for a real Hamiltonian with real starting vector
+- [x] `DenseHamiltonian` for `L = 2` Heisenberg matches the known 4×4 matrix exactly
+- [x] `size(H.H) == (2^L, 2^L)` for `Spin{1//2}` on `L` sites
+- [x] Ground state energy from ED matches `⟨ψ_GS|H|ψ_GS⟩` from MPS v0.4 (for `L ≤ 10`)
+- [x] Sparse matrix has at most `O(L × 2^L)` non-zero entries (each two-site term contributes a fixed number)
+- [x] Ground state is real for a real Hamiltonian with real starting vector
 
 ### Types
-- [ ] `DenseHamiltonian{D <: AbstractDoF, T <: Number}` — wraps `SparseMatrixCSC{T, Int}`
+- [x] `DenseHamiltonian{D <: AbstractDoF, T <: Number}` — wraps `SparseMatrixCSC{T, Int}`
 
 ### Algorithms
-- [ ] `dense_hamiltonian(L, model::AbstractDoF; kwargs...)` — builds sparse matrix by summing two-site terms
-- [ ] `ground_state(H::DenseHamiltonian; tol)` — ground state energy and vector via `KrylovKit.eigsolve`
+- [x] `dense_hamiltonian(L, model::AbstractDoF; kwargs...)` — builds sparse matrix by summing two-site terms
+- [x] `ground_state(H::DenseHamiltonian; tol)` — ground state energy and vector via `KrylovKit.eigsolve`
 
 ### Edge case tests
-- [ ] `L = 1`: trivial single-site Hamiltonian
-- [ ] All-zero Hamiltonian: ground state energy is 0, any normalized vector is a ground state
-- [ ] `L = 14`: largest system where exact diagonalization is tractable in `Float64`
+- [x] `L = 1`: trivial single-site Hamiltonian
+- [x] All-zero Hamiltonian: ground state energy is 0, any normalized vector is a ground state
+- [x] `L = 14`: largest system where exact diagonalization is tractable in `Float64`
 
 ---
 

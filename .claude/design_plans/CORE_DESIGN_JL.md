@@ -6,10 +6,10 @@
 |---|---|---|---|
 | 1 | Ex 1–5 | **complete (v0.1–v0.3)** | `AbstractDoF` · `hilbert_space` · `TIx` / `MultiIx` / `Partition` / `Bipartition` · `IndexedTensor` · `Bond` · `TensorSVD` · `tensor_svd` + `AbstractTruncation` · `FiniteMPS` · `CanonicalForm` · `ArbitraryForm` |
 | 2 | Ex 6–9, Final | **complete (v0.4–v0.6)** | `FiniteMPO` + `IdL`/`IdR` · `to_vidal` / `to_canonical` · `VidalForm` · `CompositeDoF` · `apply_gate!` · `trotter_step!` · `local_expectation` · `entanglement_spectrum` |
-| 3 | Ex 10 | **next (v0.7)** | `DenseHamiltonian` (SparseArrays / KrylovKit) |
+| 3 | Ex 10 | **complete (v0.7)** | `DenseHamiltonian` (SparseArrays / KrylovKit) |
 | Future | — | deferred | `Lattice{V,E}` + MetaGraphsNext.jl · `:tensorkit` backend dispatch · `TIx` contraction engine |
 
-Milestones 1 and 2 are complete. Milestone 3 (v0.7) is next. Items in the Future milestone are specced here for design continuity but are not implemented until an algorithm actually needs them.
+Milestones 1, 2, and 3 are complete. Items in the Future milestone are specced here for design continuity but are not implemented until an algorithm actually needs them.
 
 ---
 
