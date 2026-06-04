@@ -67,7 +67,7 @@ julia> ndim(vL)
 1
 ```
 
-A dimension-1 index is the auxiliary boundary bond of a finite open MPS.
+A dimension-1 virtual index appears at the open boundaries of a finite MPS, where the bond space is trivial.
 
 ### `MultiIx` — a composite index
 

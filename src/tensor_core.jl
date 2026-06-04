@@ -154,7 +154,7 @@ function group_legs(A::IndexedTensor, bp::Bipartition)
     perm = vcat(left_pos, right_pos)
 
     if !(length(perm) == ndims(A) && isperm(perm))
-        uncovered = [A.indices[i] for i in setdiff(1:ndims(A), perm)]
+        uncovered = AbstractIndex[A.indices[i] for i in setdiff(1:ndims(A), perm)]
         msg = if isempty(uncovered)
             "bipartition has duplicate index positions"
         else
