@@ -14,13 +14,13 @@ Choose a strategy by constructing the appropriate [`AbstractTruncation`](@ref) s
 
 ## `tensor_svd`
 
-[`tensor_svd`](@ref) takes an `IndexedTensor`, a `Bipartition` describing how to split the legs, and a truncation strategy. It returns a named tuple `(; U, S, Vd, ε)`:
+[`tensor_svd`](@ref) takes an `IndexedTensor`, a `Bipartition` describing how to split the legs, and a truncation strategy. It returns a [`TensorSVD`](@ref) with four fields:
 
 | Field | Type | Meaning |
 |:------|:-----|:--------|
-| `U` | `IndexedTensor` | Left isometry; left-partition indices + `BondIndex` |
-| `S` | `Vector{<:Real}` | Retained singular values, descending |
-| `Vd` | `IndexedTensor` | Right isometry; `BondIndex` + right-partition indices |
+| `U` | `IndexedTensor` | Left isometry; left-partition indices + `TIx{Lower}` bond leg |
+| `Σ` | `IndexedTensor` | Diagonal singular-value tensor; raw values via `Σ.data.diag` |
+| `Vd` | `IndexedTensor` | Right isometry; `TIx{Upper}` bond leg + right-partition indices |
 | `ε` | `Real` | `‖discarded singular values‖₂` — exact truncation error |
 
 ```jldoctest svd
@@ -32,15 +32,17 @@ julia> A = IndexedTensor(rand(2, 2, 3), (vL, σ, vR));
 
 julia> bp = bipartition(Partition(vL, σ), A);
 
-julia> (; U, S, Vd, ε) = tensor_svd(A, bp, KeepFirst(4));
+julia> (; U, Σ, Vd, ε) = tensor_svd(A, bp, KeepFirst(4));
 
-julia> length(S)   # at most 4, capped at rank(A) = min(4, 3) = 3
+julia> length(Σ.data.diag)   # at most 4, capped at rank(A) = min(4, 3) = 3
 3
 
-julia> S == sort(S; rev=true)   # sorted descending
+julia> Σ.data.diag == sort(Σ.data.diag; rev=true)   # sorted descending
 true
 
-julia> norm(U.data' * reshape(U.data, 4, :) - I) < 1e-12   # U†U ≈ I
+julia> U_m = reshape(U.data, 4, :);
+
+julia> norm(U_m' * U_m - I) < 1e-12   # U†U ≈ I
 true
 ```
 
@@ -49,29 +51,32 @@ true
 With no truncation (`KeepFirst(r)` where `r ≥ rank(A)`) the factorization is exact:
 
 ```jldoctest svd
-julia> (; U, S, Vd, ε) = tensor_svd(A, bp, KeepFirst(10));
+julia> (; U, Σ, Vd, ε) = tensor_svd(A, bp, KeepFirst(10));
 
 julia> ε < 1e-14   # exact — nothing discarded
 true
 
-julia> U_mat  = reshape(U.data,  4, length(S));
-julia> Vd_mat = reshape(Vd.data, length(S), 3);
-julia> A_rec  = reshape(U_mat * Diagonal(S) * Vd_mat, 2, 2, 3);
-julia> norm(A.data - A_rec) < 1e-12
+julia> svs   = Σ.data.diag;
+
+julia> U_mat = reshape(U.data,  4, length(svs));
+
+julia> V_mat = reshape(Vd.data, length(svs), 3);
+
+julia> norm(A.data - reshape(U_mat * Diagonal(svs) * V_mat, 2, 2, 3)) < 1e-12
 true
 ```
 
 ### Re-indexing
 
-`U` and `Vd` carry the original partition indices plus a new [`BondIndex`](@ref) whose `ndim` equals the number of retained singular values:
+`U` and `Vd` carry the original partition indices plus a new `TIx` bond leg whose `ndim` equals the number of retained singular values:
 
 ```jldoctest svd
-julia> bond = U.indices[end];   # BondIndex is appended to left indices
+julia> bond = U.indices[end];   # TIx{Lower} bond leg appended to left indices
 
 julia> typeof(bond)
-BondIndex
+TIx{Lower}
 
-julia> ndim(bond) == length(S)
+julia> ndim(bond) == length(Σ.data.diag)
 true
 ```
 
@@ -86,9 +91,9 @@ julia> A2 = IndexedTensor(diagm(σ_vals), (upper(:r, 4), lower(:c, 4)));
 
 julia> bp2 = bipartition(Partition(upper(:r, 4)), A2);
 
-julia> (; S) = tensor_svd(A2, bp2, KeepAbove(0.05));
+julia> (; Σ) = tensor_svd(A2, bp2, KeepAbove(0.05));
 
-julia> S
+julia> Σ.data.diag
 3-element Vector{Float64}:
  1.0
  0.5
@@ -98,9 +103,9 @@ julia> S
 `KeepRelative` keeps values above a fraction of the largest singular value:
 
 ```jldoctest svd
-julia> (; S) = tensor_svd(A2, bp2, KeepRelative(0.2));
+julia> (; Σ) = tensor_svd(A2, bp2, KeepRelative(0.2));
 
-julia> S   # keep σ/1.0 > 0.2: 1.0 and 0.5 qualify
+julia> Σ.data.diag   # keep σ/1.0 > 0.2: 1.0 and 0.5 qualify
 2-element Vector{Float64}:
  1.0
  0.5
@@ -117,9 +122,9 @@ julia> A = IndexedTensor(rand(3, 2) * rand(2, 4), (upper(:r, 3), lower(:c, 4)));
 
 julia> bp = bipartition(Partition(upper(:r, 3)), A);
 
-julia> (; S, ε) = tensor_svd(A, bp, KeepFirst(10));
+julia> (; Σ, ε) = tensor_svd(A, bp, KeepFirst(10));
 
-julia> length(S) == rank(A.data)   # capped at true rank, not 10
+julia> length(Σ.data.diag) == rank(A.data)   # capped at true rank, not 10
 true
 
 julia> ε < 1e-12   # nothing meaningful discarded

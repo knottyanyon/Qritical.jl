@@ -14,6 +14,8 @@ Return the number of distinct values the index `i` can take (its dimension).
 
 # Examples
 ```jldoctest
+julia> using Qritical
+
 julia> ndim(upper(:σ, 2))
 2
 
@@ -62,6 +64,8 @@ system — no runtime comparison needed.
 
 # Examples
 ```jldoctest
+julia> using Qritical
+
 julia> TIx{Upper}(:σ, 2)
 TIx{Upper}(:σ, 2)
 
@@ -106,11 +110,15 @@ Construct a single named index at the given position.
 
 # Examples
 ```jldoctest
+julia> using Qritical
+
 julia> upper(:σ, 2)
 TIx{Upper}(:σ, 2)
 
 julia> lower(:α, 4)
 TIx{Lower}(:α, 4)
+
+julia> using Qritical
 
 julia> upper(:σ, 2) == TIx{Upper}(:σ, 2)
 true
@@ -128,6 +136,8 @@ pairs. Returns a `Tuple` that can be destructured directly.
 
 # Examples
 ```jldoctest
+julia> using Qritical
+
 julia> vL, vR = uppers(:vL => 4, :vR => 4)
 (TIx{Upper}(:vL, 4), TIx{Upper}(:vR, 4))
 
@@ -150,6 +160,8 @@ Used when constructing MPS/MPO tensors where each virtual bond needs a unique
 label derived from a shared base — e.g. `bond_label(:α, 3)` → `:α3`.
 
 ```jldoctest
+julia> using Qritical
+
 julia> bond_label(:α, 1)
 :α1
 
@@ -173,6 +185,8 @@ because it enumerates all combinations of the constituent values.
 
 # Examples
 ```jldoctest
+julia> using Qritical
+
 julia> α, β = upper(:α, 2), lower(:β, 3);
 
 julia> g = MultiIx(:αβ, (α, β))

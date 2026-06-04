@@ -62,6 +62,8 @@ information.
 
 # Examples
 ```jldoctest
+julia> using Qritical
+
 julia> hilbert_space(Spin{1//2}())
 2
 
