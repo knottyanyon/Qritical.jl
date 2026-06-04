@@ -7,16 +7,19 @@ using LinearAlgebra: norm, I
 # Product state |↑↓↑↓...⟩ as a χ=1 FiniteMPS.
 # Basis: index 1 = |↑⟩, index 2 = |↓⟩.
 function _neel_mps(L::Int; T::Type=Float64)
-    mps = FiniteMPS(Spin{1//2}(), L, 1; T)
     d   = hilbert_space(Spin{1//2}())
+    RT  = real(T)
+    bond_svs = [RT[1] for _ in 1:L+1]
+    tensors  = Vector{IndexedTensor{T, 3}}(undef, L)
     for i in 1:L
-        spin_idx = isodd(i) ? 1 : 2
-        data     = zeros(T, 1, d, 1)
-        data[1, spin_idx, 1] = one(T)
-        mps.tensors[i] = IndexedTensor(data, mps.tensors[i].indices)
+        data = zeros(T, 1, d, 1)
+        data[1, isodd(i) ? 1 : 2, 1] = one(T)
+        vL = upper(bond_label(:χ, i - 1), 1)
+        σ  = lower(:σ, d)
+        vR = lower(bond_label(:χ, i), 1)
+        tensors[i] = IndexedTensor(data, (vL, σ, vR))
     end
-    mps.form = ArbitraryForm()
-    return mps
+    return FiniteMPS{Spin{1//2}, T, RT}(L, tensors, bond_svs, CanonicalForm(L, L + 1))
 end
 
 # ── construction ──────────────────────────────────────────────────────────────

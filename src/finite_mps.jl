@@ -315,9 +315,10 @@ function overlap(bra::FiniteMPS, ket::FiniteMPS)
         χL_bra, d, χR_bra = size(A)
         χL_ket, _,  χR_ket = size(B)
 
-        # X_mat[m, α'] = Σ_α env[α,β(m)] * conj(A)[α, σ(m), α']
-        X_mat = reshape(env' * reshape(A, χL_bra, d * χR_bra), χL_ket * d, χR_bra)
-        env   = X_mat' * reshape(B, χL_ket * d, χR_ket)
+        # F[(α_ket,σ), β_bra] = Σ_{α_bra} env[α_bra,α_ket] * conj(A)[α_bra,σ,β_bra]
+        # Use plain transpose (not adjoint) — A is already conjugated above.
+        F_mat = reshape(transpose(env) * reshape(A, χL_bra, d * χR_bra), χL_ket * d, χR_bra)
+        env   = transpose(F_mat) * reshape(B, χL_ket * d, χR_ket)
     end
 
     return env[1, 1]

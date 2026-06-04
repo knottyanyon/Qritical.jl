@@ -37,6 +37,18 @@ and occupied are physically allowed.
 """
 struct HardCoreBoson <: AbstractDoF end
 
+"""
+    CompositeDoF{D1 <: AbstractDoF, D2 <: AbstractDoF}
+
+Product of two degrees of freedom.  Local Hilbert space dimension is
+``\\operatorname{hilbert\\_space}(D1()) \\times \\operatorname{hilbert\\_space}(D2())``.
+Used to represent two-site blocks in TEBD gate application.
+"""
+struct CompositeDoF{D1 <: AbstractDoF, D2 <: AbstractDoF} <: AbstractDoF end
+
+hilbert_space(::CompositeDoF{D1, D2}) where {D1, D2} =
+    hilbert_space(D1()) * hilbert_space(D2())
+
 # ── hilbert_space — native mode ───────────────────────────────────────────────
 
 """

@@ -6,6 +6,7 @@ include("tensor_svd.jl")
 include("dof.jl")
 include("finite_mps.jl")
 include("finite_mpo.jl")
+include("tebd.jl")
 
 export AbstractIndex, ndim, label
 export IndexLoc, Upper, Lower
@@ -18,7 +19,7 @@ export Bond, TensorSVD
 export tensor_svd
 
 # v0.3 — DoF hierarchy
-export AbstractDoF, Spin, Fermionic, HardCoreBoson
+export AbstractDoF, Spin, Fermionic, HardCoreBoson, CompositeDoF
 export hilbert_space
 export AbstractSite, StateSite, OperatorSite
 
@@ -32,5 +33,9 @@ export overlap, entanglement_entropy
 export FiniteMPO
 export heisenberg_mpo, identity_mpo
 export expectation_value, apply
+
+# v0.5 — Vidal form and TEBD
+export to_vidal, to_canonical
+export apply_gate!, trotter_step!, time_evolve
 
 end
