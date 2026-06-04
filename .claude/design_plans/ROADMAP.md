@@ -130,28 +130,28 @@ Within every minor, the TDD ordering is fixed:
 **New capability:** represent a Hamiltonian as an MPO, apply it to an MPS, and compute `⟨ψ|H|ψ⟩` via environment contraction.
 
 ### Physics behavior tests (write first)
-- [ ] Heisenberg MPO on `L` sites has virtual bond dimension 5
-- [ ] `⟨ψ|I|ψ⟩ = ⟨ψ|ψ⟩` for the identity MPO
-- [ ] `⟨↑↓|H_Heis|↑↓⟩` on two sites matches the known exact value `-J/4`
-- [ ] MPO × MPS produces an MPS with bond dimension `χ_MPS × χ_MPO`
-- [ ] `‖H|ψ⟩‖² = ⟨ψ|H²|ψ⟩` (self-consistency of apply + norm)
-- [ ] `⟨ψ|H²|ψ⟩ - ⟨ψ|H|ψ⟩² ≥ 0` (variance is non-negative)
-- [ ] Power method: `H|ψ⟩ / ‖H|ψ⟩‖` converges to the ground state; energy converges to `E₀`
+- [x] Heisenberg MPO on `L` sites has virtual bond dimension 5
+- [x] `⟨ψ|I|ψ⟩ = ⟨ψ|ψ⟩` for the identity MPO
+- [x] `⟨↑↓|H_Heis|↑↓⟩` on two sites matches the known exact value `-J/4`
+- [x] MPO × MPS produces an MPS with bond dimension `χ_MPS × χ_MPO`
+- [x] `‖H|ψ⟩‖² = ⟨ψ|H²|ψ⟩` (self-consistency of apply + norm)
+- [x] `⟨ψ|H²|ψ⟩ - ⟨ψ|H|ψ⟩² ≥ 0` (variance is non-negative)
+- [x] Power method: `H|ψ⟩ / ‖H|ψ⟩‖` converges to the ground state; energy converges to `E₀`
 
 ### Types
-- [ ] `OperatorSite{D <: AbstractDoF}`
-- [ ] `FiniteMPO{D <: AbstractDoF, T <: Number}` with `IdL::Int`, `IdR::Int`
+- [x] `OperatorSite{D <: AbstractDoF}`
+- [x] `FiniteMPO{D <: AbstractDoF, T <: Number}` with `IdL::Int`, `IdR::Int`
 
 ### Algorithms
-- [ ] `heisenberg_mpo(L; J=1.0, T=Float64)` — builds the `L`-site Heisenberg MPO
-- [ ] `apply(mpo, mps)` — MPO × MPS contraction → MPS
-- [ ] `left_environment(mps, mpo, i)`, `right_environment(mps, mpo, i)`
-- [ ] `expectation_value(mps, mpo)` — `⟨ψ|H|ψ⟩` via environment contraction
+- [x] `heisenberg_mpo(L; J=1.0, T=Float64)` — builds the `L`-site Heisenberg MPO
+- [x] `apply(mpo, mps)` — MPO × MPS contraction → MPS
+- [x] `left_environment(mps, mpo, i)`, `right_environment(mps, mpo, i)`
+- [x] `expectation_value(mps, mpo)` — `⟨ψ|H|ψ⟩` via environment contraction
 
 ### Edge case tests
-- [ ] `L = 2`: MPO has only left-boundary and right-boundary tensors; no interior
-- [ ] MPO applied to unnormalized MPS: `⟨ψ|H|ψ⟩` scales as `‖ψ‖²`
-- [ ] `J = 0`: MPO is proportional to identity; `⟨ψ|H|ψ⟩ = 0` for any normalized `ψ`
+- [x] `L = 2`: MPO has only left-boundary and right-boundary tensors; no interior
+- [x] MPO applied to unnormalized MPS: `⟨ψ|H|ψ⟩` scales as `‖ψ‖²`
+- [x] `J = 0`: MPO is proportional to identity; `⟨ψ|H|ψ⟩ = 0` for any normalized `ψ`
 
 ---
 
@@ -160,31 +160,31 @@ Within every minor, the TDD ordering is fixed:
 **New capability:** represent an MPS in Γ-Λ-Γ form, apply two-site gates, and run Trotter time evolution. Covers Ex 7–9 and the final assignment.
 
 ### Physics behavior tests (write first)
-- [ ] Vidal normalization: `‖Λ_{i-1} Γ_i Λ_i‖ = 1` at each site when Λ are the correct singular values
-- [ ] `CanonicalForm ↔ VidalForm` round-trip: `|⟨ψ_can | ψ_vidal⟩|² ≈ 1`
-- [ ] Identity two-site gate: state unchanged, bond dimension does not grow, `ε = 0`
-- [ ] Unitary two-site gate preserves norm
-- [ ] `CompositeDoF{Spin{1//2}, Spin{1//2}}` has `hilbert_space` of dimension 4
-- [ ] Single full Trotter step on Néel state: energy change matches first-order perturbation theory in `dt`
-- [ ] Entropy at the central bond of a Néel state grows under time evolution (entanglement build-up)
-- [ ] Imaginary time evolution of a random state converges to the ground state energy `E₀`
+- [x] Vidal normalization: `‖Λ_{i-1} Γ_i Λ_i‖ = 1` at each site when Λ are the correct singular values
+- [x] `CanonicalForm ↔ VidalForm` round-trip: `|⟨ψ_can | ψ_vidal⟩|² ≈ 1`
+- [x] Identity two-site gate: state unchanged, bond dimension does not grow, `ε = 0`
+- [x] Unitary two-site gate preserves norm
+- [x] `CompositeDoF{Spin{1//2}, Spin{1//2}}` has `hilbert_space` of dimension 4
+- [x] Single full Trotter step on Néel state: energy change matches first-order perturbation theory in `dt`
+- [x] Entropy at the central bond of a Néel state grows under time evolution (entanglement build-up)
+- [x] Imaginary time evolution of a random state converges to the ground state energy `E₀`
 
 ### Types
-- [ ] `VidalForm()`
-- [ ] `CompositeDoF{D1 <: AbstractDoF, D2 <: AbstractDoF} <: AbstractDoF`
+- [x] `VidalForm()`
+- [x] `CompositeDoF{D1 <: AbstractDoF, D2 <: AbstractDoF} <: AbstractDoF`
 
 ### Algorithms
-- [ ] `to_vidal(mps::FiniteMPS)` → `FiniteMPS` in `VidalForm`
-- [ ] `to_canonical(mps::FiniteMPS)` → `FiniteMPS` in `CanonicalForm`
-- [ ] `apply_gate!(mps, gate, (i, i+1))` — two-site gate update in Vidal form via SVD
-- [ ] `trotter_step!(mps, H_bonds, dt)` — single odd/even bond Trotter step
-- [ ] `time_evolve(mps, H_bonds, t_end, dt; trunc)` — full real or imaginary time evolution loop
+- [x] `to_vidal(mps::FiniteMPS)` → `FiniteMPS` in `VidalForm`
+- [x] `to_canonical(mps::FiniteMPS)` → `FiniteMPS` in `CanonicalForm`
+- [x] `apply_gate!(mps, gate, (i, i+1))` — two-site gate update in Vidal form via SVD
+- [x] `trotter_step!(mps, H_bonds, dt)` — single odd/even bond Trotter step
+- [x] `time_evolve(mps, H_bonds, t_end, dt; trunc)` — full real or imaginary time evolution loop
 
 ### Edge case tests
-- [ ] Gate at boundary bonds `(1, 2)` and `(L-1, L)`: trivial Λ = `[1.0]` on the open side
-- [ ] `dt → 0` limit: a single Trotter step acts as the identity to first order in `dt`
-- [ ] Bond dimension cap hit during gate: truncation error `ε > 0`, state approximately preserved
-- [ ] Imaginary time: norm decays per step; re-normalization after each step restores it
+- [x] Gate at boundary bonds `(1, 2)` and `(L-1, L)`: trivial Λ = `[1.0]` on the open side
+- [x] `dt → 0` limit: a single Trotter step acts as the identity to first order in `dt`
+- [x] Bond dimension cap hit during gate: truncation error `ε > 0`, state approximately preserved
+- [x] Imaginary time: norm decays per step; re-normalization after each step restores it
 
 ---
 
@@ -193,22 +193,22 @@ Within every minor, the TDD ordering is fixed:
 **New capability:** compute single-site and global observables (local `⟨O⟩`, entanglement spectrum, entropy profile) in closed form without re-running SVD.
 
 ### Physics behavior tests (write first)
-- [ ] `⟨Sz⟩` at every site of `|↑↑…↑⟩` equals `+1/2` for `Spin{1//2}`
-- [ ] `⟨Sz⟩` of the two-site Néel state `|↑↓⟩` alternates `+1/2, -1/2`
-- [ ] `entanglement_entropy` of a product state is `0` at every bond
-- [ ] `entanglement_entropy` of the maximally entangled two-site state equals `log(2)`
-- [ ] `⟨n⟩ ∈ {0, 1}` for every site of a `Fermionic` product state
-- [ ] Observable computed in mixed canonical form (center at site `i`) agrees with full contraction
+- [x] `⟨Sz⟩` at every site of `|↑↑…↑⟩` equals `+1/2` for `Spin{1//2}`
+- [x] `⟨Sz⟩` of the two-site Néel state `|↑↓⟩` alternates `+1/2, -1/2`
+- [x] `entanglement_entropy` of a product state is `0` at every bond
+- [x] `entanglement_entropy` of the maximally entangled two-site state equals `log(2)`
+- [x] `⟨n⟩ ∈ {0, 1}` for every site of a `Fermionic` product state
+- [x] Observable computed in mixed canonical form (center at site `i`) agrees with full contraction
 
 ### Algorithms
-- [ ] `local_expectation(mps, op, i)` — single-site operator `⟨ψ|O_i|ψ⟩` using mixed canonical form
-- [ ] `entanglement_spectrum(mps, bond)` — returns `bond_svs[bond]` directly (no new SVD)
-- [ ] `entanglement_entropy(mps)` → `Vector` of per-bond entropies across all `L-1` bonds
+- [x] `local_expectation(mps, op, i)` — single-site operator `⟨ψ|O_i|ψ⟩` using mixed canonical form
+- [x] `entanglement_spectrum(mps, bond)` — returns `bond_svs[bond]` directly (no new SVD)
+- [x] `entanglement_entropy(mps)` → `Vector` of per-bond entropies across all `L-1` bonds
 
 ### Edge case tests
-- [ ] Observable at `i = 1` or `i = L`: no virtual bond on the open side
-- [ ] Observable on unnormalized state: result is `⟨ψ|O|ψ⟩ / ⟨ψ|ψ⟩`
-- [ ] Zero operator: `⟨O⟩ = 0` regardless of state
+- [x] Observable at `i = 1` or `i = L`: no virtual bond on the open side
+- [x] Observable on unnormalized state: result is `⟨ψ|O|ψ⟩ / ⟨ψ|ψ⟩`
+- [x] Zero operator: `⟨O⟩ = 0` regardless of state
 
 ---
 
