@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "3852375f7b005a1545d1b5fa2138960634c6de29"
+project_hash = "e1b3b3d677be7be9cd32c83b87e0b11c6d15f9c7"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "bbc22a9a08a0ef6460041086d8a7b27940ed4ffd"
@@ -91,6 +91,12 @@ deps = ["Colors"]
 git-tree-sha1 = "e092fa223bf66a3c41f9c022bd074d916dc303e7"
 uuid = "27a7e980-b3e6-11e9-2bcd-0b925532e340"
 version = "0.4.2"
+
+[[deps.ArgParse]]
+deps = ["Logging", "TextWrap"]
+git-tree-sha1 = "22cf435ac22956a7b45b0168abbc871176e7eecc"
+uuid = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+version = "1.2.0"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -410,6 +416,18 @@ deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "a692a4c1dc59a4b8bc0b6403876eb3250fde2bc3"
 uuid = "a38c48d9-6df1-5ac9-9223-b6ada3b5572b"
 version = "0.1.0+0"
+
+[[deps.Coverage]]
+deps = ["ArgParse", "Artifacts", "CoverageTools", "Downloads", "HTTP", "JSON", "LibGit2", "MbedTLS", "SHA", "Scratch"]
+git-tree-sha1 = "f09a3d13f030caa4c2cc1f80aa2b1e66ee6cc491"
+uuid = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
+version = "1.8.1"
+
+[[deps.CoverageTools]]
+deps = ["JuliaSyntax", "TOML"]
+git-tree-sha1 = "59e6cf93c468aa21bd22578c41b69b5784e34955"
+uuid = "c36e975a-824b-4404-a568-ef97ca766997"
+version = "1.4.1"
 
 [[deps.DataAPI]]
 git-tree-sha1 = "abe83f3a2f1b857aac70ef8b269080af17764bbe"
@@ -1074,6 +1092,11 @@ version = "1.30.1"
     [deps.JuMP.weakdeps]
     DimensionalData = "0703355e-b756-11e9-17c0-8b28908087d0"
 
+[[deps.JuliaSyntax]]
+git-tree-sha1 = "0d4b3dab95018bcf3925204475693d9f09dc45b8"
+uuid = "70703baa-626e-46a2-a12c-08ffd08c73b4"
+version = "1.0.2"
+
 [[deps.JuliaSyntaxHighlighting]]
 deps = ["StyledStrings"]
 uuid = "ac6e5ff7-fb65-4e79-a425-ec3bc9c03011"
@@ -1090,6 +1113,16 @@ deps = ["Base64", "CodecZlib", "DocStringExtensions", "HTTP", "JSON", "Markdown"
 git-tree-sha1 = "c2eeb52dd957eb8b9c2c2c3a8ea2a1f084062548"
 uuid = "b3565e16-c1f2-4fe9-b4ab-221c88942068"
 version = "1.0.1"
+
+[[deps.KrylovKit]]
+deps = ["LinearAlgebra", "PackageExtensionCompat", "Printf", "Random", "VectorInterface"]
+git-tree-sha1 = "1ab4539f47bee7e5045f679e5136ccaa3c8c40c3"
+uuid = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
+version = "0.10.3"
+weakdeps = ["ChainRulesCore"]
+
+    [deps.KrylovKit.extensions]
+    KrylovKitChainRulesCoreExt = "ChainRulesCore"
 
 [[deps.LAME_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1643,10 +1676,10 @@ uuid = "4b34888f-f399-49d4-9bb3-47ed5cae4e65"
 version = "1.0.2"
 
 [[deps.Qritical]]
-deps = ["GeometryBasics", "HalfIntegers", "LaTeXStrings", "LinearAlgebra", "Logging", "Makie", "ScopedValues", "Serialization", "TensorKit", "TensorOperations"]
+deps = ["GeometryBasics", "HalfIntegers", "KrylovKit", "LaTeXStrings", "LinearAlgebra", "Logging", "Makie", "ScopedValues", "Serialization", "SparseArrays", "TensorKit", "TensorOperations"]
 path = "."
 uuid = "4d77d595-865b-4fe8-9046-dbce8046f658"
-version = "0.2.1"
+version = "0.7.0"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
@@ -2073,6 +2106,11 @@ version = "1.11.0"
 git-tree-sha1 = "42fd9023fef18b9b78c8343a4e2f3813ffbcefcb"
 uuid = "1c621080-faea-4a02-84b6-bbd5e436b8fe"
 version = "1.0.0"
+
+[[deps.TextWrap]]
+git-tree-sha1 = "43044b737fa70bc12f6105061d3da38f881a3e3c"
+uuid = "b718987f-49a8-5099-9789-dcd902bef87d"
+version = "1.0.2"
 
 [[deps.TiffImages]]
 deps = ["CodecZstd", "ColorTypes", "DataStructures", "DocStringExtensions", "FileIO", "FixedPointNumbers", "IndirectArrays", "Inflate", "Mmap", "OffsetArrays", "PkgVersion", "PrecompileTools", "ProgressMeter", "SIMD", "UUIDs"]
