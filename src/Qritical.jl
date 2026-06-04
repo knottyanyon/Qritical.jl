@@ -7,6 +7,7 @@ include("dof.jl")
 include("finite_mps.jl")
 include("finite_mpo.jl")
 include("tebd.jl")
+include("observables.jl")
 
 export AbstractIndex, ndim, label
 export IndexLoc, Upper, Lower
@@ -37,5 +38,8 @@ export expectation_value, apply
 # v0.5 — Vidal form and TEBD
 export to_vidal, to_canonical
 export apply_gate!, trotter_step!, time_evolve
+
+# v0.6 — Observables
+export local_expectation, entanglement_spectrum
 
 end
