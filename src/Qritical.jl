@@ -8,6 +8,7 @@ include("finite_mps.jl")
 include("finite_mpo.jl")
 include("tebd.jl")
 include("observables.jl")
+include("ed.jl")
 
 export AbstractIndex, ndim, label
 export IndexLoc, Upper, Lower
@@ -41,5 +42,8 @@ export apply_gate!, trotter_step!, time_evolve
 
 # v0.6 — Observables
 export local_expectation, entanglement_spectrum
+
+# v0.7 — Exact diagonalization
+export DenseHamiltonian, dense_hamiltonian, ground_state
 
 end

@@ -14,4 +14,5 @@ using Test
     include("test_finite_mpo.jl")
     include("test_tebd.jl")
     include("test_observables.jl")
+    include("test_ed.jl")
 end
