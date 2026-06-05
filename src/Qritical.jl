@@ -47,3 +47,5 @@ export local_expectation, entanglement_spectrum
 export DenseHamiltonian, dense_hamiltonian, ground_state
 
 end
+
+

@@ -2,11 +2,13 @@
 .admonition.is-category-theorem {
     border-color: #CB3C33;
 }
-.admonition.is-category-theorem > .admonition-header {
+
+.admonition.is-category-theorem>.admonition-header {
     background-color: #CB3C33;
     color: #fff;
 }
-.admonition.is-category-theorem > .admonition-body {
+
+.admonition.is-category-theorem>.admonition-body {
     background-color: #fdf0ef;
     color: #1a1a2e;
 }
@@ -15,11 +17,13 @@
 .admonition.is-category-definition {
     border-color: #4063D8;
 }
-.admonition.is-category-definition > .admonition-header {
+
+.admonition.is-category-definition>.admonition-header {
     background-color: #4063D8;
     color: #fff;
 }
-.admonition.is-category-definition > .admonition-body {
+
+.admonition.is-category-definition>.admonition-body {
     background-color: #eef1fd;
     color: #1a1a2e;
 }
@@ -29,10 +33,12 @@
 .admonition.is-category-subquestion {
     border-color: #9558B2;
 }
-.admonition.is-category-subquestion > .admonition-header {
+
+.admonition.is-category-subquestion>.admonition-header {
     display: none;
 }
-.admonition.is-category-subquestion > .admonition-body {
+
+.admonition.is-category-subquestion>.admonition-body {
     background-color: #f7f0fb;
     color: #1a1a2e;
 }
@@ -41,11 +47,13 @@
 .admonition.is-category-question {
     border-color: #9558B2;
 }
-.admonition.is-category-question > .admonition-header {
+
+.admonition.is-category-question>.admonition-header {
     background-color: #9558B2;
     color: #fff;
 }
-.admonition.is-category-question > .admonition-body {
+
+.admonition.is-category-question>.admonition-body {
     background-color: #f7f0fb;
     color: #1a1a2e;
 }
@@ -59,12 +67,26 @@
 .admonition.is-category-algorithm {
     border-color: #555;
 }
-.admonition.is-category-algorithm > .admonition-header {
+
+.admonition.is-category-algorithm>.admonition-header {
     background-color: #555;
     color: #fff;
     font-family: monospace;
 }
-.admonition.is-category-algorithm > .admonition-body {
+
+.admonition.is-category-algorithm>.admonition-body {
     background-color: #f8f8f8;
     color: #1a1a2e;
+}
+
+
+/* Tensor network diagrams — dark mode adjustment
+   SVGs are exported with transparent background and #1e1e1e strokes (light mode).
+   In dark mode, invert(0.85) lightens the strokes without fully inverting blob colors.
+   Place this file at docs/src/assets/custom.css and reference it in makedocs():
+       format = Documenter.HTML(assets = ["assets/custom.css"])
+*/
+
+.theme-dark img[src*="assets/diagrams"] {
+    filter: invert(0.85);
 }
