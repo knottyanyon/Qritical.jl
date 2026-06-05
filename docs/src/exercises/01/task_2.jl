@@ -19,12 +19,7 @@ A_mat = readdlm(FPATH_A)
 # Julia array. Before doing anything with it, it is worth peeking at the
 # basics: how big is the matrix, and what type are the entries?
 
-println("type:     ", typeof(A_mat))
-println(
-    "size:     ", size(A_mat), "  →  ", size(A_mat, 1), " rows × ", size(A_mat, 2), " cols"
-)
-println("elements: ", length(A_mat))
-println("eltype:   ", eltype(A_mat))
+(type = typeof(A_mat), size = size(A_mat), elements = length(A_mat), eltype = eltype(A_mat))
 
 # So we are looking at a square matrix of `Float64` entries (double precision —
 # around 16 significant digits).  That is comfortable for SVD: LAPACK's `dgesdd`
@@ -67,8 +62,7 @@ println("eltype:   ", eltype(A_mat))
 row = upper(:row, size(A_mat, 1))
 col = upper(:col, size(A_mat, 2))
 
-println("row index: ", row)
-println("col index: ", col)
+(row = row, col = col)
 
 # Wrapping the raw array in an `IndexedTensor` attaches these indices to the
 # data without copying anything.  The `bipartition` call tells `tensor_svd`
@@ -77,7 +71,7 @@ println("col index: ", col)
 A = IndexedTensor(A_mat, (row, col))
 bp = bipartition(Partition(row), A)
 
-println("tensor indices: ", A.indices)
+A.indices
 #--
 
 # ## SVD in tensor notation
@@ -106,9 +100,7 @@ println("tensor indices: ", A.indices)
 
 res = tensor_svd(A, bp, KeepAbove(1e-3))
 
-println("full rank:    ", minimum(size(A_mat)))
-println("Schmidt rank: ", size(res.Σ.data, 1))
-println("ε ≈ ", round(res.ε; sigdigits=4))
+(full_rank = minimum(size(A_mat)), Schmidt_rank = size(res.Σ.data, 1), ε = round(res.ε; sigdigits=4))
 #--
 
 # ## The result — IndexedTensors with named bonds
@@ -118,9 +110,7 @@ println("ε ≈ ", round(res.ε; sigdigits=4))
 # `TIx{Lower}` / `TIx{Upper}` bond legs with derived labels are added at the
 # shared interfaces:
 
-println("typeof(res.U):  ", typeof(res.U))
-println("U  indices: ", res.U.indices)
-println("Vd indices: ", res.Vd.indices)
+(U_indices = res.U.indices, Vd_indices = res.Vd.indices)
 
 # The Eckart–Young–Mirsky theorem guarantees that the rank-``r`` truncated
 # SVD ``A_r = U_r \Sigma_r V_r^\dagger`` is the *best* rank-``r`` matrix
@@ -137,9 +127,8 @@ println("Vd indices: ", res.Vd.indices)
 # about how `IndexedTensor * Diagonal` dispatches):
 
 U, Σ, Vd = res.U, res.Σ, res.Vd
-A_approx = U.data * Σ.data * Vd.data
-frob_err = norm(A_mat .- A_approx)
-println("‖A - A_r‖_F ≈ ", round(frob_err; sigdigits=4), "  (should match ε above)")
+A_approx  = U.data * Σ.data * Vd.data
+round(norm(A_mat .- A_approx); sigdigits=4)   ## should match ε above
 
 # ## Notes
 

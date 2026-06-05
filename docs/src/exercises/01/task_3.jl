@@ -28,14 +28,14 @@ A     = IndexedTensor(ψ, Tuple(sites))
 
 bp_a  = bipartition(Partition(sites[1]), A)
 res_a = tensor_svd(A, bp_a, KeepAbove(1e-6); normalize=true)
-println("Schmidt rank (1 | 9): ", size(res_a.Σ.data, 1))
+(bipartition = "1 | 9", Schmidt_rank = size(res_a.Σ.data, 1))
 #--
 
 # ## Part (b) — bipartition at the middle (5 | 5)
 
 bp_b  = bipartition(Partition(sites[1:N÷2]...), A)
 res_b = tensor_svd(A, bp_b, KeepAbove(1e-6); normalize=true)
-println("Schmidt rank (5 | 5): ", size(res_b.Σ.data, 1))
+(bipartition = "5 | 5", Schmidt_rank = size(res_b.Σ.data, 1))
 #--
 
 # ## Entanglement entropy profile

@@ -62,6 +62,7 @@ fit_naive = curve_fit(model, Float64.(Ns), times_naive, [1e-10, 3.0, 0.0])
 fit_blas  = curve_fit(model, Float64.(Ns), times_blas,  [1e-12, 3.0, 0.0])
 x_naive   = round(coef(fit_naive)[2]; digits=2)
 x_blas    = round(coef(fit_blas)[2];  digits=2)
+(naive_exponent = x_naive, blas_exponent = x_blas)
 #--
 
 fig = Figure(size=(700, 380))

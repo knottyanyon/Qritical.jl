@@ -1071,12 +1071,11 @@ A     = IndexedTensor(ψ, Tuple(sites))
 ````julia
 bp_a  = bipartition(Partition(sites[1]), A)
 res_a = tensor_svd(A, bp_a, KeepAbove(1e-6); normalize=true)
-println("Schmidt rank (1 | 9): ", size(res_a.Σ.data, 1))
+(bipartition = "1 | 9", Schmidt_rank = size(res_a.Σ.data, 1))
 ````
 
 ````
-Schmidt rank (1 | 9): 2
-
+(bipartition = "1 | 9", Schmidt_rank = 2)
 ````
 
 ## Part (b) — bipartition at the middle (5 | 5)
@@ -1084,12 +1083,11 @@ Schmidt rank (1 | 9): 2
 ````julia
 bp_b  = bipartition(Partition(sites[1:N÷2]...), A)
 res_b = tensor_svd(A, bp_b, KeepAbove(1e-6); normalize=true)
-println("Schmidt rank (5 | 5): ", size(res_b.Σ.data, 1))
+(bipartition = "5 | 5", Schmidt_rank = size(res_b.Σ.data, 1))
 ````
 
 ````
-Schmidt rank (5 | 5): 24
-
+(bipartition = "5 | 5", Schmidt_rank = 24)
 ````
 
 ## Entanglement entropy profile

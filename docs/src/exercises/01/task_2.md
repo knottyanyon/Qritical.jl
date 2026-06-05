@@ -98,20 +98,11 @@ Julia array. Before doing anything with it, it is worth peeking at the
 basics: how big is the matrix, and what type are the entries?
 
 ````julia
-println("type:     ", typeof(A_mat))
-println(
-    "size:     ", size(A_mat), "  →  ", size(A_mat, 1), " rows × ", size(A_mat, 2), " cols"
-)
-println("elements: ", length(A_mat))
-println("eltype:   ", eltype(A_mat))
+(type = typeof(A_mat), size = size(A_mat), elements = length(A_mat), eltype = eltype(A_mat))
 ````
 
 ````
-type:     Matrix{Float64}
-size:     (64, 64)  →  64 rows × 64 cols
-elements: 4096
-eltype:   Float64
-
+(type = Matrix{Float64}, size = (64, 64), elements = 4096, eltype = Float64)
 ````
 
 So we are looking at a square matrix of `Float64` entries (double precision —
@@ -154,14 +145,11 @@ Here we create one upper index for the row axis and one for the column axis:
 row = upper(:row, size(A_mat, 1))
 col = upper(:col, size(A_mat, 2))
 
-println("row index: ", row)
-println("col index: ", col)
+(row = row, col = col)
 ````
 
 ````
-row index: Qritical.TIx{Qritical.Upper}(:row, 64)
-col index: Qritical.TIx{Qritical.Upper}(:col, 64)
-
+(row = Qritical.TIx{Qritical.Upper}(:row, 64), col = Qritical.TIx{Qritical.Upper}(:col, 64))
 ````
 
 Wrapping the raw array in an `IndexedTensor` attaches these indices to the
@@ -172,12 +160,11 @@ which legs go to the left factor (``U``) and which to the right (``V^\dagger``):
 A = IndexedTensor(A_mat, (row, col))
 bp = bipartition(Partition(row), A)
 
-println("tensor indices: ", A.indices)
+A.indices
 ````
 
 ````
-tensor indices: (Qritical.TIx{Qritical.Upper}(:row, 64), Qritical.TIx{Qritical.Upper}(:col, 64))
-
+(Qritical.TIx{Qritical.Upper}(:row, 64), Qritical.TIx{Qritical.Upper}(:col, 64))
 ````
 
 ## SVD in tensor notation
@@ -207,16 +194,11 @@ away.
 ````julia
 res = tensor_svd(A, bp, KeepAbove(1e-3))
 
-println("full rank:    ", minimum(size(A_mat)))
-println("Schmidt rank: ", size(res.Σ.data, 1))
-println("ε ≈ ", round(res.ε; sigdigits=4))
+(full_rank = minimum(size(A_mat)), Schmidt_rank = size(res.Σ.data, 1), ε = round(res.ε; sigdigits=4))
 ````
 
 ````
-full rank:    64
-Schmidt rank: 12
-ε ≈ 0.0002547
-
+(full_rank = 64, Schmidt_rank = 12, ε = 0.0002547)
 ````
 
 ## The result — IndexedTensors with named bonds
@@ -227,16 +209,11 @@ Schmidt rank: 12
 shared interfaces:
 
 ````julia
-println("typeof(res.U):  ", typeof(res.U))
-println("U  indices: ", res.U.indices)
-println("Vd indices: ", res.Vd.indices)
+(U_indices = res.U.indices, Vd_indices = res.Vd.indices)
 ````
 
 ````
-typeof(res.U):  Qritical.IndexedTensor{Float64, 2, Matrix{Float64}}
-U  indices: (Qritical.TIx{Qritical.Upper}(:row, 64), Qritical.TIx{Qritical.Lower}(:χrow, 12))
-Vd indices: (Qritical.TIx{Qritical.Upper}(:χcol, 12), Qritical.TIx{Qritical.Upper}(:col, 64))
-
+(U_indices = (Qritical.TIx{Qritical.Upper}(:row, 64), Qritical.TIx{Qritical.Lower}(:χrow, 12)), Vd_indices = (Qritical.TIx{Qritical.Upper}(:χcol, 12), Qritical.TIx{Qritical.Upper}(:col, 64)))
 ````
 
 The Eckart–Young–Mirsky theorem guarantees that the rank-``r`` truncated
@@ -255,14 +232,12 @@ about how `IndexedTensor * Diagonal` dispatches):
 
 ````julia
 U, Σ, Vd = res.U, res.Σ, res.Vd
-A_approx = U.data * Σ.data * Vd.data
-frob_err = norm(A_mat .- A_approx)
-println("‖A - A_r‖_F ≈ ", round(frob_err; sigdigits=4), "  (should match ε above)")
+A_approx  = U.data * Σ.data * Vd.data
+round(norm(A_mat .- A_approx); sigdigits=4)   ## should match ε above
 ````
 
 ````
-‖A - A_r‖_F ≈ 0.0002547  (should match ε above)
-
+0.0002547
 ````
 
 ## Notes
