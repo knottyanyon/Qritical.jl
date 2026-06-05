@@ -67,6 +67,17 @@ makedocs(;
                     "5.3 Observables II"    => "exercises/05/task_3.md",
                     "5.4 Observables III"   => "exercises/05/task_4.md",
                 ],
+                "Exercise 06" => [
+                    "6.1 MPO I (XXZ chain)"          => "exercises/06/task_1.md",
+                    "6.2 MPO II (Sz Sz all-to-all)"  => "exercises/06/task_2.md",
+                    "6.3 Expectation value of MPO"   => "exercises/06/task_3.md",
+                    "6.4 Applying MPO to MPS"        => "exercises/06/task_4.md",
+                ],
+                "Exercise 07" => [
+                    "7.1 Gate exponentiation"    => "exercises/07/task_1.md",
+                    "7.2 Odd/even bond update"   => "exercises/07/task_2.md",
+                    "7.3 Full Trotter step"      => "exercises/07/task_3.md",
+                ],
             ],
         ],
         "Bibliography" => "references.md",
