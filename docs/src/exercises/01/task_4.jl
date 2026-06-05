@@ -38,7 +38,7 @@ function compress_channel(M::AbstractMatrix{<:Real}, r::Int)
 end
 
 function compress_image(R, G, B, r::Int)
-    colorview(RGB, compress_channel(R, r), compress_channel(G, r), compress_channel(B, r))
+    RGB.(compress_channel(R, r), compress_channel(G, r), compress_channel(B, r))
 end
 #--
 
