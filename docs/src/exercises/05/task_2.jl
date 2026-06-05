@@ -43,18 +43,16 @@ using LinearAlgebra, Qritical
 #--
 
 function vidal_expectation_all(gammas, lambdas, op)
-    L  = length(gammas)
-    ## TODO: For each site i, compute ⟨O_i⟩.
-    ##
-    ## For i in 1:L:
-    ##   Λ_L    = i == 1 ? [1.0] : lambdas[i - 1]   # Λ_{i-1}
-    ##   Λ_R    = lambdas[i]                          # Λ_i
-    ##   χL, d, χR = size(gammas[i])
-    ##   Θ      = gammas[i] .* reshape(Λ_L, χL,1,1) .* reshape(Λ_R, 1,1,χR)
-    ##   Θ_mat  = reshape(permutedims(Θ, (1,3,2)), χL * χR, d)
-    ##   vals[i] = real(sum(conj(Θ_mat) .* (Θ_mat * op')))
-
+    L    = length(gammas)
     vals = zeros(L)
+    for i in 1:L
+        Λ_L    = i == 1 ? [1.0] : lambdas[i - 1]
+        Λ_R    = lambdas[i]
+        χL, d, χR = size(gammas[i])
+        Θ      = gammas[i] .* reshape(Λ_L, χL,1,1) .* reshape(Λ_R, 1,1,χR)
+        Θ_mat  = reshape(permutedims(Θ, (1,3,2)), χL * χR, d)
+        vals[i] = real(sum(conj(Θ_mat) .* (Θ_mat * op')))
+    end
     return vals
 end
 #--
@@ -66,7 +64,7 @@ mps = FiniteMPS(Spin{1//2}(), L, χ)
 left_canonical_sweep!(mps)
 
 function to_vidal(tensors, bond_svs)
-    L = length(tensors); T = eltype(tensors[1])
+    L = length(tensors)
     gammas  = [tensors[i] ./ reshape(bond_svs[i], size(tensors[i],1), 1, 1) for i in 1:L]
     lambdas = [bond_svs[i + 1] for i in 1:L]
     return gammas, lambdas

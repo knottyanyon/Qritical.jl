@@ -61,20 +61,16 @@ function left_canonical_mps(ψ::Array, D::Int)
     χL      = 1
     current = reshape(ψ, 1, :)   # (1, d^L)
 
-    ## TODO: Implement the sequential left-to-right SVD loop.
-    ##
-    ## For i in 1:(L-1), do the following 5 steps:
-    ##
-    ##   1. Reshape `current` from (χL, d^(L-i+1)) to M (χL·dims[i], d^(L-i))
-    ##   2. Thin SVD:  F = svd(M; full=false)
-    ##   3. Truncate:  r = min(count(>(0), F.S), D)  — keep the r largest singular values
-    ##   4. Store:     tensors[i] = reshape(F.U[:, 1:r], χL, dims[i], r)
-    ##                 bond_svs[i+1] = F.S[1:r]
-    ##   5. Advance:   current = Diagonal(F.S[1:r]) * F.Vt[1:r, :]    (shape r × d^(L-i))
-    ##                 χL = r
-    ##
-    ## After the loop the last tensor absorbs whatever is left:
-    ##   tensors[L] = reshape(current, χL, dims[L], 1)
+    for i in 1:(L-1)
+        M = reshape(current, χL * dims[i], :)
+        F = svd(M; full=false)
+        r = max(min(count(>(0), F.S), D), 1)
+        tensors[i]       = reshape(F.U[:, 1:r], χL, dims[i], r)
+        bond_svs[i + 1]  = F.S[1:r]
+        current          = Diagonal(F.S[1:r]) * F.Vt[1:r, :]
+        χL               = r
+    end
+    tensors[L] = reshape(current, χL, dims[L], 1)
 
     return tensors, bond_svs
 end

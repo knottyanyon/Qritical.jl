@@ -49,28 +49,47 @@ end
 #--
 
 function vidal_correlation_lr(gammas, lambdas, op, l)
-    L   = length(gammas)
-    d   = size(gammas[1], 2)
     Θ_l = _theta(gammas, lambdas, l)   # shape (χL, d, χR_l)
+    L   = length(gammas)
     χL_l, _, χR_l = size(Θ_l)
 
-    ## TODO: Implement the transfer-matrix sweep.
-    ##
-    ## Step 1 — left boundary with op inserted at l:
-    ##   Θ_mat = reshape(Θ_l, χL_l, d, χR_l)
-    ##   vL[α,ᾱ] = ∑_{σσ'} Θ_mat[α,σ,β]* * op[σ,σ'] * Θ_mat[ᾱ,σ',β]
-    ##   → vL = (conj(Θ_mat_2d))' * (Θ_mat_2d * op')  where Θ_mat_2d = reshape(permutedims(Θ_l,(1,3,2)), χL_l*χR_l, d)
-    ##   → vL has shape (χR_l, χR_l) after proper reshape
-    ##
-    ## Step 2 — propagate through sites l+1, …, l+r-1 via the transfer matrix:
-    ##   For each site i: Θ_i = _theta(gammas, lambdas, i)
-    ##   T[α,ᾱ,β,β̄] = ∑_σ conj(Θ_i)[α,σ,β] * Θ_i[ᾱ,σ,β̄]
-    ##   vL ← reshape(reshape(vL, 1, χR²) * reshape(T, χR², χR'²), χR', χR')
-    ##
-    ## Step 3 — close with op at l+r:
-    ##   corr[r] = ∑_{α,σ,σ'} vL[α,α̅] * Θ_{l+r}[α,σ,β]* * op[σ,σ'] * Θ_{l+r}[α̅,σ',β]
+    TT = promote_type(eltype(Θ_l), eltype(op))
 
-    corrs = zeros(L - l)
+    ## Step 1: build vL[β,β'] = ∑_{α,σ,σ'} Θ_l*[α,σ,β] op[σ,σ'] Θ_l[α,σ',β']
+    vL = zeros(TT, χR_l, χR_l)
+    for α in 1:χL_l
+        M = Θ_l[α, :, :]           # (d, χR_l)
+        vL .+= conj(M)' * op * M   # (χR_l, d)@(d,d)@(d,χR_l) = (χR_l, χR_l)
+    end
+
+    corrs = zeros(TT, L - l)
+
+    for r in 1:(L - l)
+        ## Step 2: propagate transfer matrices for sites l+1 … l+r-1
+        vL_cur = copy(vL)
+        for i in (l + 1):(l + r - 1)
+            Θ_i = _theta(gammas, lambdas, i)
+            χL_i, _, χR_i = size(Θ_i)
+            new_vL = zeros(TT, χR_i, χR_i)
+            for β in 1:χL_i, βp in 1:χL_i
+                iszero(vL_cur[β, βp]) && continue
+                ## T_part[γ,γ'] = ∑_σ Θ_i*[β,σ,γ] Θ_i[βp,σ,γ'] = conj(Θ_i[β,:,:])' * Θ_i[βp,:,:]
+                new_vL .+= vL_cur[β, βp] * (conj(Θ_i[β, :, :])' * Θ_i[βp, :, :])
+            end
+            vL_cur = new_vL
+        end
+
+        ## Step 3: close with op at site l+r; sum over right boundary (Tr over χR)
+        Θ_r = _theta(gammas, lambdas, l + r)
+        χL_r, _, χR_r = size(Θ_r)
+        X_total = zeros(TT, χL_r, χL_r)
+        for γ in 1:χR_r
+            M = Θ_r[:, :, γ]          # (χL_r, d)
+            X_total .+= conj(M) * op * M'
+        end
+        corrs[r] = real(sum(vL_cur .* X_total))
+    end
+
     return corrs
 end
 #--
@@ -80,8 +99,9 @@ mps = FiniteMPS(Spin{1//2}(), L, χ)
 left_canonical_sweep!(mps)
 
 function to_vidal(tensors, bond_svs)
-    gammas  = [tensors[i] ./ reshape(bond_svs[i], size(tensors[i],1), 1, 1) for i in 1:length(tensors)]
-    lambdas = [bond_svs[i + 1] for i in 1:length(tensors)]
+    L       = length(tensors)
+    gammas  = [tensors[i] ./ reshape(bond_svs[i], size(tensors[i],1), 1, 1) for i in 1:L]
+    lambdas = [bond_svs[i + 1] for i in 1:L]
     return gammas, lambdas
 end
 

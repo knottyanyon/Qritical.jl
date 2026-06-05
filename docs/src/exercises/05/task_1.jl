@@ -37,15 +37,12 @@ function to_vidal(tensors::Vector{<:Array{<:Number,3}},
     gammas  = Vector{Array{T, 3}}(undef, L)
     lambdas = [bond_svs[i + 1] for i in 1:L]   # lambdas[i] = Λ_i (right of site i)
 
-    ## TODO: Compute the Γ matrices by dividing out the left singular values.
-    ##
-    ## For i in 1:L:
-    ##   A        = tensors[i]          # shape (χ_{i-1}, d, χ_i)
-    ##   Λ_prev   = bond_svs[i]         # = Λ_{i-1}, length χ_{i-1}
-    ##   χL, d, χR = size(A)
-    ##   gammas[i] = A ./ reshape(Λ_prev, χL, 1, 1)
-    ##
-    ## Note: bond_svs[1] = [1.0] so site 1 divides by 1 — no numerical issue.
+    for i in 1:L
+        A        = tensors[i]          # (χ_{i-1}, d, χ_i)
+        Λ_prev   = bond_svs[i]         # Λ_{i-1}, length χ_{i-1}
+        χL       = size(A, 1)
+        gammas[i] = A ./ reshape(Λ_prev, χL, 1, 1)
+    end
 
     return gammas, lambdas
 end

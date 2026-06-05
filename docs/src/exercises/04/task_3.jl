@@ -45,22 +45,20 @@ function mps_sum(tensors1::Vector{<:Array{<:Number,3}},
     T  = promote_type(eltype(tensors1[1]), eltype(tensors2[1]), typeof(a), typeof(b))
     result = Vector{Array{T, 3}}(undef, L)
 
-    ## TODO: Assemble each site tensor.
-    ##
-    ## For i in 1:L:
-    ##   A = T.(tensors1[i]);  χL_A, d, χR_A = size(A)
-    ##   B = T.(tensors2[i]);  χL_B, _, χR_B = size(B)
-    ##
-    ##   if i == 1
-    ##       result[i] = cat(a .* A, b .* B; dims=3)   # (1, d, χR_A + χR_B)
-    ##   elseif i == L
-    ##       result[i] = cat(A, B; dims=1)              # (χL_A + χL_B, d, 1)
-    ##   else
-    ##       new = zeros(T, χL_A + χL_B, d, χR_A + χR_B)
-    ##       new[1:χL_A,           :, 1:χR_A]           = A
-    ##       new[χL_A+1:end,       :, χR_A+1:end]       = B
-    ##       result[i] = new
-    ##   end
+    for i in 1:L
+        A = T.(tensors1[i]);  χL_A, d, χR_A = size(A)
+        B = T.(tensors2[i]);  χL_B, _, χR_B = size(B)
+        if i == 1
+            result[i] = cat(a .* A, b .* B; dims=3)      # (1, d, χR_A+χR_B)
+        elseif i == L
+            result[i] = cat(A, B; dims=1)                 # (χL_A+χL_B, d, 1)
+        else
+            W = zeros(T, χL_A + χL_B, d, χR_A + χR_B)
+            W[1:χL_A,       :, 1:χR_A]       = A
+            W[χL_A+1:end,   :, χR_A+1:end]   = B
+            result[i] = W
+        end
+    end
 
     return result
 end

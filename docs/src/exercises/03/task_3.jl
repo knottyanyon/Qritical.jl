@@ -31,13 +31,20 @@ d = size(ψ, 1)
 # deviation.
 
 function check_normalization(tensors::Vector{<:Array{<:Number,3}})
-    ## TODO: For each tensor in `tensors`, compute both deviations and print
-    ## a per-site summary.  Return a named tuple of two vectors:
-    ##   (left_errors = [...], right_errors = [...])
-    ## where left_errors[i]  = ‖Mᵢ†Mᵢ  − I‖_F   (left-isometry residual)
-    ##       right_errors[i] = ‖Mᵢ Mᵢ† − I‖_F   (right-isometry residual)
-    ##
-    ## Hint: use `norm(X - I(size(X,1)))` for the Frobenius norm of X - I.
+    N = length(tensors)
+    left_errors  = Vector{Float64}(undef, N)
+    right_errors = Vector{Float64}(undef, N)
+    println("  site │  δ_L (left iso)   │  δ_R (right iso)")
+    println("  ─────┼───────────────────┼──────────────────")
+    for (i, T) in enumerate(tensors)
+        χL, d, χR = size(T)
+        ML = reshape(T, χL * d, χR)
+        MR = reshape(T, χL, d * χR)
+        left_errors[i]  = norm(ML' * ML - I(χR))
+        right_errors[i] = norm(MR * MR' - I(χL))
+        println("  $(lpad(i,4)) │  $(rpad(round(left_errors[i]; sigdigits=3), 17)) │  $(round(right_errors[i]; sigdigits=3))")
+    end
+    return (left_errors=left_errors, right_errors=right_errors)
 end
 #--
 

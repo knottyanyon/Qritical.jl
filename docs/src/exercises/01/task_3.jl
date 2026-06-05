@@ -58,8 +58,8 @@ println("Schmidt rank (5 | 5): ", size(res_b.Σ.data, 1))
 # - Guard against ``\lambda_i = 0`` to avoid ``0 \log 0``.
 
 function entanglement_entropy(λ::AbstractVector{<:Real})
-    ## TODO: implement S = -∑ᵢ λᵢ² log_b(λᵢ²)
-    ## Hint: use log2 for bits or log for nats; skip terms where λᵢ = 0
+    p = λ .^ 2
+    return -sum(pᵢ * log2(pᵢ) for pᵢ in p if pᵢ > 0)
 end
 #--
 

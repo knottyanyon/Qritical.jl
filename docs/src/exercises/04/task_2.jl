@@ -42,16 +42,11 @@ L = ndims(ψ_raw)
 function local_observable(tensors::Vector{<:Array{<:Number,3}},
                            op::Matrix{<:Number},
                            l::Int)
-    ## TODO: Compute ⟨ψ|Oₗ|ψ⟩ using only the center tensor tensors[l].
-    ##
-    ## C = tensors[l]          # shape (χL, d, χR)
-    ## Reshape C to (χL * χR, d) to contract over physical leg:
-    ##   C_mat = reshape(permutedims(C, (1,3,2)), χL * χR, d)
-    ## Then:
-    ##   ⟨O⟩ = real(tr(C_mat' * C_mat * op'))
-    ##       = real(sum(conj(C_mat) .* (C_mat * op')))
-    ##
-    ## Hint: for a real symmetric op, op' == op. For the general case keep op'.
+    C = tensors[l]                              # (χL, d, χR)
+    χL, d, χR = size(C)
+    C_mat = reshape(permutedims(C, (1,3,2)), χL * χR, d)   # (χL·χR, d)
+    ρ = C_mat' * C_mat                          # (d, d) reduced density matrix
+    return real(tr(op * ρ)) / real(tr(ρ))
 end
 #--
 

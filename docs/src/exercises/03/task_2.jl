@@ -35,21 +35,21 @@ function right_to_left!(tensors::Vector{<:Array{<:Number,3}},
                          D::Int)
     L = length(tensors)
 
-    ## TODO: Sweep from site 1 up to site L.
-    ##
-    ## For i in 1:L:
-    ##   1. data = tensors[i];  χL, d_i, χR = size(data)
-    ##   2. M    = reshape(data, χL * d_i, χR)
-    ##   3. F    = svd(M; full=false)
-    ##      r    = min(count(>(0), F.S), D)
-    ##   4. tensors[i]      = reshape(F.U[:, 1:r], χL, d_i, r)
-    ##      bond_svs[i + 1] = F.S[1:r]
-    ##   5. if i < L
-    ##          R        = Diagonal(F.S[1:r]) * F.Vt[1:r, :]
-    ##          nxt      = tensors[i + 1]
-    ##          _, d_n, χRn = size(nxt)
-    ##          tensors[i+1] = reshape(R * reshape(nxt, χR, d_n * χRn), r, d_n, χRn)
-    ##      end
+    for i in 1:L
+        data        = tensors[i]
+        χL, d_i, χR = size(data)
+        M           = reshape(data, χL * d_i, χR)
+        F           = svd(M; full=false)
+        r           = max(min(count(>(0), F.S), D), 1)
+        tensors[i]       = reshape(F.U[:, 1:r], χL, d_i, r)
+        bond_svs[i + 1]  = F.S[1:r]
+        if i < L
+            R            = Diagonal(F.S[1:r]) * F.Vt[1:r, :]
+            nxt          = tensors[i + 1]
+            _, d_n, χRn  = size(nxt)
+            tensors[i+1] = reshape(R * reshape(nxt, χR, d_n * χRn), r, d_n, χRn)
+        end
+    end
 
     return tensors, bond_svs
 end

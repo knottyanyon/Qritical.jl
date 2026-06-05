@@ -58,21 +58,16 @@ function right_canonical_mps(ψ::Array, D::Int)
     χR      = 1
     current = reshape(ψ, :, 1)   # (d^L, 1)
 
-    ## TODO: Implement the sequential right-to-left SVD loop.
-    ##
-    ## For i in L:-1:2, do the following 5 steps:
-    ##
-    ##   1. Reshape `current` from (d^(i-1)·χR_prev, χR) to M (:, dims[i]·χR)
-    ##        M = reshape(current, :, dims[i] * χR)
-    ##   2. Thin SVD:  F = svd(M; full=false)
-    ##   3. Truncate:  r = min(count(>(0), F.S), D)
-    ##   4. Store:     tensors[i] = reshape(F.Vt[1:r, :], r, dims[i], χR)
-    ##                 bond_svs[i] = F.S[1:r]
-    ##   5. Advance:   current = F.U[:, 1:r] * Diagonal(F.S[1:r])   (shape d^(i-1) × r)
-    ##                 χR = r
-    ##
-    ## After the loop the first tensor absorbs whatever is left:
-    ##   tensors[1] = reshape(current, 1, dims[1], χR)
+    for i in L:-1:2
+        M = reshape(current, :, dims[i] * χR)
+        F = svd(M; full=false)
+        r = max(min(count(>(0), F.S), D), 1)
+        tensors[i]  = reshape(F.Vt[1:r, :], r, dims[i], χR)
+        bond_svs[i] = F.S[1:r]
+        current     = F.U[:, 1:r] * Diagonal(F.S[1:r])
+        χR          = r
+    end
+    tensors[1] = reshape(current, 1, dims[1], χR)
 
     return tensors, bond_svs
 end
@@ -113,8 +108,26 @@ println("Bond dimensions: ", join([size(t, 1) for t in tensors], " · "), " → 
 # direction was used to canonicalize — the singular values encode physical
 # entanglement, not the gauge.
 #
-# With the `left_canonical_mps` from Task 2.1 in scope, compare
-# `bond_svs` from both decompositions at each interior bond.
+# We reuse the `left_canonical_mps` implementation from Task 2.1.
+
+function left_canonical_mps(ψ::Array, D::Int)
+    L = ndims(ψ); dims = size(ψ); T = eltype(ψ); RT = real(T)
+    tensors  = Vector{Array{T, 3}}(undef, L)
+    bond_svs = Vector{Vector{RT}}(undef, L + 1)
+    bond_svs[1] = RT[1]; bond_svs[L + 1] = RT[1]
+    χL = 1; current = reshape(ψ, 1, :)
+    for i in 1:(L-1)
+        M = reshape(current, χL * dims[i], :)
+        F = svd(M; full=false)
+        r = max(min(count(>(0), F.S), D), 1)
+        tensors[i] = reshape(F.U[:, 1:r], χL, dims[i], r)
+        bond_svs[i + 1] = F.S[1:r]
+        current = Diagonal(F.S[1:r]) * F.Vt[1:r, :]
+        χL = r
+    end
+    tensors[L] = reshape(current, χL, dims[L], 1)
+    return tensors, bond_svs
+end
 
 left_tensors, left_svs = left_canonical_mps(ψ, D)
 

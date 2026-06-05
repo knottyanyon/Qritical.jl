@@ -40,22 +40,25 @@ L = ndims(ψ1_raw)
 function mps_overlap(bra::Vector{<:Array{<:Number,3}},
                      ket::Vector{<:Array{<:Number,3}})
     L = length(bra)
-    bra.length == ket.length || throw(ArgumentError("MPS lengths differ"))
+    length(bra) == length(ket) || throw(ArgumentError("MPS lengths differ"))
+    T   = promote_type(eltype(bra[1]), eltype(ket[1]))
+    env = ones(T, 1, 1)   # (χL_bra × χL_ket)
 
-    ## TODO: Implement the left-to-right environment contraction.
-    ##
-    ## Initialize: env = ones(T, 1, 1)   where T = promote_type(eltype(bra[1]), eltype(ket[1]))
-    ##
-    ## For i in 1:L:
-    ##   A = conj.(bra[i])        # shape (χL_bra, d, χR_bra)
-    ##   B = ket[i]               # shape (χL_ket, d, χR_ket)
-    ##   -- contract env (χL_bra × χL_ket) with A and B over the physical leg σ --
-    ##   -- the new env has shape (χR_bra × χR_ket) --
-    ##
-    ## Return: env[1, 1]
-    ##
-    ## Hint: reshape A to (χL_bra, d * χR_bra), use matrix multiplication with
-    ## env', then reshape and multiply by B reshaped to (χL_ket * d, χR_ket).
+    for i in 1:L
+        A = conj.(bra[i])              # (χL_b, d, χR_b)
+        B = ket[i]                     # (χL_k, d, χR_k)
+        χL_b, d, χR_b = size(A)
+        χL_k, _,  χR_k = size(B)
+        ## env (χL_b × χL_k) → contract with A and B over left bonds and physical index
+        A_mat = reshape(A, χL_b, d * χR_b)       # (χL_b, d·χR_b)
+        tmp   = env' * A_mat                      # (χL_k, d·χR_b)
+        tmp   = reshape(tmp, χL_k, d, χR_b)
+        B_mat = reshape(B, χL_k * d, χR_k)       # (χL_k·d, χR_k)
+        tmp2  = reshape(permutedims(tmp, (2,1,3)), d * χL_k, χR_b)
+        env   = reshape(tmp2' * B_mat, χR_b, χR_k)
+    end
+
+    return env[1, 1]
 end
 #--
 

@@ -40,22 +40,21 @@ function left_to_right!(tensors::Vector{<:Array{<:Number,3}},
                          D::Int)
     L = length(tensors)
 
-    ## TODO: Sweep from site L down to site 1.
-    ##
-    ## For i in L:-1:1:
-    ##   1. data = tensors[i];  χL, d_i, χR = size(data)
-    ##   2. M    = reshape(data, χL, d_i * χR)
-    ##   3. F    = svd(M; full=false)
-    ##      r    = min(count(>(0), F.S), D)
-    ##   4. tensors[i]  = reshape(F.Vt[1:r, :], r, d_i, χR)
-    ##      bond_svs[i] = F.S[1:r]
-    ##   5. if i > 1
-    ##          L_fac        = F.U[:, 1:r] * Diagonal(F.S[1:r])
-    ##          prev         = tensors[i - 1]
-    ##          χL_p, d_p, _ = size(prev)
-    ##          tensors[i-1] = reshape(reshape(prev, χL_p * d_p, χL) * L_fac,
-    ##                                 χL_p, d_p, r)
-    ##      end
+    for i in L:-1:1
+        data        = tensors[i]
+        χL, d_i, χR = size(data)
+        M           = reshape(data, χL, d_i * χR)
+        F           = svd(M; full=false)
+        r           = max(min(count(>(0), F.S), D), 1)
+        tensors[i]  = reshape(F.Vt[1:r, :], r, d_i, χR)
+        bond_svs[i] = F.S[1:r]
+        if i > 1
+            L_fac        = F.U[:, 1:r] * Diagonal(F.S[1:r])
+            prev         = tensors[i - 1]
+            χL_p, d_p, _ = size(prev)
+            tensors[i-1] = reshape(reshape(prev, χL_p * d_p, χL) * L_fac, χL_p, d_p, r)
+        end
+    end
 
     return tensors, bond_svs
 end
