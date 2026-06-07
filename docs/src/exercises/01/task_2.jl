@@ -38,9 +38,9 @@ A_mat = readdlm(FPATH_A)
 # !!! note "Figure — A as a valence-2 tensor"
 #     *Tensor diagram to be added here (excalidraw).*
 #
-# We will put both legs of ``A`` in the upper (contravariant) position for now.
-# The distinction matters more once we start contracting MPS tensors and need
-# to keep track of which legs can legally be contracted together.
+# Following the standard notation ``A^i{}_j`` for a matrix element in row ``i``
+# and column ``j``, we assign the row index as upper (contravariant) and the
+# column index as lower (covariant).
 #--
 
 # ## Creating named, typed indices
@@ -57,19 +57,17 @@ A_mat = readdlm(FPATH_A)
 # time, so positional mistakes surface as errors rather than silent wrong
 # answers.
 #
-# Here we create one upper index for the row axis and one for the column axis:
+# Here we create an upper index for the row axis and a lower index for the column axis:
 
 row = upper(:row, size(A_mat, 1))
-col = upper(:col, size(A_mat, 2))
+col = lower(:col, size(A_mat, 2))
 
 (row = row, col = col)
 
 # Wrapping the raw array in an `IndexedTensor` attaches these indices to the
-# data without copying anything.  The `bipartition` call tells `tensor_svd`
-# which legs go to the left factor (``U``) and which to the right (``V^\dagger``):
+# data without copying anything:
 
 A = IndexedTensor(A_mat, (row, col))
-bp = bipartition(Partition(row), A)
 
 A.indices
 #--
@@ -89,16 +87,18 @@ A.indices
 #
 # ## Truncation
 #
-# The singular values ``\sigma_1 \geq \sigma_2 \geq \cdots \geq 0`` decay from
-# large (structure) to small (noise / redundancy).  Discarding those below a
-# threshold compresses the representation.  [`KeepAbove(atol)`](@ref) keeps
-# every ``\sigma_i > \texttt{atol}``; everything else is dropped.
+# [`KeepAbove(atol)`](@ref) keeps every ``\sigma_i > \texttt{atol}`` and drops
+# the rest.  [`KeepMachineEps()`](@ref) picks the cutoff automatically as
+# ``\sqrt{\varepsilon_\text{mach}} \cdot \sigma_1`` — anything smaller than that
+# is already buried in floating-point rounding error, so it is garbage anyway.
+#
+# The task asks us to discard singular values below ``10^{-3}``, so:
 #
 # The *truncation error* ``\varepsilon = \|\Sigma_\text{discarded}\|_2`` is
 # returned alongside the factors so we always know exactly how much we threw
 # away.
 
-res = tensor_svd(A, bp, KeepAbove(1e-3))
+res = matrix_svd(A, KeepAbove(1e-3))
 
 (full_rank = minimum(size(A_mat)), Schmidt_rank = size(res.Σ.data, 1), ε = round(res.ε; sigdigits=4))
 #--

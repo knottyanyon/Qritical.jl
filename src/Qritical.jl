@@ -18,7 +18,7 @@ export Partition, Bipartition, complement, bipartition, group_legs
 export IndexedTensor
 export AbstractTruncation, KeepFirst, KeepAbove, KeepRelative, KeepMachineEps
 export Bond, TensorSVD
-export tensor_svd
+export tensor_svd, matrix_svd
 
 # v0.3 — DoF hierarchy
 export AbstractDoF, Spin, Fermionic, HardCoreBoson, CompositeDoF

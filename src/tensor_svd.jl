@@ -262,3 +262,26 @@ function tensor_svd(
         normalize,
     )
 end
+
+"""
+    tensor_svd(A::IndexedTensor{<:Any,2}, trunc; normalize=false) -> TensorSVD
+
+Convenience form for rank-2 tensors: the bipartition is inferred automatically
+as `(indices[1] | indices[2])`, so there is no need to construct one explicitly.
+"""
+function tensor_svd(
+    A::IndexedTensor{<:Any,2}, trunc::AbstractTruncation;
+    normalize::Bool=false,
+)
+    bp = bipartition(Partition(A.indices[1]), A)
+    return tensor_svd(A, bp, trunc; normalize)
+end
+
+"""
+    matrix_svd(A::IndexedTensor{<:Any,2}, trunc; normalize=false) -> TensorSVD
+
+Alias for [`tensor_svd`](@ref) on a rank-2 `IndexedTensor`. Use this when
+`A` is already a matrix and specifying a bipartition would be redundant.
+"""
+matrix_svd(A::IndexedTensor{<:Any,2}, trunc::AbstractTruncation; normalize::Bool=false) =
+    tensor_svd(A, trunc; normalize)
