@@ -17,6 +17,7 @@ using LinearAlgebra
     include("test_power_method.jl")
     include("test_tebd.jl")
     include("test_quench.jl")
+    include("test_ed.jl")
     include("test_svd.jl")
     include("test_indices.jl")
     include("test_qtensor.jl")

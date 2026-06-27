@@ -2,6 +2,8 @@ module Qritical
 
 using LinearAlgebra
 using TensorOperations
+import SparseArrays
+import SparseArrays: sparse
 
 """
     AbstractGeometry
@@ -37,6 +39,7 @@ include("finite_mpo.jl")
 include("power_method.jl")
 include("tebd.jl")
 include("quench.jl")
+include("ed.jl")
 
 # ==== Index layer =============================================================
 export IxLoc, Upper, Lower
@@ -108,5 +111,8 @@ export neel_state
 export Quench, TEBD, NoTracker, Tracker
 export QuenchResult
 export solve
+
+# ==== ExactDiagonalization ====================================================
+export GroundState, ExactDiagonalization, EDResult, sparse
 
 end
