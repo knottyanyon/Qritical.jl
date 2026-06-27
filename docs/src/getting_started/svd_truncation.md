@@ -4,7 +4,7 @@ SVD is the workhorse of every MPS algorithm: it appears in canonicalization swee
 
 ## Truncation strategies
 
-Choose a strategy by constructing the appropriate [`AbstractTruncation`](@ref) subtype:
+Choose a strategy by constructing the appropriate [`AbstractTrunc`](@ref) subtype:
 
 | Type | Keep condition | Typical use |
 |:-----|:---------------|:------------|

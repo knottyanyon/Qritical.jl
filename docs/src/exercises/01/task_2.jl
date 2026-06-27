@@ -94,9 +94,17 @@ A.indices
 #
 # The task asks us to discard singular values below ``10^{-3}``, so:
 #
-# The *truncation error* ``\varepsilon = \|\Sigma_\text{discarded}\|_2`` is
-# returned alongside the factors so we always know exactly how much we threw
-# away.
+# The *truncation error* measures how much we threw away.  Since the
+# [Eckart–Young theorem](#singular-value-decomposition) tells us the truncated
+# SVD is the best low-rank approximation in both the spectral and Frobenius
+# norms, ``\varepsilon`` is simply the 2-norm of the discarded singular values:
+#
+# ```math
+# \varepsilon = \left\| \begin{pmatrix} \sigma_{r+1} \\ \vdots \\ \sigma_{\min(m,n)} \end{pmatrix} \right\|_2
+# ```
+#
+# This is returned alongside the factors so we always know exactly what we paid
+# for the compression.
 
 res = matrix_svd(A, KeepAbove(1e-3))
 

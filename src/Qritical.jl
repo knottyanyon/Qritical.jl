@@ -1,51 +1,46 @@
 module Qritical
 
-include("tensor_index.jl")
-include("tensor_core.jl")
-include("tensor_svd.jl")
-include("dof.jl")
-include("finite_mps.jl")
-include("finite_mpo.jl")
-include("tebd.jl")
-include("observables.jl")
-include("ed.jl")
+using LinearAlgebra
+using TensorOperations
 
-export AbstractIndex, ndim, label
-export IndexLoc, Upper, Lower
-export TIx, upper, lower, uppers, lowers, bond_label
-export MultiIx
+include("indices.jl")
+include("qtensor.jl")
+include("spectrum.jl")
+include("svd.jl")
+include("io.jl")
+include("mps.jl")
+include("canonicalize.jl")
+include("vidal.jl")
+include("correlators.jl")
+
+# ==== Index layer =============================================================
+export IxLoc, Upper, Lower
+export AbstractIx, TIx, MulTIx
+export dim, label, which_space
+export upper, lower, uppers, lowers, uppers_range, lowers_range, bond_label
+
+# ==== QTensor + partitions ====================================================
+export QTensor
 export Partition, Bipartition, complement, bipartition, group_legs
-export IndexedTensor
-export AbstractTruncation, KeepFirst, KeepAbove, KeepRelative, KeepMachineEps
-export Bond, TensorSVD
-export tensor_svd, matrix_svd
 
-# v0.3 — DoF hierarchy
-export AbstractDoF, Spin, Fermionic, HardCoreBoson, CompositeDoF
-export hilbert_space
-export AbstractSite, StateSite, OperatorSite
+# ==== SVD + truncation ========================================================
+export AbstractTrunc, NoTrunc, MaxBondDimTrunc, ValCutoffTrunc
+export FullSVD, ReducedSVD, do_svd
 
-# v0.3 — FiniteMPS
-export AbstractMPS, AbstractMPSForm, CanonicalForm, VidalForm, ArbitraryForm
-export FiniteMPS
-export left_canonical_sweep!, right_canonical_sweep!, move_center!
-export overlap, entanglement_entropy
+# ==== Spectrum + orthogonality centre =========================================
+export Bond, OrthoCenter, BondCenter, SiteCenter
+export AbstractSpectrum, SingValSpectrum, EigValSpectrum, SchmidtSpectrum
+export schmidt_rank, spectral_gap, schmidt_values
+export entanglement_entropy, entanglement_spectrum
 
-# v0.4 — FiniteMPO
-export FiniteMPO
-export heisenberg_mpo, identity_mpo
-export expectation_value, apply
+# ==== State utilities + I/O ===================================================
+export bipartition_matrix, as_state, load_array
 
-# v0.5 — Vidal form and TEBD
+# ==== MPS & canonical forms ==================================================
+export AbstractMPSForm, CanonicalForm, VidalForm, ArbitraryForm
+export FiniteMPS, to_mps, add_mps
+export CanonicalizeConfig, LeftCanonical, RightCanonical, BondCanonical, SiteCanonical
+export canonicalize, canonical_error, is_canonical, overlap, local_expectation, two_point
 export to_vidal, to_canonical
-export apply_gate!, trotter_step!, time_evolve
-
-# v0.6 — Observables
-export local_expectation, entanglement_spectrum
-
-# v0.7 — Exact diagonalization
-export DenseHamiltonian, dense_hamiltonian, ground_state
 
 end
-
-

@@ -49,7 +49,7 @@ local_hamiltonian (generic function with 1 method)
 ````julia
 function apply_bonds!(mps::FiniteMPS, H_bonds::AbstractVector, dt::Real;
                       parity::Symbol=:odd,
-                      trunc::AbstractTruncation=KeepMachineEps())
+                      trunc::AbstractTrunc=KeepMachineEps())
     # Apply time-evolution gates e^{-i h^(i,i+1) Δt} to either odd or even bonds.
     # parity = :odd  → bonds (1,2), (3,4), …
     # parity = :even → bonds (2,3), (4,5), …

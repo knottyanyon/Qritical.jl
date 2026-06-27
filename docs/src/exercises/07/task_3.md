@@ -55,7 +55,7 @@ apply_bonds! (generic function with 1 method)
 
 ````julia
 function my_trotter_step!(mps::FiniteMPS, H_bonds::AbstractVector, dt::Real;
-                          trunc::AbstractTruncation=KeepMachineEps())
+                          trunc::AbstractTrunc=KeepMachineEps())
     # First-order Trotter: odd bonds → even bonds
     # Caller is responsible for passing mps in VidalForm (e.g. via to_vidal).
     apply_bonds!(mps, H_bonds, dt; parity=:odd,  trunc)

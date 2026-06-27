@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "e1b3b3d677be7be9cd32c83b87e0b11c6d15f9c7"
+project_hash = "9c73b86c2de8792c8cf8324eef3e401b679b0445"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "bbc22a9a08a0ef6460041086d8a7b27940ed4ffd"
@@ -455,6 +455,12 @@ deps = ["AdaptivePredicates", "EnumX", "ExactPredicates", "Random"]
 git-tree-sha1 = "c55f5a9fd67bdbc8e089b5a3111fe4292986a8e8"
 uuid = "927a84f5-c5f4-47a5-9785-b46e178433df"
 version = "1.6.6"
+
+[[deps.DelimitedFiles]]
+deps = ["Mmap"]
+git-tree-sha1 = "9e2f36d3c96a820c678f2f1f1782582fcf685bae"
+uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+version = "1.9.1"
 
 [[deps.Dictionaries]]
 deps = ["Indexing", "Random", "Serialization"]
@@ -1676,10 +1682,10 @@ uuid = "4b34888f-f399-49d4-9bb3-47ed5cae4e65"
 version = "1.0.2"
 
 [[deps.Qritical]]
-deps = ["GeometryBasics", "HalfIntegers", "KrylovKit", "LaTeXStrings", "LinearAlgebra", "Logging", "Makie", "ScopedValues", "Serialization", "SparseArrays", "TensorKit", "TensorOperations"]
+deps = ["Coverage", "GeometryBasics", "HalfIntegers", "KrylovKit", "LaTeXStrings", "LinearAlgebra", "Logging", "Makie", "ScopedValues", "Serialization", "SparseArrays", "TensorKit", "TensorOperations"]
 path = "."
 uuid = "4d77d595-865b-4fe8-9046-dbce8046f658"
-version = "0.7.0"
+version = "0.7.1"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
