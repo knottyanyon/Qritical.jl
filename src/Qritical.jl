@@ -40,6 +40,7 @@ include("power_method.jl")
 include("tebd.jl")
 include("quench.jl")
 include("ed.jl")
+include("disorder.jl")
 
 # ==== Index layer =============================================================
 export IxLoc, Upper, Lower
@@ -114,5 +115,9 @@ export solve
 
 # ==== ExactDiagonalization ====================================================
 export GroundState, ExactDiagonalization, EDResult, sparse
+export StatevectorState, as_statevector, EDTimeResult
+
+# ==== Disorder ================================================================
+export Uniform, disorder_realization
 
 end

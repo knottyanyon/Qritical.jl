@@ -141,3 +141,84 @@ function solve(H::Operator, ::GroundState, ::ExactDiagonalization{:full})
     ψ   = normalize(F.vectors[:, 1])
     EDResult(evs[1], ψ, sort(evs))
 end
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §10.2  ED time propagation  exp(-iHt)|ψ⟩  or  exp(-τH)|ψ⟩
+# ─────────────────────────────────────────────────────────────────────────────
+
+"""
+    StatevectorState
+
+Study type wrapping a dense state vector for use as the initial condition in ED
+time propagation.  Pass to `solve` via `as_statevector(v)`.
+
+# Fields
+- `v::Vector{ComplexF64}` — initial state vector (Hilbert-space basis ordering).
+"""
+struct StatevectorState
+    v::Vector{ComplexF64}
+end
+
+"""
+    as_statevector(v) -> StatevectorState
+
+Wrap the dense state vector `v` as a study type for `solve` with
+`ExactDiagonalization(:time)`.
+
+The vector must be in the kron-product (big-endian) basis ordering used by
+[`dense_matrix`](@ref): `v[k]` corresponds to the basis state
+``|\\sigma_1, \\sigma_2, \\ldots, \\sigma_L\\rangle`` where
+``k = 1 + \\sum_i (\\sigma_i - 1)\\, d^{L-i}``.
+"""
+as_statevector(v::AbstractVector) = StatevectorState(convert(Vector{ComplexF64}, v))
+
+"""
+    EDTimeResult
+
+Return type of `solve` with `ExactDiagonalization(:time)`.
+
+# Fields
+- `state::Vector{ComplexF64}` — final state vector (unit-norm for real-time; unnormalized for imaginary-time).
+- `time::Float64` — total propagation time (real or imaginary).
+"""
+struct EDTimeResult
+    state::Vector{ComplexF64}
+    time::Float64
+end
+
+"""
+    solve(H, sv, ::ExactDiagonalization{:time}, p) -> EDTimeResult
+
+Propagate the initial state `sv` under `H` for the total time specified in
+protocol `p`.
+
+The propagation is exact (no Trotter splitting):
+
+```math
+|\\psi(t)\\rangle = e^{-iHt}\\,|\\psi_0\\rangle \\quad (\\text{RealTime})
+```
+```math
+|\\psi(\\tau)\\rangle = e^{-H\\tau}\\,|\\psi_0\\rangle \\quad (\\text{ImaginaryTime, unnormalized})
+```
+
+The eigendecomposition ``H = V \\Lambda V^\\dagger`` is computed once and the
+propagator is applied in ``O(d^{2L})`` time.  Renormalization is **not** applied
+automatically for imaginary-time evolution; use `normalize(result.state)` to
+recover the unit-norm GS approximation.
+"""
+function solve(H::Operator, sv::StatevectorState, ::ExactDiagonalization{:time},
+               p::ConstantProtocol)
+    M   = dense_matrix(H)
+    F   = eigen(Hermitian(M))
+    T   = total_time(p)   # p.dt * p.nsteps
+
+    if p.axis isa RealTime
+        phases = exp.(-im .* T .* real.(F.values))
+    else  # ImaginaryTime
+        phases = exp.(-T .* real.(F.values))
+    end
+
+    coefs    = F.vectors' * sv.v          # project onto eigenbasis
+    ψ_final  = F.vectors * (phases .* coefs)  # evolve + back-transform
+    EDTimeResult(ψ_final, T)
+end

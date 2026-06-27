@@ -10,8 +10,29 @@ using Random
 """
     Uniform(lo::Real, hi::Real)
 
-A uniform distribution on the interval ``[lo, hi]``.  Used as the `dist` argument
-to [`disorder_realization`](@ref).
+A uniform distribution on the closed interval ``[lo, hi]``, used to draw on-site
+random fields for disordered spin-chain models.
+
+Pass a `Uniform` to [`disorder_realization`](@ref) to generate a random-field
+vector ``h``, which you can then hand to [`XXZ`](@ref) via its `h` keyword.
+
+The standard choice for MBL studies is `Uniform(-W, W)` where ``W`` is the
+*disorder strength*: at ``W = 0`` the chain is translationally invariant; beyond
+a critical ``W_c \\approx 3.5`` the 1D XXZ chain enters the many-body-localised
+(MBL) phase.
+
+# Arguments
+- `lo::Real`: lower bound of the distribution interval.
+- `hi::Real`: upper bound.  Must satisfy `hi ≥ lo` conceptually; no runtime
+  check is performed, but drawing from a reversed interval returns nonsense.
+
+# Examples
+```jldoctest
+julia> d = Uniform(-3.5, 3.5);
+
+julia> d.lo, d.hi
+(-3.5, 3.5)
+```
 """
 struct Uniform
     lo::Float64
@@ -20,20 +41,73 @@ struct Uniform
 end
 
 """
-    disorder_realization(n, dist, rng) -> Vector{Float64}
+    disorder_realization(n::Int, dist::Uniform, rng::AbstractRNG) -> Vector{Float64}
 
-Draw `n` independent samples from `dist` using random-number generator `rng`.
+Draw `n` independent on-site random fields from `dist` and return them as a
+length-``n`` vector.  This is the standard way to build a single disorder
+realization for an MBL or Anderson-localization study.
 
-The same `rng` seed produces an identical disorder realization every time, making
-studies exactly reproducible.  For a uniform distribution `Uniform(lo, hi)`:
+### Physical picture
+
+Adding random on-site fields to the XXZ chain breaks its translational symmetry
+and can localise all eigenstates.  The disordered Hamiltonian is
+
 ```math
-h_i \\sim \\mathcal{U}(lo,\\, hi), \\quad i = 1, \\ldots, n.
+H = J \\sum_{i} \\mathbf{S}_i \\cdot \\mathbf{S}_{i+1}
+  + J_z \\sum_{i} S^z_i S^z_{i+1}
+  - \\sum_{i} h_i S^z_i
 ```
 
-Pass the returned vector as the `h` keyword to [`XXZ`](@ref):
+where each ``h_i`` is drawn independently from a uniform distribution
+``\\mathcal{U}(-W, W)``.  At weak disorder ``W \\ll 1`` the ground state is
+entangled and TEBD needs large bond dimension.  Above the MBL transition
+(``W \\gtrsim W_c \\approx 3.5`` for the 1D XXZ chain) eigenstates are
+near-product states with area-law entanglement, so imaginary-time TEBD
+converges quickly at small bond dimension.
+
+### Reproducibility
+
+Passing the same `rng` seed every time gives you bit-identical field vectors
+across runs — essential for disorder averaging, where you want to accumulate
+statistics over many realizations of ``\\{h_i\\}`` while keeping each
+realization fixed between method comparisons.
+
+# Arguments
+- `n::Int`: number of sites (length of the returned field vector).
+- `dist::Uniform`: the distribution; typically `Uniform(-W, W)` for disorder
+  strength ``W``.
+- `rng::AbstractRNG`: a seeded RNG, e.g. `MersenneTwister(42)`.  The caller
+  controls the seed so that realizations are reproducible.
+
+# Returns
+- `Vector{Float64}` of length `n`: the on-site fields
+  ``h_1, \\ldots, h_n \\sim \\mathcal{U}(\\mathrm{lo}, \\mathrm{hi})``.
+
+# Examples
+```jldoctest
+julia> using Random
+
+julia> h = disorder_realization(4, Uniform(-3.5, 3.5), MersenneTwister(0));
+
+julia> length(h)
+4
+
+julia> all(-3.5 .≤ h .≤ 3.5)
+true
+```
+
+A complete ground-state workflow for one disorder realization:
+
 ```julia
-h = disorder_realization(L, Uniform(-W, W), MersenneTwister(seed))
-H = XXZ(Chain(L); J=1.0, Jz=1.0, h=h)
+using Random
+L    = 8
+W    = 3.5                                          # near the MBL transition
+seed = 42
+rng  = MersenneTwister(seed)
+h    = disorder_realization(L, Uniform(-W, W), rng) # random fields
+H    = XXZ(Chain(L); J=1.0, Jz=1.0, h=h)           # disordered XXZ Hamiltonian
+res  = solve(H, GroundState(), ExactDiagonalization(:ground))
+res.energy                                          # ground-state energy for this realization
 ```
 """
 function disorder_realization(n::Int, dist::Uniform, rng::AbstractRNG)
