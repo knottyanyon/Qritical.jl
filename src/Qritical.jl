@@ -36,6 +36,7 @@ include("correlators.jl")
 include("finite_mpo.jl")
 include("power_method.jl")
 include("tebd.jl")
+include("quench.jl")
 
 # ==== Index layer =============================================================
 export IxLoc, Upper, Lower
@@ -101,5 +102,11 @@ export ConstantProtocol, total_time
 export bond_hamiltonian
 export apply_gate
 export TrotterSubstep, SuzukiTrotter, trotter_steps, trotter_step
+
+# ==== Quench + solve interface ================================================
+export neel_state
+export Quench, TEBD, NoTracker, Tracker
+export QuenchResult
+export solve
 
 end

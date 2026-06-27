@@ -95,6 +95,7 @@ makedocs(;
             "Operators & Hamiltonians" => "api/operator.md",
             "MPO & Expectation Values" => "api/mpo.md",
             "Power Method"             => "api/power_method.md",
+            "TEBD"                     => "api/tebd.md",
         ],
         "Bibliography" => "references.md",
     ],
