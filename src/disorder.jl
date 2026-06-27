@@ -113,3 +113,35 @@ res.energy                                          # ground-state energy for th
 function disorder_realization(n::Int, dist::Uniform, rng::AbstractRNG)
     rand(rng, n) .* (dist.hi - dist.lo) .+ dist.lo
 end
+
+"""
+    parameter_sweep(f, params) -> Vector
+
+Apply `f` to each element of `params` and collect the results.
+
+This is the standard driver for parameter scans: coupling sweeps (J, Jz, W),
+disorder-averaged observables, or finite-size scaling studies.  The interface
+is intentionally minimal — `f` is a user-supplied closure that builds the
+Hamiltonian, solves it, and returns any observable; `parameter_sweep` simply
+maps `f` over `params` and returns the collected results.
+
+# Arguments
+- `f`: a callable `f(p) -> result`.  Typically a `do`-block closure that
+  constructs a Hamiltonian from the parameter value and calls [`solve`](@ref).
+- `params`: any iterable of parameter values (e.g. `[0.5, 1.0, 2.0]` for a J
+  sweep or `1:10` for disorder seeds).
+
+# Returns
+- `Vector` of the same length as `params`, with element type inferred from `f`.
+
+# Examples
+```julia
+J_vals  = 0.5:0.5:2.0
+g       = Chain(6)
+energies = parameter_sweep(J_vals) do J
+    H = Heisenberg(g; J=J)
+    solve(H, GroundState(), ExactDiagonalization(:ground)).energy
+end
+```
+"""
+parameter_sweep(f, params) = map(f, params)

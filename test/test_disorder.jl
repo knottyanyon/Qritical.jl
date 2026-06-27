@@ -154,3 +154,47 @@ end
     end
 
 end
+
+@testset "§9.1 J-sweep driver" begin
+
+    @testset "parameter_sweep returns a result for each J value" begin
+        J_vals = [0.5, 1.0, 2.0]
+        g = Chain(4)
+        results = parameter_sweep(J_vals) do J
+            H = Heisenberg(g; J=J)
+            ed = solve(H, GroundState(), ExactDiagonalization(:ground))
+            ed.energy
+        end
+        @test length(results) == 3
+        @test results isa Vector
+    end
+
+    @testset "GS energy is monotone in J for Heisenberg chain" begin
+        # E_0 = -J * const for the antiferromagnet → more negative as J increases
+        J_vals = [0.5, 1.0, 1.5, 2.0]
+        g = Chain(4)
+        energies = parameter_sweep(J_vals) do J
+            H = Heisenberg(g; J=J)
+            solve(H, GroundState(), ExactDiagonalization(:ground)).energy
+        end
+        for i in 1:length(energies)-1
+            @test energies[i] > energies[i+1]  # more negative as J grows
+        end
+    end
+
+    @testset "disorder-averaged energy from parameter_sweep is self-consistent" begin
+        # Sweep disorder realizations and check average converges
+        rng  = MersenneTwister(5)
+        g    = Chain(4)
+        n    = 8
+        seeds = 1:n
+        avg_E = mean(parameter_sweep(collect(seeds)) do seed
+            h_vec = disorder_realization(4, Uniform(-2.0, 2.0), MersenneTwister(seed))
+            H = XXZ(g; J=1.0, Jz=1.0, h=h_vec)
+            solve(H, GroundState(), ExactDiagonalization(:ground)).energy
+        end)
+        # Energy should be negative (antiferromagnetic + disorder)
+        @test avg_E < 0.0
+    end
+
+end

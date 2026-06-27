@@ -118,6 +118,6 @@ export GroundState, ExactDiagonalization, EDResult, sparse
 export StatevectorState, as_statevector, EDTimeResult
 
 # ==== Disorder ================================================================
-export Uniform, disorder_realization
+export Uniform, disorder_realization, parameter_sweep
 
 end

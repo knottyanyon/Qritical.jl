@@ -2,6 +2,7 @@ using Qritical
 using Test
 using TensorOperations
 using LinearAlgebra
+using Statistics
 
 # Aqua quality checks are deferred to v1.0 (stale_deps will fire until all
 # planned dependencies are actually used).
