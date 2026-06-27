@@ -15,6 +15,7 @@ using LinearAlgebra
     include("test_dof.jl")
     include("test_operator.jl")
     include("test_power_method.jl")
+    include("test_tebd.jl")
     include("test_svd.jl")
     include("test_indices.jl")
     include("test_qtensor.jl")

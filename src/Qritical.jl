@@ -35,6 +35,7 @@ include("vidal.jl")
 include("correlators.jl")
 include("finite_mpo.jl")
 include("power_method.jl")
+include("tebd.jl")
 
 # ==== Index layer =============================================================
 export IxLoc, Upper, Lower
@@ -91,5 +92,14 @@ export expect, apply_mpo
 
 # ==== Power Method ============================================================
 export PowerMethodResult, power_method
+
+# ==== TEBD + time evolution ===================================================
+export TimeAxis, RealTime, ImaginaryTime
+export Unitary, HermitianPSD
+export Propagator, opclass, gate
+export ConstantProtocol, total_time
+export bond_hamiltonian
+export apply_gate
+export TrotterSubstep, SuzukiTrotter, trotter_steps, trotter_step
 
 end

@@ -94,6 +94,7 @@ makedocs(;
             "Degrees of Freedom"     => "api/dof.md",
             "Operators & Hamiltonians" => "api/operator.md",
             "MPO & Expectation Values" => "api/mpo.md",
+            "Power Method"             => "api/power_method.md",
         ],
         "Bibliography" => "references.md",
     ],
