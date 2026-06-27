@@ -13,6 +13,7 @@ using LinearAlgebra
     # include("test_tebd.jl")
     include("test_geometry.jl")
     include("test_dof.jl")
+    include("test_operator.jl")
     include("test_svd.jl")
     include("test_indices.jl")
     include("test_qtensor.jl")

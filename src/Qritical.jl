@@ -8,6 +8,7 @@ abstract type AbstractGeometry end
 
 include("geometry.jl")
 include("dof.jl")
+include("operator.jl")
 include("indices.jl")
 include("qtensor.jl")
 include("spectrum.jl")
@@ -17,6 +18,7 @@ include("mps.jl")
 include("canonicalize.jl")
 include("vidal.jl")
 include("correlators.jl")
+include("finite_mpo.jl")
 
 # ==== Index layer =============================================================
 export IxLoc, Upper, Lower
@@ -58,5 +60,17 @@ export SpinlessFermion, Electron, Majorana, HardCoreBoson
 export Statistics, Commuting, Anticommuting
 export local_dim, statistics, operators, physical_space
 export NoSymmetry
+
+# ==== Operator / Hamiltonian ==================================================
+export uniform
+export LocalTerm, BondTerm, Operator, Hamiltonian
+export XXZ, Heisenberg, Ising
+export total_magnetization, staggered_magnetization, local_op, two_point
+export identity_operator
+export dense_matrix
+
+# ==== MPO + expect ============================================================
+export FiniteMPO, MPO
+export expect
 
 end
