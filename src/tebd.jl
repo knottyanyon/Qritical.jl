@@ -239,9 +239,12 @@ function apply_gate(ψ::FiniteMPS, G::Propagator, bond::Int;
     # Merge: Θ[χL, d, d, χR]
     @tensor Θ[α, σ1, σ2, β] := A1[α, σ1, m] * A2[m, σ2, β]
 
-    # Apply gate: G has shape (d², d²) with row=(σ1',σ2'), col=(σ1,σ2)
-    G_mat = reshape(G.data, d, d, d, d)   # [σ1', σ2', σ1, σ2]
-    @tensor Θ_new[α, σ1p, σ2p, β] := G_mat[σ1p, σ2p, σ1, σ2] * Θ[α, σ1, σ2, β]
+    # Apply gate: G.data is a (d²,d²) matrix in kron ordering where
+    # G.data[(σ1'-1)*d+σ2', (σ1-1)*d+σ2] = ⟨σ1',σ2'|G|σ1,σ2⟩.
+    # Julia column-major reshape(G.data, d,d,d,d) gives
+    # G_mat[a,b,c,d_] = G.data[a+(b-1)*d, c+(d_-1)*d], i.e. G_mat[σ2',σ1',σ2,σ1].
+    G_mat = reshape(G.data, d, d, d, d)   # column-major: [σ2', σ1', σ2, σ1]
+    @tensor Θ_new[α, σ1p, σ2p, β] := G_mat[σ2p, σ1p, σ2, σ1] * Θ[α, σ1, σ2, β]
 
     # SVD split: reshape to (χL*d, d*χR)
     M = reshape(permutedims(Θ_new, (1,2,3,4)), χL * d, d * χR)

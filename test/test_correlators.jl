@@ -78,7 +78,7 @@ end
     # ------------------------------------------------------------------
     # Test 4 — Brute-force agreement on a random state
     # ⟨ψ|σᶻ_i ⊗ σᶻ_j|ψ⟩ computed via full 2^L operator embedding.
-    # Column-major site convention: MPS site s → kron position (L+1-s).
+    # as_state respects kron ordering: MPS site s → kron position s.
     # ------------------------------------------------------------------
     @testset "two_point matches full-state brute-force on random state" begin
         L     = 4
@@ -86,9 +86,7 @@ end
         mps   = to_mps(as_state(ψ_vec, fill(2, L)); trunc=NoTrunc(), form=:left)
 
         for i in 1:L, j in (i + 1):L
-            kron_i = L + 1 - i
-            kron_j = L + 1 - j
-            ops    = [k == kron_i ? σz_c : (k == kron_j ? σz_c : Id_c) for k in 1:L]
+            ops    = [k == i ? σz_c : (k == j ? σz_c : Id_c) for k in 1:L]
             O_full = foldl(kron, ops)
             expected = dot(ψ_vec, O_full * ψ_vec)
             @test two_point(mps, σz_c, σz_c, i, j) ≈ expected atol=1e-10

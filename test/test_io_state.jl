@@ -243,17 +243,27 @@ const SCRATCHPAD = "/private/tmp/claude-501/-Users-bavithra-Documents-Uni-Course
             end
         end
 
-        @testset "as_state round-trip: vec(reshape(v, dof_dims...)) ≈ v" begin
-            # Physics: reshaping and flattening should recover the original vector (up to ordering).
+        @testset "as_state round-trip: kron-ordering consistent with dense_matrix" begin
+            # Physics: as_state must respect the kron-product site ordering used by dense_matrix.
+            # Kron ordering: site 1 is most significant (changes slowest).
+            # For basis state e_k (only v[k]=1), the tensor should have
+            # data[σ₁,...,σ_L] = 1 at the multi-index whose kron position equals k.
             let L = 2,
                 d = 3,
-                v = randn(d^L),
-                dof_dims = fill(d, L),
-                ψ = as_state(v, dof_dims)
+                dof_dims = fill(d, L)
 
-                # Test: flattening the reshaped tensor recovers v
-                v_recovered = vec(ψ.data)
-                @test isapprox(v_recovered, v; atol=1e-14)
+                for k in 1:d^L
+                    e = zeros(d^L); e[k] = 1.0
+                    ψ = as_state(e, dof_dims)
+                    # Decode kron index k-1 = Σᵢ (σᵢ-1) * d^(L-i) → σ_i
+                    idx = k - 1
+                    σ = Vector{Int}(undef, L)
+                    for i in 1:L
+                        σ[i] = div(idx, d^(L-i)) + 1
+                        idx   = mod(idx, d^(L-i))
+                    end
+                    @test ψ.data[σ...] ≈ 1.0  atol=1e-14
+                end
             end
         end
 

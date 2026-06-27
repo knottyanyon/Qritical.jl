@@ -417,8 +417,13 @@ dim(ψ.indices[1])  # 2
 [`bipartition_matrix`](@ref), [`QTensor`](@ref)
 """
 function as_state(v::AbstractVector, dof_dims::AbstractVector{Int})
-    indices = Tuple(lower(Symbol(:σ, i), dof_dims[i]) for i in eachindex(dof_dims))
-    data = reshape(v, dof_dims...)
-    return QTensor(data, indices)
+    L = length(dof_dims)
+    indices = Tuple(lower(Symbol(:σ, i), dof_dims[i]) for i in 1:L)
+    # Kron product ordering: site 1 is most significant (changes slowest).
+    # Julia reshape is column-major: first index varies fastest.
+    # So reshape(v, d_L,...,d_1) gives data_raw[σ_L,...,σ_1] = v[kron_index], then
+    # permutedims reverses to data[σ_1,...,σ_L] = v[kron_index(σ_1,...,σ_L)].
+    data = permutedims(reshape(v, reverse(dof_dims)...), L:-1:1)
+    return QTensor(convert(Array{ComplexF64}, data), indices)
 end
 
