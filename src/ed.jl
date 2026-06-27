@@ -149,11 +149,23 @@ end
 """
     StatevectorState
 
-Study type wrapping a dense state vector for use as the initial condition in ED
-time propagation.  Pass to `solve` via `as_statevector(v)`.
+A thin wrapper around a dense state vector, used as the initial condition for ED
+time propagation. Think of it as the quantum-mechanics analogue of "start here":
+it bundles the full ``d^L``-dimensional vector ``|\\psi_0\\rangle`` into a typed
+container so that `solve` can dispatch on it correctly.
+
+Construct one with [`as_statevector`](@ref) rather than calling the constructor
+directly — that helper also handles element-type conversion.
 
 # Fields
-- `v::Vector{ComplexF64}` — initial state vector (Hilbert-space basis ordering).
+- `v::Vector{ComplexF64}`: the initial state in the Kronecker-product (big-endian)
+  basis ordering. Index ``k`` corresponds to the computational basis state
+  ``|\\sigma_1, \\sigma_2, \\ldots, \\sigma_L\\rangle`` with
+  ``k = 1 + \\sum_{i=1}^{L} (\\sigma_i - 1)\\, d^{L-i}``.
+
+# See also
+[`as_statevector`](@ref), [`EDTimeResult`](@ref),
+`solve(::Operator, ::StatevectorState, ::ExactDiagonalization{:time}, ::ConstantProtocol)`
 """
 struct StatevectorState
     v::Vector{ComplexF64}
@@ -162,24 +174,59 @@ end
 """
     as_statevector(v) -> StatevectorState
 
-Wrap the dense state vector `v` as a study type for `solve` with
-`ExactDiagonalization(:time)`.
+Wrap a dense vector `v` as the initial state for ED time propagation.
 
-The vector must be in the kron-product (big-endian) basis ordering used by
-[`dense_matrix`](@ref): `v[k]` corresponds to the basis state
+This is the standard entry point when you have a plain `Vector` (say, the
+ground-state vector from [`EDResult`](@ref)) and want to hand it to
+`solve` with `ExactDiagonalization(:time)`. The helper converts `v` to
+`ComplexF64` so you do not have to think about element types.
+
+The vector must be ordered in the big-endian Kronecker-product basis used
+by [`dense_matrix`](@ref): component ``k`` of the returned
+[`StatevectorState`](@ref) corresponds to the computational basis state
 ``|\\sigma_1, \\sigma_2, \\ldots, \\sigma_L\\rangle`` where
-``k = 1 + \\sum_i (\\sigma_i - 1)\\, d^{L-i}``.
+
+```math
+k = 1 + \\sum_{i=1}^{L} (\\sigma_i - 1)\\, d^{L-i}.
+```
+
+In practice, any vector you obtain from [`EDResult`](@ref) or from
+[`neel_state`](@ref) is already in this ordering.
+
+# Arguments
+- `v::AbstractVector`: a real or complex state vector of length ``d^L``.
+
+# Returns
+- `StatevectorState`: the wrapped vector, element-type promoted to
+  `ComplexF64`.
+
+# Examples
+```julia
+julia> gs = solve(H, GroundState(), ExactDiagonalization(:ground));
+julia> sv = as_statevector(gs.state);
+julia> result = solve(H, sv, ExactDiagonalization(:time), ConstantProtocol{RealTime}(0.1, 20));
+```
 """
 as_statevector(v::AbstractVector) = StatevectorState(convert(Vector{ComplexF64}, v))
 
 """
     EDTimeResult
 
-Return type of `solve` with `ExactDiagonalization(:time)`.
+The result returned by `solve` with `ExactDiagonalization(:time)`. It holds the
+propagated state and the total time elapsed, which you can use to compute
+expectation values ``\\langle O(t) \\rangle`` or to continue evolving further.
 
 # Fields
-- `state::Vector{ComplexF64}` — final state vector (unit-norm for real-time; unnormalized for imaginary-time).
-- `time::Float64` — total propagation time (real or imaginary).
+- `state::Vector{ComplexF64}`: the final state vector ``|\\psi(T)\\rangle``.
+  For real-time propagation this is exactly unit-norm (``\\|\\psi(T)\\| = 1``).
+  For imaginary-time propagation it is **not** normalised — call
+  `normalize(result.state)` to get the unit-norm ground-state approximation.
+- `time::Float64`: the total propagation time ``T = \\Delta t \\cdot N_{\\text{steps}}``,
+  in whatever units your Hamiltonian coupling constants carry.
+
+# See also
+[`StatevectorState`](@ref), [`as_statevector`](@ref),
+`solve(::Operator, ::StatevectorState, ::ExactDiagonalization{:time}, ::ConstantProtocol)`
 """
 struct EDTimeResult
     state::Vector{ComplexF64}
@@ -189,22 +236,86 @@ end
 """
     solve(H, sv, ::ExactDiagonalization{:time}, p) -> EDTimeResult
 
-Propagate the initial state `sv` under `H` for the total time specified in
-protocol `p`.
+Propagate the initial state `sv` under the Hamiltonian `H` for the total time
+given by protocol `p`, using exact eigendecomposition — no Trotter splitting,
+no truncation.
 
-The propagation is exact (no Trotter splitting):
+## What this computes
+
+For **real-time** propagation (`p` carries `RealTime`), this applies the
+unitary time-evolution operator:
 
 ```math
-|\\psi(t)\\rangle = e^{-iHt}\\,|\\psi_0\\rangle \\quad (\\text{RealTime})
-```
-```math
-|\\psi(\\tau)\\rangle = e^{-H\\tau}\\,|\\psi_0\\rangle \\quad (\\text{ImaginaryTime, unnormalized})
+|\\psi(T)\\rangle = e^{-i H T}\\,|\\psi_0\\rangle,
+\\qquad T = \\Delta t \\cdot N_{\\text{steps}}.
 ```
 
-The eigendecomposition ``H = V \\Lambda V^\\dagger`` is computed once and the
-propagator is applied in ``O(d^{2L})`` time.  Renormalization is **not** applied
-automatically for imaginary-time evolution; use `normalize(result.state)` to
-recover the unit-norm GS approximation.
+The norm is exactly preserved: ``\\|\\psi(T)\\| = \\|\\psi_0\\|``.
+
+For **imaginary-time** propagation (`p` carries `ImaginaryTime`), the
+non-unitary projector is applied instead:
+
+```math
+|\\psi(\\tau)\\rangle = e^{-H\\tau}\\,|\\psi_0\\rangle \\quad (\\text{unnormalised}).
+```
+
+Each eigencomponent decays at its own rate ``e^{-E_n \\tau}``, so the ground
+state is amplified relative to excited states. The rate of convergence is set
+by the spectral gap ``\\Delta``: components above the ground state are suppressed
+by a factor ``e^{-\\Delta\\tau}``. **Normalisation is not applied automatically**
+for imaginary time — use `normalize(result.state)` afterwards.
+
+## The eigendecomposition trick
+
+The key idea is to diagonalise ``H = V \\Lambda V^\\dagger`` **once** and then
+evaluate any time ``T`` cheaply:
+
+```math
+e^{-i H T}\\,|\\psi_0\\rangle
+= V\\,\\mathrm{diag}\\bigl(e^{-i\\lambda_1 T},\\, \\ldots,\\, e^{-i\\lambda_D T}\\bigr)\\,V^\\dagger\\,|\\psi_0\\rangle.
+```
+
+The projection ``V^\\dagger |\\psi_0\\rangle`` costs ``O(d^{2L})``, and so does
+the back-transform ``V (\\cdots)``. Diagonalisation itself costs ``O(d^{3L})``,
+but you pay that once no matter how long ``T`` is or how many times you ask for
+observables.
+
+## Cross-validation use case
+
+Because there is no Trotter error here, ED time evolution is the ideal reference
+for validating TEBD. Run both on the same small system (``L \\leq 10``) and
+compare ``\\langle O(t) \\rangle`` at several times: any disagreement is Trotter
+error, and its magnitude should scale as ``(\\Delta t)^p`` for a ``p``-th order
+Trotter formula.
+
+# Arguments
+- `H::Operator`: the Hamiltonian. Must fit within the ``2^{20}`` Hilbert-space
+  guard checked by [`sparse`](@ref) internally.
+- `sv::StatevectorState`: the initial state, constructed via
+  [`as_statevector`](@ref).
+- `::ExactDiagonalization{:time}`: selects this exact-propagation path.
+- `p::ConstantProtocol`: the evolution schedule. The `axis` field of `p`
+  selects `RealTime` or `ImaginaryTime`; `p.dt` and `p.nsteps` together
+  determine ``T = p.dt \\times p.nsteps``.
+
+# Returns
+- `EDTimeResult`: holds `result.state` (the propagated vector) and
+  `result.time` (the total time ``T``).
+
+# Examples
+```julia
+julia> # Real-time evolution of the ground state (should stay put — it's an eigenstate)
+julia> gs = solve(H, GroundState(), ExactDiagonalization(:ground));
+julia> sv = as_statevector(gs.state);
+julia> p  = ConstantProtocol{RealTime}(0.05, 40);   # T = 2.0
+julia> r  = solve(H, sv, ExactDiagonalization(:time), p);
+julia> norm(r.state)   # always 1.0 for real time
+1.0
+```
+
+# See also
+[`StatevectorState`](@ref), [`as_statevector`](@ref), [`EDTimeResult`](@ref),
+[`ConstantProtocol`](@ref), [`RealTime`](@ref), [`ImaginaryTime`](@ref)
 """
 function solve(H::Operator, sv::StatevectorState, ::ExactDiagonalization{:time},
                p::ConstantProtocol)

@@ -98,6 +98,7 @@ makedocs(;
             "TEBD"                     => "api/tebd.md",
             "Quench & TEBD Solve"      => "api/quench.md",
             "ExactDiagonalization"     => "api/ed.md",
+            "ED Time Propagation"      => "api/ed_time.md",
             "Disorder"                 => "api/disorder.md",
         ],
         "Bibliography" => "references.md",

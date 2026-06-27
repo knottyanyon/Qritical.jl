@@ -85,6 +85,41 @@ end
         @test E_final ≤ E_rand + 1e-6
     end
 
+    @testset "MBL signature: disorder suppresses entanglement growth" begin
+        # In an ergodic chain entropy grows fast; in the MBL phase it grows slowly.
+        # For L=6, W=6 >> J we expect S_disordered < S_clean after t=2.0.
+        L = 6
+        rng = MersenneTwister(99)
+        h_vec = disorder_realization(L, Uniform(-6.0, 6.0), rng)
+
+        H_clean = XXZ(Chain(L); J=1.0, Jz=1.0)
+        H_dis   = XXZ(Chain(L); J=1.0, Jz=1.0, h=h_vec)
+
+        ψ₀_clean = canonicalize(neel_state(Chain(L)), LeftCanonical(NoTrunc()))
+        ψ₀_dis   = canonicalize(neel_state(Chain(L)), LeftCanonical(NoTrunc()))
+
+        p_clean = ConstantProtocol(RealTime(), 0.05, 40, H_clean)  # t=2.0
+        p_dis   = ConstantProtocol(RealTime(), 0.05, 40, H_dis)
+
+        r_clean = solve(H_clean, Quench(ψ₀_clean), TEBD(SuzukiTrotter(2), MaxBondDimTrunc(32)), p_clean)
+        r_dis   = solve(H_dis,   Quench(ψ₀_dis),   TEBD(SuzukiTrotter(2), MaxBondDimTrunc(32)), p_dis)
+
+        # Entropy at center bond
+        center = div(L, 2)
+        function center_entropy(ψ)
+            ψc  = canonicalize(ψ, BondCanonical(center, NoTrunc()))
+            svs = ψc.bond_svs[center + 1].values
+            n2  = sum(abs2, svs)
+            n2 > 0 || return 0.0
+            p   = abs2.(svs) ./ n2
+            -sum(pi -> pi > 0 ? pi * log2(pi) : 0.0, p)
+        end
+
+        S_clean = center_entropy(r_clean.state)
+        S_dis   = center_entropy(r_dis.state)
+        @test S_clean > S_dis
+    end
+
     @testset "⟨S₁ᶻSᵢᶻ⟩ of TEBD GS matches ED cross-check" begin
         g = Chain(4)
         rng = MersenneTwister(7)
