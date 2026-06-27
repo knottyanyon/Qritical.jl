@@ -1682,10 +1682,10 @@ uuid = "4b34888f-f399-49d4-9bb3-47ed5cae4e65"
 version = "1.0.2"
 
 [[deps.Qritical]]
-deps = ["Coverage", "GeometryBasics", "HalfIntegers", "KrylovKit", "LaTeXStrings", "LinearAlgebra", "Logging", "Makie", "ScopedValues", "Serialization", "SparseArrays", "TensorKit", "TensorOperations"]
+deps = ["Coverage", "DelimitedFiles", "GeometryBasics", "HalfIntegers", "KrylovKit", "LaTeXStrings", "LinearAlgebra", "Logging", "Makie", "ScopedValues", "Serialization", "SparseArrays", "TensorKit", "TensorOperations"]
 path = "."
 uuid = "4d77d595-865b-4fe8-9046-dbce8046f658"
-version = "0.7.1"
+version = "0.1.0"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]

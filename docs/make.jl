@@ -82,6 +82,7 @@ makedocs(;
                 ],
             ],
         ],
+        "API Reference" => "api.md",
         "Bibliography" => "references.md",
     ],
 )
