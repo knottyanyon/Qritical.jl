@@ -85,4 +85,37 @@ end
         @test E_final ≤ E_rand + 1e-6
     end
 
+    @testset "⟨S₁ᶻSᵢᶻ⟩ of TEBD GS matches ED cross-check" begin
+        g = Chain(4)
+        rng = MersenneTwister(7)
+        h_vec = disorder_realization(4, Uniform(-1.0, 1.0), rng)
+        H = XXZ(g; J=1.0, Jz=1.0, h=h_vec)
+        mpo = MPO(H)
+
+        # Ground state via imaginary-time TEBD
+        ψ₀ = canonicalize(neel_state(g), LeftCanonical(NoTrunc()))
+        p = ConstantProtocol(ImaginaryTime(), 0.05, 120, H)
+        result = solve(H, Quench(ψ₀), TEBD(SuzukiTrotter(2), MaxBondDimTrunc(16)), p)
+        ψ_gs = result.state
+
+        # Ground state via exact diagonalization
+        ops = operators(SpinHalf())
+        Sz = Array(ops.Sz)
+        ed_result = solve(H, GroundState(), ExactDiagonalization(:ground))
+        psi_ed = ed_result.state
+
+        # Compare ⟨S₁ᶻ Sᵢᶻ⟩ for all i > 1
+        for i in 2:4
+            # TEBD: two_point(ψ, Sz, Sz, 1, i)
+            C_tebd = real(two_point(ψ_gs, Sz, Sz, 1, i)) / real(overlap(ψ_gs, ψ_gs))
+
+            # ED: direct from the state vector
+            L = 4; d = 2
+            Id = Matrix{Float64}(I, d, d)
+            op1 = foldl(kron, [j == 1 ? Sz : (j == i ? Sz : Id) for j in 1:L])
+            C_ed = real(psi_ed' * op1 * psi_ed)
+            @test C_tebd ≈ C_ed  atol=1e-2
+        end
+    end
+
 end
