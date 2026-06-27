@@ -3,7 +3,22 @@ module Qritical
 using LinearAlgebra
 using TensorOperations
 
-# Abstract supertype that geometry files extend
+"""
+    AbstractGeometry
+
+Abstract supertype for lattice geometries.
+
+A geometry answers exactly two queries: which sites exist, and which pairs of
+sites are connected by bonds.  That is all the Hamiltonian builder needs — it
+does not care whether the underlying graph is a chain, a square lattice, or a
+torus.  Concrete subtypes only need to implement [`sites`](@ref) and
+[`bonds`](@ref).
+
+Current concrete geometry: [`Chain`](@ref) (1D open/periodic chain).
+Planned extensions: `Square`, `Torus`, `Lattice{V,E}` (see §2 of the design plan).
+
+See also: [`Chain`](@ref), [`sites`](@ref), [`bonds`](@ref)
+"""
 abstract type AbstractGeometry end
 
 include("geometry.jl")
@@ -19,6 +34,7 @@ include("canonicalize.jl")
 include("vidal.jl")
 include("correlators.jl")
 include("finite_mpo.jl")
+include("power_method.jl")
 
 # ==== Index layer =============================================================
 export IxLoc, Upper, Lower
@@ -71,6 +87,9 @@ export dense_matrix
 
 # ==== MPO + expect ============================================================
 export FiniteMPO, MPO
-export expect
+export expect, apply_mpo
+
+# ==== Power Method ============================================================
+export PowerMethodResult, power_method
 
 end
