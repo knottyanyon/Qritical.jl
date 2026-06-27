@@ -3,6 +3,11 @@ module Qritical
 using LinearAlgebra
 using TensorOperations
 
+# Abstract supertype that geometry files extend
+abstract type AbstractGeometry end
+
+include("geometry.jl")
+include("dof.jl")
 include("indices.jl")
 include("qtensor.jl")
 include("spectrum.jl")
@@ -42,5 +47,16 @@ export FiniteMPS, to_mps, add_mps
 export CanonicalizeConfig, LeftCanonical, RightCanonical, BondCanonical, SiteCanonical
 export canonicalize, canonical_error, is_canonical, overlap, local_expectation, two_point
 export to_vidal, to_canonical
+
+# ==== Geometry ================================================================
+export AbstractGeometry, Chain, sites, bonds
+
+# ==== DoF layer ===============================================================
+export AbstractDoF
+export Spin, SpinHalf, SpinOne
+export SpinlessFermion, Electron, Majorana, HardCoreBoson
+export Statistics, Commuting, Anticommuting
+export local_dim, statistics, operators, physical_space
+export NoSymmetry
 
 end

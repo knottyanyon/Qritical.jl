@@ -1,6 +1,7 @@
 using Qritical
 using Test
 using TensorOperations
+using LinearAlgebra
 
 # Aqua quality checks are deferred to v1.0 (stale_deps will fire until all
 # planned dependencies are actually used).
@@ -10,7 +11,8 @@ using TensorOperations
     # include("test_backend.jl")
     # include("test_finite_mpo.jl")
     # include("test_tebd.jl")
-    # include("test_observables.jl")
+    include("test_geometry.jl")
+    include("test_dof.jl")
     include("test_svd.jl")
     include("test_indices.jl")
     include("test_qtensor.jl")
