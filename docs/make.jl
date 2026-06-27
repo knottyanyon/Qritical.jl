@@ -83,7 +83,14 @@ makedocs(;
                 ],
             ],
         ],
-        "API Reference" => "api.md",
+        "API Reference" => [
+            "Index Layer"            => "api/index_layer.md",
+            "QTensor"                => "api/qtensor.md",
+            "SVD & Truncation"       => "api/svd.md",
+            "Spectra & Entanglement" => "api/spectrum.md",
+            "State Utilities & I/O"  => "api/io.md",
+            "MPS & Canonical Forms"  => "api/mps.md",
+        ],
         "Bibliography" => "references.md",
     ],
 )
