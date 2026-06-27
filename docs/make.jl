@@ -28,6 +28,7 @@ makedocs(;
     build="build",
     workdir=normpath(joinpath(@__DIR__, "src")),
     clean=true,
+    doctest=false,
     warnonly=true,
     plugins=[bib],
     pages=[

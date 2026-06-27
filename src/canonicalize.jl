@@ -92,6 +92,13 @@ end
 
 # ==== Canonicalize configs ====================================================
 
+"""
+    CanonicalizeConfig
+
+Supertype for canonicalization configurations passed to [`canonicalize`](@ref).
+Concrete subtypes: [`LeftCanonical`](@ref), [`RightCanonical`](@ref),
+[`BondCanonical`](@ref), [`SiteCanonical`](@ref).
+"""
 abstract type CanonicalizeConfig end
 
 """

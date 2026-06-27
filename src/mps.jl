@@ -1,3 +1,10 @@
+"""
+    AbstractMPSForm
+
+Supertype for all MPS gauge-form tags. Every `FiniteMPS` carries one of these
+to record which isometry conditions its site tensors currently satisfy.
+Concrete subtypes: [`CanonicalForm`](@ref), [`VidalForm`](@ref), [`ArbitraryForm`](@ref).
+"""
 abstract type AbstractMPSForm end
 
 """
@@ -21,7 +28,22 @@ struct CanonicalForm <: AbstractMPSForm
     rlim::Int
 end
 
+"""
+    VidalForm()
+
+Form tag indicating the MPS is in Vidal's ``\\Gamma\\Lambda`` representation.
+Site tensors are stored as ``\\Gamma_i`` and bond tensors as ``\\Lambda_i``.
+[`is_canonical`](@ref) returns `true` for this form without checking isometry.
+"""
 struct VidalForm <: AbstractMPSForm end
+
+"""
+    ArbitraryForm()
+
+Form tag indicating no isometry conditions are guaranteed — the MPS has been
+modified (e.g. by [`add_mps`](@ref)) without a subsequent canonicalization.
+[`is_canonical`](@ref) returns `false` for this form.
+"""
 struct ArbitraryForm <: AbstractMPSForm end
 
 """
