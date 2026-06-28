@@ -78,6 +78,7 @@ S^{\\pm} |m\\rangle = \\sqrt{S(S+1) - m(m \\pm 1)} \\, |m \\pm 1\\rangle.
 ```
 
 !!! tip "Convenience aliases"
+
     Prefer [`SpinHalf`](@ref) and [`SpinOne`](@ref) over writing `Spin{1//2}()` or
     `Spin{1}()` by hand — they are just `const` aliases, so there is no performance
     difference.
@@ -314,7 +315,7 @@ tensors have shape ``(\\chi_L, d, d, \\chi_R)``.  For spin-``S`` the formula is
 | `Spin{S}`         | ``2S+1``    |
 | `SpinlessFermion` | 2           |
 | `HardCoreBoson`   | 2           |
-| `MajoranaFermion`        | 2           |
+| `MajoranaFermion` | 2           |
 | `Electron`        | 4           |
 
 # Examples
@@ -409,34 +410,36 @@ julia> ops.Sp
  0.0+0.0im  0.0+0.0im
 ```
 """
+
 function algebra_generators(::Spin{1//2})
-    I2 = ComplexF64[1 0; 0 1]
     Sz = ComplexF64[1 0; 0 -1] / 2          # ½·diag(+1,−1); Sz|↑⟩=+½|↑⟩
     Sp = ComplexF64[0 1; 0 0]              # S⁺|↓⟩=|↑⟩, S⁺|↑⟩=0
     Sm = Sp'                                 # S⁻=(S⁺)†
     Sx = (Sp + Sm) / 2
     Sy = (Sp - Sm) / (2im)
+    I2 = LinearAlgebra.one(Sz)
     (; Sx, Sy, Sz, Sp, Sm, I=I2)
 end
 
+# todo: switch to using a simple function that calculates the required matrix elements for a given S using wigner-eckart theorem instead of hard-coding separately for 1//2 and 1.
 function algebra_generators(::Spin{1})
     # 3×3 spin-1 matrices (Condon–Shortley convention).
     # Basis ordering: |+1⟩, |0⟩, |−1⟩  (mz = 1, 0, −1).
-    I3 = ComplexF64[1 0 0; 0 1 0; 0 0 1]
     Sz = ComplexF64[1 0 0; 0 0 0; 0 0 -1]
     Sp = ComplexF64[0 √2 0; 0 0 √2; 0 0 0]   # S⁺: raises mz by 1
     Sm = Sp'
     Sx = (Sp + Sm) / 2
     Sy = (Sp - Sm) / (2im)
+    I3 = LinearAlgebra.one(Sz)
     (; Sx, Sy, Sz, Sp, Sm, I=I3)
 end
 
 function algebra_generators(::SpinlessFermion)
-    I2 = ComplexF64[1 0; 0 1]
     # Basis ordering: |0⟩ (vacuum, index 1), |1⟩ (occupied, index 2).
     # c destroys a particle: c|1⟩ = |0⟩, c|0⟩ = 0.
     c = ComplexF64[0 1; 0 0]
     cdag = c'
+    I2 = LinearAlgebra.one(c)
     n = cdag * c   # number operator: diag(0,1)
     (; c, cdag, n, I=I2)
 end
@@ -444,10 +447,10 @@ end
 function algebra_generators(::HardCoreBoson)
     # Identical matrix structure to SpinlessFermion, but commuting statistics.
     # Basis ordering: |0⟩ (vacuum, index 1), |1⟩ (occupied, index 2).
-    I2 = ComplexF64[1 0; 0 1]
     b = ComplexF64[0 1; 0 0]
     bdag = b'
     n = bdag * b
+    I2 = LinearAlgebra.one(b)
     (; b, bdag, n, I=I2)
 end
 
@@ -455,7 +458,6 @@ function algebra_generators(::Electron)
     # 4×4 matrices on the electron site.
     # Basis ordering: {|0⟩, |↑⟩, |↓⟩, |↑↓⟩} — "spin-up first" convention
     # (ITensor / Essler et al.).  |↑↓⟩ ≡ c†↑ c†↓ |0⟩, so c↓|↑↓⟩ = −|↑⟩.
-    I4 = ComplexF64(1) * I(4)
 
     # c↑: destroys up-spin.  |↑⟩→|0⟩  and  |↑↓⟩→|↓⟩  (no sign, up acts first).
     cup = ComplexF64[
@@ -477,6 +479,7 @@ function algebra_generators(::Electron)
     cdndag = cdn'
     nup = cupdag * cup
     ndn = cdndag * cdn
+    I4 = LinearAlgebra.one(cup)
     n = nup + ndn
 
     # Spin operators built from the electron operators (for observables)
@@ -492,9 +495,9 @@ function algebra_generators(::MajoranaFermion)
     # γ₁ = c + c†  (=σˣ on the Fock site),  γ₂ = i(c† − c)  (=σʸ).
     # Both are Hermitian: γ†=γ.  Algebra: {γₐ,γᵦ}=2δₐᵦ.
     ops = algebra_generators(SpinlessFermion())
-    I2 = ComplexF64[1 0; 0 1]
     γ1 = ops.c + ops.cdag
     γ2 = im * (ops.cdag - ops.c)
+    I2 = LinearAlgebra.one(γ1)
     (; γ1, γ2, I=I2)
 end
 
@@ -516,12 +519,12 @@ This drives two downstream decisions:
     that handle signs automatically.
 
 | DoF               | `canonical_relation` |
-|:----------------- |:------------------- |
-| `Spin{S}`         | `CCR()`       |
-| `HardCoreBoson`   | `CCR()`       |
-| `SpinlessFermion` | `CAR()`   |
-| `Electron`        | `CAR()`   |
-| `MajoranaFermion`        | `CAR()`   |
+|:----------------- |:-------------------- |
+| `Spin{S}`         | `CCR()`              |
+| `HardCoreBoson`   | `CCR()`              |
+| `SpinlessFermion` | `CAR()`              |
+| `Electron`        | `CAR()`              |
+| `MajoranaFermion` | `CAR()`              |
 
 # Examples
 
