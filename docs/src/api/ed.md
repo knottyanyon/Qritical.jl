@@ -62,7 +62,7 @@ The typical workflow is:
 GroundState
 ExactDiagonalization
 EDResult
-sparse(H::LatticeOperator)
+matrix_repr(H::LatticeOperator, SparseFormat())
 solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:ground})
 solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:full})
 ```

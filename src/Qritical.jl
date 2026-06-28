@@ -26,6 +26,7 @@ abstract type AbstractGeometry end
 include("geometry.jl")
 include("dof.jl")
 include("symmetries.jl")
+include("storage_format.jl")
 include("operator.jl")
 include("indices.jl")
 include("qtensor.jl")
@@ -91,7 +92,9 @@ export OneSiteTerm, TwoSiteTerm, LatticeOperator, Hamiltonian
 export XXZ, Heisenberg, Ising
 export total_magnetization, staggered_magnetization, op_at_site, two_point
 export identity_operator
-export dense_matrix
+# ==== Storage format tags =====================================================
+export StorageFormat, DenseFormat, SparseFormat
+export matrix_repr
 
 # ==== MPO + expect ============================================================
 export FiniteMPO, MPO
@@ -116,7 +119,7 @@ export QuenchResult
 export solve
 
 # ==== ExactDiagonalization ====================================================
-export GroundState, ExactDiagonalization, EDResult, sparse
+export GroundState, ExactDiagonalization, EDResult
 export StatevectorState, as_statevector, EDTimeResult
 
 # ==== Disorder ================================================================

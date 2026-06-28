@@ -8,30 +8,30 @@ using SparseArrays
     @testset "dense_matrix is Hermitian" begin
         g = Chain(3)
         H = Heisenberg(g; J=1.0, h=0.1)
-        M = dense_matrix(H)
+        M = matrix_repr(H)
         @test M ≈ M'  atol=1e-12
     end
 
     @testset "dense_matrix eigenvalues are real" begin
         g = Chain(4)
         H = XXZ(g; J=1.0, Jz=0.5, h=0.2)
-        M = dense_matrix(H)
+        M = matrix_repr(H)
         ev = eigvals(Hermitian(M))
         @test all(abs.(imag.(eigvals(M))) .< 1e-10)
     end
 
-    @testset "sparse(H) and dense_matrix(H) agree" begin
+    @testset "matrix_repr(H, SparseFormat()) and matrix_repr(H) agree" begin
         g = Chain(3)
         H = Heisenberg(g; J=1.0)
-        M_dense  = dense_matrix(H)
-        M_sparse = sparse(H)
+        M_dense  = matrix_repr(H)
+        M_sparse = matrix_repr(H, SparseFormat())
         @test M_dense ≈ Matrix(M_sparse)  atol=1e-12
     end
 
-    @testset "sparse(H) is Hermitian" begin
+    @testset "matrix_repr(H, SparseFormat()) is Hermitian" begin
         g = Chain(4)
         H = XXZ(g; J=1.0, Jz=0.5, h=0.0)
-        M = sparse(H)
+        M = matrix_repr(H, SparseFormat())
         @test M ≈ M'  atol=1e-12
     end
 
@@ -52,7 +52,7 @@ end
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
         result = solve(H, GroundState(), ExactDiagonalization(:ground))
-        all_ev = real.(eigvals(Hermitian(dense_matrix(H))))
+        all_ev = real.(eigvals(Hermitian(matrix_repr(H))))
         @test result.energy ≤ minimum(all_ev) + 1e-8
     end
 
@@ -67,7 +67,7 @@ end
     @testset "ED(:ground) GS energy matches eigmin on L=4 Heisenberg" begin
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
-        E_ed = minimum(real.(eigvals(Hermitian(dense_matrix(H)))))
+        E_ed = minimum(real.(eigvals(Hermitian(matrix_repr(H)))))
         result = solve(H, GroundState(), ExactDiagonalization(:ground))
         @test result.energy ≈ E_ed  atol=1e-8
     end
@@ -108,7 +108,7 @@ end
         # If local_dim^L > 2^20 (≈1M), sparse should refuse
         g = Chain(25)   # d=2 → 2^25 > 1M
         H = Heisenberg(g; J=1.0)
-        @test_throws ArgumentError sparse(H)
+        @test_throws ArgumentError matrix_repr(H, SparseFormat())
     end
 end
 
@@ -118,7 +118,7 @@ end
         # The same 2^20 guard must apply there too.
         g = Chain(25)
         H = Heisenberg(g; J=1.0)
-        @test_throws ArgumentError dense_matrix(H)
+        @test_throws ArgumentError matrix_repr(H)
     end
 
     @testset "solve(:full) rejects oversized Hilbert space via dense_matrix guard" begin

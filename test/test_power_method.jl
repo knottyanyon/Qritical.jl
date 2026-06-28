@@ -30,9 +30,9 @@
         g = Chain(3)
         H = Heisenberg(g; J=1.0)
         M = total_magnetization(g)
-        mat_H  = dense_matrix(H)
-        mat_M  = dense_matrix(M)
-        mat_HM = dense_matrix(H + M)
+        mat_H  = matrix_repr(H)
+        mat_M  = matrix_repr(M)
+        mat_HM = matrix_repr(H + M)
         @test mat_HM ≈ mat_H + mat_M  atol=1e-10
     end
 
@@ -55,7 +55,7 @@ end
         H   = Heisenberg(g; J=1.0)
         mpo = MPO(H)
         # ED reference
-        E_ed = minimum(real.(eigvals(dense_matrix(H))))
+        E_ed = minimum(real.(eigvals(matrix_repr(H))))
 
         # Run power method (imaginary-time evolution by repeated (shift*I - H) application)
         ψ_init = let

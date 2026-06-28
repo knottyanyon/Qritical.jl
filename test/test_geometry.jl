@@ -52,7 +52,7 @@
         # and would compute d^(negative) silently.  An informative error must be thrown.
         g = Chain(4, true)
         H = XXZ(g; J=1.0)
-        @test_throws ArgumentError dense_matrix(H)
+        @test_throws ArgumentError matrix_repr(H)
     end
 
     @testset "periodic Chain raises ArgumentError in MPO (closes #79)" begin

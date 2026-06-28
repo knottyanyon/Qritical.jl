@@ -106,7 +106,7 @@ end
     @testset "sum of bond_hamiltonians matches dense_matrix (OBC)" begin
         g = Chain(3)
         H = Heisenberg(g; J=1.0, h=0.0)
-        H_dense = dense_matrix(H)
+        H_dense = matrix_repr(H)
         # For OBC Heisenberg, H = h_{12} ⊗ I_3 + I_1 ⊗ h_{23}
         d = 2; L = 3; d2 = d^2; D = d^L
         h12 = bond_hamiltonian(H, 1)

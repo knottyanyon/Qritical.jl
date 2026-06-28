@@ -39,7 +39,7 @@ using Random
         rng = MersenneTwister(99)
         h_vec = disorder_realization(4, Uniform(-3.0, 3.0), rng)
         H = XXZ(g; J=1.0, Jz=1.0, h=h_vec)
-        M = dense_matrix(H)
+        M = matrix_repr(H)
         @test M ≈ M'  atol=1e-12
     end
 
@@ -50,7 +50,7 @@ end
     @testset "imaginary-time TEBD converges to ED GS energy" begin
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
-        E_ed = minimum(real.(eigvals(Hermitian(dense_matrix(H)))))
+        E_ed = minimum(real.(eigvals(Hermitian(matrix_repr(H)))))
 
         # Start from Neel state, evolve in imaginary time
         ψ₀ = canonicalize(neel_state(g), LeftCanonical(NoTrunc()))

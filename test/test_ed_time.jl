@@ -15,7 +15,7 @@ using Random
     @testset "energy is conserved under RealTime ED propagation" begin
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
-        M = dense_matrix(H)
+        M = matrix_repr(H)
         psi_vec = normalize(randn(ComplexF64, 2^4))
         E_init = real(psi_vec' * M * psi_vec)
 
@@ -28,7 +28,7 @@ using Random
     @testset "ImaginaryTime ED propagation converges to GS" begin
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
-        M = dense_matrix(H)
+        M = matrix_repr(H)
         E_gs = minimum(real.(eigvals(Hermitian(M))))
 
         psi_vec = normalize(randn(ComplexF64, 2^4))
@@ -55,7 +55,7 @@ using Random
         # ED propagation
         p_ed = ConstantProtocol(RealTime(), t, 1, H)  # single step by exact matrix exp
         result_ed = solve(H, as_statevector(psi_vec), ExactDiagonalization(:time), p_ed)
-        E_ed = real(result_ed.state' * dense_matrix(H) * result_ed.state) / real(result_ed.state' * result_ed.state)
+        E_ed = real(result_ed.state' * matrix_repr(H) * result_ed.state) / real(result_ed.state' * result_ed.state)
 
         # TEBD (fine dt, 2nd-order Trotter)
         p_tebd = ConstantProtocol(RealTime(), dt_tebd, round(Int, t/dt_tebd), H)
@@ -64,7 +64,7 @@ using Random
         E_tebd = real(expect(ψ_f, mpo)) / real(overlap(ψ_f, ψ_f))
 
         # Energies should match (energy is conserved, so both give E_init)
-        E_init = real(psi_vec' * dense_matrix(H) * psi_vec)
+        E_init = real(psi_vec' * matrix_repr(H) * psi_vec)
         @test E_ed ≈ E_init  atol=1e-8
         @test E_tebd ≈ E_init  atol=1e-4  # TEBD has Trotter error
     end

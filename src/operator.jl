@@ -561,102 +561,90 @@ end
 # ----------------------------------------------------------------------------------------
 
 """
-    dense_matrix(H::LatticeOperator) -> Matrix{ComplexF64}
+    matrix_repr(H::LatticeOperator, [fmt::StorageFormat]) -> AbstractMatrix{ComplexF64}
 
-Build the full ``d^L \\times d^L`` dense matrix of operator `H` by Kronecker
-product construction.
+Materialise `H` as a ``d^L \\times d^L`` matrix, with storage layout chosen by `fmt`.
 
-For each on-site term ``h_i \\, O_i`` the contribution is
+  - `matrix_repr(H)` or `matrix_repr(H, DenseFormat())` — returns a dense
+    `Matrix{ComplexF64}` built by Kronecker product construction (see below).
+  - `matrix_repr(H, SparseFormat())` — returns a `SparseMatrixCSC{ComplexF64}`
+    assembled via sparse Kronecker products; suitable for Krylov/Lanczos solvers.
+
+For each on-site term ``h_i \\, O_i`` the dense contribution is
 
 ```math
 I_{d^{i-1}} \\otimes O_i \\otimes I_{d^{L-i}},
 ```
 
-and for each bond term ``J_{ij} \\, O_i \\otimes O_j`` (``j > i``) it is
+and for each two-site term ``J_{ij} \\, O_i \\otimes O_j`` (``j > i``) it is
 
 ```math
 I_{d^{i-1}} \\otimes O_i \\otimes I_{d^{j-i-1}} \\otimes O_j \\otimes I_{d^{L-j}}.
 ```
 
-All contributions are summed into a single ``d^L \\times d^L`` matrix.
-
-This is the go-to tool for exact-diagonalisation checks on small systems
-(``L \\lesssim 14`` for ``d = 2``).  For large systems use the MPO route instead.
-
 !!! warning "Commuting statistics only"
 
-    The Kronecker product construction is only correct for bosonic (commuting)
-    DoFs such as [`Spin`](@ref) and [`HardCoreBoson`](@ref).  For fermionic DoFs
-    the Jordan–Wigner string between sites ``i`` and ``j`` is not included;
-    a `basis_change` helper (planned in §3 of the design plan) will handle this
-    once implemented; for now restrict `dense_matrix` to commuting DoFs
-    ([`Spin`](@ref), [`HardCoreBoson`](@ref)).
-
-# Returns
-
-  - `Matrix{ComplexF64}` of shape ``(d^L, d^L)``.
+    Kronecker product construction is only correct for bosonic (commuting) DoFs such
+    as [`Spin`](@ref) and [`HardCoreBoson`](@ref).  For fermionic DoFs the
+    Jordan–Wigner string is not inserted automatically; restrict `matrix_repr` to
+    commuting DoFs until the planned basis-change helper is implemented.
 
 # Examples
 
 ```jldoctest
 julia> H = Heisenberg(Chain(2));
 
-julia> M = dense_matrix(H);
+julia> M = matrix_repr(H);
 
 julia> size(M)
 (4, 4)
 
 julia> isapprox(M, M'; atol=1e-12)
 true
-```    # Reject periodic geometries: the wrap bond (L,1) has i>j, which makes the
+
+julia> Ms = matrix_repr(H, SparseFormat());
+
+julia> size(Ms)
+(4, 4)
 ```
 """
-function dense_matrix(H::LatticeOperator)
-    # Reject periodic geometries: the wrap bond (L,1) has i>j, which makes the
-    # intermediate-identity dimension d^(j-i-1) = d^(negative) meaningless.  The
-    # caller should use open boundary conditions for dense_matrix.  Fixes #79.
+matrix_repr(H::LatticeOperator) = matrix_repr(H, DenseFormat())
+
+function matrix_repr(H::LatticeOperator, ::DenseFormat)
+    # Reject periodic geometries: wrap bond (L,1) has i>j, making d^(j-i-1) negative.
     if any(bt -> bt.i > bt.j, H.bond)
-        throw(
-            ArgumentError(
-                "dense_matrix does not support periodic boundary conditions: bond " *
-                "$(first(bt for bt in H.bond if bt.i > bt.j)) has i > j.  " *
-                "Use an open-boundary Chain or the sparse ED path instead.",
-            ),
-        )
+        throw(ArgumentError(
+            "matrix_repr(DenseFormat) does not support periodic boundary conditions: " *
+            "bond $(first(bt for bt in H.bond if bt.i > bt.j)) has i > j.  " *
+            "Use an open-boundary Chain or SparseFormat instead.",
+        ))
     end
     L = H.geom.L
     d = local_dim(H.dof)
     N = d^L
-    # Apply the same Hilbert-space size guard as sparse(H) (2^20 ≈ 1M): allocating a
-    # d^L × d^L dense matrix for L≥21 (d=2) silently consumes multi-GB.  Fixes #85.
-    N ≤ 2^20 || throw(
-        ArgumentError(
-            "Hilbert space dimension $N = $(d)^$L exceeds the safety limit 2^20. " *
-            "Use the sparse ED path or an MPS algorithm for large systems.",
-        ),
-    )
+    N ≤ 2^20 || throw(ArgumentError(
+        "Hilbert space dimension $N = $(d)^$L exceeds the safety limit 2^20. " *
+        "Use SparseFormat or an MPS algorithm for large systems.",
+    ))
     mat = zeros(ComplexF64, N, N)
-
     Id(n) = Matrix{ComplexF64}(I, n, n)
 
     for lt in H.onsite
-        i = lt.site
-        left = d^(i - 1)
+        i     = lt.site
+        left  = d^(i - 1)
         right = d^(L - i)
         mat .+= lt.coupling .* kron(kron(Id(left), ComplexF64.(lt.op)), Id(right))
     end
 
     for bt in H.bond
-        i = bt.i;
-        j = bt.j
-        left = d^(i - 1)
-        middle = d^(j - i - 1)   # identity string between sites i and j
-        right = d^(L - j)
-        if middle == 1
-            op2 = kron(ComplexF64.(bt.op_i), ComplexF64.(bt.op_j))
-        else
-            op2 = kron(kron(ComplexF64.(bt.op_i), Id(middle)), ComplexF64.(bt.op_j))
-        end
+        i      = bt.i
+        j      = bt.j
+        left   = d^(i - 1)
+        middle = d^(j - i - 1)
+        right  = d^(L - j)
+        op2 = middle == 1 ?
+            kron(ComplexF64.(bt.op_i), ComplexF64.(bt.op_j)) :
+            kron(kron(ComplexF64.(bt.op_i), Id(middle)), ComplexF64.(bt.op_j))
         mat .+= bt.coupling .* kron(kron(Id(left), op2), Id(right))
     end
 

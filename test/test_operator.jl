@@ -143,7 +143,7 @@ end
     @testset "Heisenberg L=2 — singlet GS energy = −3/4" begin
         g = Chain(2)
         H = Heisenberg(g; J=1.0)
-        mat = dense_matrix(H)
+        mat = matrix_repr(H)
         # Heisenberg L=2 spectrum: three-fold degenerate +1/4, one singlet −3/4
         evals = sort(real.(eigvals(mat)))
         @test evals[1] ≈ -3/4  atol=1e-10
@@ -155,7 +155,7 @@ end
     @testset "XXZ L=2 Ising limit (Jz=2, J=0) — doublet at +½, doublet at −½" begin
         g = Chain(2)
         H = XXZ(g; J=0.0, Jz=2.0, h=0.0)
-        mat = dense_matrix(H)
+        mat = matrix_repr(H)
         evals = sort(real.(eigvals(mat)))
         # Sz⊗Sz: diag(+½, −½, −½, +½) for Jz=2 → eigenvalues {+½, −½, −½, +½}
         @test evals ≈ [-0.5, -0.5, 0.5, 0.5]  atol=1e-10
@@ -164,7 +164,7 @@ end
     @testset "Field-only Hamiltonian — energy = −h·(L/2) on all-up state" begin
         g = Chain(4)
         H = XXZ(g; J=0.0, Jz=0.0, h=1.0)
-        mat = dense_matrix(H)
+        mat = matrix_repr(H)
         # All-up state: kron([1,0],[1,0],[1,0],[1,0]) = e₁
         psi_up = zeros(ComplexF64, 16); psi_up[1] = 1.0
         E = real(dot(psi_up, mat * psi_up))
@@ -174,7 +174,7 @@ end
     @testset "total_magnetization operator — all-up state has M=L/2" begin
         g = Chain(4)
         M = total_magnetization(g)
-        mat = dense_matrix(M)
+        mat = matrix_repr(M)
         psi_up = zeros(ComplexF64, 16); psi_up[1] = 1.0
         m = real(dot(psi_up, mat * psi_up))
         @test m ≈ 2.0  atol=1e-10   # L × ½ = 2
@@ -184,7 +184,7 @@ end
         # Known result: Heisenberg OBC L=4 GS ≈ −1.6160254...
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
-        mat = dense_matrix(H)
+        mat = matrix_repr(H)
         E_gs = minimum(real.(eigvals(mat)))
         @test E_gs < -1.0
         @test E_gs ≈ -1.6160254 atol=1e-5
@@ -251,7 +251,7 @@ end
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
         mpo = MPO(H)
-        mat = dense_matrix(H)
+        mat = matrix_repr(H)
         # GS from dense
         F   = eigen(Hermitian(mat))
         E_dense = F.values[1]
@@ -284,7 +284,7 @@ end
         O   = two_point(g, SpinHalf(), :Sz, 1, :Sz, 3)
 
         # Reference from dense_matrix on a random normalised state
-        mat = dense_matrix(O)
+        mat = matrix_repr(O)
         ψ_vec = normalize(randn(ComplexF64, 2^4))
         ref   = dot(ψ_vec, mat * ψ_vec)
 
@@ -301,7 +301,7 @@ end
     @testset "MPO non-adjacent Sz₁Sz₄ on L=5 chain matches dense_matrix (closes #78)" begin
         g     = Chain(5)
         O     = two_point(g, SpinHalf(), :Sz, 1, :Sz, 4)
-        mat   = dense_matrix(O)
+        mat   = matrix_repr(O)
         ψ_vec = normalize(randn(ComplexF64, 2^5))
         ref   = dot(ψ_vec, mat * ψ_vec)
 
