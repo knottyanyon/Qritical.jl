@@ -119,12 +119,14 @@ end
 
     @testset "op_at_site — single-site observable" begin
         g = Chain(6)
-        O = op_at_site(SpinHalf(), :Sz, 3)
+        O = op_at_site(g, SpinHalf(), :Sz, 3)
         @test length(O.onsite) == 1
         @test O.onsite[1].site == 3
         ops = algebra_generators(SpinHalf())
         @test O.onsite[1].op ≈ ops.Sz  atol=1e-12
         @test O.onsite[1].coupling ≈ 1.0  atol=1e-12
+        # matrix_repr must embed in the full d^L space, not just d^site
+        @test size(matrix_repr(O)) == (2^6, 2^6)
     end
 
     @testset "two_site_op — single bond term" begin

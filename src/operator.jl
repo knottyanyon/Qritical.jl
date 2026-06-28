@@ -401,9 +401,14 @@ function staggered_magnetization(g::AbstractGeometry; dof=SpinHalf())
 end
 
 """
-    op_at_site(dof::AbstractDoF, label::Symbol, site::Int) -> LatticeOperator
+    op_at_site(g::AbstractGeometry, dof::AbstractDoF, label::Symbol, site::Int) -> LatticeOperator
 
-Build a single-site observable: the operator named `label` of `dof` at `site`.
+Build a single-site observable: the operator named `label` of `dof` at `site`,
+embedded in the full many-body Hilbert space defined by geometry `g`.
+
+The geometry `g` determines the total Hilbert-space dimension ``d^L`` that
+`matrix_repr` will construct.  Without it the Kronecker-product chain cannot know
+how many identity factors to add on either side of the operator at `site`.
 
 Use this to measure any on-site quantity — ``S^z_i``, ``n_i``, ``c_i``, etc.
 — after a variational calculation.  The returned `LatticeOperator` can be passed to
@@ -411,33 +416,36 @@ Use this to measure any on-site quantity — ``S^z_i``, ``n_i``, ``c_i``, etc.
 
 # Arguments
 
-  - `dof::AbstractDoF` — the local degree of freedom (determines the operator
-    algebra).
-  - `label::Symbol`      — name of the operator to retrieve from [`algebra_generators`](@ref),
+  - `g::AbstractGeometry` — the full lattice geometry (e.g. `Chain(L)`).
+  - `dof::AbstractDoF`    — the local degree of freedom (determines the operator algebra).
+  - `label::Symbol`       — name of the operator to retrieve from [`algebra_generators`](@ref),
     e.g. `:Sz`, `:n`, `:cup`.
-  - `site::Int`        — which lattice site the operator acts on.
+  - `site::Int`           — which lattice site the operator acts on (1-indexed).
 
 # Returns
 
-  - `LatticeOperator` on a minimal `Chain(site)` geometry with a single `OneSiteTerm`
-    (coupling = 1) and no bond terms.
+  - `LatticeOperator` on geometry `g` with a single `OneSiteTerm` (coupling = 1)
+    and no bond terms.
 
 # Examples
 
 ```jldoctest
-julia> O = op_at_site(SpinHalf(), :Sz, 2);
+julia> g = Chain(4);
+
+julia> O = op_at_site(g, SpinHalf(), :Sz, 2);
 
 julia> O.onsite[1].site
 2
 
 julia> O.onsite[1].coupling
 1.0
+
+julia> size(matrix_repr(O))
+(16, 16)
 ```
 """
-function op_at_site(dof::AbstractDoF, label::Symbol, site::Int)
+function op_at_site(g::AbstractGeometry, dof::AbstractDoF, label::Symbol, site::Int)
     op = getproperty(algebra_generators(dof), label)
-    # Minimal geometry: a chain containing just this site (no bonds needed)
-    g = Chain(site)
     LatticeOperator(dof, g, [OneSiteTerm(site, op, 1.0)], TwoSiteTerm[])
 end
 
