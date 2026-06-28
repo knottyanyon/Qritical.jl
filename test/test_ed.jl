@@ -104,10 +104,34 @@ end
 end
 
 @testset "§10.1 sparse operator size guard" begin
-    @testset "large Hilbert space is rejected" begin
+    @testset "large Hilbert space is rejected by sparse" begin
         # If local_dim^L > 2^20 (≈1M), sparse should refuse
         g = Chain(25)   # d=2 → 2^25 > 1M
         H = Heisenberg(g; J=1.0)
         @test_throws ArgumentError sparse(H)
+    end
+end
+
+@testset "§10.1 dense_matrix size guard (closes #85)" begin
+    @testset "dense_matrix rejects Hilbert spaces larger than 2^20" begin
+        # solve(:time) and solve(:full) call dense_matrix, not sparse.
+        # The same 2^20 guard must apply there too.
+        g = Chain(25)
+        H = Heisenberg(g; J=1.0)
+        @test_throws ArgumentError dense_matrix(H)
+    end
+
+    @testset "solve(:full) rejects oversized Hilbert space via dense_matrix guard" begin
+        g = Chain(25)
+        H = Heisenberg(g; J=1.0)
+        @test_throws ArgumentError solve(H, GroundState(), ExactDiagonalization(:full))
+    end
+
+    @testset "solve(:time) rejects oversized Hilbert space via dense_matrix guard" begin
+        g = Chain(25)
+        H = Heisenberg(g; J=1.0)
+        v = StatevectorState(zeros(ComplexF64, 1))   # dummy — error fires before use
+        p = ConstantProtocol{RealTime}(RealTime(), 0.1, 1, H)
+        @test_throws ArgumentError solve(H, v, ExactDiagonalization(:time), p)
     end
 end

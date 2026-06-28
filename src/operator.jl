@@ -590,6 +590,11 @@ function dense_matrix(H::Operator)
     L = H.geom.L
     d = local_dim(H.dof)
     N = d^L
+    # Apply the same Hilbert-space size guard as sparse(H) (2^20 ≈ 1M): allocating a
+    # d^L × d^L dense matrix for L≥21 (d=2) silently consumes multi-GB.  Fixes #85.
+    N ≤ 2^20 || throw(ArgumentError(
+        "Hilbert space dimension $N = $(d)^$L exceeds the safety limit 2^20. " *
+        "Use the sparse ED path or an MPS algorithm for large systems."))
     mat = zeros(ComplexF64, N, N)
 
     Id(n) = Matrix{ComplexF64}(I, n, n)
