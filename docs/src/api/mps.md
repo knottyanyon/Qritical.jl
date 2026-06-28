@@ -93,12 +93,12 @@ E_i = \sum_{\sigma,\sigma'} W_{\sigma\sigma'} \, A_i^\dagger[\cdot,\sigma,\cdot]
 
 where ``W = O`` at the operator site(s) and ``W = I`` elsewhere. For a left-canonical MPS, ``A_i^\dagger E_{i-1} A_i = I`` at every site to the left of the operator — the environments collapse and only the right half needs explicit contraction.
 
-`two_point` reuses exactly the same loop as `local_expectation` with two operator insertions — no extra contraction steps — making ``\langle O_i O_j \rangle`` the same cost as ``\langle O_i \rangle``.
+`two_site_op` reuses exactly the same loop as `local_expectation` with two operator insertions — no extra contraction steps — making ``\langle O_i O_j \rangle`` the same cost as ``\langle O_i \rangle``.
 
 ---
 
 ```@docs
 overlap
 local_expectation
-two_point
+two_site_op
 ```

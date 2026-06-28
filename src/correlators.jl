@@ -84,7 +84,7 @@ function local_expectation(ψ::FiniteMPS, op::AbstractMatrix, site::Int)
 end
 
 """
-    two_point(ψ::FiniteMPS, op_i::AbstractMatrix, op_j::AbstractMatrix, i::Int, j::Int) -> Number
+    two_site_op(ψ::FiniteMPS, op_i::AbstractMatrix, op_j::AbstractMatrix, i::Int, j::Int) -> Number
 
 Compute the two-site expectation value ``\\langle \\psi | O_i O_j | \\psi \\rangle``
 by a single left-to-right environment pass with two operator insertions.
@@ -101,9 +101,9 @@ and ``W = I`` everywhere else.  The cost is ``O(L \\chi^2 d)`` — identical to
 contraction steps.
 
 For the connected correlator ``\\langle O_i O_j \\rangle_c = \\langle O_i O_j \\rangle - \\langle O_i \\rangle \\langle O_j \\rangle``,
-compute `two_point` and subtract the product of two `local_expectation` calls.
+compute `two_site_op` and subtract the product of two `local_expectation` calls.
 """
-function two_point(ψ::FiniteMPS, op_i::AbstractMatrix, op_j::AbstractMatrix, i::Int, j::Int)
+function two_site_op(ψ::FiniteMPS, op_i::AbstractMatrix, op_j::AbstractMatrix, i::Int, j::Int)
     L = length(ψ.tensors)
     T = promote_type(eltype(ψ.tensors[1].data), eltype(op_i), eltype(op_j))
     env = ones(T, 1, 1)

@@ -127,9 +127,9 @@ end
         @test O.onsite[1].coupling ≈ 1.0  atol=1e-12
     end
 
-    @testset "two_point — single bond term" begin
+    @testset "two_site_op — single bond term" begin
         g = Chain(6)
-        O = two_point(g, SpinHalf(), :Sz, 2, :Sz, 5)
+        O = two_site_op(g, SpinHalf(), :Sz, 2, :Sz, 5)
         @test isempty(O.onsite)
         @test length(O.bond) == 1
         @test O.bond[1].i == 2 && O.bond[1].j == 5
@@ -274,14 +274,14 @@ end
         @test real(expect(ψ, mpo_id)) ≈ 1.0  atol=1e-8   # normalized state
     end
 
-    @testset "MPO non-adjacent two_point: ⟨Sz₁Sz₃⟩ via MPO matches dense_matrix (closes #78)" begin
+    @testset "MPO non-adjacent two_site_op: ⟨Sz₁Sz₃⟩ via MPO matches dense_matrix (closes #78)" begin
         # Regression test for the FSM carry bug: a channel opened at site i must
         # propagate through intermediate sites via W[k+1,:,:,k+1]=Id before closing
         # at site j>i+1.  Without the fix, the MPO path returns 0 for all non-NN terms.
         g   = Chain(4)
         ops = algebra_generators(SpinHalf())
-        # two_point operator A₁B₃ — non-nearest-neighbour
-        O   = two_point(g, SpinHalf(), :Sz, 1, :Sz, 3)
+        # two_site_op operator A₁B₃ — non-nearest-neighbour
+        O   = two_site_op(g, SpinHalf(), :Sz, 1, :Sz, 3)
 
         # Reference from dense_matrix on a random normalised state
         mat = matrix_repr(O)
@@ -300,7 +300,7 @@ end
 
     @testset "MPO non-adjacent Sz₁Sz₄ on L=5 chain matches dense_matrix (closes #78)" begin
         g     = Chain(5)
-        O     = two_point(g, SpinHalf(), :Sz, 1, :Sz, 4)
+        O     = two_site_op(g, SpinHalf(), :Sz, 1, :Sz, 4)
         mat   = matrix_repr(O)
         ψ_vec = normalize(randn(ComplexF64, 2^5))
         ref   = dot(ψ_vec, mat * ψ_vec)

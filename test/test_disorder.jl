@@ -141,8 +141,8 @@ end
 
         # Compare ⟨S₁ᶻ Sᵢᶻ⟩ for all i > 1
         for i in 2:4
-            # TEBD: two_point(ψ, Sz, Sz, 1, i)
-            C_tebd = real(two_point(ψ_gs, Sz, Sz, 1, i)) / real(overlap(ψ_gs, ψ_gs))
+            # TEBD: two_site_op(ψ, Sz, Sz, 1, i)
+            C_tebd = real(two_site_op(ψ_gs, Sz, Sz, 1, i)) / real(overlap(ψ_gs, ψ_gs))
 
             # ED: direct from the state vector
             L = 4; d = 2

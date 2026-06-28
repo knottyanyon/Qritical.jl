@@ -442,7 +442,7 @@ function op_at_site(dof::AbstractDoF, label::Symbol, site::Int)
 end
 
 """
-    two_point(g::AbstractGeometry, dof::AbstractDoF,
+    two_site_op(g::AbstractGeometry, dof::AbstractDoF,
               opA::Symbol, iA::Int, opB::Symbol, iB::Int) -> LatticeOperator
 
 Build the two-point operator ``A_{i_A} B_{i_B}`` whose expectation value gives
@@ -482,7 +482,7 @@ single `TwoSiteTerm` with coupling 1 and no on-site terms.
 ```jldoctest
 julia> g = Chain(6);
 
-julia> O = two_point(g, SpinHalf(), :Sz, 1, :Sz, 4);
+julia> O = two_site_op(g, SpinHalf(), :Sz, 1, :Sz, 4);
 
 julia> length(O.bond)
 1
@@ -491,7 +491,7 @@ julia> O.bond[1].i, O.bond[1].j
 (1, 4)
 ```
 """
-function two_point(
+function two_site_op(
     g::AbstractGeometry, dof::AbstractDoF, opA::Symbol, iA::Int, opB::Symbol, iB::Int
 )
     ops = algebra_generators(dof)

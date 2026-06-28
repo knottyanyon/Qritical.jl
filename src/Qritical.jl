@@ -71,7 +71,7 @@ export bipartition_matrix, as_state, load_array
 export AbstractMPSForm, CanonicalForm, VidalForm, ArbitraryForm
 export FiniteMPS, to_mps, add_mps
 export CanonicalizeConfig, LeftCanonical, RightCanonical, BondCanonical, SiteCanonical
-export canonicalize, canonical_error, is_canonical, overlap, local_expectation, two_point
+export canonicalize, canonical_error, is_canonical, overlap, local_expectation, two_site_op
 export to_vidal, to_canonical
 
 # ==== Geometry ================================================================
@@ -90,7 +90,7 @@ export NoSymmetry, physical_space
 export uniform_coupling
 export OneSiteTerm, TwoSiteTerm, LatticeOperator, Hamiltonian
 export XXZ, Heisenberg, Ising
-export total_magnetization, staggered_magnetization, op_at_site, two_point
+export total_magnetization, staggered_magnetization, op_at_site, two_site_op
 export identity_operator
 # ==== Storage format tags =====================================================
 export StorageFormat, DenseFormat, SparseFormat
