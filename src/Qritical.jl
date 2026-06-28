@@ -79,7 +79,7 @@ export AbstractGeometry, Chain, sites, bonds
 # ==== DoF layer ===============================================================
 export AbstractDoF
 export Spin, SpinHalf, SpinOne
-export SpinlessFermion, Electron, Majorana, HardCoreBoson
+export SpinlessFermion, Electron, MajoranaFermion, HardCoreBoson
 export CanonicalRelation, CCR, CAR
 export local_dim, canonical_relation, algebra_generators
 # ==== Symmetry tags ===========================================================

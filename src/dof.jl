@@ -25,7 +25,7 @@ A degree of freedom type (DoF) captures the following crucial aspects of minimal
 Every concrete DoF in Qritical.jl is a subtype of `AbstractDoF` .
 
 Concrete subtypes: [`Spin`](@ref), [`SpinlessFermion`](@ref), [`Electron`](@ref),
-[`Majorana`](@ref), [`HardCoreBoson`](@ref).
+[`MajoranaFermion`](@ref), [`HardCoreBoson`](@ref).
 
 See also: [`local_dim`](@ref), [`canonical_relation`](@ref), [`algebra_generators`](@ref),
 [`physical_space`](@ref)
@@ -153,14 +153,14 @@ See also: [`SpinlessFermion`](@ref), [`algebra_generators`](@ref)
 struct Electron <: AbstractDoF end   # 4D site {|0⟩,|↑⟩,|↓⟩,|↑↓⟩} 
 
 """
-    Majorana <: AbstractDoF
+    MajoranaFermion <: AbstractDoF
 
-A Majorana fermion site, realized on a paired (single complex-fermion) site with
+A MajoranaFermion fermion site, realized on a paired (single complex-fermion) site with
 local dimension ``d = 2``.
 
-A Majorana operator ``\\gamma`` is its own Hermitian conjugate (``\\gamma^\\dagger = \\gamma``)
+A MajoranaFermion operator ``\\gamma`` is its own Hermitian conjugate (``\\gamma^\\dagger = \\gamma``)
 and satisfies the algebra ``\\{\\gamma_a, \\gamma_b\\} = 2\\delta_{ab}``.  In
-Qritical.jl two Majorana modes are defined on each site via the decomposition of
+Qritical.jl two MajoranaFermion modes are defined on each site via the decomposition of
 a complex fermion ``c`` into real and imaginary parts:
 
 ```math
@@ -174,7 +174,7 @@ identity on the local two-dimensional space.  The inter-site statistics are
 
 See also: [`algebra_generators`](@ref)
 """
-struct Majorana <: AbstractDoF end   # Majorana modes on a paired fermion site
+struct MajoranaFermion <: AbstractDoF end   # MajoranaFermion modes on a paired fermion site
 
 """
     HardCoreBoson <: AbstractDoF
@@ -235,7 +235,7 @@ Tag indicating that operators on different sites anticommute: ``\\{O_i, O_j\\} =
 for ``i \\neq j``.
 
 Assigned to fermionic DoFs: [`SpinlessFermion`](@ref), [`Electron`](@ref), and
-[`Majorana`](@ref).  When computing expectation values or building MPOs for
+[`MajoranaFermion`](@ref).  When computing expectation values or building MPOs for
 non-adjacent operators, a Jordan–Wigner string ``\\prod_k (-1)^{n_k}`` must be
 inserted between sites ``i`` and ``j``.  In the future this will be
 replaced by native graded-space arithmetic via TensorKit.
@@ -266,7 +266,7 @@ tensors have shape ``(\\chi_L, d, d, \\chi_R)``.  For spin-``S`` the formula is
 | `Spin{S}`         | ``2S+1``    |
 | `SpinlessFermion` | 2           |
 | `HardCoreBoson`   | 2           |
-| `Majorana`        | 2           |
+| `MajoranaFermion`        | 2           |
 | `Electron`        | 4           |
 
 # Examples
@@ -289,7 +289,7 @@ local_dim(::Spin{S}) where {S} = Int(2S + 1)   # computed at compile time
 local_dim(::SpinlessFermion) = 2
 local_dim(::Electron) = 4
 local_dim(::HardCoreBoson) = 2
-local_dim(::Majorana) = 2   # per paired (complex-fermion) site
+local_dim(::MajoranaFermion) = 2   # per paired (complex-fermion) site
 
 # ----------------------------------------------------------------------------------------
 # algebra_generators — on-site operator matrices as a NamedTuple
@@ -339,7 +339,7 @@ field names `b`, `bdag`, `n`, `I`.  Statistics are [`CCR`](@ref).
   - `Sz`, `Sp`, `Sm` — spin operators built from ``c^\\dagger_\\uparrow c_\\downarrow`` etc.
   - `I`  — ``4\\times 4`` identity
 
-**`Majorana`** — ``d = 2``, two Hermitian Majorana operators:
+**`MajoranaFermion`** — ``d = 2``, two Hermitian MajoranaFermion operators:
 
   - `γ1 = c + c†` (equals ``\\sigma^x`` on the Fock site)
   - `γ2 = i(c† - c)` (equals ``\\sigma^y``)
@@ -439,8 +439,8 @@ function algebra_generators(::Electron)
     (; cup, cdn, cupdag, cdndag, nup, ndn, n, Sz, Sp, Sm, I=I4)
 end
 
-function algebra_generators(::Majorana)
-    # Majorana operators on the paired-fermion site.
+function algebra_generators(::MajoranaFermion)
+    # MajoranaFermion operators on the paired-fermion site.
     # γ₁ = c + c†  (=σˣ on the Fock site),  γ₂ = i(c† − c)  (=σʸ).
     # Both are Hermitian: γ†=γ.  Algebra: {γₐ,γᵦ}=2δₐᵦ.
     ops = algebra_generators(SpinlessFermion())
@@ -473,7 +473,7 @@ This drives two downstream decisions:
 | `HardCoreBoson`   | `CCR()`       |
 | `SpinlessFermion` | `CAR()`   |
 | `Electron`        | `CAR()`   |
-| `Majorana`        | `CAR()`   |
+| `MajoranaFermion`        | `CAR()`   |
 
 # Examples
 
@@ -492,4 +492,4 @@ canonical_relation(::Spin) = CCR()
 canonical_relation(::HardCoreBoson) = CCR()
 canonical_relation(::SpinlessFermion) = CAR()
 canonical_relation(::Electron) = CAR()
-canonical_relation(::Majorana) = CAR()
+canonical_relation(::MajoranaFermion) = CAR()

@@ -6,7 +6,7 @@
         @test local_dim(SpinlessFermion()) == 2
         @test local_dim(Electron())        == 4
         @test local_dim(HardCoreBoson())   == 2
-        @test local_dim(Majorana())        == 2
+        @test local_dim(MajoranaFermion())        == 2
     end
 
     @testset "statistics" begin
@@ -14,10 +14,10 @@
         @test canonical_relation(Spin{1//2}())   isa CCR
         @test canonical_relation(Spin{1}())      isa CCR
         @test canonical_relation(HardCoreBoson()) isa CCR
-        # fermions and Majorana: anticommuting inter-site algebra
+        # fermions and MajoranaFermion: anticommuting inter-site algebra
         @test canonical_relation(SpinlessFermion()) isa CAR
         @test canonical_relation(Electron())        isa CAR
-        @test canonical_relation(Majorana())        isa CAR
+        @test canonical_relation(MajoranaFermion())        isa CAR
     end
 
 
@@ -168,10 +168,10 @@
     end
 
     # ─────────────────────────────────────────────────────────────────────────
-    # Majorana operators physics
+    # MajoranaFermion operators physics
     # ─────────────────────────────────────────────────────────────────────────
-    @testset "algebra_generators(Majorana()) — {γₐ, γᵦ} = 2δ" begin
-        ops = algebra_generators(Majorana())
+    @testset "algebra_generators(MajoranaFermion()) — {γₐ, γᵦ} = 2δ" begin
+        ops = algebra_generators(MajoranaFermion())
         # {γ1, γ1} = 2I
         @test ops.γ1 * ops.γ1 + ops.γ1 * ops.γ1 ≈ 2 * ops.I  atol=1e-12
         # {γ2, γ2} = 2I
@@ -180,8 +180,8 @@
         @test ops.γ1 * ops.γ2 + ops.γ2 * ops.γ1 ≈ zeros(2,2)  atol=1e-12
     end
 
-    @testset "algebra_generators(Majorana()) — both are Hermitian (γ†=γ)" begin
-        ops = algebra_generators(Majorana())
+    @testset "algebra_generators(MajoranaFermion()) — both are Hermitian (γ†=γ)" begin
+        ops = algebra_generators(MajoranaFermion())
         @test ops.γ1 ≈ ops.γ1'  atol=1e-12
         @test ops.γ2 ≈ ops.γ2'  atol=1e-12
     end
