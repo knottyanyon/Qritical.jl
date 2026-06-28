@@ -274,4 +274,43 @@ end
         @test real(expect(ψ, mpo_id)) ≈ 1.0  atol=1e-8   # normalized state
     end
 
+    @testset "MPO non-adjacent two_point: ⟨Sz₁Sz₃⟩ via MPO matches dense_matrix (closes #78)" begin
+        # Regression test for the FSM carry bug: a channel opened at site i must
+        # propagate through intermediate sites via W[k+1,:,:,k+1]=Id before closing
+        # at site j>i+1.  Without the fix, the MPO path returns 0 for all non-NN terms.
+        g   = Chain(4)
+        ops = operators(SpinHalf())
+        # two_point operator A₁B₃ — non-nearest-neighbour
+        O   = two_point(g, SpinHalf(), :Sz, 1, :Sz, 3)
+
+        # Reference from dense_matrix on a random normalised state
+        mat = dense_matrix(O)
+        ψ_vec = normalize(randn(ComplexF64, 2^4))
+        ref   = dot(ψ_vec, mat * ψ_vec)
+
+        # MPO path
+        mpo   = MPO(O)
+        ψ_t   = as_state(ψ_vec, [2, 2, 2, 2])
+        ψ     = to_mps(ψ_t; trunc=NoTrunc(), form=:left)
+        result = expect(ψ, mpo)
+
+        @test real(result) ≈ real(ref)  atol=1e-8
+        @test abs(imag(result))         < 1e-10
+    end
+
+    @testset "MPO non-adjacent Sz₁Sz₄ on L=5 chain matches dense_matrix (closes #78)" begin
+        g     = Chain(5)
+        O     = two_point(g, SpinHalf(), :Sz, 1, :Sz, 4)
+        mat   = dense_matrix(O)
+        ψ_vec = normalize(randn(ComplexF64, 2^5))
+        ref   = dot(ψ_vec, mat * ψ_vec)
+
+        mpo   = MPO(O)
+        ψ_t   = as_state(ψ_vec, [2, 2, 2, 2, 2])
+        ψ     = to_mps(ψ_t; trunc=NoTrunc(), form=:left)
+        result = expect(ψ, mpo)
+
+        @test real(result) ≈ real(ref)  atol=1e-8
+    end
+
 end

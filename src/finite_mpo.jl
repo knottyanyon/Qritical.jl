@@ -162,9 +162,23 @@ function MPO(H::Operator)
     for i in 1:L
         W = zeros(ComplexF64, χ, d, d, χ)
 
-        # Identity pass-through for both boundary states
+        # Identity pass-through for both boundary states.
         W[1,   :, :, 1]   = Id     # done → done
         W[K+2, :, :, K+2] = Id     # start → start
+
+        # Channel carry: W[k+1,:,:,k+1]=Id is needed at site i only when channel k is
+        # "in flight" — i.e., some bond of type k has bt.i < i < bt.j.  For NN bonds
+        # (bt.j = bt.i+1) there are no such intermediate sites, so no carry is needed
+        # and adding it unconditionally would allow channels to stay open past their
+        # closing site and produce spurious contributions.  Fixes #78.
+        for (k, (Ak, Bk)) in enumerate(btypes)
+            in_flight = any(H.bond) do bt
+                bt.i < i < bt.j &&
+                _ops_eq(ComplexF64.(bt.op_i), Ak) &&
+                _ops_eq(ComplexF64.(bt.op_j), Bk)
+            end
+            in_flight && (W[k+1, :, :, k+1] = Id)
+        end
 
         # Onsite terms: start → done
         for lt in H.onsite
