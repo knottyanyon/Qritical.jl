@@ -22,7 +22,20 @@ A degree of freedom type (DoF) captures the following crucial aspects of minimal
     as returned by [`canonical_relation`](@ref).  This drives the choice between
     Jordan–Wigner string insertion and native fermionic grading.
 
-Every concrete DoF in Qritical.jl is a subtype of `AbstractDoF` .
+Every concrete DoF in Qritical.jl is a subtype of `AbstractDoF`.
+
+Defining each DoF as a **distinct Julia type** (rather than a symbol, integer tag, or
+runtime enum) is a deliberate design choice that uses Julia's multiple-dispatch model.
+When you call `algebra_generators(SpinHalf())`, Julia selects the correct method at
+compile time based solely on the type — there is no runtime `if dof == :spin_half`
+branch.  This means:
+
+  - **Zero runtime overhead** — all dispatch is resolved by the compiler; the
+    struct itself carries no data and occupies no memory.
+  - **Extensibility** — adding a new DoF is just a new `struct` + new methods; no
+    existing code needs touching.
+  - **Type-safety** — passing the wrong DoF to a function is a compile-time error,
+    not a silent wrong-answer bug.
 
 Concrete subtypes: [`Spin`](@ref), [`SpinlessFermion`](@ref), [`Electron`](@ref),
 [`MajoranaFermion`](@ref), [`HardCoreBoson`](@ref).
@@ -39,18 +52,35 @@ abstract type AbstractDoF end
 """
     Spin{S} <: AbstractDoF
 
-A spin-``S`` degree of freedom site with local Hilbert-space dimension ``2S+1``.
+A spin-``S`` degree of freedom site with local Hilbert-space dimension ``2S+1``,
+where ``S`` is the **total spin quantum number** (spin magnitude): ``S = 0, \\tfrac{1}{2}, 1, \\tfrac{3}{2}, \\ldots``
+— *not* the magnetic quantum number ``m_z``.
 
-The type parameter `S` is a `Rational{Int}` such as `1//2`, `1`, `3//2`, etc. The local basis is ordered by descending magnetic quantum number: ``|m_z = S\\rangle, |m_z = S-1\\rangle, \\ldots, |m_z = -S\\rangle``.
+The type parameter `S` is a `Rational{Int}` (e.g. `1//2`, `1`, `3//2`).  Using a
+rational rather than a `Symbol` or `Float64` serves two purposes: it allows Julia to
+compute `local_dim = Int(2S + 1)` as a **compile-time constant** (no runtime cost),
+and it expresses the half-integer nature of spin exactly, without floating-point
+rounding.  `S` parameterises the *type* itself, so `Spin{1//2}` and `Spin{1}` are
+two entirely distinct types that dispatch to different method implementations.
 
-Operators are built using the **Condon–Shortley phase convention** (same as most quantum chemistry and condensed-matter textbooks), so the ladder operators satisfy
+The local basis is ordered by **descending** magnetic quantum number:
+``|m_z = S\\rangle, |m_z = S-1\\rangle, \\ldots, |m_z = -S\\rangle``.
+
+Operators are built using the **Condon–Shortley phase convention** — the standard
+choice (used in most quantum chemistry and condensed-matter textbooks) that fixes the
+overall phase of each basis state so that all ladder-operator matrix elements are
+**real and non-negative**.  Without this convention the matrices would only be
+determined up to arbitrary state-dependent signs, making table comparisons
+unreliable.  The resulting ladder operators satisfy
 
 ```math
 S^{\\pm} |m\\rangle = \\sqrt{S(S+1) - m(m \\pm 1)} \\, |m \\pm 1\\rangle.
 ```
 
-Use the pre-defined aliases [`SpinHalf`](@ref) and [`SpinOne`](@ref) for the
-most common cases rather than writing `Spin{1//2}()` or `Spin{1}()` by hand.
+!!! tip "Convenience aliases"
+    Prefer [`SpinHalf`](@ref) and [`SpinOne`](@ref) over writing `Spin{1//2}()` or
+    `Spin{1}()` by hand — they are just `const` aliases, so there is no performance
+    difference.
 
 # Examples
 
@@ -103,10 +133,18 @@ const SpinOne = Spin{1}
 
 A spinless (single-orbital) fermionic site with local dimension ``d = 2``.
 
-The local Hilbert space is ``\\{|0\\rangle, |1\\rangle\\}`` — vacuum and a single
-occupied state.  The elementary operators are the annihilation operator ``c``
-(destroys the particle, ``c|1\\rangle = |0\\rangle``) and the number operator
-``n = c^\\dagger c`` with eigenvalues 0 and 1.
+The only internal degree of freedom is **occupation** — whether the site holds a
+particle (``|1\\rangle``) or is empty (``|0\\rangle``).  Spin is deliberately absent:
+this DoF models situations where the spin degree of freedom is frozen out (e.g. a
+fully spin-polarised band, or a model where only charge fluctuations matter).  It
+is the minimal fermionic building block, and is directly useful for 1D tight-binding
+or Kitaev-chain models.
+
+To include spin, use [`Electron`](@ref) instead: that DoF tracks both spin-up and
+spin-down occupancy, giving ``d = 4``, and naturally appears in Hubbard-type models.
+
+The elementary operators are the annihilation operator ``c``
+(``c|1\\rangle = |0\\rangle``) and the number operator ``n = c^\\dagger c``.
 
 Because this is a fermionic site, [`canonical_relation`](@ref) returns [`CAR`](@ref),
 meaning that operators on different sites anticommute:
@@ -155,12 +193,12 @@ struct Electron <: AbstractDoF end   # 4D site {|0⟩,|↑⟩,|↓⟩,|↑↓⟩
 """
     MajoranaFermion <: AbstractDoF
 
-A MajoranaFermion fermion site, realized on a paired (single complex-fermion) site with
+A Majorana fermion site, realized on a paired (single complex-fermion) site with
 local dimension ``d = 2``.
 
-A MajoranaFermion operator ``\\gamma`` is its own Hermitian conjugate (``\\gamma^\\dagger = \\gamma``)
-and satisfies the algebra ``\\{\\gamma_a, \\gamma_b\\} = 2\\delta_{ab}``.  In
-Qritical.jl two MajoranaFermion modes are defined on each site via the decomposition of
+A Majorana operator ``\\gamma`` is its own Hermitian conjugate (``\\gamma^\\dagger = \\gamma``)
+and satisfies the Clifford algebra ``\\{\\gamma_a, \\gamma_b\\} = 2\\delta_{ab}``.  In
+Qritical.jl two Majorana modes are defined on each site via the decomposition of
 a complex fermion ``c`` into real and imaginary parts:
 
 ```math
@@ -174,7 +212,7 @@ identity on the local two-dimensional space.  The inter-site statistics are
 
 See also: [`algebra_generators`](@ref)
 """
-struct MajoranaFermion <: AbstractDoF end   # MajoranaFermion modes on a paired fermion site
+struct MajoranaFermion <: AbstractDoF end   # Majorana modes on a paired complex-fermion site
 
 """
     HardCoreBoson <: AbstractDoF
@@ -208,6 +246,16 @@ Statistics determines how operators on different sites combine:
   - [`CCR`](@ref): ``[O_i, O_j] = 0`` for ``i \\neq j``.  No sign factors needed.
   - [`CAR`](@ref): ``\\{O_i, O_j\\} = 0`` for ``i \\neq j``.  Signs must be
     tracked, either via Jordan–Wigner strings or via native fermionic grading.
+
+**Why a separate type hierarchy?**
+Statistics checks are on the hot path — every MPO bond term and every two-site gate
+needs to know whether a Jordan–Wigner string is required.  Representing statistics as
+a distinct `CanonicalRelation` type instead of a `Bool` field inside the DoF struct
+means the check is resolved by **compile-time dispatch** rather than a runtime branch.
+A function that accepts `::CAR` in its signature is only compiled for fermionic DoFs;
+no dead code is generated for bosons.  It also keeps the statistics axis orthogonal to
+the DoF axis: a function can dispatch on statistics alone (e.g. a Jordan–Wigner
+string helper) without caring which specific DoF it was called with.
 
 Use [`canonical_relation`](@ref) to query the statistics of any concrete `AbstractDoF`.
 """
