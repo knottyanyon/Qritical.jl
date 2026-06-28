@@ -1,9 +1,9 @@
 # Tests for §6.3 — operator arithmetic, PowerMethod, and identity expect.
 # Physics invariants: GS energy convergence, operator algebra.
 
-@testset "§6.3 Operator arithmetic" begin
+@testset "§6.3 LatticeOperator arithmetic" begin
 
-    @testset "scalar * Operator scales all couplings" begin
+    @testset "scalar * LatticeOperator scales all couplings" begin
         g = Chain(3)
         H = Heisenberg(g; J=1.0)
         H2 = 2.0 * H
@@ -15,7 +15,7 @@
         end
     end
 
-    @testset "Operator + Operator merges term lists" begin
+    @testset "LatticeOperator + LatticeOperator merges term lists" begin
         g = Chain(3)
         H = Heisenberg(g; J=1.0, h=0.0)
         M = total_magnetization(g)
@@ -25,7 +25,7 @@
         @test length(HM.bond)   == length(H.bond)   + length(M.bond)
     end
 
-    @testset "Operator + Operator — energy additivity on product state" begin
+    @testset "LatticeOperator + LatticeOperator — energy additivity on product state" begin
         # ⟨ψ|(H + M)|ψ⟩ = ⟨ψ|H|ψ⟩ + ⟨ψ|M|ψ⟩
         g = Chain(3)
         H = Heisenberg(g; J=1.0)

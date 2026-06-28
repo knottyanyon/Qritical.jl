@@ -89,5 +89,5 @@ decomposition, not just the step size.
 StatevectorState
 as_statevector
 EDTimeResult
-solve(::Operator, ::StatevectorState, ::ExactDiagonalization{:time}, ::ConstantProtocol)
+solve(::LatticeOperator, ::StatevectorState, ::ExactDiagonalization{:time}, ::ConstantProtocol)
 ```

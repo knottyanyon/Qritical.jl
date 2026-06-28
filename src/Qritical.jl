@@ -85,9 +85,9 @@ export local_dim, canonical_relation, algebra_generators
 # ==== Symmetry tags ===========================================================
 export NoSymmetry, physical_space
 
-# ==== Operator / Hamiltonian ==================================================
-export uniform
-export LocalTerm, BondTerm, Operator, Hamiltonian
+# ==== LatticeOperator / Hamiltonian ==================================================
+export uniform_coupling
+export OneSiteTerm, TwoSiteTerm, LatticeOperator, Hamiltonian
 export XXZ, Heisenberg, Ising
 export total_magnetization, staggered_magnetization, local_op, two_point
 export identity_operator

@@ -62,7 +62,7 @@ The typical workflow is:
 GroundState
 ExactDiagonalization
 EDResult
-sparse(H::Operator)
-solve(H::Operator, ::GroundState, ::ExactDiagonalization{:ground})
-solve(H::Operator, ::GroundState, ::ExactDiagonalization{:full})
+sparse(H::LatticeOperator)
+solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:ground})
+solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:full})
 ```

@@ -13,20 +13,19 @@ left-to-right using a running environment tensor.
 function overlap(ψ::FiniteMPS, φ::FiniteMPS)
     length(ψ.tensors) == length(φ.tensors) || throw(
         ArgumentError(
-            "overlap: MPS lengths must match, got $(length(ψ.tensors)) and $(length(φ.tensors))"
+            "overlap: MPS lengths must match, got $(length(ψ.tensors)) and $(length(φ.tensors))",
         ),
     )
     all(
-        size(ψ.tensors[i].data, 2) == size(φ.tensors[i].data, 2) for i in 1:length(ψ.tensors)
-    ) || throw(
-        ArgumentError("overlap: physical dimensions must match at every site"),
-    )
-    L   = length(ψ.tensors)
+        size(ψ.tensors[i].data, 2) == size(φ.tensors[i].data, 2) for
+        i in 1:length(ψ.tensors)
+    ) || throw(ArgumentError("overlap: physical dimensions must match at every site"))
+    L = length(ψ.tensors)
     env = ones(promote_type(eltype(ψ.tensors[1].data), eltype(φ.tensors[1].data)), 1, 1)
     for i in 1:L
-        Aψ  = ψ.tensors[i].data    # (χLψ, d, χRψ)
-        Aφ  = φ.tensors[i].data    # (χLφ, d, χRφ)
-        d   = size(Aψ, 2)
+        Aψ = ψ.tensors[i].data    # (χLψ, d, χRψ)
+        Aφ = φ.tensors[i].data    # (χLφ, d, χRφ)
+        d = size(Aψ, 2)
         χRψ = size(Aψ, 3)
         χRφ = size(Aφ, 3)
         new_env = zeros(eltype(env), χRψ, χRφ)
@@ -66,15 +65,16 @@ to be contracted explicitly.  The full left-to-right pass is used here for
 correctness on arbitrary canonical forms.
 """
 function local_expectation(ψ::FiniteMPS, op::AbstractMatrix, site::Int)
-    L   = length(ψ.tensors)
+    L = length(ψ.tensors)
     env = ones(promote_type(eltype(ψ.tensors[1].data), eltype(op)), 1, 1)
     for i in 1:L
-        A   = ψ.tensors[i].data    # (χL, d, χR)
-        d   = size(A, 2)
-        χR  = size(A, 3)
+        A = ψ.tensors[i].data    # (χL, d, χR)
+        d = size(A, 2)
+        χR = size(A, 3)
         new_env = zeros(eltype(env), χR, χR)
         for σ in 1:d, σ′ in 1:d
-            weight = (i == site) ? op[σ, σ′] : (σ == σ′ ? one(eltype(op)) : zero(eltype(op)))
+            weight =
+                (i == site) ? op[σ, σ′] : (σ == σ′ ? one(eltype(op)) : zero(eltype(op)))
             iszero(weight) && continue
             new_env += weight * (A[:, σ, :]' * env * A[:, σ′, :])
         end
@@ -104,13 +104,13 @@ For the connected correlator ``\\langle O_i O_j \\rangle_c = \\langle O_i O_j \\
 compute `two_point` and subtract the product of two `local_expectation` calls.
 """
 function two_point(ψ::FiniteMPS, op_i::AbstractMatrix, op_j::AbstractMatrix, i::Int, j::Int)
-    L   = length(ψ.tensors)
-    T   = promote_type(eltype(ψ.tensors[1].data), eltype(op_i), eltype(op_j))
+    L = length(ψ.tensors)
+    T = promote_type(eltype(ψ.tensors[1].data), eltype(op_i), eltype(op_j))
     env = ones(T, 1, 1)
     for site in 1:L
-        A   = ψ.tensors[site].data
-        d   = size(A, 2)
-        χR  = size(A, 3)
+        A = ψ.tensors[site].data
+        d = size(A, 2)
+        χR = size(A, 3)
         new_env = zeros(T, χR, χR)
         for σ in 1:d, σ′ in 1:d
             weight = if site == i

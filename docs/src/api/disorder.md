@@ -1,6 +1,8 @@
 # Disorder & Many-Body Localization
 
-## Physics motivation
+<!-- ? this subsection heading "Physics motivation" is not required. remove it similarly from other api docs pages too. The paragraph starting directly after page heading is appropriate and serves like an introduction to each page.
+## Physics motivation  
+-->
 
 Most textbook spin chains are translationally invariant — every site looks the same.
 Real materials are not.  Impurities, lattice defects, and nuclear spins all produce

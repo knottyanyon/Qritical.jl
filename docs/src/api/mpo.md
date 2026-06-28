@@ -2,7 +2,7 @@
 
 ## Physics motivation
 
-A **Matrix Product Operator** (MPO) is the operator analogue of an MPS: a
+A **Matrix Product LatticeOperator** (MPO) is the operator analogue of an MPS: a
 ``d^L \times d^L`` operator factored into a product of ``L`` local rank-4 tensors
 
 ```math

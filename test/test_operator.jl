@@ -1,25 +1,25 @@
-# Tests for §6.2 — Operator/Hamiltonian, named constructors, MPO
+# Tests for §6.2 — LatticeOperator/Hamiltonian, named constructors, MPO
 # Physics invariants follow MasterPlan_Part2.md §5 and §7.
 
-@testset "§6.2 Operator — term structures and named constructors" begin
+@testset "§6.2 LatticeOperator — term structures and named constructors" begin
 
     @testset "uniform coupling helper" begin
-        @test uniform(4, 1.0) == fill(1.0, 4)
-        @test uniform(3, 0.5) == [0.5, 0.5, 0.5]
-        @test uniform(1, 2.0) == [2.0]
+        @test uniform_coupling(4, 1.0) == fill(1.0, 4)
+        @test uniform_coupling(3, 0.5) == [0.5, 0.5, 0.5]
+        @test uniform_coupling(1, 2.0) == [2.0]
     end
 
-    @testset "LocalTerm constructor" begin
+    @testset "OneSiteTerm constructor" begin
         ops = algebra_generators(SpinHalf())
-        lt = LocalTerm(2, ops.Sz, -1.5)
+        lt = OneSiteTerm(2, ops.Sz, -1.5)
         @test lt.site     == 2
         @test lt.coupling == -1.5
         @test lt.op       ≈ ops.Sz
     end
 
-    @testset "BondTerm constructor" begin
+    @testset "TwoSiteTerm constructor" begin
         ops = algebra_generators(SpinHalf())
-        bt = BondTerm(1, 2, ops.Sp, ops.Sm, 0.5)
+        bt = TwoSiteTerm(1, 2, ops.Sp, ops.Sm, 0.5)
         @test bt.i        == 1
         @test bt.j        == 2
         @test bt.coupling == 0.5

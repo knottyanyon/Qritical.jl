@@ -1,6 +1,6 @@
-# §4–5 / §6.2  Operator/Hamiltonian layer.
+# §4–5 / §6.2  LatticeOperator / Hamiltonian layer.
 #
-# An Operator is a linear map on the Hilbert space, represented as a sum of
+# A LatticeOperator is a linear map on the Hilbert space, represented as a sum of
 # weighted products of on-site operators over a geometry and DoF.  The
 # Hamiltonian is the instance that drives dynamics; observables are other
 # instances.  Both are constructed identically and measured the same way.
@@ -10,45 +10,47 @@
 # ----------------------------------------------------------------------------------------
 
 """
-    uniform(n::Int, x) -> Vector
+    uniform_coupling(n::Int, x) -> Vector
 
 Return a length-`n` vector with every entry equal to `x`.
 
 This is a tiny convenience helper used by the named-model constructors (e.g.
 [`XXZ`](@ref), [`Ising`](@ref)) to turn a scalar coupling into a
 site-/bond-indexed array.  When you pass a scalar `J` to one of those
-constructors it internally calls `uniform(nb, J)` so the downstream term
+constructors it internally calls `uniform_coupling(nb, J)` so the downstream term
 builders can always index by bond number without a special case.
 
 # Examples
 
 ```jldoctest
-julia> uniform(3, 1.5)
+julia> uniform_coupling(3, 1.5)
 3-element Vector{Float64}:
  1.5
  1.5
  1.5
 
-julia> uniform(2, 0.0)
+julia> uniform_coupling(2, 0.0)
 2-element Vector{Float64}:
  0.0
  0.0
 ```
 """
-uniform(n::Int, x) = fill(x, n)
+
+uniform_coupling(n::Int, x) = fill(x, n)
 
 # ----------------------------------------------------------------------------------------
 # Term types
 # ----------------------------------------------------------------------------------------
 
 """
-    LocalTerm{O}
+    OneSiteTerm{O}
+
 
 A single-site contribution ``h \\cdot O_i`` to a larger operator.
 
 Think of this as the atomic unit of an on-site field term: a coupling strength
 times a single-site operator matrix located at a specific site.  A list of
-`LocalTerm`s inside an [`Operator`](@ref) represents a sum
+`OneSiteTerm`s inside an [`LatticeOperator`](@ref) represents a sum
 ``\\sum_i h_i \\, O_i``.
 
 # Fields
@@ -58,25 +60,25 @@ times a single-site operator matrix located at a specific site.  A list of
     drawn from [`algebra_generators`](@ref)).
   - `coupling::Float64` — prefactor ``h_i``; can be site-dependent.
 
-See also: [`BondTerm`](@ref), [`Operator`](@ref)
+See also: [`TwoSiteTerm`](@ref), [`LatticeOperator`](@ref)
 """
-struct LocalTerm{O}
+struct OneSiteTerm{O}
     site::Int
     op::O
     coupling::Float64
 end
 
 """
-    BondTerm{O1,O2}
+    TwoSiteTerm{O1,O2}
 
 A two-site contribution ``J \\cdot (O_i \\otimes O_j)`` at sites `i` and `j`.
 
 This is the atomic unit of a nearest-neighbour exchange term: a coupling
 strength times a tensor product of two single-site operator matrices at sites
-``i < j``.  A list of `BondTerm`s inside an [`Operator`](@ref) represents a
+``i < j``.  A list of `TwoSiteTerm`s inside an [`LatticeOperator`](@ref) represents a
 sum ``\\sum_{\\langle i,j \\rangle} J_{ij} \\, O_i \\otimes O_j``.
 
-Note that the coupling ``J`` is stored in the `BondTerm`, not split between the
+Note that the coupling ``J`` is stored in the `TwoSiteTerm`, not split between the
 two sites.  This matters for the MPO FSM builder, which multiplies the coupling
 into the operator that opens the channel (at site ``i``).
 
@@ -88,9 +90,9 @@ into the operator that opens the channel (at site ``i``).
   - `op_j::O2`          — operator matrix acting at site ``j``.
   - `coupling::Float64` — bond coupling ``J_{ij}``.
 
-See also: [`LocalTerm`](@ref), [`Operator`](@ref)
+See also: [`OneSiteTerm`](@ref), [`LatticeOperator`](@ref)
 """
-struct BondTerm{O1,O2}
+struct TwoSiteTerm{O1,O2}
     i::Int
     j::Int
     op_i::O1
@@ -99,16 +101,16 @@ struct BondTerm{O1,O2}
 end
 
 # ----------------------------------------------------------------------------------------
-# Operator type
+# LatticeOperator type
 # ----------------------------------------------------------------------------------------
 
 """
-    Operator{D,G,LT,BT}
+    LatticeOperator{D,G,LT,BT}
 
 A linear operator on the full Hilbert space, represented as a sum of on-site
 and two-site contributions over a degree of freedom `D` and a geometry `G`.
 
-In physics terms, an `Operator` captures the idea that most physically relevant
+In physics terms, an `LatticeOperator` captures the idea that most physically relevant
 operators — Hamiltonians, conserved charges, observables — can be written as
 
 ```math
@@ -117,19 +119,19 @@ operators — Hamiltonians, conserved charges, observables — can be written as
 
 where the first sum runs over sites and the second over bonds.  Both the
 Hamiltonian (time-evolution generator) and observables (expectation values) are
-`Operator` instances — the role is determined by how you use them:
+`LatticeOperator` instances — the role is determined by how you use them:
 
   - pass to `MPO` → [`FiniteMPO`](@ref) for variational energy optimisation
   - evaluate via `MPO(obs)` and [`expect`](@ref) → scalar ``\\langle \\psi | \\hat{O} | \\psi \\rangle``
 
-`Hamiltonian` is just a type alias for `Operator`.
+`Hamiltonian` is just a type alias for `LatticeOperator`.
 
 # Type parameters
 
   - `D <: AbstractDoF`        — the local degree of freedom (sets operator algebra and ``d``).
   - `G <: AbstractGeometry`   — the lattice geometry (sets site and bond lists).
-  - `LT`                      — concrete `LocalTerm` type.
-  - `BT`                      — concrete `BondTerm` type.
+  - `LT`                      — concrete `OneSiteTerm` type.
+  - `BT`                      — concrete `TwoSiteTerm` type.
 
 # Fields
 
@@ -138,10 +140,10 @@ Hamiltonian (time-evolution generator) and observables (expectation values) are
   - `onsite::Vector{LT}`   — list of single-site terms.
   - `bond::Vector{BT}`     — list of two-site bond terms.
 
-See also: [`LocalTerm`](@ref), [`BondTerm`](@ref), [`MPO`](@ref),
+See also: [`OneSiteTerm`](@ref), [`TwoSiteTerm`](@ref), [`MPO`](@ref),
 [`XXZ`](@ref), [`Heisenberg`](@ref), [`Ising`](@ref)
 """
-struct Operator{D<:AbstractDoF,G<:AbstractGeometry,LT,BT}
+struct LatticeOperator{D<:AbstractDoF,G<:AbstractGeometry,LT,BT}
     dof::D
     geom::G
     onsite::Vector{LT}
@@ -151,22 +153,22 @@ end
 """
     Hamiltonian
 
-Type alias for [`Operator`](@ref).
+Type alias for [`LatticeOperator`](@ref).
 
-There is no separate `Hamiltonian` type — the role of an `Operator` (whether it
+There is no separate `Hamiltonian` type — the role of an `LatticeOperator` (whether it
 generates dynamics or measures an observable) is determined by how it is used,
 not by its type.  The alias exists purely for readability: writing
 `H = XXZ(g)` and treating it as a `Hamiltonian` makes the intent obvious at
 the call site.
 """
-const Hamiltonian = Operator
+const Hamiltonian = LatticeOperator
 
 # ----------------------------------------------------------------------------------------
 # Named constructors — spin models (§7)
 # ----------------------------------------------------------------------------------------
 
 """
-    XXZ(g::Chain; J=1.0, Jz=1.0, h=0.0) -> Operator
+    XXZ(g::Chain; J=1.0, Jz=1.0, h=0.0) -> LatticeOperator
 
 Build the XXZ spin-½ Hamiltonian on the chain `g`.
 
@@ -193,12 +195,12 @@ course convention ``-h_i S^z_i`` (see Exercise 3/6 of the SS26 course).
     Default: `1.0`.
   - `Jz::Union{Number, AbstractVector}` — longitudinal (Ising) coupling.
     Default: `1.0`.
-  - `h::Union{Number, AbstractVector}`  — magnetic field (couples to ``-S^z``);
+  - `h::Union{Number, AbstractVector}`  — external magnetic field (couples to ``-S^z``);
     scalar or per-site vector.  Default: `0.0`.
 
 # Returns
 
-  - `Operator` with `dof = SpinHalf()`, suitable for `MPO(H)` or [`dense_matrix`](@ref).
+  - `LatticeOperator` with `dof = SpinHalf()`, suitable for `MPO(H)` or [`dense_matrix`](@ref).
 
 # Examples
 
@@ -216,24 +218,24 @@ julia> length(H.bond)   # 3 bonds × 3 term types (Sp⊗Sm, Sm⊗Sp, Sz⊗Sz)
 """
 function XXZ(g::Chain; J=1.0, Jz=1.0, h=0.0)
     nb = length(bonds(g))
-    Jv = J isa Number ? uniform(nb, Float64(J)) : Float64.(J)
-    Jzv = Jz isa Number ? uniform(nb, Float64(Jz)) : Float64.(Jz)
-    hv = h isa Number ? uniform(g.L, Float64(h)) : Float64.(h)
+    Jxy = J isa Number ? uniform_coupling(nb, Float64(J)) : Float64.(J)
+    Jzv = Jz isa Number ? uniform_coupling(nb, Float64(Jz)) : Float64.(Jz)
+    hv = h isa Number ? uniform_coupling(g.L, Float64(h)) : Float64.(h)
     ops = algebra_generators(SpinHalf())
 
-    onsite = [LocalTerm(i, ops.Sz, -hv[i]) for i in sites(g)]
+    onsite = [OneSiteTerm(i, ops.Sz, -hv[i]) for i in sites(g)]
 
     bond = vcat(
-        [BondTerm(i, j, ops.Sp, ops.Sm, 0.5Jv[b]) for (b, (i, j)) in enumerate(bonds(g))],
-        [BondTerm(i, j, ops.Sm, ops.Sp, 0.5Jv[b]) for (b, (i, j)) in enumerate(bonds(g))],
-        [BondTerm(i, j, ops.Sz, ops.Sz, Jzv[b]) for (b, (i, j)) in enumerate(bonds(g))],
+        [TwoSiteTerm(i, j, ops.Sp, ops.Sm, 0.5Jxy[b]) for (b, (i, j)) in enumerate(bonds(g))],
+        [TwoSiteTerm(i, j, ops.Sm, ops.Sp, 0.5Jxy[b]) for (b, (i, j)) in enumerate(bonds(g))],
+        [TwoSiteTerm(i, j, ops.Sz, ops.Sz, Jzv[b]) for (b, (i, j)) in enumerate(bonds(g))],
     )
 
-    Operator(SpinHalf(), g, onsite, bond)
+    LatticeOperator(SpinHalf(), g, onsite, bond)
 end
 
 """
-    Heisenberg(g::Chain; J=1.0, h=0.0) -> Operator
+    Heisenberg(g::Chain; J=1.0, h=0.0) -> LatticeOperator
 
 Build the isotropic Heisenberg spin-½ Hamiltonian on the chain `g`.
 
@@ -267,7 +269,7 @@ Spin{1//2}()
 Heisenberg(g::Chain; J=1.0, h=0.0) = XXZ(g; J=J, Jz=J, h=h)
 
 """
-    Ising(g::Chain; J=1.0, h=0.0) -> Operator
+    Ising(g::Chain; J=1.0, h=0.0) -> LatticeOperator
 
 Build the transverse-field Ising Hamiltonian on the chain `g`.
 
@@ -304,14 +306,14 @@ julia> length(H.bond)    # Sz⊗Sz on every NN bond
 """
 function Ising(g::Chain; J=1.0, h=0.0)
     nb = length(bonds(g))
-    Jv = J isa Number ? uniform(nb, Float64(J)) : Float64.(J)
-    hv = h isa Number ? uniform(g.L, Float64(h)) : Float64.(h)
+    Jxy = J isa Number ? uniform_coupling(nb, Float64(J)) : Float64.(J)
+    hv = h isa Number ? uniform_coupling(g.L, Float64(h)) : Float64.(h)
     ops = algebra_generators(SpinHalf())
 
-    onsite = [LocalTerm(i, ops.Sx, -hv[i]) for i in sites(g)]
-    bond = [BondTerm(i, j, ops.Sz, ops.Sz, Jv[b]) for (b, (i, j)) in enumerate(bonds(g))]
+    onsite = [OneSiteTerm(i, ops.Sx, -hv[i]) for i in sites(g)]
+    bond = [TwoSiteTerm(i, j, ops.Sz, ops.Sz, Jxy[b]) for (b, (i, j)) in enumerate(bonds(g))]
 
-    Operator(SpinHalf(), g, onsite, bond)
+    LatticeOperator(SpinHalf(), g, onsite, bond)
 end
 
 # ----------------------------------------------------------------------------------------
@@ -319,7 +321,7 @@ end
 # ----------------------------------------------------------------------------------------
 
 """
-    total_magnetization(g::AbstractGeometry; dof=SpinHalf()) -> Operator
+    total_magnetization(g::AbstractGeometry; dof=SpinHalf()) -> LatticeOperator
 
 Build the total magnetization operator ``M = \\sum_i S^z_i``.
 
@@ -336,7 +338,7 @@ on an even-``L`` chain should have ``\\langle M \\rangle = 0``.
 
 # Returns
 
-  - `Operator` with one `LocalTerm` (coupling = +1) per site and no bond terms.
+  - `LatticeOperator` with one `OneSiteTerm` (coupling = +1) per site and no bond terms.
 
 # Examples
 
@@ -352,11 +354,11 @@ true
 """
 function total_magnetization(g::AbstractGeometry; dof=SpinHalf())
     ops = algebra_generators(dof)
-    Operator(dof, g, [LocalTerm(i, ops.Sz, 1.0) for i in sites(g)], BondTerm[])
+    LatticeOperator(dof, g, [OneSiteTerm(i, ops.Sz, 1.0) for i in sites(g)], TwoSiteTerm[])
 end
 
 """
-    staggered_magnetization(g::AbstractGeometry; dof=SpinHalf()) -> Operator
+    staggered_magnetization(g::AbstractGeometry; dof=SpinHalf()) -> LatticeOperator
 
 Build the staggered magnetization (Néel order parameter)
 ``M^s = \\sum_i (-1)^i S^z_i``.
@@ -378,7 +380,7 @@ very useful for finite-size scaling studies.
 
 # Returns
 
-  - `Operator` with site couplings ``(-1)^i`` and no bond terms.
+  - `LatticeOperator` with site couplings ``(-1)^i`` and no bond terms.
 
 # Examples
 
@@ -395,16 +397,16 @@ julia> [t.coupling for t in Ms.onsite]
 """
 function staggered_magnetization(g::AbstractGeometry; dof=SpinHalf())
     ops = algebra_generators(dof)
-    Operator(dof, g, [LocalTerm(i, ops.Sz, (-1.0)^i) for i in sites(g)], BondTerm[])
+    LatticeOperator(dof, g, [OneSiteTerm(i, ops.Sz, (-1.0)^i) for i in sites(g)], TwoSiteTerm[])
 end
 
 """
-    local_op(dof::AbstractDoF, sym::Symbol, site::Int) -> Operator
+    local_op(dof::AbstractDoF, sym::Symbol, site::Int) -> LatticeOperator
 
 Build a single-site observable: the operator named `sym` of `dof` at `site`.
 
 Use this to measure any on-site quantity — ``S^z_i``, ``n_i``, ``c_i``, etc.
-— after a variational calculation.  The returned `Operator` can be passed to
+— after a variational calculation.  The returned `LatticeOperator` can be passed to
 [`expect`](@ref) by first converting it to a `FiniteMPO` via `MPO`.
 
 # Arguments
@@ -417,7 +419,7 @@ Use this to measure any on-site quantity — ``S^z_i``, ``n_i``, ``c_i``, etc.
 
 # Returns
 
-  - `Operator` on a minimal `Chain(site)` geometry with a single `LocalTerm`
+  - `LatticeOperator` on a minimal `Chain(site)` geometry with a single `OneSiteTerm`
     (coupling = 1) and no bond terms.
 
 # Examples
@@ -436,20 +438,20 @@ function local_op(dof::AbstractDoF, sym::Symbol, site::Int)
     op = getproperty(algebra_generators(dof), sym)
     # Minimal geometry: a chain containing just this site (no bonds needed)
     g = Chain(site)
-    Operator(dof, g, [LocalTerm(site, op, 1.0)], BondTerm[])
+    LatticeOperator(dof, g, [OneSiteTerm(site, op, 1.0)], TwoSiteTerm[])
 end
 
 """
     two_point(g::AbstractGeometry, dof::AbstractDoF,
-              opA::Symbol, iA::Int, opB::Symbol, iB::Int) -> Operator
+              opA::Symbol, iA::Int, opB::Symbol, iB::Int) -> LatticeOperator
 
 Build the two-point operator ``A_{i_A} B_{i_B}`` whose expectation value gives
 ``\\langle A_{i_A} B_{i_B} \\rangle``.
 
 This is the building block for two-point correlation functions: spin–spin
 correlators ``\\langle S^z_i S^z_j \\rangle``, density–density correlators
-``\\langle n_i n_j \\rangle``, and so on.  The returned `Operator` contains a
-single `BondTerm` with coupling 1 and no on-site terms.
+``\\langle n_i n_j \\rangle``, and so on.  The returned `LatticeOperator` contains a
+single `TwoSiteTerm` with coupling 1 and no on-site terms.
 
 !!! note "Fermionic statistics"
 
@@ -462,7 +464,7 @@ single `BondTerm` with coupling 1 and no on-site terms.
 
 # Arguments
 
-  - `g::AbstractGeometry` — lattice geometry (used to construct the `Operator`
+  - `g::AbstractGeometry` — lattice geometry (used to construct the `LatticeOperator`
     container; the pair ``(i_A, i_B)`` need not be a NN bond of `g`).
   - `dof::AbstractDoF`    — local degree of freedom.
   - `opA::Symbol`         — name of the left operator, e.g. `:Sz`.
@@ -472,7 +474,7 @@ single `BondTerm` with coupling 1 and no on-site terms.
 
 # Returns
 
-  - `Operator` with a single `BondTerm(iA, iB, Amat, Bmat, 1.0)` and empty
+  - `LatticeOperator` with a single `TwoSiteTerm(iA, iB, Amat, Bmat, 1.0)` and empty
     `onsite`.
 
 # Examples
@@ -495,11 +497,11 @@ function two_point(
     ops = algebra_generators(dof)
     Amat = getproperty(ops, opA)
     Bmat = getproperty(ops, opB)
-    Operator(dof, g, LocalTerm[], [BondTerm(iA, iB, Amat, Bmat, 1.0)])
+    LatticeOperator(dof, g, OneSiteTerm[], [TwoSiteTerm(iA, iB, Amat, Bmat, 1.0)])
 end
 
 """
-    identity_operator(g::AbstractGeometry, dof::AbstractDoF) -> Operator
+    identity_operator(g::AbstractGeometry, dof::AbstractDoF) -> LatticeOperator
 
 Build the identity operator
 ``I = I_1 \\otimes I_2 \\otimes \\cdots \\otimes I_L``.
@@ -523,35 +525,35 @@ true
 ```
 """
 function identity_operator(g::AbstractGeometry, dof::AbstractDoF)
-    Operator(dof, g, LocalTerm[], BondTerm[])
+    LatticeOperator(dof, g, OneSiteTerm[], TwoSiteTerm[])
 end
 
 # ----------------------------------------------------------------------------------------
-# Operator arithmetic
+# LatticeOperator arithmetic
 # ----------------------------------------------------------------------------------------
 
 """
-    Base.:*(c::Real, H::Operator) -> Operator
-    Base.:*(H::Operator, c::Real) -> Operator
+    Base.:*(c::Real, H::LatticeOperator) -> LatticeOperator
+    Base.:*(H::LatticeOperator, c::Real) -> LatticeOperator
 
 Scale all couplings of `H` by scalar `c`.
 """
-function Base.:*(c::Real, H::Operator)
-    onsite = [LocalTerm(lt.site, lt.op, c * lt.coupling) for lt in H.onsite]
-    bond = [BondTerm(bt.i, bt.j, bt.op_i, bt.op_j, c * bt.coupling) for bt in H.bond]
-    Operator(H.dof, H.geom, onsite, bond)
+function Base.:*(c::Real, H::LatticeOperator)
+    onsite = [OneSiteTerm(lt.site, lt.op, c * lt.coupling) for lt in H.onsite]
+    bond = [TwoSiteTerm(bt.i, bt.j, bt.op_i, bt.op_j, c * bt.coupling) for bt in H.bond]
+    LatticeOperator(H.dof, H.geom, onsite, bond)
 end
-Base.:*(H::Operator, c::Real) = c * H
+Base.:*(H::LatticeOperator, c::Real) = c * H
 
 """
-    Base.:+(A::Operator, B::Operator) -> Operator
+    Base.:+(A::LatticeOperator, B::LatticeOperator) -> LatticeOperator
 
 Merge the term lists of two operators (both must share the same DoF and geometry).
 """
-function Base.:+(A::Operator, B::Operator)
+function Base.:+(A::LatticeOperator, B::LatticeOperator)
     onsite = vcat(A.onsite, B.onsite)
     bond = vcat(A.bond, B.bond)
-    Operator(A.dof, A.geom, onsite, bond)
+    LatticeOperator(A.dof, A.geom, onsite, bond)
 end
 
 # ----------------------------------------------------------------------------------------
@@ -559,7 +561,7 @@ end
 # ----------------------------------------------------------------------------------------
 
 """
-    dense_matrix(H::Operator) -> Matrix{ComplexF64}
+    dense_matrix(H::LatticeOperator) -> Matrix{ComplexF64}
 
 Build the full ``d^L \\times d^L`` dense matrix of operator `H` by Kronecker
 product construction.
@@ -607,8 +609,9 @@ julia> size(M)
 julia> isapprox(M, M'; atol=1e-12)
 true
 ```    # Reject periodic geometries: the wrap bond (L,1) has i>j, which makes the
+```
 """
-function dense_matrix(H::Operator)
+function dense_matrix(H::LatticeOperator)
     # Reject periodic geometries: the wrap bond (L,1) has i>j, which makes the
     # intermediate-identity dimension d^(j-i-1) = d^(negative) meaningless.  The
     # caller should use open boundary conditions for dense_matrix.  Fixes #79.

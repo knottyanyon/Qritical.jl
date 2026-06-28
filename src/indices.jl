@@ -6,12 +6,11 @@
 Abstract supertype for the variance of a tensor index.
 
 Following the von Delft / tensor-network convention:
-- [`Upper`](@ref) — superscript, incoming arrow, bra-side → **domain** (`V'`)
-- [`Lower`](@ref) — subscript, outgoing arrow, ket-side → **codomain** (`V`)
 
-Variance is encoded as a **type parameter** rather than an enum value so that
-dispatch on `Upper` vs. `Lower` is resolved at compile time with zero runtime
-cost.
+  - [`Upper`](@ref) — superscript, incoming arrow, bra-side → **domain** (`V'`)
+  - [`Lower`](@ref) — subscript, outgoing arrow, ket-side → **codomain** (`V`)
+
+Variance is encoded as a **type parameter** rather than an enum value so that dispatch on `Upper` vs. `Lower` is resolved at compile time with zero runtime cost.
 
 See also: [`TIx`](@ref), [`which_space`](@ref)
 """
@@ -26,6 +25,7 @@ maps to the **domain** of a `TensorMap` and to the dual space `V'`.
 In Qritical.jl: `TIx{Upper}` satisfies `which_space == :domain`.
 
 # Examples
+
 ```jldoctest
 julia> which_space(TIx{Upper}(:α, 4))
 :domain
@@ -42,6 +42,7 @@ maps to the **codomain** of a `TensorMap` and to the primal space `V`.
 In Qritical.jl: `TIx{Lower}` satisfies `which_space == :codomain`.
 
 # Examples
+
 ```jldoctest
 julia> which_space(TIx{Lower}(:σ, 2))
 :codomain
@@ -57,9 +58,10 @@ struct Lower <: IxLoc end
 Root of the Qritical.jl index hierarchy.
 
 Every concrete subtype must implement:
-- [`dim(::AbstractIx)`](@ref)         — positive integer size of the index space
-- [`label(::AbstractIx)`](@ref)       — symbolic name used for contraction matching
-- [`which_space(::AbstractIx)`](@ref) — `:domain` for upper, `:codomain` for lower
+
+  - [`dim(::AbstractIx)`](@ref)         — positive integer size of the index space
+  - [`label(::AbstractIx)`](@ref)       — symbolic name used for contraction matching
+  - [`which_space(::AbstractIx)`](@ref) — `:domain` for upper, `:codomain` for lower
 
 Concrete subtypes: [`TIx`](@ref), [`MulTIx`](@ref).
 """
@@ -74,23 +76,26 @@ which_space(i::AbstractIx) = error("`which_space` not implemented for $(typeof(i
 """
     TIx{L<:IxLoc} <: AbstractIx
 
-A single tensor leg carrying a symbolic `label`, a positive `dim`ension, and a
-**variance** encoded in the type parameter `L ∈ {Upper, Lower}`.
+A single tensor leg carrying a symbolic `label`, a positive `dim`ension, and
+a **variance** encoded in the type parameter `L ∈ {Upper, Lower}`.
 
 Variance is part of the index's identity: two `TIx` values with the same label
 and dimension but *different* variance are not equal. This encodes the von Delft
-convention — upper indices belong to the domain, lower indices to the codomain —
-making contraction correctness a compile-time property.
+convention — upper indices belong to the domain, lower indices to the codomain
+— making contraction correctness a compile-time property.
 
 # Fields
-- `label :: Symbol` — name used for contraction matching (e.g. `:α`, `:σ_1`)
-- `dim   :: Int`    — strictly positive size of the index space (`dim ≥ 1`)
+
+  - `label :: Symbol` — name used for contraction matching (e.g. `:α`, `:σ_1`)
+  - `dim   :: Int`    — strictly positive size of the index space (`dim ≥ 1`)
 
 # Constructors
+
 Prefer the convenience functions [`upper`](@ref) and [`lower`](@ref) over calling
 `TIx{Upper}` / `TIx{Lower}` directly.
 
 # Examples
+
 ```jldoctest
 julia> α = TIx{Upper}(:α, 4);
 
@@ -126,6 +131,7 @@ end
 Return the dimension of index `ix`.
 
 # Examples
+
 ```jldoctest
 julia> dim(TIx{Upper}(:α, 4))
 4
@@ -142,6 +148,7 @@ dim(ix::TIx) = ix.dim
 Return the symbolic label of index `ix`.
 
 # Examples
+
 ```jldoctest
 julia> label(TIx{Upper}(:α, 4))
 :α
@@ -157,10 +164,12 @@ label(ix::TIx) = ix.label
 
 Return `:domain` for an [`Upper`](@ref) index and `:codomain` for a
 [`Lower`](@ref) index, reflecting the von Delft convention:
-- upper = incoming bra = domain (dual `V'`)
-- lower = outgoing ket = codomain (primal `V`)
+
+  - upper = incoming bra = domain (dual `V'`)
+  - lower = outgoing ket = codomain (primal `V`)
 
 # Examples
+
 ```jldoctest
 julia> which_space(TIx{Upper}(:α, 4))
 :domain
@@ -184,6 +193,7 @@ Base.hash(ix::TIx, h::UInt) = hash(ix.label, hash(ix.dim, hash(typeof(ix), h)))
 Construct an upper (domain) index. Prefer this over `TIx{Upper}(label, dim)`.
 
 # Examples
+
 ```jldoctest
 julia> α = upper(:α, 4);
 
@@ -202,6 +212,7 @@ upper(label::Symbol, dim::Int) = TIx{Upper}(label, dim)
 Construct a lower (codomain) index. Prefer this over `TIx{Lower}(label, dim)`.
 
 # Examples
+
 ```jldoctest
 julia> σ = lower(:σ, 2);
 
@@ -225,6 +236,7 @@ Calling with no arguments returns an empty tuple `()`, which is useful when
 chaining with `filter` or `map` that may produce no results.
 
 # Examples
+
 ```jldoctest
 julia> uppers()
 ()
@@ -248,6 +260,7 @@ Construct a tuple of lower (codomain) indices from `label => dim` pairs.
 Calling with no arguments returns an empty tuple `()`.
 
 # Examples
+
 ```jldoctest
 julia> lowers()
 ()
@@ -270,17 +283,19 @@ lowers(pairs::Pair{Symbol,Int}...) = TIx{Lower}.(first.(pairs), last.(pairs))
 Construct a tuple of upper (domain) indices with auto-generated labels
 `base_start`, `base_(start+1)`, …, `base_last`, all sharing the same `dim`.
 
-Useful for building a sequence of bond or physical indices along a chain of `L`
-sites — e.g. `uppers_range(:χ, D, L)` for `L` virtual bond legs of bond
+Useful for building a sequence of bond or physical indices along a chain of
+`L` sites — e.g. `uppers_range(:χ, D, L)` for `L` virtual bond legs of bond
 dimension `D`.
 
 # Arguments
-- `base`  — base symbol; the `i`-th label is `Symbol(base, :_, i)`
-- `dim`   — dimension shared by every index in the tuple
-- `last`  — upper bound of the range (inclusive)
-- `start` — lower bound of the range (default: `1`)
+
+  - `base`  — base symbol; the `i`-th label is `Symbol(base, :_, i)`
+  - `dim`   — dimension shared by every index in the tuple
+  - `last`  — upper bound of the range (inclusive)
+  - `start` — lower bound of the range (default: `1`)
 
 # Examples
+
 ```jldoctest
 julia> r = uppers_range(:χ, 4, 3);
 
@@ -314,12 +329,14 @@ Construct a tuple of lower (codomain) indices with auto-generated labels
 `base_start`, `base_(start+1)`, …, `base_last`, all sharing the same `dim`.
 
 # Arguments
-- `base`  — base symbol; the `i`-th label is `Symbol(base, :_, i)`
-- `dim`   — dimension shared by every index in the tuple
-- `last`  — upper bound of the range (inclusive)
-- `start` — lower bound of the range (default: `1`)
+
+  - `base`  — base symbol; the `i`-th label is `Symbol(base, :_, i)`
+  - `dim`   — dimension shared by every index in the tuple
+  - `last`  — upper bound of the range (inclusive)
+  - `start` — lower bound of the range (default: `1`)
 
 # Examples
+
 ```jldoctest
 julia> r = lowers_range(:σ, 2, 4);
 
@@ -347,30 +364,33 @@ end
 
 # =============== MulTIx - grouped leg ========================================
 
-""" p
+"""
     MulTIx <: AbstractIx
 
-A fused index representing an **ordered** tuple of constituent [`AbstractIx`](@ref)
-values.
+A fused index representing an **ordered** tuple of constituent
+[`AbstractIx`](@ref) values.
 
 `MulTIx` arises when several legs of a tensor are grouped into a single matrix
-row or column before an SVD or contraction — for example, reshaping a rank-3 site
-tensor into a matrix for a bipartite SVD. Its `dim` is the product of the
+row or column before an SVD or contraction — for example, reshaping a rank-3
+site tensor into a matrix for a bipartite SVD. Its `dim` is the product of the
 constituent dimensions, matching the row/column count after reshaping.
 
 The **order** of `indices` is significant: `(α, σ)` and `(σ, α)` correspond to
 different permutations of the underlying array and are therefore not equal.
 
 !!! note "No single variance"
+
     Calling [`which_space`](@ref) on a `MulTIx` raises an error, because a
     grouped leg may combine upper and lower constituents and has no single
     well-defined variance.
 
 # Fields
-- `label   :: Symbol`                    — name of the fused leg
-- `indices :: Tuple{Vararg{AbstractIx}}` — constituent indices, in order
+
+  - `label   :: Symbol`                    — name of the fused leg
+  - `indices :: Tuple{Vararg{AbstractIx}}` — constituent indices, in order
 
 # Constructors
+
 ```julia
 MulTIx(:fused, (α, σ))    # explicit label
 MulTIx((α, σ))            #  hits MulTIx(::Tuple) → _autolabel → :ασ
@@ -378,8 +398,10 @@ MulTIx(α, σ)              # varargs sugar; same auto-label
 ```
 
 # Examples
+
 ```jldoctest
-julia> α = TIx{Upper}(:α, 3);  σ = TIx{Lower}(:σ, 2);
+julia> α = TIx{Upper}(:α, 3);
+       σ = TIx{Lower}(:σ, 2);
 
 julia> g = MulTIx(:ασ, (α, σ));
 
@@ -405,8 +427,10 @@ Return the total dimension of the fused index: the product of the dimensions of
 all constituent indices. An empty `MulTIx` has `dim == 1` (empty product).
 
 # Examples
+
 ```jldoctest
-julia> α = TIx{Upper}(:α, 3);  σ = TIx{Lower}(:σ, 2);
+julia> α = TIx{Upper}(:α, 3);
+       σ = TIx{Lower}(:σ, 2);
 
 julia> dim(MulTIx(:g, (α, σ)))
 6
@@ -423,6 +447,7 @@ dim(g::MulTIx) = prod(dim, g.indices; init=1)
 Return the label of the fused index.
 
 # Examples
+
 ```jldoctest
 julia> g = MulTIx(:ασ, (TIx{Upper}(:α, 3), TIx{Lower}(:σ, 2)));
 
@@ -451,15 +476,17 @@ An ordered group of tensor legs, represented as `Vector{AbstractIx}`.
 
 A `Partition` names the subset of a tensor's legs that will be collected
 along one axis (rows or columns) when the tensor is matricised for an SVD or
-contraction.  The order within the partition determines the reshape order of
+contraction. The order within the partition determines the reshape order of
 the underlying array.
 
 Use [`Bipartition`](@ref) to pair two complementary `Partition`s, and
 [`group_legs`](@ref) to apply the split to a `QTensor`.
 
 # Examples
+
 ```jldoctest
-julia> vL = upper(:vL, 2);  σ = lower(:σ, 3);
+julia> vL = upper(:vL, 2);
+       σ = lower(:σ, 3);
 
 julia> p = Partition([vL, σ]);
 
@@ -476,22 +503,29 @@ const Partition = Vector{AbstractIx}
     Bipartition
 
 A split of a tensor's legs into two ordered groups:
-- **`left`** — the legs that become the row axis (first index) after reshaping
-- **`right`** — the legs that become the column axis (second index) after reshaping
+
+  - **`left`** — the legs that become the row axis (first index) after
+    reshaping
+  - **`right`** — the legs that become the column axis (second index) after
+    reshaping
 
 The constructor verifies that the two groups are **disjoint**: no single
-`AbstractIx` value may appear in both `left` and `right`.  Coverage — that the
+`AbstractIx` value may appear in both `left` and `right`. Coverage — that the
 two groups together account for every leg of the target tensor — is checked by
-[`group_legs`](@ref) at the point of use, not here, because a `Bipartition` may
-be built before a tensor is chosen.
+[`group_legs`](@ref) at the point of use, not here, because a `Bipartition`
+may be built before a tensor is chosen.
 
 # Fields
-- `left  :: Partition`
-- `right :: Partition`
+
+  - `left  :: Partition`
+  - `right :: Partition`
 
 # Examples
+
 ```jldoctest
-julia> vL = upper(:vL, 2);  σ = lower(:σ, 3);  vR = lower(:vR, 4);
+julia> vL = upper(:vL, 2);
+       σ = lower(:σ, 3);
+       vR = lower(:vR, 4);
 
 julia> bp = Bipartition(Partition([vL, σ]), Partition([vR]));
 
@@ -511,7 +545,7 @@ struct Bipartition
             ix ∈ right && throw(
                 ArgumentError(
                     "Bipartition: leg '$(label(ix))' (dim=$(dim(ix))) appears in both " *
-                    "the left and right partitions — each leg must belong to exactly one side."
+                    "the left and right partitions — each leg must belong to exactly one side.",
                 ),
             )
         end
@@ -529,14 +563,17 @@ preserving their original order.
 legs taken from a `QTensor` or a plain `Vector{AbstractIx}`.
 
 Matching is by index equality (`==`), so two legs with the same label and
-dimension but different variance (e.g. `upper(:σ,2)` vs `lower(:σ,2)`) are
+dimension but different variance (e.g. `upper(:σ, 2)` vs `lower(:σ, 2)`) are
 treated as distinct.
 
 See also: [`bipartition`](@ref), [`Bipartition`](@ref)
 
 # Examples
+
 ```jldoctest
-julia> vL = upper(:vL, 2);  σ = lower(:σ, 3);  vR = lower(:vR, 4);
+julia> vL = upper(:vL, 2);
+       σ = lower(:σ, 3);
+       vR = lower(:vR, 4);
 
 julia> complement(Partition([vL, σ]), [vL, σ, vR])
 1-element Vector{AbstractIx}:
@@ -557,11 +594,15 @@ Construct a [`Bipartition`](@ref) whose right side is automatically
 `complement(left, indices)`.
 
 This is the most convenient way to describe a Schmidt cut: name the legs you
-want on the left (row) side and let the library fill in the right (column) side.
+want on the left (row) side and let the library fill in the right (column)
+side.
 
 # Examples
+
 ```jldoctest
-julia> vL = upper(:vL, 2);  σ = lower(:σ, 3);  vR = lower(:vR, 4);
+julia> vL = upper(:vL, 2);
+       σ = lower(:σ, 3);
+       vR = lower(:vR, 4);
 
 julia> bp = bipartition(Partition([vL, σ]), [vL, σ, vR]);
 
@@ -580,9 +621,10 @@ Generate a positional bond label by appending the site index to a base symbol.
 
 Used throughout the MPS layer to create unique leg names for virtual bonds.
 For example, the bond to the right of site ``i`` on a chain labelled `:χ` is
-`bond_label(:χ, i)` ``= \\texttt{:χ}i``.
+`bond_label(:χ, i)` ``= \\texttt{:χ}_i``.
 
 # Examples
+
 ```jldoctest
 julia> bond_label(:χ, 3)
 :χ3

@@ -4,16 +4,16 @@
 # `ExactDiagonalization(:full)` calls dense `eigen(Hermitian(Matrix(H)))`.
 # Both paths share `sparse(H)` as the entry point for matrix construction.
 
-import KrylovKit
+using KrylovKit: KrylovKit
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Sparse matrix from Operator
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
+# Sparse matrix from LatticeOperator
+# ----------------------------------------------------------------------------------------
 
 const _ED_MAX_DIM = 2^20   # refuse Hilbert spaces larger than ~1 M
 
 """
-    sparse(H::Operator) -> SparseMatrixCSC{ComplexF64}
+    sparse(H::LatticeOperator) -> SparseMatrixCSC{ComplexF64}
 
 Build the sparse ``d^L \\times d^L`` Hamiltonian matrix for the operator `H`.
 
@@ -23,13 +23,16 @@ full Hilbert space ``\\mathcal{H} = \\bigotimes_{i=1}^{L} \\mathcal{h}_i``.
 Raises `ArgumentError` if ``d^L > 2^{20} \\approx 10^6`` (refuse to silently allocate
 multi-GB arrays).
 """
-function sparse(H::Operator)
+function sparse(H::LatticeOperator)
     d = local_dim(H.dof)
     L = H.geom.L
     D = d^L
-    D ≤ _ED_MAX_DIM || throw(ArgumentError(
-        "Hilbert space dimension $D = $(d)^$L exceeds the safety limit $_ED_MAX_DIM. " *
-        "Use an MPS algorithm for large systems."))
+    D ≤ _ED_MAX_DIM || throw(
+        ArgumentError(
+            "Hilbert space dimension $D = $(d)^$L exceeds the safety limit $_ED_MAX_DIM. " *
+            "Use an MPS algorithm for large systems.",
+        ),
+    )
 
     Id = sparse(Matrix{ComplexF64}(I, d, d))
     Sp = SparseArrays.spzeros(ComplexF64, D, D)
@@ -41,7 +44,7 @@ function sparse(H::Operator)
 
     for bt in H.bond
         i, j = bt.i, bt.j
-        mats = Vector{SparseArrays.SparseMatrixCSC{ComplexF64, Int}}(undef, L)
+        mats = Vector{SparseArrays.SparseMatrixCSC{ComplexF64,Int}}(undef, L)
         for k in 1:L
             if k == i
                 mats[k] = sparse(ComplexF64.(bt.op_i))
@@ -57,9 +60,9 @@ function sparse(H::Operator)
     return Sp
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Study and algorithm types
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     GroundState
@@ -74,18 +77,18 @@ struct GroundState end
 
 Algorithm type for exact diagonalisation.
 
-- `ExactDiagonalization(:ground)` — Lanczos on the sparse matrix; returns only
-  the ground state energy and state vector. Cost: ``O(d^L \\chi_{\\text{Krylov}})``.
-- `ExactDiagonalization(:full)` — full diagonalisation via `eigen(Hermitian(...))`;
-  returns all eigenvalues. Cost: ``O(d^{3L})``.
+  - `ExactDiagonalization(:ground)` — Lanczos on the sparse matrix; returns only
+    the ground state energy and state vector. Cost: ``O(d^L \\chi_{\\text{Krylov}})``.
+  - `ExactDiagonalization(:full)` — full diagonalisation via `eigen(Hermitian(...))`;
+    returns all eigenvalues. Cost: ``O(d^{3L})``.
 """
 struct ExactDiagonalization{mode}
     ExactDiagonalization(mode::Symbol) = new{mode}()
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Result type
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     EDResult
@@ -93,9 +96,10 @@ end
 Return type of `solve` with `ExactDiagonalization`.
 
 Fields:
-- `energy::Float64`           — ground-state energy (lowest eigenvalue).
-- `state::Vector{ComplexF64}` — ground-state vector (unit-norm; empty for `:full`).
-- `spectrum::Vector{Float64}` — all eigenvalues (sorted); non-empty only for `:full`.
+
+  - `energy::Float64`           — ground-state energy (lowest eigenvalue).
+  - `state::Vector{ComplexF64}` — ground-state vector (unit-norm; empty for `:full`).
+  - `spectrum::Vector{Float64}` — all eigenvalues (sorted); non-empty only for `:full`.
 """
 struct EDResult
     energy::Float64
@@ -103,9 +107,9 @@ struct EDResult
     spectrum::Vector{Float64}
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # solve dispatch
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     solve(H, ::GroundState, ::ExactDiagonalization{:ground}) -> EDResult
@@ -115,14 +119,16 @@ Compute the ground state of `H` using the Lanczos algorithm on the sparse matrix
 Uses KrylovKit's `eigsolve` with a random initial vector; returns the lowest
 eigenvalue and the corresponding eigenvector normalised to unit norm.
 """
-function solve(H::Operator, ::GroundState, ::ExactDiagonalization{:ground})
-    M   = sparse(H)
-    D   = size(M, 1)
-    v₀  = normalize(randn(ComplexF64, D))
+function solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:ground})
+    M = sparse(H)
+    D = size(M, 1)
+    v₀ = normalize(randn(ComplexF64, D))
     # eigsolve returns eigenvalues closest to 0 by default; use `which=:SR` for smallest real
-    vals, vecs, _ = KrylovKit.eigsolve(M, v₀, 1, :SR; ishermitian=true, tol=1e-12, maxiter=300)
-    E   = real(vals[1])
-    ψ   = normalize(vecs[1])
+    vals, vecs, _ = KrylovKit.eigsolve(
+        M, v₀, 1, :SR; ishermitian=true, tol=1e-12, maxiter=300
+    )
+    E = real(vals[1])
+    ψ = normalize(vecs[1])
     EDResult(E, ψ, Float64[E])
 end
 
@@ -134,17 +140,17 @@ Full diagonalisation of `H`.
 Returns all eigenvalues (sorted ascending) in `result.spectrum`.  `result.state`
 is the ground-state eigenvector and `result.energy` is the smallest eigenvalue.
 """
-function solve(H::Operator, ::GroundState, ::ExactDiagonalization{:full})
-    M   = dense_matrix(H)
-    F   = eigen(Hermitian(M))
+function solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:full})
+    M = dense_matrix(H)
+    F = eigen(Hermitian(M))
     evs = real.(F.values)
-    ψ   = normalize(F.vectors[:, 1])
+    ψ = normalize(F.vectors[:, 1])
     EDResult(evs[1], ψ, sort(evs))
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # §10.2  ED time propagation  exp(-iHt)|ψ⟩  or  exp(-τH)|ψ⟩
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     StatevectorState
@@ -158,14 +164,16 @@ Construct one with [`as_statevector`](@ref) rather than calling the constructor
 directly — that helper also handles element-type conversion.
 
 # Fields
-- `v::Vector{ComplexF64}`: the initial state in the Kronecker-product (big-endian)
-  basis ordering. Index ``k`` corresponds to the computational basis state
-  ``|\\sigma_1, \\sigma_2, \\ldots, \\sigma_L\\rangle`` with
-  ``k = 1 + \\sum_{i=1}^{L} (\\sigma_i - 1)\\, d^{L-i}``.
+
+  - `v::Vector{ComplexF64}`: the initial state in the Kronecker-product (big-endian)
+    basis ordering. Index ``k`` corresponds to the computational basis state
+    ``|\\sigma_1, \\sigma_2, \\ldots, \\sigma_L\\rangle`` with
+    ``k = 1 + \\sum_{i=1}^{L} (\\sigma_i - 1)\\, d^{L-i}``.
 
 # See also
+
 [`as_statevector`](@ref), [`EDTimeResult`](@ref),
-`solve(::Operator, ::StatevectorState, ::ExactDiagonalization{:time}, ::ConstantProtocol)`
+`solve(::LatticeOperator, ::StatevectorState, ::ExactDiagonalization{:time}, ::ConstantProtocol)`
 """
 struct StatevectorState
     v::Vector{ComplexF64}
@@ -194,17 +202,19 @@ In practice, any vector you obtain from [`EDResult`](@ref) or from
 [`neel_state`](@ref) is already in this ordering.
 
 # Arguments
-- `v::AbstractVector`: a real or complex state vector of length ``d^L``.
+
+  - `v::AbstractVector`: a real or complex state vector of length ``d^L``.
 
 # Returns
-- `StatevectorState`: the wrapped vector, element-type promoted to
-  `ComplexF64`.
+
+  - `StatevectorState`: the wrapped vector, element-type promoted to
+    `ComplexF64`.
 
 # Examples
+
 ```julia
-julia> gs = solve(H, GroundState(), ExactDiagonalization(:ground));
-julia> sv = as_statevector(gs.state);
 julia> result = solve(H, sv, ExactDiagonalization(:time), ConstantProtocol{RealTime}(0.1, 20));
+gs = solve(H, GroundState(), ExactDiagonalization(:ground));
 ```
 """
 as_statevector(v::AbstractVector) = StatevectorState(convert(Vector{ComplexF64}, v))
@@ -217,16 +227,18 @@ propagated state and the total time elapsed, which you can use to compute
 expectation values ``\\langle O(t) \\rangle`` or to continue evolving further.
 
 # Fields
-- `state::Vector{ComplexF64}`: the final state vector ``|\\psi(T)\\rangle``.
-  For real-time propagation this is exactly unit-norm (``\\|\\psi(T)\\| = 1``).
-  For imaginary-time propagation it is **not** normalised — call
-  `normalize(result.state)` to get the unit-norm ground-state approximation.
-- `time::Float64`: the total propagation time ``T = \\Delta t \\cdot N_{\\text{steps}}``,
-  in whatever units your Hamiltonian coupling constants carry.
+
+  - `state::Vector{ComplexF64}`: the final state vector ``|\\psi(T)\\rangle``.
+    For real-time propagation this is exactly unit-norm (``\\|\\psi(T)\\| = 1``).
+    For imaginary-time propagation it is **not** normalised — call
+    `normalize(result.state)` to get the unit-norm ground-state approximation.
+  - `time::Float64`: the total propagation time ``T = \\Delta t \\cdot N_{\\text{steps}}``,
+    in whatever units your Hamiltonian coupling constants carry.
 
 # See also
+
 [`StatevectorState`](@ref), [`as_statevector`](@ref),
-`solve(::Operator, ::StatevectorState, ::ExactDiagonalization{:time}, ::ConstantProtocol)`
+`solve(::LatticeOperator, ::StatevectorState, ::ExactDiagonalization{:time}, ::ConstantProtocol)`
 """
 struct EDTimeResult
     state::Vector{ComplexF64}
@@ -289,39 +301,39 @@ error, and its magnitude should scale as ``(\\Delta t)^p`` for a ``p``-th order
 Trotter formula.
 
 # Arguments
-- `H::Operator`: the Hamiltonian. Must fit within the ``2^{20}`` Hilbert-space
-  guard enforced by [`dense_matrix`](@ref) (same limit as [`sparse`](@ref)).
-- `sv::StatevectorState`: the initial state, constructed via
-  [`as_statevector`](@ref).
-- `::ExactDiagonalization{:time}`: selects this exact-propagation path.
-- `p::ConstantProtocol`: the evolution schedule. The `axis` field of `p`
-  selects `RealTime` or `ImaginaryTime`; `p.dt` and `p.nsteps` together
-  determine ``T = p.dt \\times p.nsteps``.
+
+  - `H::LatticeOperator`: the Hamiltonian. Must fit within the ``2^{20}`` Hilbert-space
+    guard enforced by [`dense_matrix`](@ref) (same limit as [`sparse`](@ref)).
+  - `sv::StatevectorState`: the initial state, constructed via
+    [`as_statevector`](@ref).
+  - `::ExactDiagonalization{:time}`: selects this exact-propagation path.
+  - `p::ConstantProtocol`: the evolution schedule. The `axis` field of `p`
+    selects `RealTime` or `ImaginaryTime`; `p.dt` and `p.nsteps` together
+    determine ``T = p.dt \\times p.nsteps``.
 
 # Returns
-- `EDTimeResult`: holds `result.state` (the propagated vector) and
-  `result.time` (the total time ``T``).
+
+  - `EDTimeResult`: holds `result.state` (the propagated vector) and
+    `result.time` (the total time ``T``).
 
 # Examples
+
 ```julia
-julia> # Real-time evolution of the ground state (should stay put — it's an eigenstate)
-julia> gs = solve(H, GroundState(), ExactDiagonalization(:ground));
-julia> sv = as_statevector(gs.state);
-julia> p  = ConstantProtocol{RealTime}(0.05, 40);   # T = 2.0
-julia> r  = solve(H, sv, ExactDiagonalization(:time), p);
 julia> norm(r.state)   # always 1.0 for real time
-1.0
+# Real-time evolution of the ground state (should stay put — it's an eigenstate)
 ```
 
 # See also
+
 [`StatevectorState`](@ref), [`as_statevector`](@ref), [`EDTimeResult`](@ref),
 [`ConstantProtocol`](@ref), [`RealTime`](@ref), [`ImaginaryTime`](@ref)
 """
-function solve(H::Operator, sv::StatevectorState, ::ExactDiagonalization{:time},
-               p::ConstantProtocol)
-    M   = dense_matrix(H)
-    F   = eigen(Hermitian(M))
-    T   = total_time(p)   # p.dt * p.nsteps
+function solve(
+    H::LatticeOperator, sv::StatevectorState, ::ExactDiagonalization{:time}, p::ConstantProtocol
+)
+    M = dense_matrix(H)
+    F = eigen(Hermitian(M))
+    T = total_time(p)   # p.dt * p.nsteps
 
     if p.axis isa RealTime
         phases = exp.(-im .* T .* real.(F.values))
@@ -329,7 +341,7 @@ function solve(H::Operator, sv::StatevectorState, ::ExactDiagonalization{:time},
         phases = exp.(-T .* real.(F.values))
     end
 
-    coefs    = F.vectors' * sv.v          # project onto eigenbasis
-    ψ_final  = F.vectors * (phases .* coefs)  # evolve + back-transform
+    coefs = F.vectors' * sv.v          # project onto eigenbasis
+    ψ_final = F.vectors * (phases .* coefs)  # evolve + back-transform
     EDTimeResult(ψ_final, T)
 end

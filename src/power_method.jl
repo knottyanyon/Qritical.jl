@@ -38,14 +38,14 @@ geometrically in ``n``, with the convergence rate set by the spectral gap ``E_1 
 
 ## Fields
 
-- `state::FiniteMPS`: the final MPS, in mixed-canonical form centred at the middle bond.
-  It is normalised to unit norm.
-- `energy::Float64`: the ground-state energy estimate, measured as the Rayleigh quotient
-  ``\\langle\\psi|H|\\psi\\rangle / \\langle\\psi|\\psi\\rangle`` at the last iteration.
-- `converged::Bool`: `true` if ``|E_{n+1} - E_n| < \\text{tol}`` was satisfied before
-  `maxiter` was reached. If `false`, treat the result with caution — the state may
-  not have settled yet.
-- `iterations::Int`: the number of power iterations actually performed.
+  - `state::FiniteMPS`: the final MPS, in mixed-canonical form centred at the middle bond.
+    It is normalised to unit norm.
+  - `energy::Float64`: the ground-state energy estimate, measured as the Rayleigh quotient
+    ``\\langle\\psi|H|\\psi\\rangle / \\langle\\psi|\\psi\\rangle`` at the last iteration.
+  - `converged::Bool`: `true` if ``|E_{n+1} - E_n| < \\text{tol}`` was satisfied before
+    `maxiter` was reached. If `false`, treat the result with caution — the state may
+    not have settled yet.
+  - `iterations::Int`: the number of power iterations actually performed.
 """
 struct PowerMethodResult
     state::FiniteMPS
@@ -57,8 +57,7 @@ end
 """
     power_method(H, ψ₀; shift, tol, maxiter, trunc) -> PowerMethodResult
 
-Find the ground state of `H` by iterating ``|\\psi_{n+1}\\rangle \\propto
-(\\lambda I - H)|\\psi_n\\rangle``, where ``\\lambda`` is an energy shift large enough
+Find the ground state of `H` by iterating ``|\\psi_{n+1}\\rangle \\propto (\\lambda I - H)|\\psi_n\\rangle``, where ``\\lambda`` is an energy shift large enough
 to make ``\\lambda I - H`` positive definite. This is a discrete version of imaginary-time
 evolution: each application amplifies the ground-state component relative to all excited
 states, and after enough steps only the ground state survives.
@@ -74,12 +73,12 @@ cost extra memory and compilation time — the implementation decomposes the act
 
 and evaluates the two terms separately:
 
-1. `Hψ = apply_mpo(mpo, ψ; trunc)` — zips the MPO ``H`` site by site over ``|\\psi\\rangle``,
-   producing ``H|\\psi\\rangle`` as a new MPS whose bond dimension is at most
-   ``\\chi_\\psi \\cdot \\chi_H`` before truncation.
-2. `ψ_new = add_mps(shift, ψ, -1.0, Hψ; trunc)` — forms the direct-sum MPS
-   ``\\lambda|\\psi\\rangle + (-1) \\cdot H|\\psi\\rangle`` and immediately compresses it back
-   to the target bond dimension via SVD.
+ 1. `Hψ = apply_mpo(mpo, ψ; trunc)` — zips the MPO ``H`` site by site over ``|\\psi\\rangle``,
+    producing ``H|\\psi\\rangle`` as a new MPS whose bond dimension is at most
+    ``\\chi_\\psi \\cdot \\chi_H`` before truncation.
+ 2. `ψ_new = add_mps(shift, ψ, -1.0, Hψ; trunc)` — forms the direct-sum MPS
+    ``\\lambda|\\psi\\rangle + (-1) \\cdot H|\\psi\\rangle`` and immediately compresses it back
+    to the target bond dimension via SVD.
 
 ## Energy measurement: the Rayleigh quotient
 
@@ -108,24 +107,26 @@ Convergence is geometric: each iteration multiplies the error by roughly
 A larger gap ``E_1 - E_0`` means faster convergence.
 
 # Arguments
-- `H::Operator`: the Hamiltonian as a list of coupling terms.
-- `ψ₀::FiniteMPS`: the starting state. It need not be normalised; the first thing
-  `power_method` does is centre-canonicalise it.
-- `shift::Real` (default: `4.0`): the energy shift ``\\lambda``. **This must exceed the
-  largest eigenvalue ``E_{\\max}`` of ``H``**, not just ``E_0``. A safe upper bound is
-  ``\\sum_i |\\text{coupling}_i|`` (sum of absolute coupling magnitudes); the default
-  `4.0` is only adequate for chains with ``L \\lesssim 4``. If `shift` is too small,
-  ``\\lambda I - H`` is not positive definite and the iteration will diverge.
-- `tol::Real` (default: `1e-8`): convergence threshold on the per-step energy change.
-- `maxiter::Int` (default: `200`): maximum number of power iterations before returning
-  unconverged.
-- `trunc::AbstractTrunc` (default: `MaxBondDimTrunc(32)`): truncation scheme applied
-  after `apply_mpo` and `add_mps` to keep bond dimensions bounded.
+
+  - `H::LatticeOperator`: the Hamiltonian as a list of coupling terms.
+  - `ψ₀::FiniteMPS`: the starting state. It need not be normalised; the first thing
+    `power_method` does is centre-canonicalise it.
+  - `shift::Real` (default: `4.0`): the energy shift ``\\lambda``. **This must exceed the
+    largest eigenvalue ``E_{\\max}`` of ``H``**, not just ``E_0``. A safe upper bound is
+    ``\\sum_i |\\text{coupling}_i|`` (sum of absolute coupling magnitudes); the default
+    `4.0` is only adequate for chains with ``L \\lesssim 4``. If `shift` is too small,
+    ``\\lambda I - H`` is not positive definite and the iteration will diverge.
+  - `tol::Real` (default: `1e-8`): convergence threshold on the per-step energy change.
+  - `maxiter::Int` (default: `200`): maximum number of power iterations before returning
+    unconverged.
+  - `trunc::AbstractTrunc` (default: `MaxBondDimTrunc(32)`): truncation scheme applied
+    after `apply_mpo` and `add_mps` to keep bond dimensions bounded.
 
 # Returns
-- `PowerMethodResult`: a struct with fields `state` (the final MPS), `energy`
-  (the Rayleigh-quotient estimate of ``E_0``), `converged` (whether `tol` was met),
-  and `iterations` (how many steps were taken).
+
+  - `PowerMethodResult`: a struct with fields `state` (the final MPS), `energy`
+    (the Rayleigh-quotient estimate of ``E_0``), `converged` (whether `tol` was met),
+    and `iterations` (how many steps were taken).
 
 # Extended help
 
@@ -143,12 +144,14 @@ bond dimension.
 **When `converged == false`:** increase `maxiter`, tighten `trunc` (allow a larger bond
 dimension), or check that `shift > |E_0|`.
 """
-function power_method(H::Operator, ψ₀::FiniteMPS;
-                      shift::Real    = 4.0,
-                      tol::Real      = 1e-8,
-                      maxiter::Int   = 200,
-                      trunc::AbstractTrunc = MaxBondDimTrunc(32))
-
+function power_method(
+    H::LatticeOperator,
+    ψ₀::FiniteMPS;
+    shift::Real=4.0,
+    tol::Real=1e-8,
+    maxiter::Int=200,
+    trunc::AbstractTrunc=MaxBondDimTrunc(32),
+)
     mpo = MPO(H)
 
     # Normalise initial state
@@ -166,7 +169,7 @@ function power_method(H::Operator, ψ₀::FiniteMPS;
         iters = iter
 
         # Apply (λI - H): ψ_new = λψ - H|ψ⟩
-        Hψ    = apply_mpo(mpo, ψ; trunc=trunc)
+        Hψ = apply_mpo(mpo, ψ; trunc=trunc)
         ψ_new = add_mps(shift, ψ, -1.0, Hψ; trunc=trunc)
 
         # Renormalise by full canonicalisation

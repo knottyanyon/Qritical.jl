@@ -13,7 +13,7 @@
 """
     FiniteMPO
 
-A Matrix Product Operator (MPO) for a finite chain of `L` sites.
+A Matrix Product LatticeOperator (MPO) for a finite chain of `L` sites.
 
 An MPO represents a linear operator on the full Hilbert space
 ``\\mathcal{H} = \\bigotimes_{i=1}^{L} \\mathcal{h}_i`` as a product of rank-4
@@ -24,10 +24,11 @@ W_i[\\alpha,\\, \\sigma_{\\text{out}},\\, \\sigma_{\\text{in}},\\, \\beta]
 ```
 
 where:
-- ``\\alpha`` — left auxiliary (MPO bond) index of dimension ``\\chi_L``
-- ``\\sigma_{\\text{out}}`` — outgoing (bra) physical index of dimension ``d``
-- ``\\sigma_{\\text{in}}``  — incoming (ket) physical index of dimension ``d``
-- ``\\beta`` — right auxiliary (MPO bond) index of dimension ``\\chi_R``
+
+  - ``\\alpha`` — left auxiliary (MPO bond) index of dimension ``\\chi_L``
+  - ``\\sigma_{\\text{out}}`` — outgoing (bra) physical index of dimension ``d``
+  - ``\\sigma_{\\text{in}}``  — incoming (ket) physical index of dimension ``d``
+  - ``\\beta`` — right auxiliary (MPO bond) index of dimension ``\\chi_R``
 
 The full operator matrix is recovered by contracting all ``W_i`` along their
 auxiliary indices with the boundary conditions ``\\alpha_0 = \\beta_L = 1``.
@@ -36,33 +37,34 @@ Boundary tensors have dimension 1 on their outer auxiliary side, so the stored
 tensors at sites 1 and ``L`` have shapes ``(1, d, d, \\chi)`` and
 ``(\\chi, d, d, 1)`` respectively.
 
-Construct a `FiniteMPO` from an [`Operator`](@ref) via [`MPO`](@ref).
+Construct a `FiniteMPO` from an [`LatticeOperator`](@ref) via [`MPO`](@ref).
 Evaluate expectation values via [`expect`](@ref).
 
 # Fields
-- `tensors::Vector{Array{ComplexF64,4}}` — one ``(\\chi_L, d, d, \\chi_R)`` tensor
-  per site.
-- `d::Int` — local physical dimension (same for all sites).
-- `L::Int` — number of sites.
 
-See also: [`MPO`](@ref), [`expect`](@ref), [`Operator`](@ref)
+  - `tensors::Vector{Array{ComplexF64,4}}` — one ``(\\chi_L, d, d, \\chi_R)`` tensor
+    per site.
+  - `d::Int` — local physical dimension (same for all sites).
+  - `L::Int` — number of sites.
+
+See also: [`MPO`](@ref), [`expect`](@ref), [`LatticeOperator`](@ref)
 """
 struct FiniteMPO
-    tensors::Vector{Array{ComplexF64, 4}}   # (χ_L, d_out, d_in, χ_R) per site
+    tensors::Vector{Array{ComplexF64,4}}   # (χ_L, d_out, d_in, χ_R) per site
     d::Int
     L::Int
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Internal helpers
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 # Two operator matrices are "the same type" if they are approximately equal.
 _ops_eq(A, B) = size(A) == size(B) && maximum(abs, A - B) < 1e-12
 
 # Collect unique (op_i, op_j) pairs from the bond term list (preserving order).
 function _bond_types(bond_terms)
-    types = Tuple{Matrix{ComplexF64}, Matrix{ComplexF64}}[]
+    types = Tuple{Matrix{ComplexF64},Matrix{ComplexF64}}[]
     for bt in bond_terms
         pair = (ComplexF64.(bt.op_i), ComplexF64.(bt.op_j))
         if !any(t -> _ops_eq(t[1], pair[1]) && _ops_eq(t[2], pair[2]), types)
@@ -72,12 +74,12 @@ function _bond_types(bond_terms)
     return types
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
-# MPO constructor from Operator
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
+# MPO constructor from LatticeOperator
+# ----------------------------------------------------------------------------------------
 
 """
-    MPO(H::Operator) -> FiniteMPO
+    MPO(H::LatticeOperator) -> FiniteMPO
 
 Build a [`FiniteMPO`](@ref) from the term list of `H` using the
 finite-state-machine (FSM) W-matrix method.
@@ -87,17 +89,17 @@ finite automaton that carries a "state" summarising what has been started but
 not yet finished.  The auxiliary index of the MPO tensor at site ``i`` labels
 the current FSM state.  There are three kinds of state:
 
-- **"done" state** (auxiliary index 1) — we have already accumulated a
-  complete local operator string and just need to propagate the identity to
-  the right.  The ``W`` entry `done → done` is the identity.
-- **channel ``k``** (auxiliary indices ``2, \\ldots, K+1``) — the left operator
-  ``O^{(k)}_i`` of bond type ``k`` was placed at some site to the left and we
-  are now carrying it to its right partner.  The ``W`` entry `channel k → done`
-  closes the channel by placing ``O^{(k)}_j``.
-- **"start" state** (auxiliary index ``K+2``) — we have not placed any operator
-  yet.  On-site terms and new bond openings come from this state.
+  - **"done" state** (auxiliary index 1) — we have already accumulated a
+    complete local operator string and just need to propagate the identity to
+    the right.  The ``W`` entry `done → done` is the identity.
+  - **channel ``k``** (auxiliary indices ``2, \\ldots, K+1``) — the left operator
+    ``O^{(k)}_i`` of bond type ``k`` was placed at some site to the left and we
+    are now carrying it to its right partner.  The ``W`` entry `channel k → done`
+    closes the channel by placing ``O^{(k)}_j``.
+  - **"start" state** (auxiliary index ``K+2``) — we have not placed any operator
+    yet.  On-site terms and new bond openings come from this state.
 
-For an `Operator` with ``K`` distinct nearest-neighbour bond-operator pairs
+For an `LatticeOperator` with ``K`` distinct nearest-neighbour bond-operator pairs
 ``(O^{(k)}_i, O^{(k)}_j)`` the interior bond dimension is
 
 ```math
@@ -112,13 +114,16 @@ only the "done" column is reachable from the right boundary).
 the result is a bond-dimension-1 all-identity MPO with ``\\chi = 1``.
 
 # Arguments
-- `H::Operator` — the operator to convert; produced by e.g. [`XXZ`](@ref),
-  [`Heisenberg`](@ref), [`Ising`](@ref), or any of the observable constructors.
+
+  - `H::LatticeOperator` — the operator to convert; produced by e.g. [`XXZ`](@ref),
+    [`Heisenberg`](@ref), [`Ising`](@ref), or any of the observable constructors.
 
 # Returns
-- [`FiniteMPO`](@ref) with tensors of shape ``(\\chi_L, d, d, \\chi_R)`` per site.
+
+  - [`FiniteMPO`](@ref) with tensors of shape ``(\\chi_L, d, d, \\chi_R)`` per site.
 
 # Examples
+
 ```jldoctest
 julia> g = Chain(4);
 
@@ -134,19 +139,22 @@ julia> W.d
 
 julia> size(W.tensors[2])   # interior site: full χ on both sides
 (5, 2, 2, 5)
-```
+```    # Reject periodic geometries: the FSM builder assumes bonds are ordered left-to-right
 """
-function MPO(H::Operator)
+function MPO(H::LatticeOperator)
     # Reject periodic geometries: the FSM builder assumes bonds are ordered left-to-right
     # (i < j).  The wrap bond (L,1) has i > j and would corrupt the channel logic.  Fixes #79.
     if any(bt -> bt.i > bt.j, H.bond)
-        throw(ArgumentError(
-            "MPO does not support periodic boundary conditions: bond " *
-            "$(first(bt for bt in H.bond if bt.i > bt.j)) has i > j.  " *
-            "Use an open-boundary Chain instead."))
+        throw(
+            ArgumentError(
+                "MPO does not support periodic boundary conditions: bond " *
+                "$(first(bt for bt in H.bond if bt.i > bt.j)) has i > j.  " *
+                "Use an open-boundary Chain instead.",
+            ),
+        )
     end
-    L  = H.geom.L
-    d  = local_dim(H.dof)
+    L = H.geom.L
+    d = local_dim(H.dof)
     Id = Matrix{ComplexF64}(I, d, d)
 
     # Special case: empty operator (no terms) → bond-dim-1 all-identity MPO.
@@ -158,21 +166,21 @@ function MPO(H::Operator)
 
     # Identify the distinct bond operator types — these define the FSM channels.
     btypes = _bond_types(H.bond)
-    K  = length(btypes)
-    χ  = 2 + K          # full interior bond dimension
+    K = length(btypes)
+    χ = 2 + K          # full interior bond dimension
     # Index convention:
     #   1     = "done"  (right boundary state)
     #   2..K+1 = channel k (bond type k is open)
     #   K+2   = "start" (left boundary state)
 
-    tensors = Vector{Array{ComplexF64, 4}}(undef, L)
+    tensors = Vector{Array{ComplexF64,4}}(undef, L)
 
     for i in 1:L
         W = zeros(ComplexF64, χ, d, d, χ)
 
         # Identity pass-through for both boundary states.
-        W[1,   :, :, 1]   = Id     # done → done
-        W[K+2, :, :, K+2] = Id     # start → start
+        W[1, :, :, 1] = Id     # done → done
+        W[K + 2, :, :, K + 2] = Id     # start → start
 
         # Channel carry: W[k+1,:,:,k+1]=Id is needed at site i only when channel k is
         # "in flight" — i.e., some bond of type k has bt.i < i < bt.j.  For NN bonds
@@ -182,24 +190,24 @@ function MPO(H::Operator)
         for (k, (Ak, Bk)) in enumerate(btypes)
             in_flight = any(H.bond) do bt
                 bt.i < i < bt.j &&
-                _ops_eq(ComplexF64.(bt.op_i), Ak) &&
-                _ops_eq(ComplexF64.(bt.op_j), Bk)
+                    _ops_eq(ComplexF64.(bt.op_i), Ak) &&
+                    _ops_eq(ComplexF64.(bt.op_j), Bk)
             end
-            in_flight && (W[k+1, :, :, k+1] = Id)
+            in_flight && (W[k + 1, :, :, k + 1] = Id)
         end
 
         # Onsite terms: start → done
         for lt in H.onsite
             lt.site == i || continue
-            W[K+2, :, :, 1] .+= lt.coupling .* ComplexF64.(lt.op)
+            W[K + 2, :, :, 1] .+= lt.coupling .* ComplexF64.(lt.op)
         end
 
         # Open channel k at site i (bond starting here): start → channel k
         for (k, (Ak, _)) in enumerate(btypes)
             for bt in H.bond
-                bt.i == i                        || continue
+                bt.i == i || continue
                 _ops_eq(ComplexF64.(bt.op_i), Ak) || continue
-                W[K+2, :, :, k+1] .+= bt.coupling .* ComplexF64.(bt.op_i)
+                W[K + 2, :, :, k + 1] .+= bt.coupling .* ComplexF64.(bt.op_i)
                 break   # at most one bond starts at each site per type (NN chain)
             end
         end
@@ -207,9 +215,9 @@ function MPO(H::Operator)
         # Close channel k at site i (bond ending here): channel k → done
         for (k, (_, Bk)) in enumerate(btypes)
             for bt in H.bond
-                bt.j == i                        || continue
+                bt.j == i || continue
                 _ops_eq(ComplexF64.(bt.op_j), Bk) || continue
-                W[k+1, :, :, 1] .+= ComplexF64.(bt.op_j)
+                W[k + 1, :, :, 1] .+= ComplexF64.(bt.op_j)
                 break
             end
         end
@@ -219,15 +227,15 @@ function MPO(H::Operator)
 
     # Compress boundary bond dimensions: site 1 is only ever entered from
     # the "start" row; site L is only ever exited to the "done" column.
-    tensors[1] = tensors[1][K+2:K+2, :, :, :]   # (1, d, d, χ)
+    tensors[1] = tensors[1][(K + 2):(K + 2), :, :, :]   # (1, d, d, χ)
     tensors[L] = tensors[L][:, :, :, 1:1]        # (χ, d, d, 1)
 
     FiniteMPO(tensors, d, L)
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Expectation value ⟨ψ|O|ψ⟩  (§6.3)
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     expect(ψ::FiniteMPS, O::FiniteMPO) -> ComplexF64
@@ -259,15 +267,18 @@ bond dimension; the total cost for the full sweep is
 ``O(L \\chi^2 d \\chi_{\\text{mpo}})``.
 
 # Arguments
-- `ψ::FiniteMPS`   — the MPS state; does not need to be normalised.
-- `O::FiniteMPO`   — the MPO operator; must have the same `L` and `d` as `ψ`.
+
+  - `ψ::FiniteMPS`   — the MPS state; does not need to be normalised.
+  - `O::FiniteMPO`   — the MPO operator; must have the same `L` and `d` as `ψ`.
 
 # Returns
-- `ComplexF64` — the expectation value ``\\langle \\psi | O | \\psi \\rangle``.
-  For Hermitian operators and real states this should have a negligible imaginary
-  part.
+
+  - `ComplexF64` — the expectation value ``\\langle \\psi | O | \\psi \\rangle``.
+    For Hermitian operators and real states this should have a negligible imaginary
+    part.
 
 # Examples
+
 ```jldoctest
 julia> using LinearAlgebra
 
@@ -279,7 +290,7 @@ julia> W = MPO(H);
 
 julia> ψ = to_mps(normalize([1.0, 0.0, 0.0, -1.0] / √2));
 
-julia> isapprox(real(expect(ψ, W)), -0.75, atol=1e-10)
+julia> isapprox(real(expect(ψ, W)), -0.75; atol=1e-10)
 true
 ```
 """
@@ -300,9 +311,9 @@ function expect(ψ::FiniteMPS, O::FiniteMPO)
     return env[1, 1, 1]
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # MPO application: O|ψ⟩  (§6.3 / §8)
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     apply_mpo(O::FiniteMPO, ψ::FiniteMPS; trunc=NoTrunc()) -> FiniteMPS
@@ -323,13 +334,13 @@ function apply_mpo(O::FiniteMPO, ψ::FiniteMPS; trunc::AbstractTrunc=NoTrunc())
 
     # Zip contraction: build thick MPS tensors (χ_mpo*χ_mps bonds) site by site,
     # then do a single left-canonical SVD sweep with the requested truncation.
-    thick = Vector{Array{ComplexF64, 3}}(undef, L)
+    thick = Vector{Array{ComplexF64,3}}(undef, L)
 
     for i in 1:L
         A = ψ.tensors[i].data   # (χ_L, d, χ_R)
         W = O.tensors[i]        # (χ_mpo_L, d_out, d_in, χ_mpo_R)
-        χ_L, _, χ_R       = size(A)
-        χW_L, _, _, χW_R  = size(W)
+        χ_L, _, χ_R = size(A)
+        χW_L, _, _, χW_R = size(W)
 
         # Contract over physical index d_in=σ, fuse auxiliary bonds:
         # new[(a,α), σ_out, (b,β)] = Σ_σ W[a,σ_out,σ,b] * A[α,σ,β]
@@ -344,41 +355,48 @@ function apply_mpo(O::FiniteMPO, ψ::FiniteMPS; trunc::AbstractTrunc=NoTrunc())
 end
 
 # Left-canonical SVD sweep on thick MPS tensors (mirrors _left_sweep_mps! in canonicalize.jl).
-function _compress_thick_mps(tensors::Vector{Array{ComplexF64,3}}, d::Int, L::Int,
-                               trunc::AbstractTrunc)
-    result   = Vector{QTensor}(undef, L)
+function _compress_thick_mps(
+    tensors::Vector{Array{ComplexF64,3}}, d::Int, L::Int, trunc::AbstractTrunc
+)
+    result = Vector{QTensor}(undef, L)
     bond_svs = Vector{SingValSpectrum}(undef, L + 1)
-    ε_total  = 0.0
+    ε_total = 0.0
 
     bond_svs[1] = SingValSpectrum([1.0], 0.0, true)
 
-    carry  = tensors[1]
+    carry = tensors[1]
     χ_left = size(carry, 1)
 
     for i in 1:(L - 1)
         M = reshape(carry, χ_left * d, size(carry, 3))
 
-        F       = svd(M)
-        tol     = length(F.S) * eps(eltype(F.S)) * (isempty(F.S) ? 1.0 : F.S[1])
+        F = svd(M)
+        tol = length(F.S) * eps(eltype(F.S)) * (isempty(F.S) ? 1.0 : F.S[1])
         S_clean = filter(s -> s > tol, F.S)
         r, ε_bond = _truncate_singular_values(S_clean, trunc)
-        svs     = F.S[1:r]
+        svs = F.S[1:r]
         ε_total += ε_bond
 
-        normalized    = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
-        bond_svs[i+1] = SingValSpectrum(svs, ε_bond, normalized)
-        result[i]     = QTensor(reshape(F.U[:, 1:r], χ_left, d, r),
-                                (upper(:vL, χ_left), lower(:σ, d), lower(:vR, r)))
+        normalized = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
+        bond_svs[i + 1] = SingValSpectrum(svs, ε_bond, normalized)
+        result[i] = QTensor(
+            reshape(F.U[:, 1:r], χ_left, d, r),
+            (upper(:vL, χ_left), lower(:σ, d), lower(:vR, r)),
+        )
 
-        χ_next_L, _, χ_next_R = size(tensors[i+1])
-        carry  = reshape(Diagonal(svs) * F.Vt[1:r, :] *
-                         reshape(tensors[i+1], χ_next_L, d * χ_next_R), r, d, χ_next_R)
+        χ_next_L, _, χ_next_R = size(tensors[i + 1])
+        carry = reshape(
+            Diagonal(svs) * F.Vt[1:r, :] * reshape(tensors[i + 1], χ_next_L, d * χ_next_R),
+            r,
+            d,
+            χ_next_R,
+        )
         χ_left = r
     end
 
     χ_R = size(carry, 3)
-    result[L]     = QTensor(carry, (upper(:vL, χ_left), lower(:σ, d), lower(:vR, χ_R)))
-    bond_svs[L+1] = SingValSpectrum([1.0], 0.0, true)
+    result[L] = QTensor(carry, (upper(:vL, χ_left), lower(:σ, d), lower(:vR, χ_R)))
+    bond_svs[L + 1] = SingValSpectrum([1.0], 0.0, true)
 
     FiniteMPS(result, bond_svs, CanonicalForm(L, L + 1), ε_total)
 end

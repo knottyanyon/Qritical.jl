@@ -312,7 +312,7 @@ function group_legs(A::QTensor, bp::Bipartition)
 
     # locate each partition leg in A.indices (by equality)
     _find(ix) = findfirst(==(ix), all_ix)
-    left_pos  = _find.(bp.left)
+    left_pos = _find.(bp.left)
     right_pos = _find.(bp.right)
 
     any(isnothing, left_pos) && throw(
@@ -330,7 +330,7 @@ function group_legs(A::QTensor, bp::Bipartition)
     length(covered) < length(all_ix) && throw(
         ArgumentError(
             "group_legs: tensor has $(length(all_ix)) leg(s) but the bipartition " *
-            "covers only $(length(covered)) — every leg must appear on exactly one side."
+            "covers only $(length(covered)) — every leg must appear on exactly one side.",
         ),
     )
 
@@ -339,12 +339,12 @@ function group_legs(A::QTensor, bp::Bipartition)
     data_p = isempty(perm) ? A.data : permutedims(A.data, perm)
 
     # reshape into a 2D matrix
-    left_dim  = prod(dim, bp.left;  init=1)
+    left_dim = prod(dim, bp.left; init=1)
     right_dim = prod(dim, bp.right; init=1)
-    data_2d   = reshape(data_p, left_dim, right_dim)
+    data_2d = reshape(data_p, left_dim, right_dim)
 
     # attach fused index metadata
-    left_ix  = MulTIx(Tuple(bp.left))
+    left_ix = MulTIx(Tuple(bp.left))
     right_ix = MulTIx(Tuple(bp.right))
 
     QTensor(data_2d, (left_ix, right_ix))

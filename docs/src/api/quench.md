@@ -34,7 +34,7 @@ Qritical separates the *question* from the *method* through a typed interface:
 solve(H, Quench(ψ₀), TEBD(formula, trunc), protocol; tracker = NoTracker())
 ```
 
-- `H` is the Hamiltonian (an `Operator`).
+- `H` is the Hamiltonian (an `LatticeOperator`).
 - `Quench(ψ₀)` is the **study type** — it encodes "this is a quench starting from
   ``|\psi_0\rangle``". Having this as its own type means the same question can later be
   answered by different methods (TEBD, ED, TDVP) without changing the call site.
@@ -91,5 +91,5 @@ TEBD
 NoTracker
 Tracker
 QuenchResult
-solve(H::Operator, quench::Quench, algo::TEBD, p::ConstantProtocol)
+solve(H::LatticeOperator, quench::Quench, algo::TEBD, p::ConstantProtocol)
 ```

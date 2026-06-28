@@ -4,9 +4,9 @@
 # point.  It hands off to the TEBD engine for each Trotter step and optionally
 # records operator expectation values via the Tracker after each step.
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Néel state — alternating ↑↓ product state
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     neel_state(g::AbstractGeometry; dof=SpinHalf()) -> FiniteMPS
@@ -20,28 +20,28 @@ The state is a bond-dimension-1 MPS: site ``i`` carries ``|\\uparrow\\rangle`` f
 state for the XXZ quench problem (Ex 8).
 """
 function neel_state(g::AbstractGeometry; dof::AbstractDoF=SpinHalf())
-    L  = length(sites(g))
-    d  = local_dim(dof)
+    L = length(sites(g))
+    d = local_dim(dof)
     # spin-½ basis: index 1 = |↑⟩, index 2 = |↓⟩
-    tensors  = Vector{QTensor}(undef, L)
+    tensors = Vector{QTensor}(undef, L)
     bond_svs = Vector{SingValSpectrum}(undef, L + 1)
-    bond_svs[1]   = SingValSpectrum([1.0], 0.0, true)
-    bond_svs[L+1] = SingValSpectrum([1.0], 0.0, true)
+    bond_svs[1] = SingValSpectrum([1.0], 0.0, true)
+    bond_svs[L + 1] = SingValSpectrum([1.0], 0.0, true)
 
     for i in 1:L
         data = zeros(ComplexF64, 1, d, 1)
-        σ    = isodd(i) ? 1 : 2    # 1 = ↑, 2 = ↓
+        σ = isodd(i) ? 1 : 2    # 1 = ↑, 2 = ↓
         data[1, σ, 1] = 1.0
-        tensors[i]    = QTensor(data, (upper(:vL, 1), lower(:σ, d), lower(:vR, 1)))
-        bond_svs[i+1] = SingValSpectrum([1.0], 0.0, true)
+        tensors[i] = QTensor(data, (upper(:vL, 1), lower(:σ, d), lower(:vR, 1)))
+        bond_svs[i + 1] = SingValSpectrum([1.0], 0.0, true)
     end
 
     FiniteMPS(tensors, bond_svs, CanonicalForm(L + 1, 1), 0.0)
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Quench "study" type
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     Quench{Ψ}
@@ -50,6 +50,7 @@ A study type that encodes a quantum quench: start from initial state `ψ₀` and
 evolve under a Hamiltonian.
 
 Used as the second argument to `solve`:
+
 ```julia
 solve(H, Quench(ψ₀), TEBD(formula, trunc), protocol)
 ```
@@ -58,9 +59,9 @@ struct Quench{Ψ}
     ψ₀::Ψ
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # TEBD algorithm type
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     TEBD{F,T}
@@ -68,17 +69,18 @@ end
 Algorithm type for time-evolving block decimation.
 
 Fields:
-- `formula::F`  — the Trotter decomposition (e.g., `SuzukiTrotter(2)`).
-- `trunc::T`    — truncation strategy applied after each gate application.
+
+  - `formula::F`  — the Trotter decomposition (e.g., `SuzukiTrotter(2)`).
+  - `trunc::T`    — truncation strategy applied after each gate application.
 """
 struct TEBD{F,T}
     formula::F
     trunc::T
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Tracker + NoTracker
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     NoTracker
@@ -94,25 +96,26 @@ struct NoTracker end
 Records operator expectation values during a time evolution.
 
 # Constructor
+
 ```julia
 Tracker(:name => operator, :name2 => operator2, …; every=1)
 ```
-- Keys are `Symbol` names; values are `Operator`s built via the standard constructors.
-- `every` (default 1): record every `every` steps.
+
+  - Keys are `Symbol` names; values are `LatticeOperator`s built via the standard constructors.
+  - `every` (default 1): record every `every` steps.
 
 Access recorded data via `result.measurements[:name]`.
 """
 struct Tracker
-    observables::Vector{Pair{Symbol, Any}}   # (name, Operator)
+    observables::Vector{Pair{Symbol,Any}}   # (name, LatticeOperator)
     every::Int
 end
 
-Tracker(pairs::Pair{Symbol}...; every::Int=1) =
-    Tracker(collect(pairs), every)
+Tracker(pairs::Pair{Symbol}...; every::Int=1) = Tracker(collect(pairs), every)
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # QuenchResult
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     QuenchResult
@@ -120,19 +123,20 @@ Tracker(pairs::Pair{Symbol}...; every::Int=1) =
 The return value of `solve(..., Quench(...), TEBD(...), ...)`.
 
 Fields:
-- `state::FiniteMPS`                             — the final MPS after all steps.
-- `steps::Int`                                   — the number of Trotter steps taken.
-- `measurements::Dict{Symbol, Vector{Float64}}`  — measurements recorded by the tracker.
+
+  - `state::FiniteMPS`                             — the final MPS after all steps.
+  - `steps::Int`                                   — the number of Trotter steps taken.
+  - `measurements::Dict{Symbol, Vector{Float64}}`  — measurements recorded by the tracker.
 """
 struct QuenchResult
     state::FiniteMPS
     steps::Int
-    measurements::Dict{Symbol, Vector{Float64}}
+    measurements::Dict{Symbol,Vector{Float64}}
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # solve dispatch: H + Quench + TEBD + ConstantProtocol
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     solve(H, quench::Quench, algo::TEBD, p::ConstantProtocol; tracker=NoTracker()) -> QuenchResult
@@ -141,23 +145,24 @@ Evolve the initial state `quench.ψ₀` under Hamiltonian `H` for `p.nsteps` Tro
 of size `p.dt` using the `algo.formula` Suzuki-Trotter decomposition.
 
 At each step:
-1. Apply all single-bond gates from `trotter_steps(algo.formula, H, p.dt)`.
-2. For real-time evolution (`RealTime`), the norm is preserved automatically.
-   For imaginary-time, the state is renormalized after the step.
-3. If the tracker fires at this step, record `⟨O⟩ / ⟨ψ|ψ⟩` for each observable.
+
+ 1. Apply all single-bond gates from `trotter_steps(algo.formula, H, p.dt)`.
+ 2. For real-time evolution (`RealTime`), the norm is preserved automatically.
+    For imaginary-time, the state is renormalized after the step.
+ 3. If the tracker fires at this step, record `⟨O⟩ / ⟨ψ|ψ⟩` for each observable.
 
 Returns a `QuenchResult` with the final state and all measurements.
 """
-function solve(H::Operator, quench::Quench, algo::TEBD, p::ConstantProtocol;
-               tracker=NoTracker())
-
-    ψ    = quench.ψ₀
-    mpo  = Dict{Symbol, FiniteMPO}()
-    meas = Dict{Symbol, Vector{Float64}}()
+function solve(
+    H::LatticeOperator, quench::Quench, algo::TEBD, p::ConstantProtocol; tracker=NoTracker()
+)
+    ψ = quench.ψ₀
+    mpo = Dict{Symbol,FiniteMPO}()
+    meas = Dict{Symbol,Vector{Float64}}()
 
     if tracker isa Tracker
         for (name, op) in tracker.observables
-            mpo[name]  = MPO(op)
+            mpo[name] = MPO(op)
             meas[name] = Float64[]
         end
     end

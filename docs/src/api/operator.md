@@ -5,13 +5,13 @@
 A linear quantum-mechanical observable is a sum of weighted products of single-site
 operators. The **Hamiltonian** is just one such observable — the operator that drives
 dynamics. Magnetisation, density, and two-point correlators are others. Qritical builds
-all of them the same way: as an `Operator` (a term list over a geometry and DoF), so the
+all of them the same way: as an `LatticeOperator` (a term list over a geometry and DoF), so the
 same `expect(ψ, O)` routine measures energy, magnetisation, and ``\langle S^z_i S^z_j
 \rangle`` without any special-casing.
 
 The construction strategy is **lazy**: couplings and operator matrices are stored as a
-list of `LocalTerm`s and `BondTerm`s; the dense matrix form (`dense_matrix`) and the MPO
-form (`MPO`) are computed on demand. This means you can build an `Operator`, inspect its
+list of `OneSiteTerm`s and `TwoSiteTerm`s; the dense matrix form (`dense_matrix`) and the MPO
+form (`MPO`) are computed on demand. This means you can build an `LatticeOperator`, inspect its
 term list, modify couplings, and only pay for the MPO contraction when you actually call
 `expect`.
 
@@ -24,7 +24,7 @@ in the constructor propagates everywhere and is caught by the unit tests.
 
 ### Hamiltonian is an alias
 
-`Hamiltonian = Operator`. The role (dynamics generator vs. observable) is determined by
+`Hamiltonian = LatticeOperator`. The role (dynamics generator vs. observable) is determined by
 how the instance is *used*, not by its type. `solve(H, GroundState(), DMRG(...))` uses
 `H` as a generator; `expect(ψ, H)` uses the same object as an observable. A distinct
 `Hamiltonian` type would add no information.
@@ -32,7 +32,7 @@ how the instance is *used*, not by its type. `solve(H, GroundState(), DMRG(...))
 ### Observable constructors
 
 The observable constructors (`total_magnetization`, `staggered_magnetization`,
-`local_op`, `two_point`) return ordinary `Operator`s. They plug directly into the
+`local_op`, `two_point`) return ordinary `LatticeOperator`s. They plug directly into the
 `Tracker` at each TEBD step via `expect(ψ, O)`, requiring no special measurement
 infrastructure.
 
@@ -40,9 +40,9 @@ infrastructure.
 
 ```@docs
 uniform
-LocalTerm
-BondTerm
-Operator
+OneSiteTerm
+TwoSiteTerm
+LatticeOperator
 XXZ
 Heisenberg
 Ising
