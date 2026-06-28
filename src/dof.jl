@@ -18,8 +18,8 @@ A degree of freedom type (DoF) captures the following crucial aspects of minimal
  2. **Operator algebra** — the set of elementary matrices that act on that space, returned as a `NamedTuple` by [`operators`](@ref).
 
  3. **Exchange statistics** — whether operators on different sites
-    commute ([`Commuting`](@ref)) or anticommute ([`Anticommuting`](@ref)),
-    as returned by [`statistics`](@ref).  This drives the choice between
+    commute ([`CCR`](@ref)) or anticommute ([`CAR`](@ref)),
+    as returned by [`canonical_relation`](@ref).  This drives the choice between
     Jordan–Wigner string insertion and native fermionic grading.
 
 Every concrete DoF in Qritical.jl is a subtype of `AbstractDoF` .
@@ -27,7 +27,7 @@ Every concrete DoF in Qritical.jl is a subtype of `AbstractDoF` .
 Concrete subtypes: [`Spin`](@ref), [`SpinlessFermion`](@ref), [`Electron`](@ref),
 [`Majorana`](@ref), [`HardCoreBoson`](@ref).
 
-See also: [`local_dim`](@ref), [`statistics`](@ref), [`operators`](@ref),
+See also: [`local_dim`](@ref), [`canonical_relation`](@ref), [`operators`](@ref),
 [`physical_space`](@ref)
 """
 abstract type AbstractDoF end
@@ -76,7 +76,7 @@ space ``\\{|{\\uparrow}\\rangle, |{\\downarrow}\\rangle\\}`` and ``d = 2``.
 julia> local_dim(SpinHalf())
 2
 
-julia> statistics(SpinHalf()) isa Commuting
+julia> canonical_relation(SpinHalf()) isa CCR
 true
 ```
 """
@@ -108,7 +108,7 @@ occupied state.  The elementary operators are the annihilation operator ``c``
 (destroys the particle, ``c|1\\rangle = |0\\rangle``) and the number operator
 ``n = c^\\dagger c`` with eigenvalues 0 and 1.
 
-Because this is a fermionic site, [`statistics`](@ref) returns [`Anticommuting`](@ref),
+Because this is a fermionic site, [`canonical_relation`](@ref) returns [`CAR`](@ref),
 meaning that operators on different sites anticommute:
 ``\\{c_i, c_j^\\dagger\\} = \\delta_{ij}``.
 When working without native graded spaces, Jordan–Wigner string factors must be
@@ -141,7 +141,7 @@ on the doubly-occupied state, one gets
 c_{\\downarrow} |{\\uparrow\\downarrow}\\rangle = -|{\\uparrow}\\rangle.
 ```
 
-Inter-site statistics are [`Anticommuting`](@ref) — both ``c_{\\uparrow}`` and
+Inter-site statistics are [`CAR`](@ref) — both ``c_{\\uparrow}`` and
 ``c_{\\downarrow}`` are fermionic.
 
 The full operator set (see [`operators(::Electron)`](@ref)) includes individual
@@ -170,7 +170,7 @@ a complex fermion ``c`` into real and imaginary parts:
 
 Both ``\\gamma_1`` and ``\\gamma_2`` are Hermitian, traceless, and square to the
 identity on the local two-dimensional space.  The inter-site statistics are
-[`Anticommuting`](@ref), inherited from the underlying complex fermion.
+[`CAR`](@ref), inherited from the underlying complex fermion.
 
 See also: [`operators`](@ref)
 """
@@ -187,7 +187,7 @@ Algebraically this looks identical to a spinless fermion site, but the crucial
 difference is that bosonic operators on different sites **commute**:
 ``[b_i, b_j^\\dagger] = 0`` for ``i \\neq j``.
 
-This means [`statistics`](@ref) returns [`Commuting`](@ref) and no Jordan–Wigner
+This means [`canonical_relation`](@ref) returns [`CCR`](@ref) and no Jordan–Wigner
 strings are needed for non-adjacent operators.
 
 See also: [`SpinlessFermion`](@ref) (anticommuting version), [`operators`](@ref)
@@ -195,27 +195,27 @@ See also: [`SpinlessFermion`](@ref) (anticommuting version), [`operators`](@ref)
 struct HardCoreBoson <: AbstractDoF end   # 2D site {|0⟩,|1⟩}; b, b†, n; b²=0
 
 # ----------------------------------------------------------------------------------------
-# Statistics — intrinsic inter-site statistics of the DoF
+# CanonicalRelation — exchange statistics of the DoF
 # ----------------------------------------------------------------------------------------
 
 """
-    Statistics
+    CanonicalRelation
 
 Abstract supertype for the intrinsic inter-site statistics of a [`AbstractDoF`](@ref).
 
 Statistics determines how operators on different sites combine:
 
-  - [`Commuting`](@ref): ``[O_i, O_j] = 0`` for ``i \\neq j``.  No sign factors needed.
-  - [`Anticommuting`](@ref): ``\\{O_i, O_j\\} = 0`` for ``i \\neq j``.  Signs must be
+  - [`CCR`](@ref): ``[O_i, O_j] = 0`` for ``i \\neq j``.  No sign factors needed.
+  - [`CAR`](@ref): ``\\{O_i, O_j\\} = 0`` for ``i \\neq j``.  Signs must be
     tracked, either via Jordan–Wigner strings or via native fermionic grading.
 
-Use [`statistics`](@ref) to query the statistics of any concrete `AbstractDoF`.
+Use [`canonical_relation`](@ref) to query the statistics of any concrete `AbstractDoF`.
 """
 
-abstract type Statistics end
+abstract type CanonicalRelation end
 
 """
-    Commuting <: Statistics
+    CCR <: CanonicalRelation
 
 Tag indicating that operators on different sites commute: ``[O_i, O_j] = 0``
 for ``i \\neq j``.
@@ -224,12 +224,12 @@ Assigned to bosonic DoFs: [`Spin`](@ref) (all values of ``S``) and
 [`HardCoreBoson`](@ref).  No Jordan–Wigner string is ever needed between
 commuting sites.
 
-See also: [`Anticommuting`](@ref), [`statistics`](@ref)
+See also: [`CAR`](@ref), [`canonical_relation`](@ref)
 """
-struct Commuting <: Statistics end   # operators on different sites commute
+struct CCR <: CanonicalRelation end   # operators on different sites commute
 
 """
-    Anticommuting <: Statistics
+    CAR <: CanonicalRelation
 
 Tag indicating that operators on different sites anticommute: ``\\{O_i, O_j\\} = 0``
 for ``i \\neq j``.
@@ -240,9 +240,9 @@ non-adjacent operators, a Jordan–Wigner string ``\\prod_k (-1)^{n_k}`` must be
 inserted between sites ``i`` and ``j``.  In the future this will be
 replaced by native graded-space arithmetic via TensorKit.
 
-See also: [`Commuting`](@ref), [`statistics`](@ref)
+See also: [`CCR`](@ref), [`canonical_relation`](@ref)
 """
-struct Anticommuting <: Statistics end   # operators on different sites anticommute
+struct CAR <: CanonicalRelation end   # operators on different sites anticommute
 
 # ----------------------------------------------------------------------------------------
 # local_dim — local Hilbert-space dimension
@@ -380,7 +380,7 @@ observable constructors all retrieve entries from this tuple by name.
   - `I`    — identity
 
 **`HardCoreBoson`** — ``d = 2``, same matrix structure as `SpinlessFermion` but
-field names `b`, `bdag`, `n`, `I`.  Statistics are [`Commuting`](@ref).
+field names `b`, `bdag`, `n`, `I`.  Statistics are [`CCR`](@ref).
 
 **`Electron`** — ``d = 4``, basis ``\\{|0\\rangle, |{\\uparrow}\\rangle, |{\\downarrow}\\rangle, |{\\uparrow\\downarrow}\\rangle\\}``
 ("spin-up first" convention):
@@ -503,45 +503,45 @@ function operators(::Majorana)
 end
 
 """
-    statistics(dof::AbstractDoF) -> Statistics
+    canonical_relation(dof::AbstractDoF) -> CanonicalRelation
 
-Return the intrinsic inter-site statistics of `dof` as either a [`Commuting`](@ref)
-or [`Anticommuting`](@ref) instance.
+Return the intrinsic inter-site statistics of `dof` as either a [`CCR`](@ref)
+or [`CAR`](@ref) instance.
 
 This drives two downstream decisions:
 
  1. **Jordan–Wigner string insertion** — when computing expectation values or
     building MPOs for non-adjacent fermionic operators, a string factor
     ``\\prod_{k=i}^{j-1} (-1)^{n_k}`` must be inserted between sites ``i`` and ``j``.
-    Code that needs this check calls `statistics(dof) isa Anticommuting`.
+    Code that needs this check calls `canonical_relation(dof) isa CAR`.
 
  2. **Native graded spaces** (Week 12) — when TensorKit integration is enabled,
-    `Anticommuting` DoFs will use graded vector spaces and fuse/split operations
+    `CAR` DoFs will use graded vector spaces and fuse/split operations
     that handle signs automatically.
 
-| DoF               | `statistics` result |
+| DoF               | `canonical_relation` |
 |:----------------- |:------------------- |
-| `Spin{S}`         | `Commuting()`       |
-| `HardCoreBoson`   | `Commuting()`       |
-| `SpinlessFermion` | `Anticommuting()`   |
-| `Electron`        | `Anticommuting()`   |
-| `Majorana`        | `Anticommuting()`   |
+| `Spin{S}`         | `CCR()`       |
+| `HardCoreBoson`   | `CCR()`       |
+| `SpinlessFermion` | `CAR()`   |
+| `Electron`        | `CAR()`   |
+| `Majorana`        | `CAR()`   |
 
 # Examples
 
 ```jldoctest
-julia> statistics(SpinHalf()) isa Commuting
+julia> canonical_relation(SpinHalf()) isa CCR
 true
 
-julia> statistics(SpinlessFermion()) isa Anticommuting
+julia> canonical_relation(SpinlessFermion()) isa CAR
 true
 
-julia> statistics(HardCoreBoson()) isa Commuting
+julia> canonical_relation(HardCoreBoson()) isa CCR
 true
 ```
 """
-statistics(::Spin) = Commuting()
-statistics(::HardCoreBoson) = Commuting()
-statistics(::SpinlessFermion) = Anticommuting()
-statistics(::Electron) = Anticommuting()
-statistics(::Majorana) = Anticommuting()
+canonical_relation(::Spin) = CCR()
+canonical_relation(::HardCoreBoson) = CCR()
+canonical_relation(::SpinlessFermion) = CAR()
+canonical_relation(::Electron) = CAR()
+canonical_relation(::Majorana) = CAR()

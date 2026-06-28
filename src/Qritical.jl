@@ -79,8 +79,8 @@ export AbstractGeometry, Chain, sites, bonds
 export AbstractDoF
 export Spin, SpinHalf, SpinOne
 export SpinlessFermion, Electron, Majorana, HardCoreBoson
-export Statistics, Commuting, Anticommuting
-export local_dim, statistics, operators, physical_space
+export CanonicalRelation, CCR, CAR
+export local_dim, canonical_relation, operators, physical_space
 export NoSymmetry
 
 # ==== Operator / Hamiltonian ==================================================

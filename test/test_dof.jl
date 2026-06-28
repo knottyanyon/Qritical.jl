@@ -11,13 +11,13 @@
 
     @testset "statistics" begin
         # spins and hard-core bosons: commuting inter-site algebra
-        @test statistics(Spin{1//2}())   isa Commuting
-        @test statistics(Spin{1}())      isa Commuting
-        @test statistics(HardCoreBoson()) isa Commuting
+        @test canonical_relation(Spin{1//2}())   isa CCR
+        @test canonical_relation(Spin{1}())      isa CCR
+        @test canonical_relation(HardCoreBoson()) isa CCR
         # fermions and Majorana: anticommuting inter-site algebra
-        @test statistics(SpinlessFermion()) isa Anticommuting
-        @test statistics(Electron())        isa Anticommuting
-        @test statistics(Majorana())        isa Anticommuting
+        @test canonical_relation(SpinlessFermion()) isa CAR
+        @test canonical_relation(Electron())        isa CAR
+        @test canonical_relation(Majorana())        isa CAR
     end
 
     @testset "physical_space — sectorless (NoSymmetry)" begin
