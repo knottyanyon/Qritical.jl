@@ -32,7 +32,7 @@ how the instance is *used*, not by its type. `solve(H, GroundState(), DMRG(...))
 ### Observable constructors
 
 The observable constructors (`total_magnetization`, `staggered_magnetization`,
-`local_op`, `two_point`) return ordinary `LatticeOperator`s. They plug directly into the
+`op_at_site`, `two_point`) return ordinary `LatticeOperator`s. They plug directly into the
 `Tracker` at each TEBD step via `expect(ψ, O)`, requiring no special measurement
 infrastructure.
 
@@ -48,7 +48,7 @@ Heisenberg
 Ising
 total_magnetization
 staggered_magnetization
-local_op
+op_at_site
 two_point(g::AbstractGeometry, dof::AbstractDoF, opA::Symbol, iA::Int, opB::Symbol, iB::Int)
 identity_operator
 dense_matrix

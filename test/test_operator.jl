@@ -117,9 +117,9 @@ end
         end
     end
 
-    @testset "local_op — single-site observable" begin
+    @testset "op_at_site — single-site observable" begin
         g = Chain(6)
-        O = local_op(SpinHalf(), :Sz, 3)
+        O = op_at_site(SpinHalf(), :Sz, 3)
         @test length(O.onsite) == 1
         @test O.onsite[1].site == 3
         ops = algebra_generators(SpinHalf())

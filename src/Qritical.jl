@@ -89,7 +89,7 @@ export NoSymmetry, physical_space
 export uniform_coupling
 export OneSiteTerm, TwoSiteTerm, LatticeOperator, Hamiltonian
 export XXZ, Heisenberg, Ising
-export total_magnetization, staggered_magnetization, local_op, two_point
+export total_magnetization, staggered_magnetization, op_at_site, two_point
 export identity_operator
 export dense_matrix
 

@@ -401,9 +401,9 @@ function staggered_magnetization(g::AbstractGeometry; dof=SpinHalf())
 end
 
 """
-    local_op(dof::AbstractDoF, sym::Symbol, site::Int) -> LatticeOperator
+    op_at_site(dof::AbstractDoF, label::Symbol, site::Int) -> LatticeOperator
 
-Build a single-site observable: the operator named `sym` of `dof` at `site`.
+Build a single-site observable: the operator named `label` of `dof` at `site`.
 
 Use this to measure any on-site quantity — ``S^z_i``, ``n_i``, ``c_i``, etc.
 — after a variational calculation.  The returned `LatticeOperator` can be passed to
@@ -413,7 +413,7 @@ Use this to measure any on-site quantity — ``S^z_i``, ``n_i``, ``c_i``, etc.
 
   - `dof::AbstractDoF` — the local degree of freedom (determines the operator
     algebra).
-  - `sym::Symbol`      — name of the operator to retrieve from [`algebra_generators`](@ref),
+  - `label::Symbol`      — name of the operator to retrieve from [`algebra_generators`](@ref),
     e.g. `:Sz`, `:n`, `:cup`.
   - `site::Int`        — which lattice site the operator acts on.
 
@@ -425,7 +425,7 @@ Use this to measure any on-site quantity — ``S^z_i``, ``n_i``, ``c_i``, etc.
 # Examples
 
 ```jldoctest
-julia> O = local_op(SpinHalf(), :Sz, 2);
+julia> O = op_at_site(SpinHalf(), :Sz, 2);
 
 julia> O.onsite[1].site
 2
@@ -434,8 +434,8 @@ julia> O.onsite[1].coupling
 1.0
 ```
 """
-function local_op(dof::AbstractDoF, sym::Symbol, site::Int)
-    op = getproperty(algebra_generators(dof), sym)
+function op_at_site(dof::AbstractDoF, label::Symbol, site::Int)
+    op = getproperty(algebra_generators(dof), label)
     # Minimal geometry: a chain containing just this site (no bonds needed)
     g = Chain(site)
     LatticeOperator(dof, g, [OneSiteTerm(site, op, 1.0)], TwoSiteTerm[])
