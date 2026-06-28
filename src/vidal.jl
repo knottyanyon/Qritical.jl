@@ -23,7 +23,10 @@ left-to-right sweep and the bond singular values ``\\lambda^{(i)} = \\Lambda_i``
 \\Gamma_i = \\Lambda_{i-1}^{-1}\\, A_i
 ```
 
-The combination ``\\Gamma_i \\Lambda_i`` recovers the right-canonical tensor ``B_i``.
+The combination ``\\Gamma_i \\Lambda_i`` recovers the right-canonical tensor ``B_i``
+**only when ``\\Lambda_i`` holds the true Schmidt values** of the full state at bond ``i``
+(i.e. when the canonical centre was at that bond before `to_vidal` was called).  For a
+truncated or non-canonical input the identity holds only approximately.
 
 # Implementation
 

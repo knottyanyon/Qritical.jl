@@ -297,7 +297,7 @@ The entanglement spectrum ``\\{\\varepsilon_i\\}`` defined as
 
 where ``\\sigma_i`` are the Schmidt values (natural logarithm, base ``e``).
 For a Bell pair with ``\\sigma_1 = \\sigma_2 = 1/\\sqrt{2}`` this gives
-``\\varepsilon_i = \\ln 4`` for both levels.
+``\\varepsilon_i = -2\\ln(1/\\sqrt{2}) = \\ln 2`` for both levels.
 
 The entanglement spectrum (a list of "energies") carries more information than
 the scalar entropy: it reveals the level structure of the reduced density

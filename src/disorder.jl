@@ -53,7 +53,7 @@ Adding random on-site fields to the XXZ chain breaks its translational symmetry
 and can localise all eigenstates.  The disordered Hamiltonian is
 
 ```math
-H = J \\sum_{i} \\mathbf{S}_i \\cdot \\mathbf{S}_{i+1}
+H = \\frac{J}{2} \\sum_{i} \\bigl(S^+_i S^-_{i+1} + S^-_i S^+_{i+1}\\bigr)
   + J_z \\sum_{i} S^z_i S^z_{i+1}
   - \\sum_{i} h_i S^z_i
 ```

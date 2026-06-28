@@ -314,9 +314,8 @@ site tensor `A[α, σ_in, β]`, fusing the auxiliary indices `(a, α) → aα` a
 `(b, β) → bβ` to produce a "thick" MPS with bond dimension `χ_mpo × χ_mps`.
 The result is then compressed back to `trunc` via a left-canonical SVD sweep.
 
-For systems with `d^L ≤ ~ 10^5` (i.e., `L ≤ 16` for `d=2`) the implementation
-contracts to a full dense state vector first and then calls `to_mps`.  This is
-exact (no intermediate truncation error) and simple to verify.
+The zip-contract is exact up to the SVD truncation controlled by `trunc`: each
+site-by-site contraction introduces no additional approximation beyond `trunc`.
 """
 function apply_mpo(O::FiniteMPO, ψ::FiniteMPS; trunc::AbstractTrunc=NoTrunc())
     L = O.L

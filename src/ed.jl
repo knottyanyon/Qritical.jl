@@ -290,7 +290,7 @@ Trotter formula.
 
 # Arguments
 - `H::Operator`: the Hamiltonian. Must fit within the ``2^{20}`` Hilbert-space
-  guard checked by [`sparse`](@ref) internally.
+  guard enforced by [`dense_matrix`](@ref) (same limit as [`sparse`](@ref)).
 - `sv::StatevectorState`: the initial state, constructed via
   [`as_statevector`](@ref).
 - `::ExactDiagonalization{:time}`: selects this exact-propagation path.

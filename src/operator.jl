@@ -558,8 +558,9 @@ This is the go-to tool for exact-diagonalisation checks on small systems
     The Kronecker product construction is only correct for bosonic (commuting)
     DoFs such as [`Spin`](@ref) and [`HardCoreBoson`](@ref).  For fermionic DoFs
     the Jordan–Wigner string between sites ``i`` and ``j`` is not included;
-    use `basis_change(H, SpinHalf())` first to embed fermionic operators into a
-    spin representation with explicit JW strings.
+    a `basis_change` helper (planned in §3 of the design plan) will handle this
+    once implemented; for now restrict `dense_matrix` to commuting DoFs
+    ([`Spin`](@ref), [`HardCoreBoson`](@ref)).
 
 # Returns
 - `Matrix{ComplexF64}` of shape ``(d^L, d^L)``.

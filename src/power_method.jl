@@ -23,10 +23,11 @@ The power method mimics this by repeatedly applying the operator
 \\hat{P} = \\lambda I - H
 ```
 
-whose eigenvalues are ``\\lambda - E_k``. As long as ``\\lambda > E_0 > E_1 > \\cdots``
-(the shift is chosen larger than the ground-state energy), the dominant eigenvalue is
-``\\lambda - E_0`` — the ground state. After ``n`` applications the overlap with any
-excited state ``|k\\rangle`` is suppressed by
+whose eigenvalues are ``\\lambda - E_k``. For ``\\hat{P}`` to be positive definite,
+``\\lambda`` must exceed the **largest** eigenvalue ``E_{\\max}`` of ``H`` (not just the
+ground-state energy ``E_0``). The dominant eigenvalue is then ``\\lambda - E_0`` because
+``E_0 < E_k`` for all excited states, so ``\\lambda - E_0 > \\lambda - E_k``.
+After ``n`` applications the overlap with any excited state ``|k\\rangle`` is suppressed by
 
 ```math
 \\left(\\frac{\\lambda - E_k}{\\lambda - E_0}\\right)^n \\to 0
@@ -110,10 +111,11 @@ A larger gap ``E_1 - E_0`` means faster convergence.
 - `H::Operator`: the Hamiltonian as a list of coupling terms.
 - `ψ₀::FiniteMPS`: the starting state. It need not be normalised; the first thing
   `power_method` does is centre-canonicalise it.
-- `shift::Real` (default: `4.0`): the energy shift ``\\lambda``. **This must be strictly
-  larger than the true ground-state energy** ``E_0``. A safe (if conservative) upper
-  bound is the sum of absolute values of all couplings in `H`. If `shift` is too
-  small, ``\\lambda I - H`` will not be positive definite and the iteration will diverge.
+- `shift::Real` (default: `4.0`): the energy shift ``\\lambda``. **This must exceed the
+  largest eigenvalue ``E_{\\max}`` of ``H``**, not just ``E_0``. A safe upper bound is
+  ``\\sum_i |\\text{coupling}_i|`` (sum of absolute coupling magnitudes); the default
+  `4.0` is only adequate for chains with ``L \\lesssim 4``. If `shift` is too small,
+  ``\\lambda I - H`` is not positive definite and the iteration will diverge.
 - `tol::Real` (default: `1e-8`): convergence threshold on the per-step energy change.
 - `maxiter::Int` (default: `200`): maximum number of power iterations before returning
   unconverged.
