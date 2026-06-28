@@ -25,6 +25,7 @@ abstract type AbstractGeometry end
 
 include("geometry.jl")
 include("dof.jl")
+include("symmetries.jl")
 include("operator.jl")
 include("indices.jl")
 include("qtensor.jl")
@@ -80,8 +81,9 @@ export AbstractDoF
 export Spin, SpinHalf, SpinOne
 export SpinlessFermion, Electron, Majorana, HardCoreBoson
 export CanonicalRelation, CCR, CAR
-export local_dim, canonical_relation, algebra_generators, physical_space
-export NoSymmetry
+export local_dim, canonical_relation, algebra_generators
+# ==== Symmetry tags ===========================================================
+export NoSymmetry, physical_space
 
 # ==== Operator / Hamiltonian ==================================================
 export uniform

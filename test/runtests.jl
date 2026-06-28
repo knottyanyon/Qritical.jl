@@ -14,6 +14,7 @@ using Statistics
     # include("test_tebd.jl")
     include("test_geometry.jl")
     include("test_dof.jl")
+    include("test_symmetries.jl")
     include("test_operator.jl")
     include("test_power_method.jl")
     include("test_tebd.jl")
