@@ -127,10 +127,10 @@ using Qritical
     # §1.4b.4 Von Neumann entropy with 0 log 0 = 0 guard
     # ────────────────────────────────────────────────────────────────────────
 
-    @testset "Von Neumann entropy: S = −Σσᵢ² log σᵢ² with 0 log 0 = 0 guard" begin
-        # Physics: S = −Σ σᵢ² log σᵢ² where the convention 0·log(0) = 0
-        # prevents NaN for rank-deficient states.
-        let σ_vals = [0.99, 0.01 / sqrt(2)],
+    @testset "Von Neumann entropy: S = −Σ pᵢ log pᵢ, pᵢ normalised from σᵢ²; 0 log 0 = 0 guard" begin
+        # Use a unit-norm state (Σσᵢ² = 1) so the formula −Σσᵢ²logσᵢ² matches
+        # −Σpᵢlogpᵢ with pᵢ = σᵢ²/Σσᵢ² and we can verify the numerical value directly.
+        let σ_vals = [sqrt(0.9), sqrt(0.1)],   # Σσᵢ² = 0.9 + 0.1 = 1
             i = lower(:i, 2),
             j = lower(:j, 2),
             A_tensor = QTensor(Matrix(Diagonal(σ_vals)), (i, j)),
@@ -140,9 +140,27 @@ using Qritical
                 s = SchmidtSpectrum(F.spectrum, bp, F.center),
                 S = entanglement_entropy(s; base=ℯ)
 
-                σ_sq = abs2.(s.spectrum.values)
-                S_expected = -sum(p -> p > 0 ? p * log(p) : 0.0, σ_sq)
+                # For normalised σ, p = σ² and the formula is standard von Neumann entropy
+                S_expected = -(0.9 * log(0.9) + 0.1 * log(0.1))
                 @test isapprox(S, S_expected; atol=1e-10)
+                @test isfinite(S)
+            end
+        end
+    end
+
+    @testset "Von Neumann entropy: 0 log 0 = 0 convention does not produce NaN" begin
+        # A rank-1 state: σ = [1, 0].  The zero entry must contribute 0 to the entropy.
+        let σ_vals = [1.0, 0.0],
+            i = lower(:i, 2),
+            j = lower(:j, 2),
+            A_tensor = QTensor(Matrix(Diagonal(σ_vals)), (i, j)),
+            bp = Bipartition(Partition([i]), Partition([j]))
+
+            let F = do_svd(A_tensor, bp, NoTrunc()),
+                s = SchmidtSpectrum(F.spectrum, bp, F.center),
+                S = entanglement_entropy(s; base=2)
+                # Product state: entropy = 0
+                @test isapprox(S, 0.0; atol=1e-10)
                 @test isfinite(S)
             end
         end
@@ -288,6 +306,51 @@ using Qritical
                     @test spectral_gap(s) > 0.9
                 end
             end
+        end
+    end
+
+    # ────────────────────────────────────────────────────────────────────────
+    # §1.4b entropy must be correct on truncated (non-unit-norm) spectra (closes #80)
+    # ────────────────────────────────────────────────────────────────────────
+    @testset "entanglement_entropy is correct on truncated spectrum (closes #80)" begin
+        # A maximally entangled 3-qubit state truncated to keep only 2 Schmidt values.
+        # If entropy is computed without normalisation, the result is wrong because
+        # the kept σᵢ² no longer sum to 1 after truncation.
+        let i = lower(:i, 3),
+            j = lower(:j, 3),
+            # σ = [0.8, 0.6, 0.0] — only 2 non-zero values; after normalisation
+            # p = [0.64/1.0, 0.36/1.0] = [0.64, 0.36]  (already normalised here)
+            # entropy_correct = −(0.64 log₂ 0.64 + 0.36 log₂ 0.36)
+            ψ_tensor = QTensor(
+                reshape([0.8 0.0 0.0; 0.0 0.6 0.0; 0.0 0.0 0.0], 3, 3), (i, j)),
+            bp = Bipartition(Partition([i]), Partition([j])),
+            F  = do_svd(ψ_tensor, bp, ValCutoffTrunc(1e-10)),
+            s  = SchmidtSpectrum(F.spectrum, bp, F.center)
+
+            # Truncated spectrum has σ = [0.8, 0.6]; Σσᵢ² = 0.64+0.36 = 1.0
+            p_correct = [0.64, 0.36]
+            S_correct = -sum(p -> p * log2(p), p_correct)
+            @test entanglement_entropy(s; base=2) ≈ S_correct  atol=1e-10
+        end
+
+        let i  = lower(:i, 2),
+            j  = lower(:j, 2),
+            # Deliberately un-normalised values: σ = [0.8, 0.6] (Σσᵢ² = 1.0 here
+            # but if stored raw after truncation they might be [0.8, 0.6] from a
+            # state with Σσᵢ² < 1). Use an explicit non-unit-norm case.
+            # Build a spectrum manually with values that don't sum to 1 in squares:
+            # σ = [√0.4, √0.3]  →  Σσᵢ² = 0.7  (non-unit-norm — simulates truncation)
+            raw_svs  = [sqrt(0.4), sqrt(0.3)],
+            ψ_tensor = QTensor(diagm(raw_svs), (i, j)),
+            bp = Bipartition(Partition([i]), Partition([j])),
+            F  = do_svd(ψ_tensor, bp, NoTrunc()),
+            s  = SchmidtSpectrum(F.spectrum, bp, F.center)
+
+            # After NoTrunc, values are [√0.4, √0.3]; Σσᵢ² ≈ 0.7 ≠ 1.
+            # Correct entropy is on the normalised probabilities: p = [0.4/0.7, 0.3/0.7]
+            p_norm   = [0.4/0.7, 0.3/0.7]
+            S_correct = -sum(p -> p * log2(p), p_norm)
+            @test entanglement_entropy(s; base=2) ≈ S_correct  atol=1e-10
         end
     end
 

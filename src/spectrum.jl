@@ -277,6 +277,12 @@ Default `base=2` returns the entropy in **bits**.  Pass `base=ℯ` for nats.
 """
 function entanglement_entropy(s::SchmidtSpectrum; base=2)
     p = abs2.(s.spectrum.values)   # pᵢ = σᵢ²  (eigenvalues of ρ_A)
+    # Normalise so that Σpᵢ = 1 before computing −Σ pᵢ log pᵢ.  Without this
+    # the result is wrong when the spectrum comes from a truncated or non-canonical
+    # state (Σσᵢ² < 1).  The design plan (Part 1 line 529) notes that the entropy
+    # is only "free" when the canonical centre is at this bond; normalising here
+    # makes the function safe to call regardless of the gauge.  Fixes #80.
+    p ./= sum(p)
     return -sum(pᵢ -> pᵢ > 0 ? pᵢ * log(base, pᵢ) : 0.0, p)
 end
 
