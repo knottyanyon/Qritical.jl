@@ -15,7 +15,7 @@ A degree of freedom type (DoF) captures the following crucial aspects of minimal
 
  1. **Local Hilbert space** — the finite-dimensional space spanned by the on-site basis states (e.g. ``spin up \\{|{\\uparrow}\\rangle, spin down |{\\downarrow \\rangle\\}`` for a spin-½). Its dimension can be obtained with [`local_dim`](@ref) and is important in estimating bond dimension growth behavior.
 
- 2. **Operator algebra** — the set of elementary matrices that act on that space, returned as a `NamedTuple` by [`operators`](@ref).
+ 2. **Operator algebra** — the set of elementary matrices that act on that space, returned as a `NamedTuple` by [`algebra_generators`](@ref).
 
  3. **Exchange statistics** — whether operators on different sites
     commute ([`CCR`](@ref)) or anticommute ([`CAR`](@ref)),
@@ -27,7 +27,7 @@ Every concrete DoF in Qritical.jl is a subtype of `AbstractDoF` .
 Concrete subtypes: [`Spin`](@ref), [`SpinlessFermion`](@ref), [`Electron`](@ref),
 [`Majorana`](@ref), [`HardCoreBoson`](@ref).
 
-See also: [`local_dim`](@ref), [`canonical_relation`](@ref), [`operators`](@ref),
+See also: [`local_dim`](@ref), [`canonical_relation`](@ref), [`algebra_generators`](@ref),
 [`physical_space`](@ref)
 """
 abstract type AbstractDoF end
@@ -115,7 +115,7 @@ When working without native graded spaces, Jordan–Wigner string factors must b
 inserted for non-adjacent operators.
 
 See also: [`HardCoreBoson`](@ref) (same matrix structure, commuting statistics),
-[`Electron`](@ref) (spin-½ version), [`operators`](@ref)
+[`Electron`](@ref) (spin-½ version), [`algebra_generators`](@ref)
 """
 struct SpinlessFermion <: AbstractDoF end   # 2D site {|0⟩,|1⟩}; c, c†, n
 
@@ -144,11 +144,11 @@ c_{\\downarrow} |{\\uparrow\\downarrow}\\rangle = -|{\\uparrow}\\rangle.
 Inter-site statistics are [`CAR`](@ref) — both ``c_{\\uparrow}`` and
 ``c_{\\downarrow}`` are fermionic.
 
-The full operator set (see [`operators(::Electron)`](@ref)) includes individual
+The full operator set (see [`algebra_generators(::Electron)`](@ref)) includes individual
 spin-resolved annihilators `cup`/`cdn`, number operators `nup`/`ndn`, the total
 number `n`, and spin operators `Sz`, `Sp`, `Sm`.
 
-See also: [`SpinlessFermion`](@ref), [`operators`](@ref)
+See also: [`SpinlessFermion`](@ref), [`algebra_generators`](@ref)
 """
 struct Electron <: AbstractDoF end   # 4D site {|0⟩,|↑⟩,|↓⟩,|↑↓⟩} 
 
@@ -172,7 +172,7 @@ Both ``\\gamma_1`` and ``\\gamma_2`` are Hermitian, traceless, and square to the
 identity on the local two-dimensional space.  The inter-site statistics are
 [`CAR`](@ref), inherited from the underlying complex fermion.
 
-See also: [`operators`](@ref)
+See also: [`algebra_generators`](@ref)
 """
 struct Majorana <: AbstractDoF end   # Majorana modes on a paired fermion site
 
@@ -190,7 +190,7 @@ difference is that bosonic operators on different sites **commute**:
 This means [`canonical_relation`](@ref) returns [`CCR`](@ref) and no Jordan–Wigner
 strings are needed for non-adjacent operators.
 
-See also: [`SpinlessFermion`](@ref) (anticommuting version), [`operators`](@ref)
+See also: [`SpinlessFermion`](@ref) (anticommuting version), [`algebra_generators`](@ref)
 """
 struct HardCoreBoson <: AbstractDoF end   # 2D site {|0⟩,|1⟩}; b, b†, n; b²=0
 
@@ -348,7 +348,7 @@ physical_space(dof::AbstractDoF, ::NoSymmetry) = local_dim(dof)
 # ----------------------------------------------------------------------------------------
 
 """
-    operators(dof::AbstractDoF) -> NamedTuple
+    algebra_generators(dof::AbstractDoF) -> NamedTuple
 
 Return a `NamedTuple` of ``d \\times d`` `ComplexF64` matrices for all elementary
 on-site operators of `dof`.
@@ -400,7 +400,7 @@ field names `b`, `bdag`, `n`, `I`.  Statistics are [`CCR`](@ref).
 # Examples
 
 ```jldoctest
-julia> ops = operators(SpinHalf());
+julia> ops = algebra_generators(SpinHalf());
 
 julia> ops.Sz
 2×2 Matrix{ComplexF64}:
@@ -413,7 +413,7 @@ julia> ops.Sp
  0.0+0.0im  0.0+0.0im
 ```
 """
-function operators(::Spin{1//2})
+function algebra_generators(::Spin{1//2})
     I2 = ComplexF64[1 0; 0 1]
     Sz = ComplexF64[1 0; 0 -1] / 2          # ½·diag(+1,−1); Sz|↑⟩=+½|↑⟩
     Sp = ComplexF64[0 1; 0 0]              # S⁺|↓⟩=|↑⟩, S⁺|↑⟩=0
@@ -423,7 +423,7 @@ function operators(::Spin{1//2})
     (; Sx, Sy, Sz, Sp, Sm, I=I2)
 end
 
-function operators(::Spin{1})
+function algebra_generators(::Spin{1})
     # 3×3 spin-1 matrices (Condon–Shortley convention).
     # Basis ordering: |+1⟩, |0⟩, |−1⟩  (mz = 1, 0, −1).
     I3 = ComplexF64[1 0 0; 0 1 0; 0 0 1]
@@ -435,7 +435,7 @@ function operators(::Spin{1})
     (; Sx, Sy, Sz, Sp, Sm, I=I3)
 end
 
-function operators(::SpinlessFermion)
+function algebra_generators(::SpinlessFermion)
     I2 = ComplexF64[1 0; 0 1]
     # Basis ordering: |0⟩ (vacuum, index 1), |1⟩ (occupied, index 2).
     # c destroys a particle: c|1⟩ = |0⟩, c|0⟩ = 0.
@@ -445,7 +445,7 @@ function operators(::SpinlessFermion)
     (; c, cdag, n, I=I2)
 end
 
-function operators(::HardCoreBoson)
+function algebra_generators(::HardCoreBoson)
     # Identical matrix structure to SpinlessFermion, but commuting statistics.
     # Basis ordering: |0⟩ (vacuum, index 1), |1⟩ (occupied, index 2).
     I2 = ComplexF64[1 0; 0 1]
@@ -455,7 +455,7 @@ function operators(::HardCoreBoson)
     (; b, bdag, n, I=I2)
 end
 
-function operators(::Electron)
+function algebra_generators(::Electron)
     # 4×4 matrices on the electron site.
     # Basis ordering: {|0⟩, |↑⟩, |↓⟩, |↑↓⟩} — "spin-up first" convention
     # (ITensor / Essler et al.).  |↑↓⟩ ≡ c†↑ c†↓ |0⟩, so c↓|↑↓⟩ = −|↑⟩.
@@ -491,11 +491,11 @@ function operators(::Electron)
     (; cup, cdn, cupdag, cdndag, nup, ndn, n, Sz, Sp, Sm, I=I4)
 end
 
-function operators(::Majorana)
+function algebra_generators(::Majorana)
     # Majorana operators on the paired-fermion site.
     # γ₁ = c + c†  (=σˣ on the Fock site),  γ₂ = i(c† − c)  (=σʸ).
     # Both are Hermitian: γ†=γ.  Algebra: {γₐ,γᵦ}=2δₐᵦ.
-    ops = operators(SpinlessFermion())
+    ops = algebra_generators(SpinlessFermion())
     I2 = ComplexF64[1 0; 0 1]
     γ1 = ops.c + ops.cdag
     γ2 = im * (ops.cdag - ops.c)

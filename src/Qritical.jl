@@ -80,7 +80,7 @@ export AbstractDoF
 export Spin, SpinHalf, SpinOne
 export SpinlessFermion, Electron, Majorana, HardCoreBoson
 export CanonicalRelation, CCR, CAR
-export local_dim, canonical_relation, operators, physical_space
+export local_dim, canonical_relation, algebra_generators, physical_space
 export NoSymmetry
 
 # ==== Operator / Hamiltonian ==================================================

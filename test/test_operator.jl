@@ -10,7 +10,7 @@
     end
 
     @testset "LocalTerm constructor" begin
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         lt = LocalTerm(2, ops.Sz, -1.5)
         @test lt.site     == 2
         @test lt.coupling == -1.5
@@ -18,7 +18,7 @@
     end
 
     @testset "BondTerm constructor" begin
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         bt = BondTerm(1, 2, ops.Sp, ops.Sm, 0.5)
         @test bt.i        == 1
         @test bt.j        == 2
@@ -41,7 +41,7 @@
         # Course convention: onsite coupling = −hᵢ, so H_onsite = −h·Sz at each site
         g = Chain(4)
         H = XXZ(g; J=0.0, Jz=0.0, h=1.0)
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         # Each onsite term should have coupling = −1.0 and op = Sz
         for lt in H.onsite
             @test lt.coupling ≈ -1.0  atol=1e-12
@@ -82,7 +82,7 @@
     @testset "Ising — ZZ coupling sign and operator" begin
         g = Chain(3)
         H = Ising(g; J=1.0, h=0.0)
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         # Bond terms should be Sz⊗Sz with coupling J
         for bt in H.bond
             @test bt.op_i ≈ ops.Sz  atol=1e-12
@@ -98,7 +98,7 @@ end
     @testset "total_magnetization — L onsite Sz terms with coupling +1" begin
         g = Chain(4)
         M = total_magnetization(g)
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         @test length(M.onsite) == 4
         @test isempty(M.bond)
         for lt in M.onsite
@@ -122,7 +122,7 @@ end
         O = local_op(SpinHalf(), :Sz, 3)
         @test length(O.onsite) == 1
         @test O.onsite[1].site == 3
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         @test O.onsite[1].op ≈ ops.Sz  atol=1e-12
         @test O.onsite[1].coupling ≈ 1.0  atol=1e-12
     end
@@ -279,7 +279,7 @@ end
         # propagate through intermediate sites via W[k+1,:,:,k+1]=Id before closing
         # at site j>i+1.  Without the fix, the MPO path returns 0 for all non-NN terms.
         g   = Chain(4)
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         # two_point operator A₁B₃ — non-nearest-neighbour
         O   = two_point(g, SpinHalf(), :Sz, 1, :Sz, 3)
 

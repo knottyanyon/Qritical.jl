@@ -5,9 +5,9 @@
 # Hamiltonian is the instance that drives dynamics; observables are other
 # instances.  Both are constructed identically and measured the same way.
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Coupling helpers (§4)
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     uniform(n::Int, x) -> Vector
@@ -21,6 +21,7 @@ constructors it internally calls `uniform(nb, J)` so the downstream term
 builders can always index by bond number without a special case.
 
 # Examples
+
 ```jldoctest
 julia> uniform(3, 1.5)
 3-element Vector{Float64}:
@@ -36,9 +37,9 @@ julia> uniform(2, 0.0)
 """
 uniform(n::Int, x) = fill(x, n)
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Term types
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     LocalTerm{O}
@@ -51,10 +52,11 @@ times a single-site operator matrix located at a specific site.  A list of
 ``\\sum_i h_i \\, O_i``.
 
 # Fields
-- `site::Int`         — which lattice site the operator acts on.
-- `op::O`             — the on-site operator matrix (typically a `Matrix{ComplexF64}`
-  drawn from [`operators`](@ref)).
-- `coupling::Float64` — prefactor ``h_i``; can be site-dependent.
+
+  - `site::Int`         — which lattice site the operator acts on.
+  - `op::O`             — the on-site operator matrix (typically a `Matrix{ComplexF64}`
+    drawn from [`algebra_generators`](@ref)).
+  - `coupling::Float64` — prefactor ``h_i``; can be site-dependent.
 
 See also: [`BondTerm`](@ref), [`Operator`](@ref)
 """
@@ -79,11 +81,12 @@ two sites.  This matters for the MPO FSM builder, which multiplies the coupling
 into the operator that opens the channel (at site ``i``).
 
 # Fields
-- `i::Int`            — left site index.
-- `j::Int`            — right site index (usually ``j = i + 1`` for NN bonds).
-- `op_i::O1`          — operator matrix acting at site ``i``.
-- `op_j::O2`          — operator matrix acting at site ``j``.
-- `coupling::Float64` — bond coupling ``J_{ij}``.
+
+  - `i::Int`            — left site index.
+  - `j::Int`            — right site index (usually ``j = i + 1`` for NN bonds).
+  - `op_i::O1`          — operator matrix acting at site ``i``.
+  - `op_j::O2`          — operator matrix acting at site ``j``.
+  - `coupling::Float64` — bond coupling ``J_{ij}``.
 
 See also: [`LocalTerm`](@ref), [`Operator`](@ref)
 """
@@ -95,9 +98,9 @@ struct BondTerm{O1,O2}
     coupling::Float64
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Operator type
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     Operator{D,G,LT,BT}
@@ -116,27 +119,29 @@ where the first sum runs over sites and the second over bonds.  Both the
 Hamiltonian (time-evolution generator) and observables (expectation values) are
 `Operator` instances — the role is determined by how you use them:
 
-- pass to `MPO` → [`FiniteMPO`](@ref) for variational energy optimisation
-- evaluate via `MPO(obs)` and [`expect`](@ref) → scalar ``\\langle \\psi | \\hat{O} | \\psi \\rangle``
+  - pass to `MPO` → [`FiniteMPO`](@ref) for variational energy optimisation
+  - evaluate via `MPO(obs)` and [`expect`](@ref) → scalar ``\\langle \\psi | \\hat{O} | \\psi \\rangle``
 
 `Hamiltonian` is just a type alias for `Operator`.
 
 # Type parameters
-- `D <: AbstractDoF`        — the local degree of freedom (sets operator algebra and ``d``).
-- `G <: AbstractGeometry`   — the lattice geometry (sets site and bond lists).
-- `LT`                      — concrete `LocalTerm` type.
-- `BT`                      — concrete `BondTerm` type.
+
+  - `D <: AbstractDoF`        — the local degree of freedom (sets operator algebra and ``d``).
+  - `G <: AbstractGeometry`   — the lattice geometry (sets site and bond lists).
+  - `LT`                      — concrete `LocalTerm` type.
+  - `BT`                      — concrete `BondTerm` type.
 
 # Fields
-- `dof::D`               — the site degree of freedom.
-- `geom::G`              — the lattice geometry.
-- `onsite::Vector{LT}`   — list of single-site terms.
-- `bond::Vector{BT}`     — list of two-site bond terms.
+
+  - `dof::D`               — the site degree of freedom.
+  - `geom::G`              — the lattice geometry.
+  - `onsite::Vector{LT}`   — list of single-site terms.
+  - `bond::Vector{BT}`     — list of two-site bond terms.
 
 See also: [`LocalTerm`](@ref), [`BondTerm`](@ref), [`MPO`](@ref),
 [`XXZ`](@ref), [`Heisenberg`](@ref), [`Ising`](@ref)
 """
-struct Operator{D<:AbstractDoF, G<:AbstractGeometry, LT, BT}
+struct Operator{D<:AbstractDoF,G<:AbstractGeometry,LT,BT}
     dof::D
     geom::G
     onsite::Vector{LT}
@@ -156,9 +161,9 @@ the call site.
 """
 const Hamiltonian = Operator
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Named constructors — spin models (§7)
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     XXZ(g::Chain; J=1.0, Jz=1.0, h=0.0) -> Operator
@@ -181,19 +186,22 @@ exchange ``J \\mathbf{S}_i \\cdot \\mathbf{S}_j``.  The field term follows the
 course convention ``-h_i S^z_i`` (see Exercise 3/6 of the SS26 course).
 
 # Arguments
-- `g::Chain`    — lattice geometry.
-- `J::Union{Number, AbstractVector}`  — transverse (flip-flop) coupling; scalar
-  applies uniformly to every bond, a vector sets each bond individually.
-  Default: `1.0`.
-- `Jz::Union{Number, AbstractVector}` — longitudinal (Ising) coupling.
-  Default: `1.0`.
-- `h::Union{Number, AbstractVector}`  — magnetic field (couples to ``-S^z``);
-  scalar or per-site vector.  Default: `0.0`.
+
+  - `g::Chain`    — lattice geometry.
+  - `J::Union{Number, AbstractVector}`  — transverse (flip-flop) coupling; scalar
+    applies uniformly to every bond, a vector sets each bond individually.
+    Default: `1.0`.
+  - `Jz::Union{Number, AbstractVector}` — longitudinal (Ising) coupling.
+    Default: `1.0`.
+  - `h::Union{Number, AbstractVector}`  — magnetic field (couples to ``-S^z``);
+    scalar or per-site vector.  Default: `0.0`.
 
 # Returns
-- `Operator` with `dof = SpinHalf()`, suitable for `MPO(H)` or [`dense_matrix`](@ref).
+
+  - `Operator` with `dof = SpinHalf()`, suitable for `MPO(H)` or [`dense_matrix`](@ref).
 
 # Examples
+
 ```jldoctest
 julia> g = Chain(4);
 
@@ -207,18 +215,18 @@ julia> length(H.bond)   # 3 bonds × 3 term types (Sp⊗Sm, Sm⊗Sp, Sz⊗Sz)
 ```
 """
 function XXZ(g::Chain; J=1.0, Jz=1.0, h=0.0)
-    nb  = length(bonds(g))
-    Jv  = J  isa Number ? uniform(nb, Float64(J))  : Float64.(J)
+    nb = length(bonds(g))
+    Jv = J isa Number ? uniform(nb, Float64(J)) : Float64.(J)
     Jzv = Jz isa Number ? uniform(nb, Float64(Jz)) : Float64.(Jz)
-    hv  = h  isa Number ? uniform(g.L, Float64(h)) : Float64.(h)
-    ops = operators(SpinHalf())
+    hv = h isa Number ? uniform(g.L, Float64(h)) : Float64.(h)
+    ops = algebra_generators(SpinHalf())
 
     onsite = [LocalTerm(i, ops.Sz, -hv[i]) for i in sites(g)]
 
     bond = vcat(
-        [BondTerm(i, j, ops.Sp, ops.Sm, 0.5Jv[b])  for (b, (i, j)) in enumerate(bonds(g))],
-        [BondTerm(i, j, ops.Sm, ops.Sp, 0.5Jv[b])  for (b, (i, j)) in enumerate(bonds(g))],
-        [BondTerm(i, j, ops.Sz, ops.Sz, Jzv[b])    for (b, (i, j)) in enumerate(bonds(g))],
+        [BondTerm(i, j, ops.Sp, ops.Sm, 0.5Jv[b]) for (b, (i, j)) in enumerate(bonds(g))],
+        [BondTerm(i, j, ops.Sm, ops.Sp, 0.5Jv[b]) for (b, (i, j)) in enumerate(bonds(g))],
+        [BondTerm(i, j, ops.Sz, ops.Sz, Jzv[b]) for (b, (i, j)) in enumerate(bonds(g))],
     )
 
     Operator(SpinHalf(), g, onsite, bond)
@@ -241,12 +249,14 @@ paradigmatic gapless spin-½ chain, exactly solvable via the Bethe ansatz and
 described by a ``c = 1`` conformal field theory.
 
 # Arguments
-- `g::Chain`                          — chain geometry.
-- `J::Union{Number, AbstractVector}`  — exchange coupling; `J > 0` is antiferromagnetic.
-  Default: `1.0`.
-- `h::Union{Number, AbstractVector}`  — longitudinal field. Default: `0.0`.
+
+  - `g::Chain`                          — chain geometry.
+  - `J::Union{Number, AbstractVector}`  — exchange coupling; `J > 0` is antiferromagnetic.
+    Default: `1.0`.
+  - `h::Union{Number, AbstractVector}`  — longitudinal field. Default: `0.0`.
 
 # Examples
+
 ```jldoctest
 julia> H = Heisenberg(Chain(4));
 
@@ -273,13 +283,15 @@ quantum critical point ``|h/J| = 1/2`` (in the ``S^z S^z`` convention used here)
 the model is exactly solvable via a Jordan–Wigner transformation.
 
 # Arguments
-- `g::Chain`                          — chain geometry.
-- `J::Union{Number, AbstractVector}`  — longitudinal (Ising) coupling.
-  Default: `1.0`.
-- `h::Union{Number, AbstractVector}`  — transverse-field strength (couples to
-  ``-S^x``).  Default: `0.0`.
+
+  - `g::Chain`                          — chain geometry.
+  - `J::Union{Number, AbstractVector}`  — longitudinal (Ising) coupling.
+    Default: `1.0`.
+  - `h::Union{Number, AbstractVector}`  — transverse-field strength (couples to
+    ``-S^x``).  Default: `0.0`.
 
 # Examples
+
 ```jldoctest
 julia> H = Ising(Chain(4); J=1.0, h=0.5);
 
@@ -291,20 +303,20 @@ julia> length(H.bond)    # Sz⊗Sz on every NN bond
 ```
 """
 function Ising(g::Chain; J=1.0, h=0.0)
-    nb  = length(bonds(g))
-    Jv  = J isa Number ? uniform(nb, Float64(J)) : Float64.(J)
-    hv  = h isa Number ? uniform(g.L, Float64(h)) : Float64.(h)
-    ops = operators(SpinHalf())
+    nb = length(bonds(g))
+    Jv = J isa Number ? uniform(nb, Float64(J)) : Float64.(J)
+    hv = h isa Number ? uniform(g.L, Float64(h)) : Float64.(h)
+    ops = algebra_generators(SpinHalf())
 
     onsite = [LocalTerm(i, ops.Sx, -hv[i]) for i in sites(g)]
-    bond   = [BondTerm(i, j, ops.Sz, ops.Sz, Jv[b]) for (b, (i, j)) in enumerate(bonds(g))]
+    bond = [BondTerm(i, j, ops.Sz, ops.Sz, Jv[b]) for (b, (i, j)) in enumerate(bonds(g))]
 
     Operator(SpinHalf(), g, onsite, bond)
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Observable constructors (§5 / §7)
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     total_magnetization(g::AbstractGeometry; dof=SpinHalf()) -> Operator
@@ -317,14 +329,17 @@ is a useful sanity check: the ground state of an antiferromagnet at zero field
 on an even-``L`` chain should have ``\\langle M \\rangle = 0``.
 
 # Arguments
-- `g::AbstractGeometry` — lattice geometry.
-- `dof`                 — degree of freedom; its ``S^z`` operator is used.
-  Default: `SpinHalf()`.
+
+  - `g::AbstractGeometry` — lattice geometry.
+  - `dof`                 — degree of freedom; its ``S^z`` operator is used.
+    Default: `SpinHalf()`.
 
 # Returns
-- `Operator` with one `LocalTerm` (coupling = +1) per site and no bond terms.
+
+  - `Operator` with one `LocalTerm` (coupling = +1) per site and no bond terms.
 
 # Examples
+
 ```jldoctest
 julia> M = total_magnetization(Chain(4));
 
@@ -336,7 +351,7 @@ true
 ```
 """
 function total_magnetization(g::AbstractGeometry; dof=SpinHalf())
-    ops = operators(dof)
+    ops = algebra_generators(dof)
     Operator(dof, g, [LocalTerm(i, ops.Sz, 1.0) for i in sites(g)], BondTerm[])
 end
 
@@ -357,13 +372,16 @@ still diverges with system size in a characteristic way — making this observab
 very useful for finite-size scaling studies.
 
 # Arguments
-- `g::AbstractGeometry` — lattice geometry.
-- `dof`                 — degree of freedom. Default: `SpinHalf()`.
+
+  - `g::AbstractGeometry` — lattice geometry.
+  - `dof`                 — degree of freedom. Default: `SpinHalf()`.
 
 # Returns
-- `Operator` with site couplings ``(-1)^i`` and no bond terms.
+
+  - `Operator` with site couplings ``(-1)^i`` and no bond terms.
 
 # Examples
+
 ```jldoctest
 julia> Ms = staggered_magnetization(Chain(4));
 
@@ -376,7 +394,7 @@ julia> [t.coupling for t in Ms.onsite]
 ```
 """
 function staggered_magnetization(g::AbstractGeometry; dof=SpinHalf())
-    ops = operators(dof)
+    ops = algebra_generators(dof)
     Operator(dof, g, [LocalTerm(i, ops.Sz, (-1.0)^i) for i in sites(g)], BondTerm[])
 end
 
@@ -390,17 +408,20 @@ Use this to measure any on-site quantity — ``S^z_i``, ``n_i``, ``c_i``, etc.
 [`expect`](@ref) by first converting it to a `FiniteMPO` via `MPO`.
 
 # Arguments
-- `dof::AbstractDoF` — the local degree of freedom (determines the operator
-  algebra).
-- `sym::Symbol`      — name of the operator to retrieve from [`operators`](@ref),
-  e.g. `:Sz`, `:n`, `:cup`.
-- `site::Int`        — which lattice site the operator acts on.
+
+  - `dof::AbstractDoF` — the local degree of freedom (determines the operator
+    algebra).
+  - `sym::Symbol`      — name of the operator to retrieve from [`algebra_generators`](@ref),
+    e.g. `:Sz`, `:n`, `:cup`.
+  - `site::Int`        — which lattice site the operator acts on.
 
 # Returns
-- `Operator` on a minimal `Chain(site)` geometry with a single `LocalTerm`
-  (coupling = 1) and no bond terms.
+
+  - `Operator` on a minimal `Chain(site)` geometry with a single `LocalTerm`
+    (coupling = 1) and no bond terms.
 
 # Examples
+
 ```jldoctest
 julia> O = local_op(SpinHalf(), :Sz, 2);
 
@@ -412,9 +433,9 @@ julia> O.onsite[1].coupling
 ```
 """
 function local_op(dof::AbstractDoF, sym::Symbol, site::Int)
-    op  = getproperty(operators(dof), sym)
+    op = getproperty(algebra_generators(dof), sym)
     # Minimal geometry: a chain containing just this site (no bonds needed)
-    g   = Chain(site)
+    g = Chain(site)
     Operator(dof, g, [LocalTerm(site, op, 1.0)], BondTerm[])
 end
 
@@ -431,6 +452,7 @@ correlators ``\\langle S^z_i S^z_j \\rangle``, density–density correlators
 single `BondTerm` with coupling 1 and no on-site terms.
 
 !!! note "Fermionic statistics"
+
     For fermionic DoFs and non-adjacent sites ``i_A < i_B``, the correct
     correlator requires a Jordan–Wigner string
     ``\\prod_{k=i_A}^{i_B-1} (-1)^{n_k}`` between the two operators.
@@ -439,19 +461,22 @@ single `BondTerm` with coupling 1 and no on-site terms.
     JW strings by hand for fermionic models.
 
 # Arguments
-- `g::AbstractGeometry` — lattice geometry (used to construct the `Operator`
-  container; the pair ``(i_A, i_B)`` need not be a NN bond of `g`).
-- `dof::AbstractDoF`    — local degree of freedom.
-- `opA::Symbol`         — name of the left operator, e.g. `:Sz`.
-- `iA::Int`             — site of the left operator.
-- `opB::Symbol`         — name of the right operator.
-- `iB::Int`             — site of the right operator.
+
+  - `g::AbstractGeometry` — lattice geometry (used to construct the `Operator`
+    container; the pair ``(i_A, i_B)`` need not be a NN bond of `g`).
+  - `dof::AbstractDoF`    — local degree of freedom.
+  - `opA::Symbol`         — name of the left operator, e.g. `:Sz`.
+  - `iA::Int`             — site of the left operator.
+  - `opB::Symbol`         — name of the right operator.
+  - `iB::Int`             — site of the right operator.
 
 # Returns
-- `Operator` with a single `BondTerm(iA, iB, Amat, Bmat, 1.0)` and empty
-  `onsite`.
+
+  - `Operator` with a single `BondTerm(iA, iB, Amat, Bmat, 1.0)` and empty
+    `onsite`.
 
 # Examples
+
 ```jldoctest
 julia> g = Chain(6);
 
@@ -464,9 +489,10 @@ julia> O.bond[1].i, O.bond[1].j
 (1, 4)
 ```
 """
-function two_point(g::AbstractGeometry, dof::AbstractDoF,
-                   opA::Symbol, iA::Int, opB::Symbol, iB::Int)
-    ops  = operators(dof)
+function two_point(
+    g::AbstractGeometry, dof::AbstractDoF, opA::Symbol, iA::Int, opB::Symbol, iB::Int
+)
+    ops = algebra_generators(dof)
     Amat = getproperty(ops, opA)
     Bmat = getproperty(ops, opB)
     Operator(dof, g, LocalTerm[], [BondTerm(iA, iB, Amat, Bmat, 1.0)])
@@ -486,6 +512,7 @@ The expectation value ``\\langle \\psi | I | \\psi \\rangle = \\|\\psi\\|^2``, w
 makes this useful as a norm check when the MPS is not in a normalised form.
 
 # Examples
+
 ```jldoctest
 julia> g = Chain(4);
 
@@ -499,9 +526,9 @@ function identity_operator(g::AbstractGeometry, dof::AbstractDoF)
     Operator(dof, g, LocalTerm[], BondTerm[])
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Operator arithmetic
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     Base.:*(c::Real, H::Operator) -> Operator
@@ -511,7 +538,7 @@ Scale all couplings of `H` by scalar `c`.
 """
 function Base.:*(c::Real, H::Operator)
     onsite = [LocalTerm(lt.site, lt.op, c * lt.coupling) for lt in H.onsite]
-    bond   = [BondTerm(bt.i, bt.j, bt.op_i, bt.op_j, c * bt.coupling) for bt in H.bond]
+    bond = [BondTerm(bt.i, bt.j, bt.op_i, bt.op_j, c * bt.coupling) for bt in H.bond]
     Operator(H.dof, H.geom, onsite, bond)
 end
 Base.:*(H::Operator, c::Real) = c * H
@@ -523,13 +550,13 @@ Merge the term lists of two operators (both must share the same DoF and geometry
 """
 function Base.:+(A::Operator, B::Operator)
     onsite = vcat(A.onsite, B.onsite)
-    bond   = vcat(A.bond,   B.bond)
+    bond = vcat(A.bond, B.bond)
     Operator(A.dof, A.geom, onsite, bond)
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 # Dense matrix from term list — used for testing and small-system ED
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------------------
 
 """
     dense_matrix(H::Operator) -> Matrix{ComplexF64}
@@ -555,6 +582,7 @@ This is the go-to tool for exact-diagonalisation checks on small systems
 (``L \\lesssim 14`` for ``d = 2``).  For large systems use the MPO route instead.
 
 !!! warning "Commuting statistics only"
+
     The Kronecker product construction is only correct for bosonic (commuting)
     DoFs such as [`Spin`](@ref) and [`HardCoreBoson`](@ref).  For fermionic DoFs
     the Jordan–Wigner string between sites ``i`` and ``j`` is not included;
@@ -563,9 +591,11 @@ This is the go-to tool for exact-diagonalisation checks on small systems
     ([`Spin`](@ref), [`HardCoreBoson`](@ref)).
 
 # Returns
-- `Matrix{ComplexF64}` of shape ``(d^L, d^L)``.
+
+  - `Matrix{ComplexF64}` of shape ``(d^L, d^L)``.
 
 # Examples
+
 ```jldoctest
 julia> H = Heisenberg(Chain(2));
 
@@ -574,44 +604,51 @@ julia> M = dense_matrix(H);
 julia> size(M)
 (4, 4)
 
-julia> isapprox(M, M', atol=1e-12)
+julia> isapprox(M, M'; atol=1e-12)
 true
-```
+```    # Reject periodic geometries: the wrap bond (L,1) has i>j, which makes the
 """
 function dense_matrix(H::Operator)
     # Reject periodic geometries: the wrap bond (L,1) has i>j, which makes the
     # intermediate-identity dimension d^(j-i-1) = d^(negative) meaningless.  The
     # caller should use open boundary conditions for dense_matrix.  Fixes #79.
     if any(bt -> bt.i > bt.j, H.bond)
-        throw(ArgumentError(
-            "dense_matrix does not support periodic boundary conditions: bond " *
-            "$(first(bt for bt in H.bond if bt.i > bt.j)) has i > j.  " *
-            "Use an open-boundary Chain or the sparse ED path instead."))
+        throw(
+            ArgumentError(
+                "dense_matrix does not support periodic boundary conditions: bond " *
+                "$(first(bt for bt in H.bond if bt.i > bt.j)) has i > j.  " *
+                "Use an open-boundary Chain or the sparse ED path instead.",
+            ),
+        )
     end
     L = H.geom.L
     d = local_dim(H.dof)
     N = d^L
     # Apply the same Hilbert-space size guard as sparse(H) (2^20 ≈ 1M): allocating a
     # d^L × d^L dense matrix for L≥21 (d=2) silently consumes multi-GB.  Fixes #85.
-    N ≤ 2^20 || throw(ArgumentError(
-        "Hilbert space dimension $N = $(d)^$L exceeds the safety limit 2^20. " *
-        "Use the sparse ED path or an MPS algorithm for large systems."))
+    N ≤ 2^20 || throw(
+        ArgumentError(
+            "Hilbert space dimension $N = $(d)^$L exceeds the safety limit 2^20. " *
+            "Use the sparse ED path or an MPS algorithm for large systems.",
+        ),
+    )
     mat = zeros(ComplexF64, N, N)
 
     Id(n) = Matrix{ComplexF64}(I, n, n)
 
     for lt in H.onsite
-        i     = lt.site
-        left  = d^(i - 1)
+        i = lt.site
+        left = d^(i - 1)
         right = d^(L - i)
         mat .+= lt.coupling .* kron(kron(Id(left), ComplexF64.(lt.op)), Id(right))
     end
 
     for bt in H.bond
-        i = bt.i; j = bt.j
-        left   = d^(i - 1)
+        i = bt.i;
+        j = bt.j
+        left = d^(i - 1)
         middle = d^(j - i - 1)   # identity string between sites i and j
-        right  = d^(L - j)
+        right = d^(L - j)
         if middle == 1
             op2 = kron(ComplexF64.(bt.op_i), ComplexF64.(bt.op_j))
         else

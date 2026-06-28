@@ -5,7 +5,7 @@
 @testset "§7.1 TimeAxis + Gate exponentiation" begin
 
     @testset "RealTime gate is unitary" begin
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         # SzSz bond Hamiltonian (2-site, d²=4)
         h = kron(Array(ops.Sz), Array(ops.I)) + kron(Array(ops.I), Array(ops.Sz))
         G = gate(h, 0.1, RealTime())
@@ -15,7 +15,7 @@
     end
 
     @testset "ImaginaryTime gate is Hermitian and positive semidefinite" begin
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         h = kron(Array(ops.Sz), Array(ops.Sz))  # 4×4, Hermitian
         G = gate(h, 0.1, ImaginaryTime())
         @test G isa Propagator{ImaginaryTime}
@@ -25,7 +25,7 @@
     end
 
     @testset "opclass dispatches on time axis type" begin
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         h = kron(Array(ops.Sz), Array(ops.Sz))
         G_real = gate(h, 0.05, RealTime())
         G_imag = gate(h, 0.05, ImaginaryTime())
@@ -34,7 +34,7 @@
     end
 
     @testset "gate dt stored in Propagator" begin
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         h = kron(Array(ops.Sz), Array(ops.Sz))
         dt = 0.137
         G = gate(h, dt, RealTime())
@@ -42,7 +42,7 @@
     end
 
     @testset "gate(h, dt, RealTime) matches matrix exponential exp(-im*dt*h)" begin
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         h4 = kron(Array(ops.Sz), Array(ops.Sz)) + 0.5 * (kron(Array(ops.Sp), Array(ops.Sm)) + kron(Array(ops.Sm), Array(ops.Sp)))
         dt = 0.2
         G = gate(h4, dt, RealTime())
@@ -51,7 +51,7 @@
     end
 
     @testset "gate(h, dt, ImaginaryTime) matches exp(-dt*h)" begin
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         h4 = kron(Array(ops.Sz), Array(ops.Sz))
         dt = 0.3
         G = gate(h4, dt, ImaginaryTime())
@@ -71,7 +71,7 @@
     @testset "gate from ConstantProtocol carries axis type" begin
         g = Chain(2)
         H = Heisenberg(g; J=1.0)
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         h4 = kron(Array(ops.Sp), Array(ops.Sm)) * 0.5 +
              kron(Array(ops.Sm), Array(ops.Sp)) * 0.5 +
              kron(Array(ops.Sz), Array(ops.Sz))
@@ -133,7 +133,7 @@ end
         g = Chain(4)
         psi_vec = normalize(randn(ComplexF64, 2^4))
         ψ = to_mps(as_state(psi_vec, [2,2,2,2]); trunc=NoTrunc(), form=:left)
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         h4 = kron(Array(ops.Sz), Array(ops.Sz))
         G = gate(h4, 0.1, RealTime())
         ψ_new = apply_gate(ψ, G, 2; trunc=NoTrunc())
@@ -146,7 +146,7 @@ end
         g = Chain(4)
         psi_vec = normalize(randn(ComplexF64, 2^4))
         ψ = to_mps(as_state(psi_vec, [2,2,2,2]); trunc=NoTrunc(), form=:left)
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         h4 = kron(Array(ops.Sz), Array(ops.Sz))
         G_fwd = gate(h4, 0.1, RealTime())
         G_bwd = gate(h4, -0.1, RealTime())

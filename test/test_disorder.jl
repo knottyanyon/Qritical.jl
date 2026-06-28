@@ -134,7 +134,7 @@ end
         ψ_gs = result.state
 
         # Ground state via exact diagonalization
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         Sz = Array(ops.Sz)
         ed_result = solve(H, GroundState(), ExactDiagonalization(:ground))
         psi_ed = ed_result.state

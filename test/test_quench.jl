@@ -27,7 +27,7 @@
         g = Chain(4)
         ψ = neel_state(g)
         # local_expectation computes <ψ|σᵢ|ψ> directly without building a full MPO
-        ops = operators(SpinHalf())
+        ops = algebra_generators(SpinHalf())
         sz1 = real(local_expectation(ψ, ComplexF64.(ops.Sz), 1))
         sz2 = real(local_expectation(ψ, ComplexF64.(ops.Sz), 2))
         @test sz1 ≈  0.5  atol=1e-10   # site 1: spin up
