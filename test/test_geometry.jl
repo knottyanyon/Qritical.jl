@@ -47,4 +47,18 @@
         end
     end
 
+    @testset "periodic Chain raises ArgumentError in dense_matrix (closes #79)" begin
+        # dense_matrix assumes i<j for every bond; the wrap bond (L,1) has i>j
+        # and would compute d^(negative) silently.  An informative error must be thrown.
+        g = Chain(4, true)
+        H = XXZ(g; J=1.0)
+        @test_throws ArgumentError dense_matrix(H)
+    end
+
+    @testset "periodic Chain raises ArgumentError in MPO (closes #79)" begin
+        g = Chain(4, true)
+        H = XXZ(g; J=1.0)
+        @test_throws ArgumentError MPO(H)
+    end
+
 end

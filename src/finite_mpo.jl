@@ -137,6 +137,14 @@ julia> size(W.tensors[2])   # interior site: full χ on both sides
 ```
 """
 function MPO(H::Operator)
+    # Reject periodic geometries: the FSM builder assumes bonds are ordered left-to-right
+    # (i < j).  The wrap bond (L,1) has i > j and would corrupt the channel logic.  Fixes #79.
+    if any(bt -> bt.i > bt.j, H.bond)
+        throw(ArgumentError(
+            "MPO does not support periodic boundary conditions: bond " *
+            "$(first(bt for bt in H.bond if bt.i > bt.j)) has i > j.  " *
+            "Use an open-boundary Chain instead."))
+    end
     L  = H.geom.L
     d  = local_dim(H.dof)
     Id = Matrix{ComplexF64}(I, d, d)

@@ -578,6 +578,15 @@ true
 ```
 """
 function dense_matrix(H::Operator)
+    # Reject periodic geometries: the wrap bond (L,1) has i>j, which makes the
+    # intermediate-identity dimension d^(j-i-1) = d^(negative) meaningless.  The
+    # caller should use open boundary conditions for dense_matrix.  Fixes #79.
+    if any(bt -> bt.i > bt.j, H.bond)
+        throw(ArgumentError(
+            "dense_matrix does not support periodic boundary conditions: bond " *
+            "$(first(bt for bt in H.bond if bt.i > bt.j)) has i > j.  " *
+            "Use an open-boundary Chain or the sparse ED path instead."))
+    end
     L = H.geom.L
     d = local_dim(H.dof)
     N = d^L
