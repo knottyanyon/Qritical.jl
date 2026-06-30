@@ -275,11 +275,22 @@ Bond legs are named `:λL` (between U and Σ) and `:λR` (between Σ and Vd):
 
 The `Upper`/`Lower` variance follows the package convention: outgoing legs are
 `Lower` (codomain), incoming legs are `Upper` (domain).
+
+`U_mat` and `Vd_mat` come out of the matrix SVD with the partitions fused into a
+single row/column axis.  They are reshaped back into one axis per original leg —
+`U` to `(left dims..., r)` and `Vd` to `(r, right dims...)` — so the factors are
+genuine multi-leg tensors when a partition groups more than one leg.  This is the
+exact inverse of the column-major fusion done in [`group_legs`](@ref); for the
+single-leg-per-side (matrix) case the reshapes are no-ops.
 """
 function _assemble_qtensors(U_mat, svs, Vd_mat, r, bp::Bipartition)
-    U_qt = QTensor(U_mat, (bp.left..., lower(:λL, r)))
+    left_dims = Tuple(dim(ix) for ix in bp.left)
+    right_dims = Tuple(dim(ix) for ix in bp.right)
+    U_arr = reshape(U_mat, left_dims..., r)
+    Vd_arr = reshape(Vd_mat, r, right_dims...)
+    U_qt = QTensor(U_arr, (bp.left..., lower(:λL, r)))
     Σ_qt = QTensor(Diagonal(svs), (upper(:λL, r), lower(:λR, r)))
-    Vd_qt = QTensor(Vd_mat, (upper(:λR, r), bp.right...))
+    Vd_qt = QTensor(Vd_arr, (upper(:λR, r), bp.right...))
     return U_qt, Σ_qt, Vd_qt
 end
 
