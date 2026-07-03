@@ -32,7 +32,7 @@ function neel_state(g::AbstractGeometry; dof::AbstractDoF=SpinHalf())
         data = zeros(ComplexF64, 1, d, 1)
         σ = isodd(i) ? 1 : 2    # 1 = ↑, 2 = ↓
         data[1, σ, 1] = 1.0
-        tensors[i] = QTensor(data, (upper(:vL, 1), lower(:σ, d), lower(:vR, 1)))
+        tensors[i] = QTensor(data, (upper(:vL, 1), upper(:σ, d), lower(:vR, 1)))
         bond_svs[i + 1] = SingValSpectrum([1.0], 0.0, true)
     end
 

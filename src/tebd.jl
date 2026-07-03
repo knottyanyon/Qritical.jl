@@ -266,8 +266,11 @@ function apply_gate(
     tensors = copy(ψ.tensors)
     bond_svs = copy(ψ.bond_svs)
 
-    tensors[i] = QTensor(A1_new, (upper(:vL, χL), lower(:σ, d), lower(:vR, r)))
-    tensors[j] = QTensor(A2_new, (upper(:vL, r), lower(:σ, d), lower(:vR, χR)))
+    # Outer legs keep their old variance — their partner sites are untouched, so
+    # re-tagging them would break the one-up-one-down bond pairing. The fresh inner
+    # bond points toward site j (arrow in = Upper on j), which absorbed Σ.
+    tensors[i] = QTensor(A1_new, (ψ.tensors[i].indices[1], upper(:σ, d), lower(:vR, r)))
+    tensors[j] = QTensor(A2_new, (upper(:vL, r), upper(:σ, d), ψ.tensors[j].indices[3]))
     normalized = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
     bond_svs[i + 1] = SingValSpectrum(svs, 0.0, normalized)
 
