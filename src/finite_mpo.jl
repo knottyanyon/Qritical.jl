@@ -26,9 +26,18 @@ W_i[\\alpha,\\, \\sigma_{\\text{out}},\\, \\sigma_{\\text{in}},\\, \\beta]
 where:
 
   - ``\\alpha`` — left auxiliary (MPO bond) index of dimension ``\\chi_L``
-  - ``\\sigma_{\\text{out}}`` — outgoing (bra) physical index of dimension ``d``
-  - ``\\sigma_{\\text{in}}``  — incoming (ket) physical index of dimension ``d``
+  - ``\\sigma_{\\text{out}}`` — ket-side (output) physical index of dimension ``d``:
+    the contravariant ``\\sigma'`` of the operator coefficient
+    ``O^{\\sigma'}_{\\sigma}`` in ``\\hat{O} = |\\sigma'\\rangle O^{\\sigma'}_{\\sigma} \\langle\\sigma|``
+    (`Upper` in the covariant convention)
+  - ``\\sigma_{\\text{in}}``  — bra-side (input) physical index of dimension ``d``:
+    the covariant ``\\sigma`` that contracts the input state's ``\\psi^{\\sigma}``
+    (`Lower` in the covariant convention)
   - ``\\beta`` — right auxiliary (MPO bond) index of dimension ``\\chi_R``
+
+The stored tensors are raw `Array`s (no variance tags); the covariant reading
+above governs how they contract with `QTensor` legs in [`expect`](@ref) and
+[`apply_mpo`](@ref).
 
 The full operator matrix is recovered by contracting all ``W_i`` along their
 auxiliary indices with the boundary conditions ``\\alpha_0 = \\beta_L = 1``.
@@ -381,7 +390,7 @@ function _compress_thick_mps(
         bond_svs[i + 1] = SingValSpectrum(svs, ε_bond, normalized)
         result[i] = QTensor(
             reshape(F.U[:, 1:r], χ_left, d, r),
-            (upper(:vL, χ_left), lower(:σ, d), lower(:vR, r)),
+            (upper(:vL, χ_left), upper(:σ, d), lower(:vR, r)),
         )
 
         χ_next_L, _, χ_next_R = size(tensors[i + 1])
@@ -395,7 +404,7 @@ function _compress_thick_mps(
     end
 
     χ_R = size(carry, 3)
-    result[L] = QTensor(carry, (upper(:vL, χ_left), lower(:σ, d), lower(:vR, χ_R)))
+    result[L] = QTensor(carry, (upper(:vL, χ_left), upper(:σ, d), lower(:vR, χ_R)))
     bond_svs[L + 1] = SingValSpectrum([1.0], 0.0, true)
 
     FiniteMPS(result, bond_svs, CanonicalForm(L, L + 1), ε_total)
