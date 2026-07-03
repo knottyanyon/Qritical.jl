@@ -7,8 +7,11 @@ Abstract supertype for the variance of a tensor index.
 
 Following the von Delft / tensor-network convention:
 
-  - [`Upper`](@ref) — superscript, incoming arrow, bra-side → **domain** (`V'`)
-  - [`Lower`](@ref) — subscript, outgoing arrow, ket-side → **codomain** (`V`)
+  - [`Upper`](@ref) — superscript, incoming arrow → **domain** (dual `V'`);
+    the contravariant index of a ket-expansion *coefficient*, e.g. ``\\sigma``
+    in ``|\\psi\\rangle = A^{\\sigma}|\\sigma\\rangle``
+  - [`Lower`](@ref) — subscript, outgoing arrow → **codomain** (primal `V`);
+    the covariant index carried by basis kets and bra-expansion coefficients
 
 Variance is encoded as a **type parameter** rather than an enum value so that dispatch on `Upper` vs. `Lower` is resolved at compile time with zero runtime cost.
 
@@ -19,8 +22,11 @@ abstract type IxLoc end
 """
     Upper <: IxLoc
 
-Variance tag for an **upper** (superscript) index: incoming arrow, bra-side,
-maps to the **domain** of a `TensorMap` and to the dual space `V'`.
+Variance tag for an **upper** (superscript) index: incoming arrow, maps to the
+**domain** of a `TensorMap` and to the dual space `V'`. This is the variance of
+a contravariant ket-expansion coefficient index — the ``\\sigma`` of the stored
+array ``A^{\\sigma}`` in ``|\\psi\\rangle = A^{\\sigma}|\\sigma\\rangle`` — so
+physical legs of state tensors are `Upper`.
 
 In Qritical.jl: `TIx{Upper}` satisfies `which_space == :domain`.
 
@@ -36,8 +42,10 @@ struct Upper <: IxLoc end
 """
     Lower <: IxLoc
 
-Variance tag for a **lower** (subscript) index: outgoing arrow, ket-side,
-maps to the **codomain** of a `TensorMap` and to the primal space `V`.
+Variance tag for a **lower** (subscript) index: outgoing arrow, maps to the
+**codomain** of a `TensorMap` and to the primal space `V`. This is the variance
+of a covariant index — the one labelling basis kets ``|\\sigma\\rangle`` or
+carried by bra-expansion coefficients ``A^{\\dagger}_{\\sigma}``.
 
 In Qritical.jl: `TIx{Lower}` satisfies `which_space == :codomain`.
 
@@ -165,8 +173,8 @@ label(ix::TIx) = ix.label
 Return `:domain` for an [`Upper`](@ref) index and `:codomain` for a
 [`Lower`](@ref) index, reflecting the von Delft convention:
 
-  - upper = incoming bra = domain (dual `V'`)
-  - lower = outgoing ket = codomain (primal `V`)
+  - upper = incoming arrow = contravariant coefficient index = domain (dual `V'`)
+  - lower = outgoing arrow = covariant index = codomain (primal `V`)
 
 # Examples
 
@@ -184,6 +192,37 @@ which_space(::TIx{Lower}) = :codomain
 Base.:(==)(a::TIx{L}, b::TIx{L}) where {L<:IxLoc} = a.label == b.label && a.dim == b.dim
 Base.:(==)(::TIx, ::TIx) = false   # different variance → never equal
 Base.hash(ix::TIx, h::UInt) = hash(ix.label, hash(ix.dim, hash(typeof(ix), h)))
+
+"""
+    flip(ix::TIx) -> TIx
+
+Raise or lower a single index: return an index with the same label and
+dimension but the **opposite variance** (`Upper` ↔ `Lower`), moving the leg
+between domain and codomain. Diagrammatically, `flip` reverses the leg's arrow.
+
+With the trivial metric of an orthonormal basis, raising and lowering an index
+does not change any numerical value, so `flip` is a pure re-labelling. It is an
+involution: `flip(flip(ix)) == ix`.
+
+`flip` acts on **one leg only** — contrast with the adjoint, which flips *every*
+leg, reverses their order, and conjugates the data. Flipping one end of a
+contracted bond breaks the upper-with-lower pairing rule; a bond must be flipped
+at **both** ends (as happens when the orthogonality centre moves across it).
+
+See also: [`upper`](@ref), [`lower`](@ref), [`which_space`](@ref)
+
+# Examples
+
+```jldoctest
+julia> flip(upper(:a, 3)) == lower(:a, 3)
+true
+
+julia> flip(flip(upper(:a, 3))) == upper(:a, 3)
+true
+```
+"""
+flip(ix::TIx{Upper}) = TIx{Lower}(ix.label, ix.dim)
+flip(ix::TIx{Lower}) = TIx{Upper}(ix.label, ix.dim)
 
 # ======================= Single-index convenience constructors ======================
 

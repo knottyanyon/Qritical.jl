@@ -47,7 +47,7 @@ include("disorder.jl")
 # ==== Index layer =============================================================
 export IxLoc, Upper, Lower
 export AbstractIx, TIx, MulTIx
-export dim, label, which_space
+export dim, label, which_space, flip
 export upper, lower, uppers, lowers, uppers_range, lowers_range, bond_label
 
 # ==== QTensor + partitions ====================================================
