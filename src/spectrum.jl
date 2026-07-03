@@ -11,15 +11,17 @@ sit on either side of a shared index.
 ```
 
 A `Bond` carries no numerical data — it only records which `TIx` objects name
-the two faces of the link:
+the two faces of the gauge centre ``\\Sigma``:
 
-- `.lower :: TIx{Lower}` — the **outgoing** (codomain) face; sits on the right
-  leg of the left tensor (e.g. the ``\\lambda_R`` leg of ``\\Sigma``).
-- `.upper :: TIx{Upper}` — the **incoming** (domain) face; sits on the left leg
-  of the right tensor (e.g. the ``\\lambda_L`` leg of ``\\Sigma``).
+- `.left  :: TIx{Upper}` — ``\\Sigma``'s left face (``\\lambda_L``); its partner
+  on ``U`` is the `Lower` leg of the same label.
+- `.right :: TIx{Upper}` — ``\\Sigma``'s right face (``\\lambda_R``); its partner
+  on ``V^\\dagger`` is the `Lower` leg of the same label.
 
-The naming matches the package convention: `Lower` = codomain = outgoing,
-`Upper` = domain = incoming (§13, §23 of MasterPlan).
+Both faces are `Upper` because ``\\Sigma`` **is** the orthogonality centre: bond
+arrows always point toward the centre, so both arrows point *into* ``\\Sigma``
+(`Upper` = incoming = domain). The isometries on either side carry the matching
+outgoing (`Lower`) ends, preserving the one-up-one-down contraction rule.
 
 # Construction
 
@@ -27,8 +29,8 @@ After `do_svd`, the bond is derived directly from the ``\\Sigma`` factor:
 
 ```julia
 F = do_svd(A, bp, NoTrunc())
-F.center.bond.lower === F.Σ.indices[2]  # lower(:λR, r)
-F.center.bond.upper === F.Σ.indices[1]  # upper(:λL, r)
+F.center.bond.left  === F.Σ.indices[1]  # upper(:λL, r)
+F.center.bond.right === F.Σ.indices[2]  # upper(:λR, r)
 ```
 
 No label matching is needed — the legs are the *same* `TIx` objects.
@@ -37,8 +39,8 @@ No label matching is needed — the legs are the *same* `TIx` objects.
 [`BondCenter`](@ref), [`OrthoCenter`](@ref)
 """
 struct Bond
-    lower::TIx{Lower}
-    upper::TIx{Upper}
+    left::TIx{Upper}
+    right::TIx{Upper}
 end
 
 # ==== Orthogonality-centre hierarchy ==========================================
@@ -70,8 +72,9 @@ gauge freedom.  Conversion to left-canonical shifts the centre rightward
 it leftward (absorbing ``\\Sigma`` into ``U``).
 
 # Fields
-- `bond :: Bond` — the link on which the centre sits; `.bond.lower` is the
-  right leg of ``U`` and `.bond.upper` is the left leg of ``V^\\dagger``.
+- `bond :: Bond` — the link on which the centre sits; `.bond.left` and
+  `.bond.right` are ``\\Sigma``'s own (both `Upper`) faces, whose partners are
+  the right leg of ``U`` and the left leg of ``V^\\dagger`` respectively.
 
 # See also
 [`SiteCenter`](@ref), [`Bond`](@ref)
@@ -88,14 +91,15 @@ physical leg and is neither left- nor right-orthogonal.  This form arises
 after `move_center!` sweeps the gauge to a specific site.
 
 # Fields
-- `leg :: TIx{Lower}` — the physical leg of the site tensor that is the
-  current centre.
+- `leg :: TIx{Upper}` — the physical leg of the site tensor that is the
+  current centre. Physical legs are `Upper` (contravariant coefficients), and
+  on the centre site every leg is `Upper` — both bond arrows point in.
 
 # See also
 [`BondCenter`](@ref), [`OrthoCenter`](@ref)
 """
 struct SiteCenter <: OrthoCenter
-    leg::TIx{Lower}
+    leg::TIx{Upper}
 end
 
 # ==== Spectrum hierarchy ======================================================
