@@ -180,8 +180,8 @@ using Qritical
             let F = do_svd(A, bp, NoTrunc()),
                 s = SchmidtSpectrum(F.spectrum, bp, F.center)
 
-                @test s.center.bond.upper == F.Σ.indices[1]   # upper(:λL, r)
-                @test s.center.bond.lower == F.Σ.indices[2]   # lower(:λR, r)
+                @test s.center.bond.left == F.Σ.indices[1]    # upper(:λL, r)
+                @test s.center.bond.right == F.Σ.indices[2]   # upper(:λR, r) — Σ is the centre, both faces Upper
             end
         end
     end
@@ -265,9 +265,9 @@ using Qritical
 
     @testset "BondCenter vs SiteCenter dispatch is exhaustive over OrthoCenter" begin
         # Physics: orthogonality centre is either a bond or a site — nothing else.
-        let bond = Bond(lower(:λL, 4), upper(:λR, 4)),
+        let bond = Bond(upper(:λL, 4), upper(:λR, 4)),   # both faces of the centre are Upper
             bond_center = BondCenter(bond),
-            site_center = SiteCenter(lower(:σ, 2))
+            site_center = SiteCenter(upper(:σ, 2))       # physical legs are Upper
 
             @test bond_center isa OrthoCenter
             @test site_center isa OrthoCenter

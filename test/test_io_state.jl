@@ -49,7 +49,7 @@ const SCRATCHPAD = "/private/tmp/claude-501/-Users-bavithra-Documents-Uni-Course
             let σ_vals = [0.8, 0.6],
                 spec = SingValSpectrum(σ_vals, 0.0, false),
                 # Construct a SchmidtSpectrum with dummy bond and cut
-                bond = Bond(lower(:λL, 2), upper(:λR, 2)),
+                bond = Bond(upper(:λL, 2), upper(:λR, 2)),   # both centre faces Upper
                 bp = Bipartition(Partition([lower(:i, 2)]), Partition([lower(:j, 2)])),
                 s = SchmidtSpectrum(spec, bp, BondCenter(bond))
 
@@ -175,7 +175,7 @@ const SCRATCHPAD = "/private/tmp/claude-501/-Users-bavithra-Documents-Uni-Course
         @testset "bipartition_matrix on rank-3 tensor: left partition (σ,vL) vs right (vR)" begin
             # Physics: a 3-leg tensor can be bipartitioned into a matrix.
             # Left partition: {σ, vL} → rows; right partition: {vR} → cols.
-            let σ = lower(:σ, 2),
+            let σ = upper(:σ, 2),
                 vL = upper(:vL, 3),
                 vR = lower(:vR, 5),
                 A = QTensor(randn(2, 3, 5), (σ, vL, vR)),

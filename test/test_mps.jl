@@ -55,10 +55,10 @@ end
             d = 2
             # Create L site tensors with generic dimensions
             tensors = [
-                QTensor(randn(1, d, 2), (upper(:vL, 1), lower(:σ, d), lower(:vR, 2))),
-                QTensor(randn(2, d, 3), (upper(:vL, 2), lower(:σ, d), lower(:vR, 3))),
-                QTensor(randn(3, d, 2), (upper(:vL, 3), lower(:σ, d), lower(:vR, 2))),
-                QTensor(randn(2, d, 1), (upper(:vL, 2), lower(:σ, d), lower(:vR, 1))),
+                QTensor(randn(1, d, 2), (upper(:vL, 1), upper(:σ, d), lower(:vR, 2))),
+                QTensor(randn(2, d, 3), (upper(:vL, 2), upper(:σ, d), lower(:vR, 3))),
+                QTensor(randn(3, d, 2), (upper(:vL, 3), upper(:σ, d), lower(:vR, 2))),
+                QTensor(randn(2, d, 1), (upper(:vL, 2), upper(:σ, d), lower(:vR, 1))),
             ]
             bond_svs = [
                 SingValSpectrum([1.0], 0.0, true),
@@ -80,9 +80,9 @@ end
             L = 3
             d = 2
             tensors = [
-                QTensor(randn(1, d, 2), (upper(:vL, 1), lower(:σ, d), lower(:vR, 2))),
-                QTensor(randn(2, d, 2), (upper(:vL, 2), lower(:σ, d), lower(:vR, 2))),
-                QTensor(randn(2, d, 1), (upper(:vL, 2), lower(:σ, d), lower(:vR, 1))),
+                QTensor(randn(1, d, 2), (upper(:vL, 1), upper(:σ, d), lower(:vR, 2))),
+                QTensor(randn(2, d, 2), (upper(:vL, 2), upper(:σ, d), lower(:vR, 2))),
+                QTensor(randn(2, d, 1), (upper(:vL, 2), upper(:σ, d), lower(:vR, 1))),
             ]
             bond_svs = [
                 SingValSpectrum([1.0], 0.0, true),
@@ -103,8 +103,8 @@ end
             L = 2
             d = 2
             tensors = [
-                QTensor(randn(1, d, 2), (upper(:vL, 1), lower(:σ, d), lower(:vR, 2))),
-                QTensor(randn(2, d, 1), (upper(:vL, 2), lower(:σ, d), lower(:vR, 1))),
+                QTensor(randn(1, d, 2), (upper(:vL, 1), upper(:σ, d), lower(:vR, 2))),
+                QTensor(randn(2, d, 1), (upper(:vL, 2), upper(:σ, d), lower(:vR, 1))),
             ]
             bond_svs = [
                 SingValSpectrum([1.0], 0.0, true),
@@ -126,9 +126,9 @@ end
             L = 3
             d = 2
             tensors = [
-                QTensor(randn(1, d, 2), (upper(:vL, 1), lower(:σ, d), lower(:vR, 2))),
-                QTensor(randn(2, d, 3), (upper(:vL, 2), lower(:σ, d), lower(:vR, 3))),
-                QTensor(randn(3, d, 1), (upper(:vL, 3), lower(:σ, d), lower(:vR, 1))),
+                QTensor(randn(1, d, 2), (upper(:vL, 1), upper(:σ, d), lower(:vR, 2))),
+                QTensor(randn(2, d, 3), (upper(:vL, 2), upper(:σ, d), lower(:vR, 3))),
+                QTensor(randn(3, d, 1), (upper(:vL, 3), upper(:σ, d), lower(:vR, 1))),
             ]
             bond_svs = [
                 SingValSpectrum([1.0], 0.0, true),
@@ -151,8 +151,8 @@ end
             L = 2
             d = 2
             tensors = [
-                QTensor(randn(1, d, 2), (upper(:vL, 1), lower(:σ, d), lower(:vR, 2))),
-                QTensor(randn(2, d, 1), (upper(:vL, 2), lower(:σ, d), lower(:vR, 1))),
+                QTensor(randn(1, d, 2), (upper(:vL, 1), upper(:σ, d), lower(:vR, 2))),
+                QTensor(randn(2, d, 1), (upper(:vL, 2), upper(:σ, d), lower(:vR, 1))),
             ]
             bond_svs = [
                 SingValSpectrum([1.0], 0.0, true),

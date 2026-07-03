@@ -386,8 +386,8 @@ using Qritical
         # The SVD should respect the bipartition correctly.
 
         # A simple 3-site MPS-like tensor: σ_1, σ_2 (physical), vL, vR (bonds)
-        σ1 = lower(:σ1, 2)
-        σ2 = lower(:σ2, 2)
+        σ1 = upper(:σ1, 2)
+        σ2 = upper(:σ2, 2)
         vL = upper(:vL, 4)
         vR = lower(:vR, 4)
 
@@ -526,9 +526,9 @@ end  # @testset "SVD and truncation"
 
     # 3-qubit uniform product state — shared by both boundary-bond tests.
     @testset "Boundary bonds of open-chain product state" begin
-        let _σ1 = lower(:σ1, 2),
-            _σ2 = lower(:σ2, 2),
-            _σ3 = lower(:σ3, 2),
+        let _σ1 = upper(:σ1, 2),
+            _σ2 = upper(:σ2, 2),
+            _σ3 = upper(:σ3, 2),
             ψ_tensor = QTensor(ones(2, 2, 2) / (2 * sqrt(2)), (_σ1, _σ2, _σ3)),
             bp = Bipartition(Partition([_σ1]), Partition([_σ2, _σ3]))
 

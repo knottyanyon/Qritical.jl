@@ -155,7 +155,7 @@
         end
 
         @testset "leg names (labels) are remembered even when directions are mixed" begin
-            indices = (upper(:vL, 2), lower(:σ, 3), upper(:vR, 4))
+            indices = (upper(:vL, 2), upper(:σ, 3), lower(:vR, 4))
             t = QTensor(rand(2, 3, 4), indices)
 
             @test label(t.indices[1]) == :vL
@@ -251,7 +251,7 @@
 
         @testset "a fused (grouped) leg can also sit in the tuple" begin
             i = upper(:i, 2)
-            σ = lower(:σ, 3)
+            σ = upper(:σ, 3)
             grouped = MulTIx(:iσ, (i, σ))
             k = upper(:k, 4)
             t = QTensor(rand(6, 4), (grouped, k))
@@ -327,7 +327,7 @@ end
 @testset "group_legs: reshaping a tensor into a matrix along a bipartition" begin
 
     @testset "rank-3 tensor {σ, vL | vR}: output shape is (dim(σ)*dim(vL)) × dim(vR)" begin
-        σ  = lower(:σ,  2)
+        σ  = upper(:σ,  2)
         vL = upper(:vL, 3)
         vR = lower(:vR, 4)
         A  = QTensor(rand(2, 3, 4), (σ, vL, vR))
@@ -337,7 +337,7 @@ end
     end
 
     @testset "result is a rank-2 QTensor with a MulTIx on each leg" begin
-        σ  = lower(:σ,  2)
+        σ  = upper(:σ,  2)
         vL = upper(:vL, 3)
         vR = lower(:vR, 4)
         A  = QTensor(rand(2, 3, 4), (σ, vL, vR))
@@ -350,7 +350,7 @@ end
     end
 
     @testset "left partition legs become rows, right partition legs become columns" begin
-        σ  = lower(:σ,  2)
+        σ  = upper(:σ,  2)
         vL = upper(:vL, 3)
         vR = lower(:vR, 4)
         A  = QTensor(rand(2, 3, 4), (σ, vL, vR))
@@ -361,7 +361,7 @@ end
     end
 
     @testset "fused leg metadata records the constituent legs" begin
-        σ  = lower(:σ,  2)
+        σ  = upper(:σ,  2)
         vL = upper(:vL, 3)
         vR = lower(:vR, 4)
         A  = QTensor(rand(2, 3, 4), (σ, vL, vR))
@@ -374,7 +374,7 @@ end
     end
 
     @testset "data round-trip: reshape back recovers the original values" begin
-        σ  = lower(:σ,  2)
+        σ  = upper(:σ,  2)
         vL = upper(:vL, 3)
         vR = lower(:vR, 4)
         data = rand(2, 3, 4)
@@ -387,7 +387,7 @@ end
     end
 
     @testset "legs in non-natural order: tensor axes are permuted before reshape" begin
-        σ  = lower(:σ,  2)
+        σ  = upper(:σ,  2)
         vL = upper(:vL, 3)
         vR = lower(:vR, 4)
         data = rand(2, 3, 4)   # tensor natural order: (σ=2, vL=3, vR=4)
@@ -431,7 +431,7 @@ end
     end
 
     @testset "a leg in the bipartition that is not in the tensor raises ArgumentError" begin
-        σ     = lower(:σ,  2)
+        σ     = upper(:σ,  2)
         vR    = lower(:vR, 4)
         ghost = lower(:ghost, 7)   # not a leg of A
         A  = QTensor(rand(2, 4), (σ, vR))
@@ -440,7 +440,7 @@ end
     end
 
     @testset "a leg of the tensor not covered by the bipartition raises ArgumentError" begin
-        σ  = lower(:σ,  2)
+        σ  = upper(:σ,  2)
         vL = upper(:vL, 3)
         vR = lower(:vR, 4)
         A  = QTensor(rand(2, 3, 4), (σ, vL, vR))
@@ -450,7 +450,7 @@ end
     end
 
     @testset "complement + bipartition convenience used together with group_legs" begin
-        σ  = lower(:σ,  2)
+        σ  = upper(:σ,  2)
         vL = upper(:vL, 3)
         vR = lower(:vR, 4)
         data = rand(2, 3, 4)
