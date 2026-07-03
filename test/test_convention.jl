@@ -35,9 +35,12 @@
 is_upper(ix) = which_space(ix) === :domain
 is_lower(ix) = which_space(ix) === :codomain
 
-# A random L-site coefficient tensor A^{σ₁…σ_L} with the correct Upper physical legs.
+# A random normalised L-site coefficient tensor A^{σ₁…σ_L} with the correct Upper
+# physical legs. Normalised so that EVERY site of a canonical form is isometric —
+# for an unnormalised state the edge site carries ‖ψ‖ and fails A†A = I.
 function rand_coeff_tensor(L::Int, d::Int)
     data = randn(ComplexF64, ntuple(_ -> d, L)...)
+    data ./= norm(data)
     return QTensor(data, Tuple(upper(Symbol(:σ, i), d) for i in 1:L))
 end
 

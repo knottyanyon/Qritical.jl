@@ -370,6 +370,69 @@ is returned regardless.
 """
 TensorOperations.tensorstructure(t::QTensor, i::Int, ::Bool) = t.indices[i]
 
+# ==== Adjoint & flips =========================================================
+
+"""
+    Base.adjoint(A::QTensor) -> QTensor
+    A'
+
+Return the Hermitian adjoint of `A` under the von Delft covariant convention:
+**flip every leg's variance, reverse the leg order, and conjugate the data**,
+
+```math
+[A^{\\dagger}]^{\\beta}_{\\sigma\\alpha} := \\overline{A^{\\alpha\\sigma}_{\\beta}},
+```
+
+generalising ``(MN)^{\\dagger} = N^{\\dagger}M^{\\dagger}`` to arbitrary order.
+Labels are **not** primed — the daggering is carried entirely by the variance
+and the leg positions. Because position `p` is array axis `p` (row = leftmost),
+the leg reversal is mirrored on the backing array:
+`(A').data == conj(permutedims(A.data, reverse(1:ndims(A))))`.
+
+The adjoint is an involution, `(A')' == A`, and reproduces the familiar matrix
+adjoint for order-2 tensors: `(A').data == adjoint(A.data)`.
+
+This is the same operation as TensorKit's `adjoint`: swap domain and codomain,
+dualise every leg, reverse their order.
+
+See also: [`dagger`](@ref), [`flip`](@ref)
+"""
+function Base.adjoint(A::QTensor)
+    N = length(A.indices)
+    data = conj(permutedims(A.data, ntuple(k -> N + 1 - k, N)))
+    return QTensor(data, reverse(map(flip, A.indices)))
+end
+
+"""
+    dagger(A::QTensor) -> QTensor
+
+Syntactic sugar for [`Base.adjoint`](@ref): `dagger(A) == A'`. Provided for
+readability in physics-flavoured code where ``A^{\\dagger}`` is spelled out.
+"""
+dagger(A::QTensor) = adjoint(A)
+
+"""
+    flip(A::QTensor, i::Integer) -> QTensor
+
+Raise or lower leg `i` of `A`: return a `QTensor` whose `i`-th index has the
+opposite variance, all other legs untouched. With the trivial metric of an
+orthonormal basis this is numerically free, so **the backing array is reused
+as-is** — no copy, no conjugation, no permutation.
+
+Contrast with the adjoint, which flips *every* leg, reverses their order, and
+conjugates the data. Flipping a single end of a contracted bond breaks the
+upper-with-lower pairing rule; flip bonds at **both** ends (this is what a
+centre-move across a bond does).
+
+See also: [`flip(::TIx)`](@ref), [`Base.adjoint(::QTensor)`](@ref)
+"""
+function flip(A::QTensor, i::Integer)
+    1 <= i <= length(A.indices) ||
+        throw(ArgumentError("flip: leg $i out of range for an order-$(length(A.indices)) tensor."))
+    indices = ntuple(k -> k == i ? flip(A.indices[k]) : A.indices[k], length(A.indices))
+    return QTensor(A.data, indices)
+end
+
 # ==== State utilities =========================================================
 
 """

@@ -51,7 +51,7 @@ export dim, label, which_space, flip
 export upper, lower, uppers, lowers, uppers_range, lowers_range, bond_label
 
 # ==== QTensor + partitions ====================================================
-export QTensor
+export QTensor, dagger
 export Partition, Bipartition, complement, bipartition, group_legs
 
 # ==== SVD + truncation ========================================================
