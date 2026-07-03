@@ -42,18 +42,20 @@ function _left_sweep_mps!(
         ε_total += ε_bond
 
         tensors[i] = QTensor(
-            reshape(F.U[:, 1:r], χL, d, r), (upper(:vL, χL), lower(:σ, d), lower(:vR, r))
+            reshape(F.U[:, 1:r], χL, d, r), (upper(:vL, χL), upper(:σ, d), lower(:vR, r))
         )
         normalized = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
         bond_svs[i + 1] = SingValSpectrum(svs, ε_bond, normalized)
 
-        # Absorb Σ·Vd into next tensor
+        # Absorb Σ·Vd into next tensor; tagged left-canonical (Up,Up,Low) — transient
+        # if the sweep continues, final if site i+1 is the left form's norm carrier.
+        # Mixed-form configs retag their centre site to all-Upper afterwards.
         carry = Diagonal(svs) * F.Vt[1:r, :]    # (r, χR)
         A_next = tensors[i + 1].data                # (χR, d_next, χR_next)
         _, d_next, χR_next = size(A_next)
         merged = reshape(carry * reshape(A_next, χR, d_next * χR_next), r, d_next, χR_next)
         tensors[i + 1] = QTensor(
-            merged, (upper(:vL, r), lower(:σ, d_next), lower(:vR, χR_next))
+            merged, (upper(:vL, r), upper(:σ, d_next), lower(:vR, χR_next))
         )
     end
     return ε_total
@@ -79,19 +81,30 @@ function _right_sweep_mps!(
         ε_total += ε_bond
 
         tensors[i] = QTensor(
-            reshape(F.Vt[1:r, :], r, d, χR), (upper(:vL, r), lower(:σ, d), lower(:vR, χR))
+            reshape(F.Vt[1:r, :], r, d, χR), (lower(:vL, r), upper(:σ, d), upper(:vR, χR))
         )
         normalized = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
         bond_svs[i] = SingValSpectrum(svs, ε_bond, normalized)
 
-        # Absorb U·Σ into previous tensor
+        # Absorb U·Σ into previous tensor; tagged right-canonical (Low,Up,Up) — transient
+        # if the sweep continues, final if site i-1 is the right form's norm carrier.
+        # Mixed-form configs retag their centre site to all-Upper afterwards.
         carry = F.U[:, 1:r] * Diagonal(svs)   # (χL, r)
         A_prev = tensors[i - 1].data              # (χL_p, d_p, χL)
         χL_p, d_p, _ = size(A_prev)
         merged = reshape(reshape(A_prev, χL_p * d_p, χL) * carry, χL_p, d_p, r)
-        tensors[i - 1] = QTensor(merged, (upper(:vL, χL_p), lower(:σ, d_p), lower(:vR, r)))
+        tensors[i - 1] = QTensor(merged, (lower(:vL, χL_p), upper(:σ, d_p), upper(:vR, r)))
     end
     return ε_total
+end
+
+# Retag site k as the orthogonality centre: both bond arrows point INTO the
+# centre, so every leg is Upper (domain). The data is untouched — with the
+# trivial metric this is a pure re-labelling (a double bond-end flip).
+function _tag_centre!(tensors::Vector{QTensor}, k::Int)
+    χL, d, χR = size(tensors[k].data)
+    tensors[k] = QTensor(tensors[k].data, (upper(:vL, χL), upper(:σ, d), upper(:vR, χR)))
+    return nothing
 end
 
 # ==== Canonicalize configs ====================================================
@@ -211,6 +224,7 @@ function canonicalize(mps::FiniteMPS, config::BondCanonical)
     bond_svs = copy(mps.bond_svs)
     ε = (k > 1) ? _left_sweep_mps!(tensors, bond_svs, 1:(k - 1), config.trunc) : 0.0
     ε += (k < L) ? _right_sweep_mps!(tensors, bond_svs, (k + 1):L, config.trunc) : 0.0
+    _tag_centre!(tensors, k)
     return FiniteMPS(tensors, bond_svs, CanonicalForm(k, k + 1), ε)
 end
 
@@ -221,6 +235,7 @@ function canonicalize(mps::FiniteMPS, config::SiteCanonical)
     bond_svs = copy(mps.bond_svs)
     ε = (k > 1) ? _left_sweep_mps!(tensors, bond_svs, 1:(k - 1), config.trunc) : 0.0
     ε += (k < L) ? _right_sweep_mps!(tensors, bond_svs, (k + 1):L, config.trunc) : 0.0
+    _tag_centre!(tensors, k)
     return FiniteMPS(tensors, bond_svs, CanonicalForm(k - 1, k + 1), ε)
 end
 
