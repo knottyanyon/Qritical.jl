@@ -241,7 +241,7 @@ in `A.indices`.  Delegates to `complement(p, A.indices)`.
 
 # Examples
 ```jldoctest
-julia> vL = upper(:vL, 2);  σ = lower(:σ, 3);  vR = lower(:vR, 4);
+julia> vL = upper(:vL, 2);  σ = upper(:σ, 3);  vR = lower(:vR, 4);
 
 julia> A = QTensor(rand(2, 3, 4), (vL, σ, vR));
 
@@ -260,7 +260,7 @@ Construct a [`Bipartition`](@ref) for tensor `A` whose right side is
 
 # Examples
 ```jldoctest
-julia> vL = upper(:vL, 2);  σ = lower(:σ, 3);  vR = lower(:vR, 4);
+julia> vL = upper(:vL, 2);  σ = upper(:σ, 3);  vR = lower(:vR, 4);
 
 julia> A = QTensor(rand(2, 3, 4), (vL, σ, vR));
 
@@ -292,7 +292,7 @@ specified in the partition before reshaping.
 
 # Examples
 ```jldoctest
-julia> σ  = lower(:σ,  2);  vL = upper(:vL, 3);  vR = lower(:vR, 4);
+julia> σ  = upper(:σ,  2);  vL = upper(:vL, 3);  vR = lower(:vR, 4);
 
 julia> A  = QTensor(rand(2, 3, 4), (σ, vL, vR));
 

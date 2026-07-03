@@ -253,12 +253,12 @@ Construct a lower (codomain) index. Prefer this over `TIx{Lower}(label, dim)`.
 # Examples
 
 ```jldoctest
-julia> σ = lower(:σ, 2);
+julia> vR = lower(:vR, 2);
 
-julia> which_space(σ)
+julia> which_space(vR)
 :codomain
 
-julia> dim(σ)
+julia> dim(vR)
 2
 ```
 """
@@ -525,7 +525,7 @@ Use [`Bipartition`](@ref) to pair two complementary `Partition`s, and
 
 ```jldoctest
 julia> vL = upper(:vL, 2);
-       σ = lower(:σ, 3);
+       σ = upper(:σ, 3);
 
 julia> p = Partition([vL, σ]);
 
@@ -563,7 +563,7 @@ may be built before a tensor is chosen.
 
 ```jldoctest
 julia> vL = upper(:vL, 2);
-       σ = lower(:σ, 3);
+       σ = upper(:σ, 3);
        vR = lower(:vR, 4);
 
 julia> bp = Bipartition(Partition([vL, σ]), Partition([vR]));
@@ -611,7 +611,7 @@ See also: [`bipartition`](@ref), [`Bipartition`](@ref)
 
 ```jldoctest
 julia> vL = upper(:vL, 2);
-       σ = lower(:σ, 3);
+       σ = upper(:σ, 3);
        vR = lower(:vR, 4);
 
 julia> complement(Partition([vL, σ]), [vL, σ, vR])
@@ -621,7 +621,7 @@ julia> complement(Partition([vL, σ]), [vL, σ, vR])
 julia> complement(Partition([]), [vL, σ])
 2-element Vector{AbstractIx}:
  TIx{Upper}(:vL, 2)
- TIx{Lower}(:σ, 3)
+ TIx{Upper}(:σ, 3)
 ```
 """
 complement(p::Partition, indices) = Partition([ix for ix in indices if ix ∉ p])
@@ -640,7 +640,7 @@ side.
 
 ```jldoctest
 julia> vL = upper(:vL, 2);
-       σ = lower(:σ, 3);
+       σ = upper(:σ, 3);
        vR = lower(:vR, 4);
 
 julia> bp = bipartition(Partition([vL, σ]), [vL, σ, vR]);
