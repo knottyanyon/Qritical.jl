@@ -52,22 +52,27 @@ struct ArbitraryForm <: AbstractMPSForm end
 Matrix-product state for a finite open chain with ``L`` sites.
 
 # Fields
-- `tensors::Vector{QTensor}`: ``L`` site tensors, each order-3 with legs
-  ``(\\texttt{vL}::\\text{Upper},\\; \\sigma::\\text{Lower},\\; \\texttt{vR}::\\text{Lower})``
+- `tensors::Vector{QTensor}`: ``L`` site tensors, each order-3 with legs stored
+  in the order ``(\\texttt{vL},\\; \\sigma,\\; \\texttt{vR})``
 - `bond_svs::Vector{SingValSpectrum}`: ``L+1`` bond spectra; boundaries carry the
   trivial spectrum ``[1.0]``
 - `form::AbstractMPSForm`: canonical-form tag
 - `ε::Float64`: accumulated truncation error — sum of per-bond discarded singular-value
   2-norms (zero for `NoTrunc`)
 
-# Index convention (MasterPlan §13/§23)
-```
-    vL (Upper, χ_L)
-    │
-    ● σ (Lower, d)
-    │
-    vR (Lower, χ_R)
-```
+# Index convention (MasterPlan §13/§23; von Delft covariant notation)
+
+The physical leg ``\\sigma`` is **always `Upper`** — the stored array is the
+contravariant ket-expansion coefficient ``A^{\\sigma}``. Bond variance is
+**form-dependent**: every bond arrow points toward the orthogonality centre
+(`Upper` = arrow in, `Lower` = arrow out), so
+
+| Site | vL | ``\\sigma`` | vR |
+|------|----|----|----|
+| left-canonical ``A^{i,\\sigma}_k`` | `Upper` | `Upper` | `Lower` |
+| right-canonical ``B_k^{i,\\sigma}`` | `Lower` | `Upper` | `Upper` |
+| orthogonality centre | `Upper` | `Upper` | `Upper` |
+
 Boundary sites have ``\\chi_L = 1`` (left) and ``\\chi_R = 1`` (right).
 """
 struct FiniteMPS
@@ -104,7 +109,7 @@ function _left_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
         ε_total += ε_bond
 
         tensors[i]    = QTensor(reshape(F.U[:, 1:r], χ_left, d[i], r),
-                                (upper(:vL, χ_left), lower(:σ, d[i]), lower(:vR, r)))
+                                (upper(:vL, χ_left), upper(:σ, d[i]), lower(:vR, r)))
         normalized    = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
         bond_svs[i+1] = SingValSpectrum(svs, ε_bond, normalized)
 
@@ -114,7 +119,7 @@ function _left_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
 
     # Last site: carry has shape (χ_left, d_L)
     tensors[L] = QTensor(reshape(carry, χ_left, d[L], 1),
-                         (upper(:vL, χ_left), lower(:σ, d[L]), lower(:vR, 1)))
+                         (upper(:vL, χ_left), upper(:σ, d[L]), lower(:vR, 1)))
 
     return FiniteMPS(tensors, bond_svs, CanonicalForm(L, L + 1), ε_total)
 end
@@ -144,7 +149,7 @@ function _right_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
         ε_total += ε_bond
 
         tensors[i]  = QTensor(reshape(F.Vt[1:r, :], r, d[i], χ_right),
-                              (upper(:vL, r), lower(:σ, d[i]), lower(:vR, χ_right)))
+                              (lower(:vL, r), upper(:σ, d[i]), upper(:vR, χ_right)))
         normalized  = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
         bond_svs[i] = SingValSpectrum(svs, ε_bond, normalized)
 
@@ -154,7 +159,7 @@ function _right_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
 
     # Site 1: carry has shape (d₁, χ_right)
     tensors[1] = QTensor(reshape(carry, 1, d[1], χ_right),
-                         (upper(:vL, 1), lower(:σ, d[1]), lower(:vR, χ_right)))
+                         (lower(:vL, 1), upper(:σ, d[1]), upper(:vR, χ_right)))
 
     return FiniteMPS(tensors, bond_svs, CanonicalForm(0, 1), ε_total)
 end
@@ -168,7 +173,8 @@ Decompose a full quantum state tensor into a canonical matrix-product state via
 iterated SVD.
 
 # Arguments
-- `ψ::QTensor`: full state tensor with ``L`` physical legs, all of type `Lower`
+- `ψ::QTensor`: full coefficient tensor ``A^{\\sigma_1 \\ldots \\sigma_L}`` with
+  ``L`` physical legs, all of type `Upper` (contravariant ket-expansion indices)
 - `trunc::AbstractTrunc`: truncation strategy (default: `NoTrunc()`)
 - `form::Symbol`: `:left` for left-canonical sweep or `:right` for right-canonical sweep
 
@@ -299,7 +305,9 @@ function add_mps(
             blk[(χLψ+1):end, :, (χRψ+1):end]   = Aφ
         end
 
-        new_indices = (upper(:vL, χL_new), lower(:σ, d), lower(:vR, χR_new))
+        # transient ArbitraryForm tensors: σ is Upper on every state tensor; the
+        # bond tags are provisional until _recompress_left assigns the canonical ones
+        new_indices = (upper(:vL, χL_new), upper(:σ, d), lower(:vR, χR_new))
         tensors[i]  = QTensor(blk, new_indices)
     end
 
@@ -349,7 +357,7 @@ function _recompress_left(mps::FiniteMPS, trunc::AbstractTrunc)::FiniteMPS
         ε_total += ε_bond
 
         tensors[i]    = QTensor(reshape(F.U[:, 1:r], χL, d, r),
-                                (upper(:vL, χL), lower(:σ, d), lower(:vR, r)))
+                                (upper(:vL, χL), upper(:σ, d), lower(:vR, r)))
         normalized    = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
         bond_svs[i+1] = SingValSpectrum(svs, ε_bond, normalized)
 
@@ -363,7 +371,7 @@ function _recompress_left(mps::FiniteMPS, trunc::AbstractTrunc)::FiniteMPS
     end
 
     # Last site: carry is already the final tensor
-    tensors[L] = QTensor(carry, (upper(:vL, χL), lower(:σ, size(carry, 2)), lower(:vR, size(carry, 3))))
+    tensors[L] = QTensor(carry, (upper(:vL, χL), upper(:σ, size(carry, 2)), lower(:vR, size(carry, 3))))
 
     return FiniteMPS(tensors, bond_svs, CanonicalForm(L, L + 1), ε_total)
 end
