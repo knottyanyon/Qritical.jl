@@ -462,8 +462,10 @@ Reshape the coefficient vector `v` into an order-`L` tensor with one physical
 leg per site.  `dof_dims[i]` is the local Hilbert-space dimension at site `i`.
 
 The result satisfies `vec(ψ.data) === v` (no copy; the tensor shares memory with
-the input vector).  Each leg is labelled `:σ1`, `:σ2`, … and typed `Lower`
-(outgoing physical index, codomain convention).
+the input vector).  Each leg is labelled `:σ1`, `:σ2`, … and typed `Upper`: the
+stored array is the ket-expansion **coefficient** tensor ``A^{\\sigma_1 \\ldots
+\\sigma_L}`` of ``|\\psi\\rangle = A^{\\vec{\\sigma}}|\\vec{\\sigma}\\rangle``,
+whose physical indices are contravariant (incoming arrows, domain convention).
 
 # Arguments
 - `v         :: AbstractVector` — full state vector of length `∏ dof_dims[i]`
@@ -481,7 +483,7 @@ dim(ψ.indices[1])  # 2
 """
 function as_state(v::AbstractVector, dof_dims::AbstractVector{Int})
     L = length(dof_dims)
-    indices = Tuple(lower(Symbol(:σ, i), dof_dims[i]) for i in 1:L)
+    indices = Tuple(upper(Symbol(:σ, i), dof_dims[i]) for i in 1:L)
     # Kron product ordering: site 1 is most significant (changes slowest).
     # Julia reshape is column-major: first index varies fastest.
     # So reshape(v, d_L,...,d_1) gives data_raw[σ_L,...,σ_1] = v[kron_index], then
