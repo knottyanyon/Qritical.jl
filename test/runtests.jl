@@ -24,6 +24,7 @@ using Statistics
     include("test_spectrum.jl")
     include("test_io_state.jl")
     include("test_mps.jl")
+    include("test_convention.jl")
     include("test_canonicalize.jl")
     include("test_vidal.jl")
     include("test_observables.jl")
