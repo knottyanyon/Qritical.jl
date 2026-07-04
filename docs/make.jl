@@ -81,6 +81,8 @@ makedocs(;
             "Exercise 07" => "exercises/07/ex_07.md",
             "Exercise 08" => "exercises/08/ex_08.md",
             "Exercise 09" => "exercises/09/ex_09.md",
+            "Exercise 10" => "exercises/10/ex_10.md",
+            "Exercise 11" => "exercises/11/ex_11.md",
         ],
         "API Reference" => [
             "Index Layer" => "api/index_layer.md",

@@ -144,7 +144,7 @@ Create a mapping from exercise names (e.g., "Exercise 01") to their doc page pat
 function create_exercise_page_mapping(exercises_dir::String)
     pages = Dict{String, String}()
 
-    for i in 1:9
+    for i in 1:11
         exercise_num = lpad(i, 2, '0')
         exercise_name = "Exercise $exercise_num"
         page_path = "exercises/$exercise_num/ex_$exercise_num"  # Documenter adds .md
