@@ -12,6 +12,8 @@ Before any tensor-network computation can begin, the physical state must be repr
 
 ---
 
+## Functions
+
 ```@docs
 load_array
 as_state

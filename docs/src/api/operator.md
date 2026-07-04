@@ -38,18 +38,44 @@ infrastructure.
 
 ---
 
+## Types
+
+### Terms and operators
+
 ```@docs
-uniform_coupling
 OneSiteTerm
 TwoSiteTerm
 LatticeOperator
+```
+
+## Functions
+
+### Coupling patterns
+
+```@docs
+uniform_coupling
+```
+
+### Named Hamiltonians
+
+```@docs
 XXZ
 Heisenberg
 Ising
+```
+
+### Observable constructors
+
+```@docs
 total_magnetization
 staggered_magnetization
 op_at_site
 two_site_op(g::AbstractGeometry, dof::AbstractDoF, opA::Symbol, iA::Int, opB::Symbol, iB::Int)
 identity_operator
+```
+
+### Matrix representations
+
+```@docs
 matrix_repr(H::LatticeOperator)
 ```

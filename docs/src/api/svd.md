@@ -21,12 +21,28 @@ Before any truncation strategy sees the spectrum, LAPACK rounding noise is strip
 
 ---
 
+## Types
+
+### Truncation strategies
+
 ```@docs
 AbstractTrunc
 NoTrunc
 MaxBondDimTrunc
 ValCutoffTrunc
+```
+
+### SVD result types
+
+```@docs
 FullSVD
 ReducedSVD
+```
+
+## Functions
+
+### SVD computation
+
+```@docs
 do_svd
 ```

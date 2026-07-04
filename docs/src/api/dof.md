@@ -45,8 +45,17 @@ c_\downarrow |\!\uparrow\downarrow\rangle = -|\!\uparrow\rangle
 
 ---
 
+## Types
+
+### Abstract interface
+
 ```@docs
 AbstractDoF
+```
+
+### Concrete degrees of freedom
+
+```@docs
 Spin
 SpinHalf
 SpinOne
@@ -54,12 +63,27 @@ SpinlessFermion
 Electron
 MajoranaFermion
 HardCoreBoson
+```
+
+### Statistics traits
+
+```@docs
 CanonicalRelation
 CCR
 CAR
+```
+
+### Symmetry
+
+```@docs
+NoSymmetry
+```
+
+## Functions
+
+```@docs
 local_dim
 canonical_relation
 algebra_generators
 physical_space
-NoSymmetry
 ```

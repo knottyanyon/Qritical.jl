@@ -51,9 +51,16 @@ The result ``L^{(L)}[1,1,1]`` is the scalar expectation value. Per-site cost:
 
 ---
 
+## Types
+
 ```@docs
 FiniteMPO
 MPO
+```
+
+## Functions
+
+```@docs
 expect(ψ::FiniteMPS, O::FiniteMPO)
 apply_mpo
 ```

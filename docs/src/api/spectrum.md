@@ -23,15 +23,31 @@ These types are kept distinct so that `BondCanonical` and `SiteCanonical` sweeps
 
 ---
 
+## Types
+
+### Orthogonality centres
+
 ```@docs
 Bond
 OrthoCenter
 BondCenter
 SiteCenter
+```
+
+### Spectrum types
+
+```@docs
 AbstractSpectrum
 SingValSpectrum
 EigValSpectrum
 SchmidtSpectrum
+```
+
+## Functions
+
+### Spectrum analysis
+
+```@docs
 schmidt_rank
 spectral_gap
 schmidt_values

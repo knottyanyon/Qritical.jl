@@ -11,14 +11,30 @@ The `{D}` parameter on `QTensor{T,N,D}` selects the execution backend without ch
 
 The switch between backends is a single `ScopedValue` context (`with_backend(:tensorkit) do … end`) — no algorithm code changes.
 
-A `Partition` records an ordered group of legs (an axis list for a matricisation), and `Bipartition` pairs a row-partition with a column-partition for use in SVD. `group_legs` permutes and reshapes a `QTensor` to produce a rank-2 tensor whose two `MulTIx` legs encode the full original structure, ready for factorisation.
-
 ---
+
+## Types
+
+### Main tensor type
 
 ```@docs
 QTensor
+```
+
+### Partitions and reshaping
+
+A `Partition` records an ordered group of legs (an axis list for a matricisation), and `Bipartition` pairs a row-partition with a column-partition for use in SVD. `group_legs` permutes and reshapes a `QTensor` to produce a rank-2 tensor whose two `MulTIx` legs encode the full original structure, ready for factorisation.
+
+```@docs
 Partition
 Bipartition
+```
+
+## Functions
+
+### Partition utilities
+
+```@docs
 complement
 bipartition
 group_legs
