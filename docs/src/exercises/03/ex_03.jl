@@ -1,0 +1,91 @@
+using LinearAlgebra, Serialization, Qritical
+ψ_raw = deserialize(joinpath(DATA_ROOT, "psi.jls"))
+N = ndims(ψ_raw);  d = size(ψ_raw, 1)
+sites  = Tuple([upper(Symbol(:s, i), d) for i in 1:N])
+ψ_tens = QTensor(ψ_raw, sites)
+# Build a reference left-canonical MPS (exact, D=64)
+mps_ref = to_mps(ψ_tens; trunc=MaxBondDimTrunc(64), form=:left)
+println("Reference MPS form: ", mps_ref.form)
+
+#md # Ex 3. Transformations Between Canonical Forms
+#md
+#md All transformations sweep along the chain applying one SVD per site — cost $O(L\chi^3)$,
+#md no reconstruction of the full $d^L$ state vector.
+
+#md ## (a) Left → Right canonical
+#md
+#md Apply `canonicalize(mps, RightCanonical())` to an already left-canonical MPS.
+#md The sweep goes site $L \to 1$; at each step the $V^\dagger$ factor becomes the
+#md new right-canonical tensor and the $U\Sigma$ factor is absorbed leftward.
+
+mps_R = canonicalize(mps_ref, RightCanonical())
+println("After L→R sweep: ", mps_R.form)
+println("⟨ψ|ψ⟩ preserved: ", round(real(overlap(mps_R, mps_R)); sigdigits=8))
+
+# Verify: every site satisfies BB† = I  (note the parens — `let (a,b,c) = …`)
+errs = [let (χL, d_i, χR) = size(t.data)
+            M = reshape(t.data, χL, d_i * χR)
+            norm(M * M' - I(χL))
+        end for t in mps_R.tensors]
+println("Right-isometry errors: ", round.(errs; sigdigits=3))
+
+# Singular values must be gauge-invariant
+println("Bond 5 SVs (left canonical):  ", round.(mps_ref.bond_svs[6].values; sigdigits=4))
+println("Bond 5 SVs (right canonical): ", round.(mps_R.bond_svs[6].values;   sigdigits=4))
+
+#md ## (b) Right → Left canonical
+#md
+#md Reverse direction: sweep site $1 \to L$, storing the $U$ factor as the new
+#md left-canonical tensor and absorbing $\Sigma V^\dagger$ rightward.
+
+mps_R2L = canonicalize(mps_R, LeftCanonical())
+println("After R→L sweep: ", mps_R2L.form)
+println("⟨ψ|ψ⟩ preserved: ", round(real(overlap(mps_R2L, mps_R2L)); sigdigits=8))
+
+# Verify left-isometry everywhere
+errs2 = [let (χL, d_i, χR) = size(t.data)
+             M = reshape(t.data, χL * d_i, χR)
+             norm(M' * M - I(χR))
+         end for t in mps_R2L.tensors]
+println("Left-isometry errors: ", round.(errs2; sigdigits=3))
+
+#md ## (c) Normalization diagnostics
+#md
+#md `canonical_error(A)` measures the left-isometry deviation $\|A^\dagger A - I\|_F$.
+#md For a fully left-canonical MPS all errors should be $\approx 0$.
+#md For a right-canonical MPS the left errors should be large and right errors $\approx 0$.
+#md `is_canonical` returns true if all errors are below a tolerance.
+
+function norm_table(mps, label)
+    println("\n$label  (form = $(mps.form))")
+    println("  site │ δ_L (left iso) │ δ_R (right iso)")
+    println("  ─────┼────────────────┼────────────────")
+    for (i, t) in enumerate(mps.tensors)
+        χL, d_i, χR = size(t.data)
+        ML  = reshape(t.data, χL * d_i, χR)
+        MR  = reshape(t.data, χL, d_i * χR)
+        δ_L = norm(ML' * ML - I(χR))
+        δ_R = norm(MR * MR' - I(χL))
+        println("  $(lpad(i,4)) │ $(rpad(round(δ_L; sigdigits=3), 15)) │ $(round(δ_R; sigdigits=3))")
+    end
+end
+norm_table(mps_ref, "Left-canonical")
+
+norm_table(mps_R, "Right-canonical")
+
+# Mixed canonical: sites 1..l left-iso, site l+1..N right-iso
+l = N ÷ 2
+mps_M = canonicalize(mps_ref, BondCanonical(l))
+norm_table(mps_M, "Mixed canonical (center bond = $l)")
+
+# is_canonical as a quick flag
+println("is_canonical(mps_L): ", is_canonical(mps_ref))
+println("is_canonical(mps_R): ", is_canonical(mps_R))
+println("is_canonical(mps_M): ", is_canonical(mps_M))
+
+# Gauge invariance of singular-value spectra across all three forms
+println("\nSingular values at bond ", N÷2, ":")
+for (lbl, mps) in [("Left", mps_ref), ("Right", mps_R), ("Mixed", mps_M)]
+    svs = round.(mps.bond_svs[N÷2 + 1].values; sigdigits=4)
+    println("  $lbl:  ", svs)
+end

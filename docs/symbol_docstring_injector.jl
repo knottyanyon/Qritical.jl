@@ -128,11 +128,31 @@ function extract_qritical_symbols(code::String)
 end
 
 """
-    inject_usage_into_module_docstrings!(mod::Module, usage::Dict{Symbol, Vector{String}})
+    create_exercise_page_mapping(exercises_dir::String) -> Dict{String, String}
 
-Inject "Used in exercises" sections into the docstrings of all exported symbols in a module.
+Create a mapping from exercise names (e.g., "Exercise 01") to their doc page paths.
 """
-function inject_usage_into_module_docstrings!(mod::Module, usage::Dict{Symbol, Vector{String}})
+function create_exercise_page_mapping(exercises_dir::String)
+    pages = Dict{String, String}()
+
+    for i in 1:9
+        exercise_num = lpad(i, 2, '0')
+        exercise_name = "Exercise $exercise_num"
+        page_path = "exercises/$exercise_num/ex_$exercise_num"  # Documenter adds .md
+        pages[exercise_name] = page_path
+    end
+
+    pages
+end
+
+"""
+    inject_usage_into_module_docstrings!(mod::Module, usage::Dict{Symbol, Vector{String}},
+                                         exercise_pages::Dict{String, String})
+
+Inject "Used in exercises" sections with links into the docstrings of all exported symbols.
+"""
+function inject_usage_into_module_docstrings!(mod::Module, usage::Dict{Symbol, Vector{String}},
+                                             exercise_pages::Dict{String, String})
     # Get all exported symbols from the module
     exports = names(mod; all=false)  # only exported names
 
@@ -145,10 +165,16 @@ function inject_usage_into_module_docstrings!(mod::Module, usage::Dict{Symbol, V
                 doc = Docs.getdoc(binding)
 
                 if doc !== nothing && isa(doc, Markdown.MD)
-                    # Build "Used in exercises" section
+                    # Build "Used in exercises" section with links
                     used_in_lines = ["## Used in exercises", ""]
                     for exercise in sort(exercises)
-                        push!(used_in_lines, "- $exercise")
+                        if haskey(exercise_pages, exercise)
+                            page_path = exercise_pages[exercise]
+                            # Create a markdown link
+                            push!(used_in_lines, "- [$exercise](@ref $page_path)")
+                        else
+                            push!(used_in_lines, "- $exercise")
+                        end
                     end
                     used_in_text = join(used_in_lines, "\n")
 

@@ -1,6 +1,7 @@
 using Qritical
 using Documenter
 using DocumenterCitations
+using Literate
 
 # Load the symbol usage injection system (JSON and Markdown imported inside)
 include(joinpath(@__DIR__, "symbol_docstring_injector.jl"))
@@ -9,12 +10,25 @@ bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authory
 
 DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
 
-# Scan exercise notebooks and prepare symbol usage mapping
-exercise_usage = find_notebook_symbol_usage(joinpath(@__DIR__, "src", "exercises"))
-@info "Found $(length(exercise_usage)) symbols used in exercises"
+# Process exercise notebooks with Literate.jl (convert .jl → .md for docs)
+exercises_dir = joinpath(@__DIR__, "src", "exercises")
+for (root, dirs, files) in walkdir(exercises_dir)
+    for file in files
+        if startswith(file, "ex_") && endswith(file, ".jl")
+            input_path = joinpath(root, file)
+            # Literate.jl will create a markdown file in the same directory
+            Literate.markdown(input_path; documenter=true, flavor=Literate.DocumenterFlavor())
+        end
+    end
+end
 
-# Inject "Used in exercises" into docstrings before building docs
-inject_usage_into_module_docstrings!(Qritical, exercise_usage)
+# Scan exercise notebooks and prepare symbol usage mapping
+exercise_usage = find_notebook_symbol_usage(exercises_dir)
+exercise_pages = create_exercise_page_mapping(exercises_dir)
+@info "Found $(length(exercise_usage)) symbols used in $(length(exercise_pages)) exercises"
+
+# Inject "Used in exercises" with links into docstrings before building docs
+inject_usage_into_module_docstrings!(Qritical, exercise_usage, exercise_pages)
 
 makedocs(;
     modules=[Qritical],
@@ -46,56 +60,17 @@ makedocs(;
     plugins=[bib],
     pages=[
         "Home" => "index.md",
-        # "Getting Started" => [
-        #     "getting_started/index.md",
-        #     "Installation" => "getting_started/installation.md",
-        #     "Indices & IndexedTensor" => "getting_started/indexed_tensor.md",
-        #     "SVD & Truncation" => "getting_started/svd_truncation.md",
-        # ],
-        # "Notation" => "notation.md",
-        # "Hands-on-TN" => [
-        #     "Exercises" => [
-        #         "Exercise 01" => [
-        #             "1.1 Julia install party" => "exercises/01/task_1.md",
-        #             "1.2 SVD a matrix"        => "exercises/01/task_2.md",
-        #             "1.3 SVD a state"         => "exercises/01/task_3.md",
-        #             "1.4 SVD an image"        => "exercises/01/task_4.md",
-        #             "1.5 Contractions"        => "exercises/01/task_5.md",
-        #         ],
-        #         "Exercise 02" => [
-        #             "2.1 Left Canonical State"  => "exercises/02/task_1.md",
-        #             "2.2 Right Canonical State" => "exercises/02/task_2.md",
-        #             "2.3 Mixed Canonical State" => "exercises/02/task_3.md",
-        #         ],
-        #         "Exercise 03" => [
-        #             "3.1 Left to Right"        => "exercises/03/task_1.md",
-        #             "3.2 Right to Left"        => "exercises/03/task_2.md",
-        #             "3.3 Check Normalization"  => "exercises/03/task_3.md",
-        #         ],
-        #         "Exercise 04" => [
-        #             "4.2 MPS Overlap"    => "exercises/04/task_1.md",
-        #             "4.3 Observables"    => "exercises/04/task_2.md",
-        #             "4.4 Adding MPS"     => "exercises/04/task_3.md",
-        #         ],
-        #         "Exercise 05" => [
-        #             "5.1 Vidal Notation"    => "exercises/05/task_1.md",
-        #             "5.2 Observables I"     => "exercises/05/task_2.md",
-        #             "5.3 Observables II"    => "exercises/05/task_3.md",
-        #             "5.4 Observables III"   => "exercises/05/task_4.md",
-        #         ],
-        #         "Exercise 06" => [
-        #             "6.1 MPO I (XXZ chain)"          => "exercises/06/task_1.md",
-        #             "6.2 MPO II (Sz Sz all-to-all)"  => "exercises/06/task_2.md",
-        #             "6.3 Expectation value of MPO"   => "exercises/06/task_3.md",
-        #             "6.4 Applying MPO to MPS"        => "exercises/06/task_4.md",
-        #         ],
-        #         "Exercise 07" => [
-        #             "7.1 Gate exponentiation"    => "exercises/07/task_1.md",
-        #             "7.2 Odd/even bond update"   => "exercises/07/task_2.md",
-        #             "7.3 Full Trotter step"      => "exercises/07/task_3.md",
-        #         ],
-        #     ],
-        # ],
+        "Exercises" => [
+            "Exercise 01" => "exercises/01/ex_01.md",
+            "Exercise 02" => "exercises/02/ex_02.md",
+            "Exercise 03" => "exercises/03/ex_03.md",
+            "Exercise 04" => "exercises/04/ex_04.md",
+            "Exercise 05" => "exercises/05/ex_05.md",
+            "Exercise 06" => "exercises/06/ex_06.md",
+            "Exercise 07" => "exercises/07/ex_07.md",
+            "Exercise 08" => "exercises/08/ex_08.md",
+            "Exercise 09" => "exercises/09/ex_09.md",
+        ],
         "API Reference" => [
             "Index Layer" => "api/index_layer.md",
             "QTensor" => "api/qtensor.md",

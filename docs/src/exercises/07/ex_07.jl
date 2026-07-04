@@ -1,0 +1,104 @@
+using LinearAlgebra, Qritical
+using CairoMakie
+L   = 8
+dof = SpinHalf()
+g   = Chain(L)
+H   = XXZ(g; J=1.0, Jz=1.0, h=0.0)   # isotropic Heisenberg
+println("XXZ chain  L=$L  bonds=", length(bonds(g)))
+
+#md # Ex 7. Trotter–Suzuki Gates and TEBD
+#md
+#md Time evolution under a nearest-neighbour Hamiltonian is approximated by a product
+#md of two-site gates (Trotter decomposition).  Each gate is $U_{ij}(\Delta t) = e^{-i h^{(ij)} \Delta t}$
+#md for real time and $e^{-h^{(ij)} \tau}$ for imaginary time.
+
+#md ## (a) Local Hamiltonian and gate $e^{-ih^{(2)}\Delta t}$
+#md
+#md `bond_hamiltonian(H, b)` extracts the $4\times 4$ two-site matrix for bond $b$.
+#md `gate(h, dt, RealTime())` exponentiates it.
+
+h12 = bond_hamiltonian(H, 1)   # 4×4 matrix for bond (1,2)
+println("h^(1,2) eigenvalues: ", round.(sort(real.(eigvals(h12))); sigdigits=5))
+println("Expected (Heisenberg dimer): ", round.([-3/4, 1/4, 1/4, 1/4]; sigdigits=5))
+
+dt  = 0.1
+# gate(...) returns a Propagator; its matrix lives in `.data`
+U12 = gate(h12, dt, RealTime()).data
+println("Gate U = exp(-i h Δt):")
+println("  Unitarity ‖U†U − I‖ = ", round(norm(U12' * U12 - I(4)); sigdigits=4))
+println("  |det(U)|            = ", round(abs(det(U12)); sigdigits=6))
+
+# All bond gates for the full chain (matrices via `.data`)
+gates_rt = [gate(bond_hamiltonian(H, b), dt, RealTime()).data for b in 1:L-1]
+println("All $(L-1) bond gates unitary: ",
+        all(norm(U' * U - I(4)) < 1e-12 for U in gates_rt) ? "✓" : "✗")
+
+#md ## (b) Single odd / even bond sweep via `apply_gate`
+#md
+#md Odd bonds $\{(1,2),(3,4),\ldots\}$ and even bonds $\{(2,3),(4,5),\ldots\}$ act on
+#md non-overlapping sites, so each parity sweep can be applied sequentially.
+#md `apply_gate(mps, U, bond)` returns a new MPS after SVD-truncation of the two updated sites.
+
+# Build a generic initial MPS in left-canonical form.
+# apply_gate / trotter_step consume a canonical FiniteMPS (not Vidal Γ-tensors).
+mps0 = to_mps(as_state(randn(ComplexF64, 2^L), fill(2, L));
+              trunc=MaxBondDimTrunc(32), form=:left)
+println("Initial ⟨ψ|ψ⟩ = ", round(real(overlap(mps0, mps0)); sigdigits=8))
+
+# Apply odd bonds (1,2), (3,4), … — apply_gate takes the Propagator directly
+mps_odd = mps0
+for b in 1:2:(L-1)
+    G = gate(bond_hamiltonian(H, b), dt, RealTime())
+    global mps_odd = apply_gate(mps_odd, G, b; trunc=MaxBondDimTrunc(32))
+end
+println("After odd sweep  ⟨ψ|ψ⟩ = ", round(real(overlap(mps_odd, mps_odd)); sigdigits=8))
+
+# Apply even bonds (2,3), (4,5), …
+mps_both = mps_odd
+for b in 2:2:(L-1)
+    G = gate(bond_hamiltonian(H, b), dt, RealTime())
+    global mps_both = apply_gate(mps_both, G, b; trunc=MaxBondDimTrunc(32))
+end
+println("After odd+even sweep ⟨ψ|ψ⟩ = ", round(real(overlap(mps_both, mps_both)); sigdigits=8))
+
+#md ## (c) Full Trotter step via `trotter_step`
+#md
+#md `trotter_step(mps, H, dt, SuzukiTrotter(1))` applies the first-order decomposition
+#md (odd then even bonds) in one call.  `SuzukiTrotter(2)` gives the second-order
+#md palindrome: half-step forward, half-step backward.
+
+# 1st-order Trotter step (canonical MPS in, canonical MPS out)
+mps_t1 = trotter_step(mps0, H, dt, SuzukiTrotter(1); trunc=MaxBondDimTrunc(32))
+println("1st-order Trotter ⟨ψ|ψ⟩ = ", round(real(overlap(mps_t1, mps_t1)); sigdigits=8))
+# 2nd-order Trotter step
+mps_t2 = trotter_step(mps0, H, dt, SuzukiTrotter(2); trunc=MaxBondDimTrunc(32))
+println("2nd-order Trotter ⟨ψ|ψ⟩ = ", round(real(overlap(mps_t2, mps_t2)); sigdigits=8))
+
+# Trotter error: real-time evolution conserves energy exactly, so ΔE ≈ 0
+# up to the Trotter splitting error (2nd order has smaller ΔE than 1st)
+W_xxz = MPO(H)
+E0   = real(expect(mps0,   W_xxz))
+E_t1 = real(expect(mps_t1, W_xxz))
+E_t2 = real(expect(mps_t2, W_xxz))
+println("\nEnergy before evolution:        ", round(E0;   sigdigits=8))
+println("After 1st-order Trotter step:   ", round(E_t1; sigdigits=8), "  ΔE=", round(E_t1-E0; sigdigits=3))
+println("After 2nd-order Trotter step:   ", round(E_t2; sigdigits=8), "  ΔE=", round(E_t2-E0; sigdigits=3))
+
+# Imaginary-time Trotter: convergence toward the ground state.
+# Start from the Néel state (good overlap with the AFM ground state).
+# e^{-Hτ} shrinks the norm, so renormalize (canonicalize) after each step
+# and divide ⟨H⟩ by ⟨ψ|ψ⟩ when reading off the energy.
+dτ     = 0.05
+mps_it = canonicalize(neel_state(g; dof=dof), LeftCanonical())
+for step in 1:200
+    mps_it = trotter_step(mps_it, H, dτ, SuzukiTrotter(2);
+                          axis=ImaginaryTime(), trunc=MaxBondDimTrunc(16))
+    global mps_it = canonicalize(mps_it, LeftCanonical())
+end
+E_it = real(expect(mps_it, W_xxz)) / real(overlap(mps_it, mps_it))
+println("Imaginary-time GS energy (L=$L): ", round(E_it; sigdigits=8))
+
+# ED reference for comparison
+gs = solve(H, GroundState(), ExactDiagonalization(:ground))
+println("ED exact GS energy:             ", round(gs.energy; sigdigits=8))
+println("TEBD error:                     ", round(abs(E_it - gs.energy); sigdigits=3))

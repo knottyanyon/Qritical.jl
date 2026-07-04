@@ -1,0 +1,289 @@
+# =====================================================================
+#  Exercise 11 — Quantics Tensor Cross Interpolation (QTCI)
+#  Hands-on Tensor Networks, SS 26 — Prof. Dr. D. M. Kennes / Dominik Chudy
+# =====================================================================
+#
+# This exercise steps outside Qritical.jl and drives three research-grade
+# packages from the tensor4all toolbox (https://tensor4all.org):
+#
+#     TensorCrossInterpolation.jl   — the TCI engine
+#     QuanticsGrids.jl              — binary (quantics) grids
+#     QuanticsTCI.jl                — the `quanticscrossinterpolate` front end
+#
+# We build quantics tensor-train (QTT) representations of three 1-D functions
+# and read off, from the BOND DIMENSION χ, when a function is compressible:
+#
+#     (a)  e^{-x^2}                                     smooth, single scale
+#     (b)  cos(x/B)·cos(x/(4√5 B))·e^{-x^2} + 2e^{-x}   multi-scale (Ritter 2024)
+#     (c)  e^{-x^2} + η·ξ,  ξ ~ N(0,1)                  smooth + incompressible noise
+#
+# Run in the REPL from this folder, or:  julia --project=. ex_11.jl
+# ---------------------------------------------------------------------
+#
+# 1. WHY QUANTICS, AND WHY CROSS INTERPOLATION?
+#
+# Curse of dimensionality: a function of L variables discretised on d points
+# per axis is a tensor with d^L entries. The same explosion hits a SINGLE
+# variable at fine resolution: 2^R points for R bits.
+#
+# Compressibility: any discretised function is a tensor, and many are well
+# approximated by a tensor train  F_σ ≈ [M₁]^{σ₁}…[M_L]^{σ_L}  with a small
+# bond dimension χ_max ≪ d^{L/2}. Storage then costs O(d χ² L) — no longer
+# exponential. χ is the quantitative measure of "bond entanglement".
+#
+# Quantics: split the grid index m ∈ {0,…,2^R−1} into binary digits
+#     m = Σ_ℓ (σ_ℓ−1) 2^{R−ℓ},   σ_ℓ ∈ {1,2}.
+# Each bit σ_ℓ resolves ONE length scale — σ₁ the coarsest, σ_R the finest.
+# A 1-variable function becomes an R-leg tensor with local dimension d = 2.
+#
+# TCI: unfolding via SVD is optimal but needs ALL d^L entries. TCI instead
+# builds the train from 1-D slices using matrix cross interpolation
+#     A ≈ C P⁻¹ R,   P = A[I,J]   (pivot rows/columns),
+# at runtime cost O(d χ³ L), sampling only a tiny subset of entries. If the
+# tensor is incompressible, TCI signals this: χ runs to its maximum.
+#
+# Diagnostic used throughout: watch χ. Small and R-independent ⇒ compressible;
+# saturating to 2^{⌊R/2⌋} ⇒ incompressible.
+# =====================================================================
+
+import Pkg
+Pkg.activate(@__DIR__)          # self-contained env, kept off the docs deps
+Pkg.instantiate()
+
+using QuanticsTCI: quanticscrossinterpolate
+import QuanticsGrids as QG
+import TensorCrossInterpolation as TCI
+using CairoMakie, LaTeXStrings
+using Random
+CairoMakie.activate!(type = "png")
+
+# ---------------------------------------------------------------------
+# 2. HELPERS
+# ---------------------------------------------------------------------
+# The QTT is callable at a linear grid index i ∈ {1,…,2^R} as `qtt(i)`;
+# QG.origcoord_to_grididx / grididx_to_origcoord translate between x and i.
+
+"Cross-interpolate `f` on [xmin, xmax] using R quantics bits."
+function build_qtt(f, xmin, xmax, R; tolerance = 1e-8, maxbonddim = 200)
+    grid = QG.DiscretizedGrid{1}(R, xmin, xmax; includeendpoint = false)
+    qtt, ranks, errors = quanticscrossinterpolate(
+        Float64, f, grid; tolerance = tolerance, maxbonddim = maxbonddim)
+    return (; qtt, grid, ranks, errors)
+end
+
+"Evaluate exact `f` and the QTT at `xs`, snapped to the quantics grid."
+function sample_on_grid(f, res, xs)
+    idx    = [QG.origcoord_to_grididx(res.grid, x) for x in xs]
+    xsnap  = [QG.grididx_to_origcoord(res.grid, i) for i in idx]
+    approx = [res.qtt(i) for i in idx]
+    exact  = f.(xsnap)
+    return xsnap, approx, exact
+end
+
+"Bond-dimension profile χ_ℓ of the tensor train (length R−1)."
+bondprofile(res) = TCI.linkdims(res.qtt.tci)
+
+"Overlay exact function and QTT approximation on one axis."
+function plot_overlay(f, res, xs; title = "", xlabel = L"x", every = 1)
+    xsnap, approx, exact = sample_on_grid(f, res, xs)
+    fig = Figure(size = (760, 360))
+    ax  = Axis(fig[1, 1]; title = title, xlabel = xlabel, ylabel = L"f(x)")
+    lines!(ax, xsnap, exact; color = :black, linewidth = 1.6, label = "exact")
+    scatter!(ax, xsnap[1:every:end], approx[1:every:end];
+             color = :crimson, markersize = 5, label = "QTT")
+    axislegend(ax; position = :rt)
+    fig
+end
+
+"Plot the bond profile χ_ℓ."
+function plot_bondprofile(res; title = "")
+    χ = bondprofile(res)
+    fig = Figure(size = (620, 320))
+    ax  = Axis(fig[1, 1]; title = title,
+               xlabel = L"bond index $\ell$", ylabel = L"\chi_\ell")
+    lines!(ax, 1:length(χ), χ; color = :teal, linewidth = 2)
+    scatter!(ax, 1:length(χ), χ; color = :teal, markersize = 7)
+    fig
+end
+
+# ---------------------------------------------------------------------
+# 3. (a)  SMOOTH, SINGLE-SCALE:  f(x) = e^{-x^2} on [-3, 3]
+# ---------------------------------------------------------------------
+# One length scale, analytic ⇒ expect extreme compressibility.
+
+fa(x) = exp(-x^2)
+resa  = build_qtt(fa, -3.0, 3.0, 12; tolerance = 1e-10)
+χa    = maximum(bondprofile(resa))
+println("(a)  R = 12,  max χ = ", χa,
+        ",   final TCI error ≈ ", round(resa.errors[end]; sigdigits = 3))
+println("     bond profile χ_ℓ = ", bondprofile(resa))
+
+save("11_a_overlay.png",
+     plot_overlay(fa, resa, range(-3, 3; length = 800);
+                  title = L"(a)  $e^{-x^2}$ on $[-3,3]$  —  QTT vs exact"))
+save("11_a_bond.png",
+     plot_bondprofile(resa; title = L"(a)  bond profile  ($\chi_{\max}=%$(χa)$)"))
+
+# Reading (a): with R=12 (4096 points) TCI reaches ~1e-10 with χ_max ≈ 9. The
+# bond profile is a low smooth hump — near-separable across scales. Storage is
+# O(d χ² R) ~ 10³ numbers, and the gap over the dense grid widens as R grows
+# because χ stays flat.
+
+# ---------------------------------------------------------------------
+# 4. (b)  MULTI-SCALE:  Ritter et al., PRL 2024
+# ---------------------------------------------------------------------
+#   f(x) = cos(x/B)·cos(x/(4√5 B))·e^{-x^2} + 2e^{-x},  B = 2^{-30}, x∈[0,ln20]
+#
+# cos(x/B) oscillates on scale B ≈ 9.3e-10, so there are ~3/B ≈ 3e9 oscillations
+# on the domain. Resolving them needs Δx = ln20/2^R ≪ B, i.e. R ≳ 32–40. The
+# ratio 1/(4√5) is irrational, so the two frequencies are incommensurate. Yet
+# because the scales are cleanly separated by the binary digits, the QTT rank
+# stays modest AND essentially independent of R — the quantics miracle.
+
+const B = 2.0^(-30)
+fb(x) = cos(x / B) * cos(x / (4 * sqrt(5) * B)) * exp(-x^2) + 2 * exp(-x)
+
+println("\n(b)  R    max χ    final error")
+resb_by_R = Dict{Int,Any}()
+for R in (20, 30, 40)
+    res = build_qtt(fb, 0.0, log(20), R; tolerance = 1e-6, maxbonddim = 200)
+    resb_by_R[R] = res
+    println("     ", rpad(R, 5), rpad(maximum(bondprofile(res)), 8),
+            round(res.errors[end]; sigdigits = 3))
+end
+resb = resb_by_R[40]      # fully resolved
+
+# Full domain: the fast oscillation is far below plotting resolution, so we see
+# the envelope 2e^{-x} filled in by the modulated Gaussian; QTT sits on exact.
+save("11_b_full.png",
+     plot_overlay(fb, resb, range(0, log(20); length = 3000);
+                  title = L"(b)  full domain $[0,\ln 20]$  ($R=40$)"))
+
+# Zoom to ~30 fast periods (period ≈ 2πB): individual oscillations are resolved
+# and the QTT tracks them exactly.
+win = 30 * 2π * B
+save("11_b_zoom.png",
+     plot_overlay(fb, resb, range(0, win; length = 2000); every = 8,
+                  title = L"(b)  zoom $x\in[0,\,30\cdot2\pi B]$  —  fast scale resolved"))
+
+save("11_b_bond.png",
+     plot_bondprofile(resb;
+         title = L"(b)  bond profile at $R=40$  ($\chi_{\max}=%$(maximum(bondprofile(resb)))$)"))
+
+# Reading (b): χ_max ≈ 13 for EVERY R ∈ {20,30,40}. The cost is independent of
+# resolution, though R=40 is a grid of ~1e12 points that could never be stored
+# densely. The bond profile is a broad plateau: every scale carries a little
+# correlation, none is expensive. A complicated-but-scale-structured function
+# stays cheap.
+
+# ---------------------------------------------------------------------
+# 5. (c)  SMOOTH + NOISE:  f(x) = e^{-x^2} + η·ξ,  ξ ~ N(0,1)
+# ---------------------------------------------------------------------
+# Subtlety: TCI assumes a DETERMINISTIC oracle — the same input must always
+# return the same value, since pivots are re-evaluated. A literal randn() inside
+# f would return a different value each call; the "function" would be ill-defined
+# and TCI could never converge. The meaningful object is a FIXED noise
+# realisation on the grid, so we draw the noise once and look it up by index.
+# Independent values at independent grid points share no cross-scale structure
+# ⇒ incompressible: TCI can only reproduce them at the maximal bond dimension
+# 2^{⌊R/2⌋}, i.e. by memorising every point.
+
+Rc    = 12
+gridc = QG.DiscretizedGrid{1}(Rc, -3.0, 3.0; includeendpoint = false)
+Random.seed!(2026)
+η     = 0.05
+noise = η .* randn(2^Rc)                       # one fixed realisation
+fc(x) = exp(-x^2) + noise[QG.origcoord_to_grididx(gridc, x)]
+
+println("\n(c)  tol     max χ    final error")
+for tol in (1e-1, 1e-2, 1e-3)
+    res = build_qtt(fc, -3.0, 3.0, Rc; tolerance = tol, maxbonddim = 500)
+    println("     ", rpad(tol, 8), rpad(maximum(bondprofile(res)), 8),
+            round(res.errors[end]; sigdigits = 3))
+end
+resc = build_qtt(fc, -3.0, 3.0, Rc; tolerance = 1e-3, maxbonddim = 500)
+
+save("11_c_overlay.png",
+     plot_overlay(fc, resc, range(-3, 3; length = 600); every = 2,
+                  title = L"(c)  noisy Gaussian ($\eta=0.05$)  —  QTT reproduces every jitter"))
+save("11_c_bond.png",
+     plot_bondprofile(resc;
+         title = L"(c)  bond profile saturates to $2^{\lfloor R/2\rfloor}=%$(2^(Rc÷2))$"))
+
+# Reading (c): tightening the tolerance below the noise amplitude drives χ_max to
+# the ceiling 2^6 = 64; the bond profile is the full triangle
+# χ_ℓ = min(2^ℓ, 2^{R−ℓ}). TCI "succeeds" only by memorising all 4096 values —
+# no compression. This saturating, R-growing χ (or a stalled error) is the
+# warning sign of incompressibility / resolving below the noise floor. Cure:
+# interpolate only to a tolerance ABOVE the noise amplitude.
+
+# ---------------------------------------------------------------------
+# 6. EXPLORATION — vary resolution R, tolerance τ, bond cap D
+# ---------------------------------------------------------------------
+
+# (i) Tolerance sweep for the smooth Gaussian (a): tighter τ → larger χ.
+tols       = 10.0 .^ .-(2:2:12)
+χ_of_tol   = Int[]
+err_of_tol = Float64[]
+for τ in tols
+    res = build_qtt(fa, -3.0, 3.0, 20; tolerance = τ, maxbonddim = 200)
+    push!(χ_of_tol,   maximum(bondprofile(res)))
+    push!(err_of_tol, res.errors[end])
+end
+println("\n(exploration i)  τ → χ, error   (Gaussian, R = 20)")
+for (τ, χ, e) in zip(tols, χ_of_tol, err_of_tol)
+    println("     τ = ", rpad(τ, 9), "  χ = ", rpad(χ, 4), "  err ≈ ", round(e; sigdigits = 3))
+end
+let fig = Figure(size = (760, 340))
+    ax = Axis(fig[1, 1]; title = L"(a)  cost vs accuracy at $R=20$",
+              xlabel = L"requested tolerance $\tau$", ylabel = L"\chi_{\max}",
+              xscale = log10, xreversed = true)
+    lines!(ax, tols, χ_of_tol; color = :royalblue, linewidth = 2)
+    scatter!(ax, tols, χ_of_tol; color = :royalblue, markersize = 8)
+    save("11_explore_tol.png", fig)
+end
+
+# (ii) Bond-cap sweep for the multi-scale function (b) at R = 30: error drops
+# until D reaches the intrinsic rank (~13), then plateaus.
+Ds       = [2, 4, 8, 13, 20, 40]
+err_of_D = Float64[]
+for D in Ds
+    res = build_qtt(fb, 0.0, log(20), 30; tolerance = 1e-10, maxbonddim = D)
+    push!(err_of_D, res.errors[end])
+end
+println("\n(exploration ii)  D → error   (multi-scale, R = 30)")
+for (D, e) in zip(Ds, err_of_D)
+    println("     D = ", rpad(D, 4), "  final error ≈ ", round(e; sigdigits = 3))
+end
+let fig = Figure(size = (760, 340))
+    ax = Axis(fig[1, 1]; title = L"(b)  error vs bond cap $D$ at $R=30$",
+              xlabel = L"maximum bond dimension $D$", ylabel = L"final TCI error",
+              yscale = log10)
+    lines!(ax, Ds, err_of_D; color = :darkorange, linewidth = 2)
+    scatter!(ax, Ds, err_of_D; color = :darkorange, markersize = 8)
+    save("11_explore_D.png", fig)
+end
+
+# ---------------------------------------------------------------------
+# 7. QUESTIONS TO THINK ABOUT
+# ---------------------------------------------------------------------
+# When does QTCI compress well, and when does it fail?
+#   Well when the function is smooth or scale-structured, so behaviour at
+#   different length scales is only weakly correlated — the binary digits
+#   decouple and χ stays small AND independent of R. (a) trivially, (b)
+#   remarkably (χ ≈ 13 even at R=40, ~1e12 points). It FAILS when the data
+#   carries independent information at every point — genuine noise (c), or any
+#   function whose fine scales are uncorrelated with the coarse ones: then χ
+#   saturates to 2^{⌊R/2⌋}, the error stalls, and there is no gain over the
+#   dense grid. Slow/non-convergence of TCI is itself the diagnostic.
+#
+# What does the bond dimension tell you about the function's structure?
+#   χ_ℓ is the quantics analogue of an entanglement spectrum: it measures how
+#   strongly scales coarser than bond ℓ are correlated with scales finer than ℓ.
+#   Low/flat (a) ⇒ near-separability; broad plateau (b) ⇒ every scale
+#   contributes a little, none is expensive (self-similar / multi-scale); full
+#   triangle min(2^ℓ,2^{R−ℓ}) (c) ⇒ maximal scale entanglement, incompressible.
+#   χ_max is a quantitative complexity measure, and its scaling with R (flat vs
+#   growing) separates compressible from incompressible.
+
+println("\nDone. Figures written: 11_a_*, 11_b_*, 11_c_*, 11_explore_*.png")
