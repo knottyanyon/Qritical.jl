@@ -50,7 +50,15 @@ exercise_pages = create_exercise_page_mapping(exercises_dir)
 inject_usage_into_module_docstrings!(Qritical, exercise_usage, exercise_pages)
 
 # Preprocess markdown files to convert glossary references {glossary:term} → markdown links
+# Skip if running under LiveServer to avoid infinite rebuild loop
+# (LiveServer detects file modifications and triggers rebuild)
 function preprocess_glossary_links(src_dir)
+    # Skip if we're in interactive/serving mode (avoid rebuild loop)
+    if Base.isinteractive()
+        @debug "Skipping glossary preprocessing in interactive mode (LiveServer)"
+        return
+    end
+
     for (root, dirs, files) in walkdir(src_dir)
         for file in files
             if endswith(file, ".md")
