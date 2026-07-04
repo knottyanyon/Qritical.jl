@@ -13,6 +13,11 @@ bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authory
 DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
 
 # Process exercise notebooks with Literate.jl (convert .jl → .md for docs)
+# Only regenerate when the .jl source is newer than the existing .md output.
+# This matters under `servedocs()`: Literate output lands inside docs/src/, which
+# LiveServer watches. Unconditionally rewriting the .md on every build makes the
+# watcher see a "change" and re-trigger make.jl, which rewrites it again — an
+# infinite rebuild loop. Skipping up-to-date files breaks that cycle.
 exercises_dir = joinpath(@__DIR__, "src", "exercises")
 for (root, dirs, files) in walkdir(exercises_dir)
     for file in files
@@ -20,6 +25,10 @@ for (root, dirs, files) in walkdir(exercises_dir)
             input_path = joinpath(root, file)
             md_filename = replace(file, ".jl" => ".md")
             output_path = joinpath(root, md_filename)
+
+            if isfile(output_path) && mtime(output_path) >= mtime(input_path)
+                continue
+            end
 
             # Process with Literate - specify output directory explicitly
             # This generates .md directly in the exercise directory
@@ -50,15 +59,10 @@ exercise_pages = create_exercise_page_mapping(exercises_dir)
 inject_usage_into_module_docstrings!(Qritical, exercise_usage, exercise_pages)
 
 # Preprocess markdown files to convert glossary references {glossary:term} → markdown links
-# Skip if running under LiveServer to avoid infinite rebuild loop
-# (LiveServer detects file modifications and triggers rebuild)
+# Only writes files whose content actually changes, so once all {glossary:term}
+# references have been converted, reruns under `servedocs()` are no-ops and don't
+# re-trigger the file watcher.
 function preprocess_glossary_links(src_dir)
-    # Skip if we're in interactive/serving mode (avoid rebuild loop)
-    if Base.isinteractive()
-        @debug "Skipping glossary preprocessing in interactive mode (LiveServer)"
-        return
-    end
-
     for (root, dirs, files) in walkdir(src_dir)
         for file in files
             if endswith(file, ".md")
