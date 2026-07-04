@@ -1,9 +1,9 @@
 # Operators & Hamiltonians
 
 A linear quantum-mechanical observable is a sum of weighted products of single-site
-operators. The **[`Hamiltonian`](@ref)** is just one such observable — the operator that drives
+operators. The **Hamiltonian** is just one such observable — the operator that drives
 dynamics. Magnetisation, density, and two-point correlators are others. Qritical builds
-all of them the same way: as an `LatticeOperator` (a term list over a geometry and DoF), so the
+all of them the same way: as a [`LatticeOperator`](@ref) (a term list over a geometry and DoF), so the
 same `expect(ψ, O)` routine measures energy, magnetisation, and ``\langle S^z_i S^z_j
 \rangle`` without any special-casing.
 

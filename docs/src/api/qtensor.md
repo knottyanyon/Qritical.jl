@@ -15,7 +15,7 @@ The switch between backends is a single `ScopedValue` context (`with_backend(:te
 
 **Types:** [`QTensor`](@ref) · [`Partition`](@ref) · [`Bipartition`](@ref)
 
-**Functions:** [`complement`](@ref) · [`bipartition`](@ref) · [`group_legs`](@ref)
+**Functions:** [`complement`](@ref) · [`bipartition`](@ref) · [`group_legs`](@ref) · [`dagger`](@ref)
 
 ---
 
@@ -27,6 +27,13 @@ The switch between backends is a single `ScopedValue` context (`with_backend(:te
 QTensor
 ```
 
+### Adjoint and conjugation
+
+```@docs
+dagger
+Base.adjoint(::QTensor)
+```
+
 ### Partitions and reshaping
 
 A `Partition` records an ordered group of legs (an axis list for a matricisation), and `Bipartition` pairs a row-partition with a column-partition for use in SVD. `group_legs` permutes and reshapes a `QTensor` to produce a rank-2 tensor whose two `MulTIx` legs encode the full original structure, ready for factorisation.
@@ -34,13 +41,6 @@ A `Partition` records an ordered group of legs (an axis list for a matricisation
 ```@docs
 Partition
 Bipartition
-```
-
-## Functions
-
-### Partition utilities
-
-```@docs
 complement
 bipartition
 group_legs

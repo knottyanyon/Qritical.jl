@@ -64,10 +64,10 @@ col = lower(:col, size(A_mat, 2))
 
 (row = row, col = col)
 
-# Wrapping the raw array in an `IndexedTensor` attaches these indices to the
+# Wrapping the raw array in an `QTensor` attaches these indices to the
 # data without copying anything:
 
-A = IndexedTensor(A_mat, (row, col))
+A = QTensor(A_mat, (row, col))
 
 A.indices
 #--
@@ -87,7 +87,7 @@ A.indices
 #
 # ## Truncation
 #
-# [`KeepAbove(atol)`](@ref) keeps every ``\sigma_i > \texttt{atol}`` and drops
+# [`ValCutoffTrunc(atol)`](@ref) keeps every ``\sigma_i > \texttt{atol}`` and drops
 # the rest.  [`KeepMachineEps()`](@ref) picks the cutoff automatically as
 # ``\sqrt{\varepsilon_\text{mach}} \cdot \sigma_1`` — anything smaller than that
 # is already buried in floating-point rounding error, so it is garbage anyway.
@@ -106,15 +106,15 @@ A.indices
 # This is returned alongside the factors so we always know exactly what we paid
 # for the compression.
 
-res = matrix_svd(A, KeepAbove(1e-3))
+res = matrix_svd(A, ValCutoffTrunc(1e-3))
 
 (full_rank = minimum(size(A_mat)), Schmidt_rank = size(res.Σ.data, 1), ε = round(res.ε; sigdigits=4))
 #--
 
-# ## The result — IndexedTensors with named bonds
+# ## The result — QTensors with named bonds
 #
-# `tensor_svd` does not return bare matrices.  `U`, `Σ`, and `Vd` come back as
-# `IndexedTensor`s: the original partition legs are re-attached, and fresh
+# `do_svd` does not return bare matrices.  `U`, `Σ`, and `Vd` come back as
+# `QTensor`s: the original partition legs are re-attached, and fresh
 # `TIx{Lower}` / `TIx{Upper}` bond legs with derived labels are added at the
 # shared interfaces:
 
@@ -132,7 +132,7 @@ res = matrix_svd(A, KeepAbove(1e-3))
 #
 # We can verify this by reconstructing ``A_r`` from the `.data` fields (using
 # `.data` keeps the multiplication in raw array space, avoiding any ambiguity
-# about how `IndexedTensor * Diagonal` dispatches):
+# about how `QTensor * Diagonal` dispatches):
 
 U, Σ, Vd = res.U, res.Σ, res.Vd
 A_approx  = U.data * Σ.data * Vd.data

@@ -43,14 +43,11 @@ TIx
 MulTIx
 ```
 
-### Partitions
-
-```@docs
-Partition
-Bipartition
-```
-
 ## Functions
+
+### Partition utilities
+
+See [`QTensor`](/api/qtensor.md) documentation for `Partition` and `Bipartition` usage.
 
 ### Accessors
 
@@ -80,7 +77,5 @@ lowers_range
 ### Partition utilities
 
 ```@docs
-complement
-bipartition
 bond_label
 ```
