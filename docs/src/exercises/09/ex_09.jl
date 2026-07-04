@@ -49,6 +49,8 @@ println("Final imaginary-time energy: ", round(E_history[end]; sigdigits=8))
 println("ED exact:                    ", round(gs_ed.energy;    sigdigits=8))
 println("Error:                       ", round(abs(E_history[end] - gs_ed.energy); sigdigits=3))
 
+# Convergence of the imaginary-time energy toward the ED ground-state energy.
+
 fig = Figure(size=(680, 320))
 ax  = Axis(fig[1,1];
     title  = "Imaginary-time convergence to GS energy (L=$L, D=$D)",
@@ -99,6 +101,8 @@ println("\nW      ⟨S⟩ (bits)")
 for (W, S) in zip(W_vals, S_avg)
     println("  $(lpad(W, 4))   ", round(S; sigdigits=4))
 end
+
+# Ground-state entanglement entropy versus disorder strength.
 
 fig2 = Figure(size=(660, 340))
 ax2  = Axis(fig2[1,1];

@@ -1,5 +1,6 @@
 using LinearAlgebra, Serialization, Qritical
 using CairoMakie
+const DATA_ROOT = normpath(joinpath(@__FILE__, "..", "..", "data"))
 ψ_raw  = deserialize(joinpath(DATA_ROOT, "psi.jls"))
 N = ndims(ψ_raw);  d = size(ψ_raw, 1)
 sites  = Tuple([upper(Symbol(:s, i), d) for i in 1:N])
@@ -88,6 +89,8 @@ println("⟨σᶻ_{L/2} σᶻ_{L/2+r}⟩  and  connected C(r):")
 for r in 1:N-l
     println("  r=$r:  full=$(round(corrs[r]; sigdigits=4))   connected=$(round(corrs_c[r]; sigdigits=4))")
 end
+
+# Plot the full and connected correlators against distance.
 
 fig = Figure(size=(680, 320))
 ax  = Axis(fig[1,1];

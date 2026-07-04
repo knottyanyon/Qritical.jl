@@ -129,7 +129,7 @@ end
 Ls_v = collect(2:2:14)
 n_onsite_v, n_bond_v, dense_total, sparse_nnz_v = hamiltonian_density_vs_L(Ls_v)
 fig = Figure(size = (880, 420))
-# Left panel: bond and onsite term counts — both linear in L
+#= Left panel: bond and onsite term counts — both linear in L =#
 ax1 = Axis(fig[1, 1];
     xlabel = "Chain length  L",
     ylabel = "Number of terms",
@@ -141,7 +141,7 @@ scatter!(ax1, Ls_v, n_bond_v;   color = :steelblue, markersize = 10)
 lines!(ax1,   Ls_v, n_onsite_v; color = :orangered,  label = "Onsite terms  L")
 scatter!(ax1, Ls_v, n_onsite_v; color = :orangered,  markersize = 10)
 axislegend(ax1; position = :lt)
-# Right panel: dense D² vs sparse nnz — log scale reveals the exponential gap
+#= Right panel: dense D² vs sparse nnz — log scale reveals the exponential gap =#
 ax2 = Axis(fig[1, 2];
     xlabel = "Chain length  L",
     ylabel = "Number of stored entries",
@@ -288,7 +288,7 @@ mstag  = Float64[]
 for step in 1:n_t
     p = ConstantProtocol(RealTime(), dt, 1, hamiltonian)
     r = solve(hamiltonian, as_statevector(ψ), ExactDiagonalization(:time), p)
-    ψ = r.state
+    global ψ = r.state
     push!(times, dt * step)
     push!(mstag, real(dot(ψ, M_stag_mat * ψ)))
 end

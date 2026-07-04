@@ -25,7 +25,7 @@ DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
 # Exercises listed in EXECUTABLE_EXERCISES have been verified to run standalone
 # (their data dependencies exist under docs/src/exercises/data/) and are left
 # executable so their `println`/plot output renders in the built docs.
-const EXECUTABLE_EXERCISES = ["01"]
+const EXECUTABLE_EXERCISES = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"]
 
 exercises_dir = joinpath(@__DIR__, "src", "exercises")
 for (root, dirs, files) in walkdir(exercises_dir)

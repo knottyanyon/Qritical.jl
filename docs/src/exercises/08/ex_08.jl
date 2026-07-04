@@ -31,7 +31,7 @@ for L in L_values
     ψ_t    = canonicalize(neel_state(g; dof=dof), LeftCanonical())
     W_stag = MPO(staggered_magnetization(g; dof=dof))
     W_Sz   = MPO(total_magnetization(g; dof=dof))
-    # t=0: product state has Mstag = -L/2 and S = 0
+    #= t=0: product state has Mstag = -L/2 and S = 0 =#
     Mstag_L = [real(expect(ψ_t, W_stag))]
     S_L     = [0.0]
     for step in 1:nsteps
@@ -49,10 +49,14 @@ for L in L_values
             "  S(T)=", round(S_L[end]; sigdigits=3), " bits")
 end
 
+# Sanity check: at $t=0$ the product state gives $M_{\rm stag}(0) = -L/2$ exactly.
+
 println("Summary at t=0:")
 for L in L_values
     println("  L=$L  Mstag(0)=", Mstag_data[L][1], "  (expected ", -L/2, ")  S(0)=", S_data[L][1])
 end
+
+# Staggered magnetisation decay for each chain length.
 
 fig = Figure(size=(750, 400))
 ax  = Axis(fig[1,1];
@@ -67,6 +71,8 @@ for L in L_values
 end
 axislegend(ax; position=:rb)
 fig
+
+# Entanglement entropy growth at the central bond, for the same chain lengths.
 
 fig2 = Figure(size=(750, 400))
 ax2  = Axis(fig2[1,1];

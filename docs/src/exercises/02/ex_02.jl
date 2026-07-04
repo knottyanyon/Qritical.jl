@@ -1,5 +1,7 @@
 using LinearAlgebra, Serialization, Qritical
 
+const DATA_ROOT = normpath(joinpath(@__FILE__, "..", "..", "data"))
+
 ψ_raw = deserialize(joinpath(DATA_ROOT, "psi.jls"))
 N = ndims(ψ_raw) # number of sites
 d = size(ψ_raw, 1) # local state space dimension

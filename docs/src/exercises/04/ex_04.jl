@@ -1,4 +1,5 @@
 using LinearAlgebra, Serialization, Qritical
+const DATA_ROOT = normpath(joinpath(@__FILE__, "..", "..", "data"))
 load_mps(fname, D=64) = let
     ψ_raw = deserialize(joinpath(DATA_ROOT, fname))
     N = ndims(ψ_raw);  d = size(ψ_raw, 1)
