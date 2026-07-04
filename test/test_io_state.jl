@@ -15,8 +15,9 @@ using Serialization
 using DelimitedFiles
 using Qritical
 
-# Scratchpad for temporary test files (fixtures, intermediate data)
-const SCRATCHPAD = "/private/tmp/claude-501/-Users-bavithra-Documents-Uni-Courses-26-HTN-Qritical-jl/8ecb12b1-c9bf-424b-bbce-2b5fba90376d/scratchpad"
+# Scratchpad for temporary test files (fixtures, intermediate data).
+# Use a fresh OS temp dir so the tests run anywhere, including CI.
+const SCRATCHPAD = mktempdir()
 
 @testset "IO and state utilities" begin
 
