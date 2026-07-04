@@ -86,7 +86,16 @@ The `converged` field of `PowerMethodResult` tells you whether this was achieved
 
 ---
 
+## Types
+
+### Results
+
 ```@docs
 PowerMethodResult
+```
+
+## Functions
+
+```@docs
 power_method
 ```

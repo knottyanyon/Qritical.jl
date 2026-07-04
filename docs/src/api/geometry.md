@@ -19,9 +19,16 @@ works unchanged.
 
 ---
 
+## Types
+
 ```@docs
 AbstractGeometry
 Chain
+```
+
+## Functions
+
+```@docs
 sites
 bonds
 ```

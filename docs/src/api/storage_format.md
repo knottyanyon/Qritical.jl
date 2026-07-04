@@ -31,6 +31,8 @@ uses `matrix_repr`.
 
 ---
 
+## Types
+
 ```@docs
 StorageFormat
 DenseFormat

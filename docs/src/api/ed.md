@@ -58,10 +58,31 @@ The typical workflow is:
 
 ---
 
+## Types
+
+### Problem specification
+
 ```@docs
 GroundState
+```
+
+### Algorithms
+
+```@docs
 ExactDiagonalization
+```
+
+### Results
+
+```@docs
 EDResult
+```
+
+## Functions
+
+### Ground state search
+
+```@docs
 solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:ground})
 solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:full})
 ```

@@ -84,12 +84,38 @@ pass `NoTracker()` (the default) and you pay no overhead.
 
 ---
 
+## Types
+
+### Initial states
+
 ```@docs
-neel_state
 Quench
+```
+
+### Algorithms
+
+```@docs
 TEBD
+```
+
+### Tracking and results
+
+```@docs
 NoTracker
 Tracker
 QuenchResult
+```
+
+## Functions
+
+### State preparation
+
+```@docs
+neel_state
+```
+
+### Time evolution
+
+```@docs
 solve(H::LatticeOperator, quench::Quench, algo::TEBD, p::ConstantProtocol)
 ```

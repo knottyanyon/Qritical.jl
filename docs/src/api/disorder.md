@@ -102,7 +102,14 @@ the identical disorder landscape.
 
 ---
 
+## Types
+
 ```@docs
 Uniform
+```
+
+## Functions
+
+```@docs
 disorder_realization
 ```

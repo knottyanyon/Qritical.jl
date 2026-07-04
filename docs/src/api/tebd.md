@@ -94,21 +94,47 @@ through each neighbouring bond.
 
 ---
 
+## Types
+
+### Time axis
+
 ```@docs
 TimeAxis
 RealTime
 ImaginaryTime
+```
+
+### Gate properties and propagators
+
+```@docs
 Unitary
 HermitianPSD
 Propagator
-opclass
-gate
 ConstantProtocol
-total_time
-bond_hamiltonian
-apply_gate
 TrotterSubstep
 SuzukiTrotter
+```
+
+## Functions
+
+### Gate construction and application
+
+```@docs
+opclass
+gate
+apply_gate
+```
+
+### Hamiltonian preparation
+
+```@docs
+bond_hamiltonian
+total_time
+```
+
+### Trotter stepping
+
+```@docs
 trotter_steps
 trotter_step
 ```
