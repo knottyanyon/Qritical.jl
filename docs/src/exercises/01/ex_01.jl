@@ -62,8 +62,10 @@ j_col = lower(:j, ncols);
 # and column leg `j` (`Lower`):
 #
 # ```@raw html
-# <img src="../1_light.svg" class="docs-light-only" width="320"/>
-# <img src="../1_dark.svg" class="docs-dark-only" width="320"/>
+# <div style="text-align: center">
+# <img src="../1_light.svg" class="docs-light-only" width="60%"/>
+# <img src="../1_dark.svg" class="docs-dark-only" width="60%"/>
+# </div>
 # ```
 #
 # If you're now reaching for your general relativity textbook thinking "covariant
