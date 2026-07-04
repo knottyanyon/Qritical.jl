@@ -2,9 +2,19 @@ using Qritical
 using Documenter
 using DocumenterCitations
 
+# Load the symbol usage injection system (JSON and Markdown imported inside)
+include(joinpath(@__DIR__, "symbol_docstring_injector.jl"))
+
 bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authoryear)
 
 DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
+
+# Scan exercise notebooks and prepare symbol usage mapping
+exercise_usage = find_notebook_symbol_usage(joinpath(@__DIR__, "src", "exercises"))
+@info "Found $(length(exercise_usage)) symbols used in exercises"
+
+# Inject "Used in exercises" into docstrings before building docs
+inject_usage_into_module_docstrings!(Qritical, exercise_usage)
 
 makedocs(;
     modules=[Qritical],
