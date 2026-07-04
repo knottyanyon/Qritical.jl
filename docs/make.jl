@@ -1,6 +1,7 @@
 using Qritical
 using Documenter
 using DocumenterCitations
+using DocumenterMermaid
 using Literate
 using JSON, Markdown
 

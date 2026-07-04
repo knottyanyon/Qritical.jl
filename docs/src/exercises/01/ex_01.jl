@@ -19,7 +19,7 @@ using InteractiveUtils   # versioninfo() (auto-loaded by IJulia, explicit for sc
 versioninfo()
 println("Qritical loaded: ", Qritical)
 
-const DATA_ROOT = normpath(joinpath(@__FILE__, "..", "..", "data"))
+const DATA_ROOT = normpath(joinpath(@__FILE__, "..", "..", "data"));
 
 # # 2. SVD a matrix
 
