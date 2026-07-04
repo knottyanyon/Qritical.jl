@@ -91,7 +91,7 @@ julia> label(g)
 
 ## `QTensor`
 
-`QTensor` (see the [QTensor API documentation](/api/qtensor.md)) pairs a backing `AbstractArray` with an `NTuple` of `AbstractIx` values, one per dimension:
+`QTensor` (see the [QTensor API documentation](../api/qtensor.md)) pairs a backing `AbstractArray` with an `NTuple` of `AbstractIx` values, one per dimension:
 
 ```jldoctest it
 julia> using Qritical

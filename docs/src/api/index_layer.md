@@ -47,7 +47,7 @@ MulTIx
 
 ### Partition utilities
 
-See [`QTensor`](/api/qtensor.md) documentation for `Partition` and `Bipartition` usage.
+See the [`QTensor` documentation](../api/qtensor.md) for `Partition` and `Bipartition` usage.
 
 ### Accessors
 
