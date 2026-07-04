@@ -6,21 +6,18 @@
     find_notebook_symbol_usage(notebooks_dir::String) -> Dict{Symbol, Vector{String}}
 
 Scan Jupyter notebooks and return a mapping of symbol -> list of exercise names.
-If JSON is not available, returns an empty dict (symbol discovery is optional).
+Returns an empty dict if JSON is unavailable (symbol discovery is optional).
 """
 function find_notebook_symbol_usage(notebooks_dir::String)
     usage = Dict{Symbol, Vector{String}}()
 
-    # Check if JSON is available; if not, skip notebook parsing
-    try
-        @eval using JSON
-    catch
-        @warn "JSON not available; skipping exercise notebook symbol discovery"
+    # Check if JSON is available in the current scope
+    if !isdefined(Main, :JSON)
+        # Silently skip if JSON is not available — symbol discovery is optional
         return usage
     end
 
     if !isdir(notebooks_dir)
-        @warn "Exercises directory not found: $notebooks_dir"
         return usage
     end
 
@@ -39,7 +36,7 @@ function find_notebook_symbol_usage(notebooks_dir::String)
 
                     try
                         # Parse notebook JSON
-                        notebook_json = JSON.parse(read(notebook_path, String))
+                        notebook_json = Main.JSON.parse(read(notebook_path, String))
 
                         # Extract code from all code cells
                         cells = get(notebook_json, "cells", [])
@@ -64,8 +61,10 @@ function find_notebook_symbol_usage(notebooks_dir::String)
                                 end
                             end
                         end
-                    catch e
-                        @warn "Failed to parse notebook $notebook_path: $e"
+                    catch
+                        # Silently skip notebooks that fail to parse — notebook parsing
+                        # is optional for the docs build to succeed
+                        continue
                     end
                 end
             end

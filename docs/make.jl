@@ -2,8 +2,9 @@ using Qritical
 using Documenter
 using DocumenterCitations
 using Literate
+using JSON, Markdown
 
-# Load the symbol usage injection system (JSON and Markdown imported inside)
+# Load the symbol usage injection system
 include(joinpath(@__DIR__, "symbol_docstring_injector.jl"))
 
 bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authoryear)
