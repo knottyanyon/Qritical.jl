@@ -18,6 +18,14 @@ DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
 # LiveServer watches. Unconditionally rewriting the .md on every build makes the
 # watcher see a "change" and re-trigger make.jl, which rewrites it again — an
 # infinite rebuild loop. Skipping up-to-date files breaks that cycle.
+#
+# Most exercises reference paths/state that don't resolve cleanly in the docs
+# build environment, so they default to execute=false (source shown, not run).
+# Exercises listed in EXECUTABLE_EXERCISES have been verified to run standalone
+# (their data dependencies exist under docs/src/exercises/data/) and are left
+# executable so their `println`/plot output renders in the built docs.
+const EXECUTABLE_EXERCISES = ["01"]
+
 exercises_dir = joinpath(@__DIR__, "src", "exercises")
 for (root, dirs, files) in walkdir(exercises_dir)
     for file in files
@@ -30,19 +38,20 @@ for (root, dirs, files) in walkdir(exercises_dir)
                 continue
             end
 
+            exercise_id = basename(root)
+            executable = exercise_id in EXECUTABLE_EXERCISES
+
             # Process with Literate - specify output directory explicitly
             # This generates .md directly in the exercise directory
-            # execute=false prevents running code blocks (they're for user interaction)
             Literate.markdown(input_path, root;
                              documenter=true,
                              flavor=Literate.DocumenterFlavor(),
-                             execute=false)
+                             execute=executable)
 
-            # Post-process: convert @example blocks to plain code blocks
-            # (exercises contain interactive code not meant to be auto-executed)
-            if isfile(output_path)
+            # Post-process: for non-executable exercises, convert @example blocks
+            # to plain code blocks so Documenter never tries to run them.
+            if !executable && isfile(output_path)
                 content = read(output_path, String)
-                # Replace ````@example with plain ````julia (won't be executed by Documenter)
                 modified = replace(content, r"````@example ex_\d+\n" => "````julia\n")
                 write(output_path, modified)
             end
