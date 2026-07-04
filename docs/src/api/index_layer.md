@@ -14,21 +14,68 @@ The `MulTIx` type represents a fused (grouped) leg — the result of `group_legs
 
 ---
 
+## Types
+
+### Abstract types and variance tags
+
 ```@docs
 AbstractIx
 IxLoc
 Upper
 Lower
+```
+
+### Single index
+
+```@docs
 TIx
+```
+
+### Multi-index (fused leg)
+
+```@docs
 MulTIx
+```
+
+### Partitions
+
+```@docs
+Partition
+Bipartition
+```
+
+## Functions
+
+### Accessors
+
+```@docs
 dim
 label
 which_space
+```
+
+### Index manipulation
+
+```@docs
+flip
 upper
 lower
+```
+
+### Batch constructors
+
+```@docs
 uppers
 lowers
 uppers_range
 lowers_range
+```
+
+### Partition utilities
+
+```@docs
+complement
+bipartition
+group_legs
 bond_label
 ```

@@ -65,11 +65,19 @@ struct Lower <: IxLoc end
 
 Root of the Qritical.jl index hierarchy.
 
-Every concrete subtype must implement:
+Every concrete subtype must implement three methods that expose the index's identity and
+structural role within a tensor:
 
-  - [`dim(::AbstractIx)`](@ref)         — positive integer size of the index space
-  - [`label(::AbstractIx)`](@ref)       — symbolic name used for contraction matching
-  - [`which_space(::AbstractIx)`](@ref) — `:domain` for upper, `:codomain` for lower
+  - [`dim(::AbstractIx)`](@ref)         — positive integer size of the index space.
+    Required to check index compatibility during contraction and to reshape tensors for
+    matrix operations (SVD, matrix-vector products).
+  - [`label(::AbstractIx)`](@ref)       — symbolic name used for contraction matching.
+    Two indices contract only if they have identical labels (one Upper, one Lower);
+    the label is the key lookup in the contraction machinery.
+  - [`which_space(::AbstractIx)`](@ref) — `:domain` for upper, `:codomain` for lower.
+    Determines the variance semantics and which end of a `TensorMap` this leg maps to;
+    essential for correct index order in matricisation (reshape for SVD) and for
+    tracking adjoint operations.
 
 Concrete subtypes: [`TIx`](@ref), [`MulTIx`](@ref).
 """
@@ -90,8 +98,7 @@ a **variance** encoded in the type parameter `L ∈ {Upper, Lower}`.
 Variance is part of the index's identity: two `TIx` values with the same label
 and dimension but *different* variance are not equal. This encodes the von Delft
 convention — upper indices belong to the domain, lower indices to the codomain
-— making contraction correctness a compile-time property.
-
+— making contraction correctness a compile-time property. 
 # Fields
 
   - `label :: Symbol` — name used for contraction matching (e.g. `:α`, `:σ_1`)
@@ -124,6 +131,7 @@ false
 ```
 """
 struct TIx{L<:IxLoc} <: AbstractIx
+
     label::Symbol
     dim::Int
 
@@ -171,10 +179,17 @@ label(ix::TIx) = ix.label
     which_space(ix::TIx) -> Symbol
 
 Return `:domain` for an [`Upper`](@ref) index and `:codomain` for a
-[`Lower`](@ref) index, reflecting the von Delft convention:
+[`Lower`](@ref) index, reflecting the von Delft convention.
 
-  - upper = incoming arrow = contravariant coefficient index = domain (dual `V'`)
-  - lower = outgoing arrow = covariant index = codomain (primal `V`)
+The returned **space** is the Hilbert space that this index belongs to when viewed as a
+leg of a `TensorMap`. In TensorKit parlance, a `TensorMap(V → W)` maps from domain `V`
+(the input space) to codomain `W` (the output space). Each leg of the underlying dense
+tensor falls into exactly one: Upper indices map to the domain (dual `V'`, contravariant),
+while Lower indices map to the codomain (primal `W`, covariant). This correspondence
+determines tensor contraction rules and the reshape order during matricisation for SVD:
+
+  - upper = incoming arrow = contravariant coefficient index → `:domain` (dual `V'`)
+  - lower = outgoing arrow = covariant basis index → `:codomain` (primal `V`)
 
 # Examples
 
@@ -189,6 +204,12 @@ julia> which_space(TIx{Lower}(:σ, 2))
 which_space(::TIx{Upper}) = :domain
 which_space(::TIx{Lower}) = :codomain
 
+# Extend Base.== and Base.hash so indices can be stored in dicts/sets and compared.
+# Two indices are equal only if they have the same label, dimension, AND variance (Upper vs Lower).
+# This is critical for contraction: we match Upper(label=:α, dim=2) with Lower(label=:α, dim=2),
+# but not with Upper(label=:α, dim=2) or Upper(label=:β, dim=2). The hash enables fast index
+# lookup when building contraction networks; dim is included so different dimensions don't
+# collide, even if they happen to have the same label.
 Base.:(==)(a::TIx{L}, b::TIx{L}) where {L<:IxLoc} = a.label == b.label && a.dim == b.dim
 Base.:(==)(::TIx, ::TIx) = false   # different variance → never equal
 Base.hash(ix::TIx, h::UInt) = hash(ix.label, hash(ix.dim, hash(typeof(ix), h)))
@@ -200,8 +221,11 @@ Raise or lower a single index: return an index with the same label and
 dimension but the **opposite variance** (`Upper` ↔ `Lower`), moving the leg
 between domain and codomain. Diagrammatically, `flip` reverses the leg's arrow.
 
-With the trivial metric of an orthonormal basis, raising and lowering an index
-does not change any numerical value, so `flip` is a pure re-labelling. It is an
+Formally, raising and lowering an index corresponds to contracting with the metric tensor
+``g_{ij}`` or its inverse ``g^{ij}``. In the orthonormal basis convention used throughout
+Qritical, the metric is the identity (``g_{ij} = \\delta_{ij}``), so raising and lowering
+are **purely syntactic**: they change the variance tag and the tensor map's leg placement
+but do not alter numerical values. This is why `flip` only re-tags the index and is an
 involution: `flip(flip(ix)) == ix`.
 
 `flip` acts on **one leg only** — contrast with the adjoint, which flips *every*
@@ -289,6 +313,10 @@ julia> which_space(β)
 :domain
 ```
 """
+# The "." is Julia's broadcasting operator. first.(pairs) applies `first` element-wise to
+# each pair, producing a tuple of labels; last.(pairs) applies `last` to each pair,
+# producing a tuple of dimensions. TIx{Upper}.(...) then broadcasts the constructor
+# TIx{Upper}(label, dim) element-wise, zipping the two tuples together.
 uppers(pairs::Pair{Symbol,Int}...) = TIx{Upper}.(first.(pairs), last.(pairs))
 
 """
@@ -499,6 +527,26 @@ label(g::MulTIx) = g.label
 Base.:(==)(a::MulTIx, b::MulTIx) = a.label == b.label && a.indices == b.indices
 Base.hash(g::MulTIx, h::UInt) = hash(g.label, hash(g.indices, h))
 
+
+"""
+    _autolabel(indices::Tuple{Vararg{AbstractIx}}) -> Symbol
+
+Generate a label for a fused multi-index by concatenating the labels of its constituent
+indices. Returns `:scalar` if the tuple is empty (a scalar has no indices to fuse).
+
+This is an internal helper used by the `MulTIx` constructor to auto-generate labels when
+none is provided. For example, `_autolabel((upper(:α, 3), lower(:σ, 2)))` returns `:ασ`.
+
+# Examples
+
+```jldoctest
+julia> _autolabel((upper(:α, 3), lower(:σ, 2)))
+:ασ
+
+julia> _autolabel(())
+:scalar
+```
+"""
 function _autolabel(indices::Tuple{Vararg{AbstractIx}})
     isempty(indices) ? :scalar : Symbol(join(String.(label.(indices))))
 end
