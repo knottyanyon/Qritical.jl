@@ -260,7 +260,6 @@ string helper) without caring which specific DoF it was called with.
 
 Use [`canonical_relation`](@ref) to query the statistics of any concrete `AbstractDoF`.
 """
-
 abstract type CanonicalRelation end
 
 """
@@ -410,7 +409,6 @@ julia> ops.Sp
  0.0+0.0im  0.0+0.0im
 ```
 """
-
 function algebra_generators(::Spin{1//2})
     Sz = ComplexF64[1 0; 0 -1] / 2          # ½·diag(+1,−1); Sz|↑⟩=+½|↑⟩
     Sp = ComplexF64[0 1; 0 0]              # S⁺|↓⟩=|↑⟩, S⁺|↑⟩=0

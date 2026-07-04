@@ -100,6 +100,7 @@ makedocs(;
             "Power Method" => "api/power_method.md",
             "TEBD" => "api/tebd.md",
             "Quench & TEBD Solve" => "api/quench.md",
+            "Storage Formats" => "api/storage_format.md",
             "ExactDiagonalization" => "api/ed.md",
             "ED Time Propagation" => "api/ed_time.md",
             "Disorder" => "api/disorder.md",

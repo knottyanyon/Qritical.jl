@@ -96,7 +96,7 @@ Concrete subtypes:
 - [`MaxBondDimTrunc`](@ref) — keep at most `max_χ` values
 - [`ValCutoffTrunc`](@ref)  — keep all values above a threshold
 
-Julia dispatches the correct [`_truncate_singular_values`](@ref) method
+Julia dispatches the correct `_truncate_singular_values` method
 automatically based on which subtype you pass — no `if/else` needed.
 """
 abstract type AbstractTrunc end
@@ -235,7 +235,7 @@ Steps:
    is treated as a numerical zero, not a genuine Schmidt value.  This step
    happens *before* the truncation strategy sees the list, so strategies
    operate on a clean, physics-relevant spectrum.
-4. Apply [`_truncate_singular_values`](@ref) to decide how many to keep.
+4. Apply `_truncate_singular_values` to decide how many to keep.
 5. Slice `U`, `Σ`, `Vd` to keep only the leading `r` columns/rows/values.
 
 Returns raw `Matrix` / `Vector` values — not `QTensor`s. The leg metadata is

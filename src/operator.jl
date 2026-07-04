@@ -35,7 +35,6 @@ julia> uniform_coupling(2, 0.0)
  0.0
 ```
 """
-
 uniform_coupling(n::Int, x) = fill(x, n)
 
 # ----------------------------------------------------------------------------------------
@@ -200,7 +199,7 @@ course convention ``-h_i S^z_i`` (see Exercise 3/6 of the SS26 course).
 
 # Returns
 
-  - `LatticeOperator` with `dof = SpinHalf()`, suitable for `MPO(H)` or [`dense_matrix`](@ref).
+  - `LatticeOperator` with `dof = SpinHalf()`, suitable for `MPO(H)` or [`matrix_repr`](@ref).
 
 # Examples
 
@@ -467,7 +466,7 @@ single `TwoSiteTerm` with coupling 1 and no on-site terms.
     correlator requires a Jordan–Wigner string
     ``\\prod_{k=i_A}^{i_B-1} (-1)^{n_k}`` between the two operators.
     The MPO route via [`expect`](@ref) does not insert this string automatically
-    in the current version; use [`dense_matrix`](@ref) on small systems or handle
+    in the current version; use [`matrix_repr`](@ref) on small systems or handle
     JW strings by hand for fermionic models.
 
 # Arguments

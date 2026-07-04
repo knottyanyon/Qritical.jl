@@ -211,7 +211,7 @@ tensor ``B_i``, satisfying ``B_i B_i^\\dagger = I_r``.  Site 1 inherits the norm
 **Noise cleaning before truncation.** `LinearAlgebra.svd` can return tiny
 floating-point artifacts in the singular-value tail at the level of
 ``\\varepsilon_\\text{mach} \\times \\sigma_1``.  These are filtered out before
-[`_truncate_singular_values`](@ref) is called, preventing them from being counted
+`_truncate_singular_values` is called, preventing them from being counted
 as genuine Schmidt values and inflating ``\\chi`` when `trunc = NoTrunc()`.
 The threshold used is the classical Golub–Van Loan numerical-rank criterion:
 ``\\sigma_k > n\\, \\varepsilon_\\text{mach}\\, \\sigma_1``.

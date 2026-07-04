@@ -10,7 +10,7 @@ same `expect(ψ, O)` routine measures energy, magnetisation, and ``\langle S^z_i
 \rangle`` without any special-casing.
 
 The construction strategy is **lazy**: couplings and operator matrices are stored as a
-list of `OneSiteTerm`s and `TwoSiteTerm`s; the dense matrix form (`dense_matrix`) and the MPO
+list of `OneSiteTerm`s and `TwoSiteTerm`s; the dense matrix form (`matrix_repr`) and the MPO
 form (`MPO`) are computed on demand. This means you can build an `LatticeOperator`, inspect its
 term list, modify couplings, and only pay for the MPO contraction when you actually call
 `expect`.
@@ -39,7 +39,7 @@ infrastructure.
 ---
 
 ```@docs
-uniform
+uniform_coupling
 OneSiteTerm
 TwoSiteTerm
 LatticeOperator
@@ -51,5 +51,5 @@ staggered_magnetization
 op_at_site
 two_site_op(g::AbstractGeometry, dof::AbstractDoF, opA::Symbol, iA::Int, opB::Symbol, iB::Int)
 identity_operator
-dense_matrix
+matrix_repr(H::LatticeOperator)
 ```

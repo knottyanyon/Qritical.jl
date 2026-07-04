@@ -178,7 +178,7 @@ ground-state vector from [`EDResult`](@ref)) and want to hand it to
 `ComplexF64` so you do not have to think about element types.
 
 The vector must be ordered in the big-endian Kronecker-product basis used
-by [`dense_matrix`](@ref): component ``k`` of the returned
+by [`matrix_repr`](@ref): component ``k`` of the returned
 [`StatevectorState`](@ref) corresponds to the computational basis state
 ``|\\sigma_1, \\sigma_2, \\ldots, \\sigma_L\\rangle`` where
 
@@ -291,7 +291,8 @@ Trotter formula.
 # Arguments
 
   - `H::LatticeOperator`: the Hamiltonian. Must fit within the ``2^{20}`` Hilbert-space
-    guard enforced by [`dense_matrix`](@ref) (same limit as [`sparse`](@ref)).
+    guard enforced by [`matrix_repr`](@ref) (the same limit applies to both the dense
+    and sparse storage formats).
   - `sv::StatevectorState`: the initial state, constructed via
     [`as_statevector`](@ref).
   - `::ExactDiagonalization{:time}`: selects this exact-propagation path.

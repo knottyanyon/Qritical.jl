@@ -41,7 +41,7 @@ For ``L = 10``, ``d = 2``, that is a factor of roughly ``10^6 / m``.
 
 ### The ``2^{20}`` guard
 
-The `sparse` function refuses to build a Hilbert space larger than ``2^{20} \approx 10^6``
+`matrix_repr` refuses to build a Hilbert space larger than ``2^{20} \approx 10^6``
 states. This is not an arbitrary limit — it reflects the point at which the dense matrix
 would take several gigabytes of RAM and the full diagonalization would run for hours.
 Beyond this scale you should be using an MPS algorithm. The guard makes this failure loud
@@ -62,7 +62,6 @@ The typical workflow is:
 GroundState
 ExactDiagonalization
 EDResult
-matrix_repr(H::LatticeOperator, SparseFormat())
 solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:ground})
 solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:full})
 ```
