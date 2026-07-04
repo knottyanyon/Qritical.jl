@@ -13,9 +13,9 @@ The switch between backends is a single `ScopedValue` context (`with_backend(:te
 
 ## Quick Reference
 
-**Types:** [`QTensor`](@ref) · [`Partition`](@ref) · [`Bipartition`](@ref)
+**Types:** `QTensor` · `Partition` · `Bipartition`
 
-**Functions:** [`complement`](@ref) · [`bipartition`](@ref) · [`group_legs`](@ref) · [`dagger`](@ref)
+**Functions:** `complement` · `bipartition` · `group_legs` · `dagger`
 
 ---
 
