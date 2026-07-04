@@ -58,6 +58,14 @@ The typical workflow is:
 
 ---
 
+## Quick Reference
+
+**Types:** [`GroundState`](@ref) · [`ExactDiagonalization`](@ref) · [`EDResult`](@ref)
+
+**Functions:** [`solve`](@ref)
+
+---
+
 ## Types
 
 ### Problem specification

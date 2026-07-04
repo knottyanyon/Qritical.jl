@@ -13,6 +13,14 @@ The switch between backends is a single `ScopedValue` context (`with_backend(:te
 
 ---
 
+## Quick Reference
+
+**Types:** [`QTensor`](@ref) · [`Partition`](@ref) · [`Bipartition`](@ref)
+
+**Functions:** [`complement`](@ref) · [`bipartition`](@ref) · [`group_legs`](@ref)
+
+---
+
 ## Types
 
 ### Main tensor type

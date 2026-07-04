@@ -14,6 +14,14 @@ The `MulTIx` type represents a fused (grouped) leg — the result of `group_legs
 
 ---
 
+## Quick Reference
+
+**Types:** [`AbstractIx`](@ref) · [`IxLoc`](@ref) · [`Upper`](@ref) · [`Lower`](@ref) · [`TIx`](@ref) · [`MulTIx`](@ref) · [`Partition`](@ref) · [`Bipartition`](@ref)
+
+**Functions:** [`dim`](@ref) · [`label`](@ref) · [`which_space`](@ref) · [`flip`](@ref) · [`upper`](@ref) · [`lower`](@ref) · [`uppers`](@ref) · [`lowers`](@ref) · [`uppers_range`](@ref) · [`lowers_range`](@ref) · [`complement`](@ref) · [`bipartition`](@ref) · [`bond_label`](@ref)
+
+---
+
 ## Types
 
 ### Abstract types and variance tags

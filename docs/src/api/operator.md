@@ -38,6 +38,16 @@ infrastructure.
 
 ---
 
+## Quick Reference
+
+**Operator types:** [`OneSiteTerm`](@ref) · [`TwoSiteTerm`](@ref) · [`LatticeOperator`](@ref)
+
+**Hamiltonian builders:** [`uniform_coupling`](@ref) · [`XXZ`](@ref) · [`Heisenberg`](@ref) · [`Ising`](@ref)
+
+**Observables:** [`total_magnetization`](@ref) · [`staggered_magnetization`](@ref) · [`op_at_site`](@ref) · [`two_site_op`](@ref) · [`identity_operator`](@ref) · [`matrix_repr`](@ref)
+
+---
+
 ## Types
 
 ### Terms and operators

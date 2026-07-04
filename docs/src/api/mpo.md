@@ -51,6 +51,14 @@ The result ``L^{(L)}[1,1,1]`` is the scalar expectation value. Per-site cost:
 
 ---
 
+## Quick Reference
+
+**MPO types:** [`FiniteMPO`](@ref) · [`MPO`](@ref)
+
+**Functions:** [`expect`](@ref) · [`apply_mpo`](@ref)
+
+---
+
 ## Types
 
 ```@docs

@@ -19,6 +19,14 @@ works unchanged.
 
 ---
 
+## Quick Reference
+
+**Types:** [`AbstractGeometry`](@ref) · [`Chain`](@ref)
+
+**Functions:** [`sites`](@ref) · [`bonds`](@ref)
+
+---
+
 ## Types
 
 ```@docs

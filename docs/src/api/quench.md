@@ -84,6 +84,14 @@ pass `NoTracker()` (the default) and you pay no overhead.
 
 ---
 
+## Quick Reference
+
+**Types:** [`Quench`](@ref) · [`TEBD`](@ref) · [`NoTracker`](@ref) · [`Tracker`](@ref) · [`QuenchResult`](@ref)
+
+**Functions:** [`neel_state`](@ref) · [`solve`](@ref)
+
+---
+
 ## Types
 
 ### Initial states

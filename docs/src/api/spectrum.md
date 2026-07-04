@@ -23,6 +23,16 @@ These types are kept distinct so that `BondCanonical` and `SiteCanonical` sweeps
 
 ---
 
+## Quick Reference
+
+**Orthogonality centres:** [`Bond`](@ref) · [`OrthoCenter`](@ref) · [`BondCenter`](@ref) · [`SiteCenter`](@ref)
+
+**Spectra:** [`AbstractSpectrum`](@ref) · [`SingValSpectrum`](@ref) · [`EigValSpectrum`](@ref) · [`SchmidtSpectrum`](@ref)
+
+**Analysis:** [`schmidt_rank`](@ref) · [`spectral_gap`](@ref) · [`schmidt_values`](@ref) · [`entanglement_entropy`](@ref) · [`entanglement_spectrum`](@ref)
+
+---
+
 ## Types
 
 ### Orthogonality centres

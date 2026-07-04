@@ -20,6 +20,16 @@ The **canonical form** is the key operational concept. A site tensor ``A_i`` is 
 
 ---
 
+## Quick Reference
+
+**MPS types:** [`AbstractMPSForm`](@ref) · [`CanonicalForm`](@ref) · [`VidalForm`](@ref) · [`ArbitraryForm`](@ref) · [`FiniteMPS`](@ref)
+
+**Canonical forms:** [`CanonicalizeConfig`](@ref) · [`LeftCanonical`](@ref) · [`RightCanonical`](@ref) · [`BondCanonical`](@ref) · [`SiteCanonical`](@ref)
+
+**Operations:** [`to_mps`](@ref) · [`add_mps`](@ref) · [`canonicalize`](@ref) · [`canonical_error`](@ref) · [`is_canonical`](@ref) · [`to_vidal`](@ref) · [`to_canonical`](@ref) · [`overlap`](@ref) · [`local_expectation`](@ref) · [`two_site_op`](@ref)
+
+---
+
 ```@docs
 AbstractMPSForm
 CanonicalForm

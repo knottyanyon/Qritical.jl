@@ -45,6 +45,16 @@ c_\downarrow |\!\uparrow\downarrow\rangle = -|\!\uparrow\rangle
 
 ---
 
+## Quick Reference
+
+**DoF types:** [`AbstractDoF`](@ref) · [`Spin`](@ref) · [`SpinHalf`](@ref) · [`SpinOne`](@ref) · [`SpinlessFermion`](@ref) · [`Electron`](@ref) · [`MajoranaFermion`](@ref) · [`HardCoreBoson`](@ref)
+
+**Statistics:** [`CanonicalRelation`](@ref) · [`CCR`](@ref) · [`CAR`](@ref)
+
+**Functions:** [`local_dim`](@ref) · [`canonical_relation`](@ref) · [`algebra_generators`](@ref) · [`physical_space`](@ref) · [`NoSymmetry`](@ref)
+
+---
+
 ## Types
 
 ### Abstract interface

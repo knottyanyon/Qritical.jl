@@ -94,6 +94,18 @@ through each neighbouring bond.
 
 ---
 
+## Quick Reference
+
+**Time axis:** [`TimeAxis`](@ref) · [`RealTime`](@ref) · [`ImaginaryTime`](@ref)
+
+**Gate types:** [`Unitary`](@ref) · [`HermitianPSD`](@ref) · [`Propagator`](@ref) · [`ConstantProtocol`](@ref)
+
+**Trotter:** [`TrotterSubstep`](@ref) · [`SuzukiTrotter`](@ref)
+
+**Functions:** [`opclass`](@ref) · [`gate`](@ref) · [`apply_gate`](@ref) · [`bond_hamiltonian`](@ref) · [`total_time`](@ref) · [`trotter_steps`](@ref) · [`trotter_step`](@ref)
+
+---
+
 ## Types
 
 ### Time axis

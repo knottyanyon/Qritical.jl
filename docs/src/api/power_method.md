@@ -86,6 +86,14 @@ The `converged` field of `PowerMethodResult` tells you whether this was achieved
 
 ---
 
+## Quick Reference
+
+**Types:** [`PowerMethodResult`](@ref)
+
+**Functions:** [`power_method`](@ref)
+
+---
+
 ## Types
 
 ### Results
