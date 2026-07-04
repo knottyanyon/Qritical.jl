@@ -58,6 +58,14 @@ j_col = lower(:j, ncols);
 #   index in Penrose notation, playing the role of a "ket" or "column" space
 # - **Lower** — created with `lower(:name, dim)`, playing the role of a "bra" or "row" space
 #
+# The tensor-network diagram for `A` — a valence-2 tensor with row leg `i` (`Upper`)
+# and column leg `j` (`Lower`):
+#
+# ```@raw html
+# <img src="../1_light.svg" class="docs-light-only" width="320"/>
+# <img src="../1_dark.svg" class="docs-dark-only" width="320"/>
+# ```
+#
 # If you're now reaching for your general relativity textbook thinking "covariant
 # transformation laws, cotangent bundles, pullbacks..." — you can put it back on the shelf.
 # In quantum mechanics everything lives in a finite-dimensional Hilbert space equipped with
