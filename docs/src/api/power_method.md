@@ -13,7 +13,7 @@ because the excited components ``e^{-\tau E_k}`` decay faster than the ground-st
 component ``e^{-\tau E_0}`` whenever ``E_k > E_0``. The ground state dominates
 exponentially fast.
 
-For a converged ground state with first excited state above it, the rate of convergence is set by the [`spectral gap`](@ref Glossary#spectral-gap) ``\Delta = E_1 - E_0``.
+For a converged ground state with first excited state above it, the rate of convergence is set by the [`spectral gap`](../references/glossary.md#spectral-gap) ``\Delta = E_1 - E_0``.
 
 For a small time step ``\tau``, the evolution operator expands as
 

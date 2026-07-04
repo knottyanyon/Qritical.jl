@@ -1,14 +1,14 @@
 # SVD & Truncation
 
-The [`Schmidt decomposition`](@ref Glossary#schmidt-decomposition) is the fundamental tool of tensor-network methods. For a bipartite quantum state ``|\psi\rangle \in \mathcal{H}_A \otimes \mathcal{H}_B``, the Schmidt decomposition reads
+The [`Schmidt decomposition`](../references/glossary.md#schmidt-decomposition) is the fundamental tool of tensor-network methods. For a bipartite quantum state ``|\psi\rangle \in \mathcal{H}_A \otimes \mathcal{H}_B``, the Schmidt decomposition reads
 
 ```math
 |\psi\rangle = \sum_{i=1}^{r} \sigma_i \, |u_i\rangle_A \otimes |v_i\rangle_B
 ```
 
-where ``\sigma_i \geq 0`` are the [`Schmidt values`](@ref Glossary#schmidt-values), ``r`` is the [`Schmidt rank`](@ref Glossary#schmidt-rank), and ``\{|u_i\rangle\}``, ``\{|v_i\rangle\}`` are orthonormal bases. This is exactly a [`singular-value decomposition`](@ref Glossary#singular-value-decomposition) of the reshaped state tensor across the bipartition cut.
+where ``\sigma_i \geq 0`` are the [`Schmidt values`](../references/glossary.md#schmidt-values), ``r`` is the [`Schmidt rank`](../references/glossary.md#schmidt-rank), and ``\{|u_i\rangle\}``, ``\{|v_i\rangle\}`` are orthonormal bases. This is exactly a [`singular-value decomposition`](../references/glossary.md#singular-value-decomposition) of the reshaped state tensor across the bipartition cut.
 
-The Schmidt values carry the entanglement: the von Neumann entropy is ``S = -\sum_i \sigma_i^2 \log \sigma_i^2``. In a weakly entangled state — which includes the ground states of local gapped Hamiltonians by the [`area law`](@ref Glossary#area-law) — most Schmidt values are negligibly small. **[`Truncation`](@ref Glossary#truncation)** keeps only the top ``r`` values and discards the rest, controlled by `AbstractTrunc`. This is what makes [`MPS`](@ref Glossary#matrix-product-state) efficient: rather than storing ``d^L`` amplitudes, one stores ``L`` tensors each of [`bond dimension`](@ref Glossary#bond-dimension) ``\chi \ll d^{L/2}``.
+The Schmidt values carry the entanglement: the von Neumann entropy is ``S = -\sum_i \sigma_i^2 \log \sigma_i^2``. In a weakly entangled state — which includes the ground states of local gapped Hamiltonians by the [`area law`](../references/glossary.md#area-law) — most Schmidt values are negligibly small. **[`Truncation`](../references/glossary.md#truncation)** keeps only the top ``r`` values and discards the rest, controlled by `AbstractTrunc`. This is what makes [`MPS`](../references/glossary.md#mps) efficient: rather than storing ``d^L`` amplitudes, one stores ``L`` tensors each of [`bond dimension`](../references/glossary.md#bond-dimension) ``\chi \ll d^{L/2}``.
 
 `do_svd` separates the *exact* case from the *approximate* case at the type level:
 

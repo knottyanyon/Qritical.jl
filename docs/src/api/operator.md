@@ -8,9 +8,9 @@ same `expect(ψ, O)` routine measures energy, magnetisation, and ``\langle S^z_i
 \rangle`` without any special-casing.
 
 The construction strategy is **lazy**: couplings and operator matrices are stored as a
-list of `OneSiteTerm`s and `TwoSiteTerm`s; the dense matrix form (`matrix_repr`) and the [`MPO`](@ref Glossary#matrix-product-operator)
+list of `OneSiteTerm`s and `TwoSiteTerm`s; the dense matrix form (`matrix_repr`) and the [`MPO`](../references/glossary.md#mpo)
 form (`MPO`) are computed on demand. This means you can build an `LatticeOperator`, inspect its
-term list, modify couplings, and only pay for the [`MPO`](@ref Glossary#matrix-product-operator) contraction when you actually call
+term list, modify couplings, and only pay for the [`MPO`](../references/glossary.md#mpo) contraction when you actually call
 `expect`.
 
 ### Named constructors

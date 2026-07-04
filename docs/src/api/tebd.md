@@ -1,9 +1,9 @@
 # TEBD & Suzuki-Trotter Time Evolution
 
-**[`Time-Evolving Block Decimation`](@ref Glossary#tebd)** ([`TEBD`](@ref Glossary#tebd)) is the workhorse algorithm for time-evolving
-an [`MPS`](@ref Glossary#matrix-product-state) under a nearest-neighbour Hamiltonian. The core idea is to approximate the
+**[`Time-Evolving Block Decimation`](../references/glossary.md#time-evolving-block-decimation)** ([`TEBD`](../references/glossary.md#tebd)) is the workhorse algorithm for time-evolving
+an [`MPS`](../references/glossary.md#mps) under a nearest-neighbour Hamiltonian. The core idea is to approximate the
 global time-evolution operator ``e^{-i\Delta t H}`` as a product of cheap two-site
-gates — one gate per [`bond`](@ref Glossary#bond) — using a **Suzuki-Trotter product formula**.
+gates — one gate per [`bond`](../references/glossary.md#bond) — using a **Suzuki-Trotter product formula**.
 
 ### Why the Trotter decomposition works
 

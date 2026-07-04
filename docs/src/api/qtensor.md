@@ -1,11 +1,11 @@
 # QTensor
 
-A raw multi-dimensional array has no memory of what its axes mean. In tensor-network computations this quickly becomes dangerous: it is easy to contract the wrong pair of legs, to forget which index is the physical spin and which is the virtual [`bond`](@ref Glossary#bond), or to apply a gate to the wrong site. `QTensor` solves this by bundling a numerical array with an ordered tuple of typed index legs (`TIx{Upper}` or `TIx{Lower}`), making every contraction label-driven rather than position-driven.
+A raw multi-dimensional array has no memory of what its axes mean. In tensor-network computations this quickly becomes dangerous: it is easy to contract the wrong pair of legs, to forget which index is the physical spin and which is the virtual [`bond`](../references/glossary.md#bond), or to apply a gate to the wrong site. `QTensor` solves this by bundling a numerical array with an ordered tuple of typed index legs (`TIx{Upper}` or `TIx{Lower}`), making every contraction label-driven rather than position-driven.
 
 The `{D}` parameter on `QTensor{T,N,D}` selects the execution backend without changing any algorithm code:
 
 - **`:native` backend** — `D = Array{T,N}`, the default dense path. Full-rank tensors, all sectors treated as one block. Used for the learning path, ED validation, and any model without exploitable symmetry.
-- **`:tensorkit` backend** (Part 2) — `D = TensorKit.TensorMap`. The same `QTensor` wrapper, but the underlying array is [`block-sparse`](@ref Glossary#block-sparse): each block corresponds to a symmetry sector (a good quantum number), and contractions run *within* blocks. This is how U(1) charge conservation or SU(2) spin symmetry translates into a computational speedup at large [`bond dimension`](@ref Glossary#bond-dimension) ``\chi``.
+- **`:tensorkit` backend** (Part 2) — `D = TensorKit.TensorMap`. The same `QTensor` wrapper, but the underlying array is [`block-sparse`](../references/glossary.md#block-sparse): each block corresponds to a symmetry sector (a good quantum number), and contractions run *within* blocks. This is how U(1) charge conservation or SU(2) spin symmetry translates into a computational speedup at large [`bond dimension`](../references/glossary.md#bond-dimension) ``\chi``.
 
 The switch between backends is a single `ScopedValue` context (`with_backend(:tensorkit) do … end`) — no algorithm code changes.
 

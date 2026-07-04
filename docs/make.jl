@@ -4,8 +4,9 @@ using DocumenterCitations
 using Literate
 using JSON, Markdown
 
-# Load the symbol usage injection system
+# Load custom documentation hooks
 include(joinpath(@__DIR__, "symbol_docstring_injector.jl"))
+include(joinpath(@__DIR__, "glossary_linker.jl"))
 
 bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authoryear)
 
@@ -41,6 +42,26 @@ exercise_pages = create_exercise_page_mapping(exercises_dir)
 
 # Inject "Used in exercises" with links into docstrings before building docs
 inject_usage_into_module_docstrings!(Qritical, exercise_usage, exercise_pages)
+
+# Preprocess markdown files to convert glossary references {glossary:term} → markdown links
+function preprocess_glossary_links(src_dir)
+    for (root, dirs, files) in walkdir(src_dir)
+        for file in files
+            if endswith(file, ".md")
+                filepath = joinpath(root, file)
+                content = read(filepath, String)
+                modified = glossary_link_preprocessor(content)
+                if modified != content
+                    write(filepath, modified)
+                    @debug "Processed glossary links in $filepath"
+                end
+            end
+        end
+    end
+end
+
+src_dir = normpath(joinpath(@__DIR__, "src"))
+preprocess_glossary_links(src_dir)
 
 makedocs(;
     modules=[Qritical],
