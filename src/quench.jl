@@ -139,7 +139,8 @@ end
 # ----------------------------------------------------------------------------------------
 
 """
-    solve(H, quench::Quench, algo::TEBD, p::ConstantProtocol; tracker=NoTracker()) -> QuenchResult
+    solve(H, quench::Quench, algo::TEBD, p::ConstantProtocol;
+          tracker=NoTracker(), log_every::Int=0) -> QuenchResult
 
 Evolve the initial state `quench.ψ₀` under Hamiltonian `H` for `p.nsteps` Trotter steps
 of size `p.dt` using the `algo.formula` Suzuki-Trotter decomposition.
@@ -150,11 +151,19 @@ At each step:
  2. For real-time evolution (`RealTime`), the norm is preserved automatically.
     For imaginary-time, the state is renormalized after the step.
  3. If the tracker fires at this step, record `⟨O⟩ / ⟨ψ|ψ⟩` for each observable.
+ 4. If `log_every > 0` and the step is a multiple of it, emit an `@info` line with
+    the step count, maximum bond dimension, and largest per-bond truncation error
+    so far — useful for watching long sweeps without a live dashboard.
 
 Returns a `QuenchResult` with the final state and all measurements.
 """
 function solve(
-    H::LatticeOperator, quench::Quench, algo::TEBD, p::ConstantProtocol; tracker=NoTracker()
+    H::LatticeOperator,
+    quench::Quench,
+    algo::TEBD,
+    p::ConstantProtocol;
+    tracker=NoTracker(),
+    log_every::Int=0,
 )
     ψ = quench.ψ₀
     mpo = Dict{Symbol,FiniteMPO}()
@@ -179,6 +188,12 @@ function solve(
             for (name, op_mpo) in mpo
                 push!(meas[name], real(expect(ψ, op_mpo)) / norm_sq)
             end
+        end
+
+        if log_every > 0 && mod(step, log_every) == 0
+            χ_max = maximum(length(bs.values) for bs in ψ.bond_svs)
+            ε_max = maximum(bs.ε for bs in ψ.bond_svs)
+            @info "TEBD step $step/$(p.nsteps)" χ_max ε_max
         end
     end
 
