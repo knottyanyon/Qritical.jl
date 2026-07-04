@@ -6,16 +6,16 @@ sites  = Tuple([upper(Symbol(:s, i), d) for i in 1:N])
 mps    = to_mps(QTensor(ψ_raw, sites); trunc=MaxBondDimTrunc(32), form=:left)
 println("MPS length: ", N, "  max bond dim: ", maximum(size(t.data, 3) for t in mps.tensors))
 
-#md # Ex 5. Vidal (Γ-Λ) Notation and Observables
-#md
-#md The Vidal form factors each left-canonical tensor $A_i = \Lambda_{i-1}\,\Gamma_i$
-#md where $\Lambda_k = \mathrm{diag}(\lambda^{[k]}_1,\ldots)$ are the Schmidt values
-#md at bond $k$.  All physical information is encoded in the $\Gamma\Lambda$ structure.
+# # Ex 5. Vidal (Γ-Λ) Notation and Observables
+#
+# The Vidal form factors each left-canonical tensor $A_i = \Lambda_{i-1}\,\Gamma_i$
+# where $\Lambda_k = \mathrm{diag}(\lambda^{[k]}_1,\ldots)$ are the Schmidt values
+# at bond $k$.  All physical information is encoded in the $\Gamma\Lambda$ structure.
 
-#md ## (a) Convert to Vidal form
-#md
-#md `to_vidal(mps)` returns a new `FiniteMPS` in `VidalForm`.
-#md The round-trip `to_canonical(to_vidal(mps))` should reproduce the original.
+# ## (a) Convert to Vidal form
+#
+# `to_vidal(mps)` returns a new `FiniteMPS` in `VidalForm`.
+# The round-trip `to_canonical(to_vidal(mps))` should reproduce the original.
 
 mps_v = to_vidal(mps)
 println("After to_vidal: ", mps_v.form)
@@ -30,19 +30,19 @@ for k in 1:N
     println("  Bond $k: ", round(sum(abs2, sv); sigdigits=6))
 end
 
-#md ## (b) Entanglement entropy from the Λ spectra; observables on the canonical form
-#md
-#md The real payoff of the Vidal form: the bond matrices $\Lambda_k$ **are** the
-#md Schmidt values across bond $k$, so the bipartite entanglement entropy
-#md $S_k = -\sum_\alpha \lambda_\alpha^2 \log_2 \lambda_\alpha^2$ is read off directly
-#md from `mps_v.bond_svs`, with no contraction.
-#md
-#md Expectation values, by contrast, are evaluated on the **canonical**
-#md reconstruction `to_canonical(mps_v)`: Qritical's `local_expectation` /
-#md `two_site_op` contract the bare site tensors, which reproduce the state only in
-#md canonical form — not from the bare $\Gamma$ tensors (those carry inverse-$\Lambda$
-#md factors and would overflow). The round-trip is exact, so these match the
-#md original `mps`.
+# ## (b) Entanglement entropy from the Λ spectra; observables on the canonical form
+#
+# The real payoff of the Vidal form: the bond matrices $\Lambda_k$ **are** the
+# Schmidt values across bond $k$, so the bipartite entanglement entropy
+# $S_k = -\sum_\alpha \lambda_\alpha^2 \log_2 \lambda_\alpha^2$ is read off directly
+# from `mps_v.bond_svs`, with no contraction.
+#
+# Expectation values, by contrast, are evaluated on the **canonical**
+# reconstruction `to_canonical(mps_v)`: Qritical's `local_expectation` /
+# `two_site_op` contract the bare site tensors, which reproduce the state only in
+# canonical form — not from the bare $\Gamma$ tensors (those carry inverse-$\Lambda$
+# factors and would overflow). The round-trip is exact, so these match the
+# original `mps`.
 
 ops = algebra_generators(SpinHalf())
 σz  = ops.Sz * 2
@@ -68,7 +68,7 @@ println("⟨σˣᵢ⟩ = ", round.(σx_site; sigdigits=3))
 println("Max |⟨σᶻ⟩_reconstructed − ⟨σᶻ⟩_original| = ",
         round(maximum(abs.(σz_site .- σz_orig)); sigdigits=4))
 
-#md ## (c) Nearest-neighbour correlations $\langle \sigma^z_i \sigma^z_{i+1} \rangle$
+# ## (c) Nearest-neighbour correlations $\langle \sigma^z_i \sigma^z_{i+1} \rangle$
 
 # Correlations on the canonical reconstruction (normalized)
 zz_nn   = [real(two_site_op(mc, σz, σz, i, i+1)) / nrm2 for i in 1:N-1]
@@ -76,10 +76,10 @@ zz_c_nn = zz_nn .- σz_site[1:end-1] .* σz_site[2:end]
 println("⟨σᶻᵢ σᶻᵢ₊₁⟩:      ", round.(zz_nn;   sigdigits=3))
 println("Connected ⟨··⟩_c: ", round.(zz_c_nn; sigdigits=3))
 
-#md ## (d) Long-range correlations $\langle \sigma^z_{L/2}\,\sigma^z_{L/2+r} \rangle$
-#md
-#md For distances $r \ge 2$ the transfer matrix between the two operator insertions
-#md must be propagated explicitly. `two_site_op` handles arbitrary $(i,j)$.
+# ## (d) Long-range correlations $\langle \sigma^z_{L/2}\,\sigma^z_{L/2+r} \rangle$
+#
+# For distances $r \ge 2$ the transfer matrix between the two operator insertions
+# must be propagated explicitly. `two_site_op` handles arbitrary $(i,j)$.
 
 l = N ÷ 2
 corrs   = [real(two_site_op(mc, σz, σz, l, l+r)) / nrm2 for r in 1:N-l]

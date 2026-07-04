@@ -7,13 +7,13 @@ sites = Tuple([upper(Symbol(:s, i), d) for i in 1:N]) # create the required indi
 ψ_tens = QTensor(ψ_raw, sites);
 println("State shape: ", size(ψ_raw), "   N = $N   d = $d")
 
-#md # Ex 2. MPS Canonical Forms
+# # Ex 2. MPS Canonical Forms
 
-#md ## (a) Left-canonical form
-#md
-#md
-#md `to_mps` performs SVD iteratively left-to-right, absorbing $\Sigma V^\dagger$ rightward at each step. 
-#md Every tensor $A_i$ satisfies $A_i^\dagger A_i = \mathbb{1}_{\chi_i}$.
+# ## (a) Left-canonical form
+#
+#
+# `to_mps` performs SVD iteratively left-to-right, absorbing $\Sigma V^\dagger$ rightward at each step. 
+# Every tensor $A_i$ satisfies $A_i^\dagger A_i = \mathbb{1}_{\chi_i}$.
 
 # @ the question asked to write the function that does this change from an arbitrary state to left canonical. so write a few lines explain what the `to_mps` function does explaining the various arguments it takes as input and what they mean, especially what the argument form means and add a link directing to the api doc page of the function so that the reader can learn more
 # @ probably a bug: in the `to_mps`source` code it says that "- `ψ::QTensor`: full state tensor with ``L`` physical legs, all of type `Lower`". but i want to repeat again that we are talking about the component coefficients of the wavefunction written as a sum in the basis, arranged as the tensor. that means when we start the site indices on `ψ` should all be up indices. not down indices. it is the coefficient matrix that we rearrange into a chain of 3 leg tensors. so please double check this and fix it.  
@@ -36,10 +36,10 @@ end
 χs = [size(t.data, 3) for t in mps_L.tensors]
 println("Bond dims: 1 → ", join(χs, " → "))
 
-#md ## (b) Right-canonical form
-#md
-#md The right-to-left sweep stores $V^\dagger$ at each site.
-#md Every tensor $B_i$ satisfies $B_i B_i^\dagger = \mathbb{1}_{\chi_{i-1}}$.
+# ## (b) Right-canonical form
+#
+# The right-to-left sweep stores $V^\dagger$ at each site.
+# Every tensor $B_i$ satisfies $B_i B_i^\dagger = \mathbb{1}_{\chi_{i-1}}$.
 
 mps_R = to_mps(ψ_tens; trunc=MaxBondDimTrunc(64), form=:right)
 println("Form  : ", mps_R.form)
@@ -59,13 +59,13 @@ println("Singular values at bond 5 (middle):")
 println("  Left  canonical: ", round.(mps_L.bond_svs[6].values; sigdigits=4))
 println("  Right canonical: ", round.(mps_R.bond_svs[6].values; sigdigits=4))
 
-#md ## (c) Mixed-canonical form
-#md
-#md Put the orthogonality centre at site $l$: sites $1\ldots l-1$ are left-canonical,
-#md site $l$ is unconstrained (carries the full norm), sites $l+1\ldots L$ are right-canonical.
-#md
-#md API: `canonicalize(mps, BondCanonical(l))` — returns a new MPS with center AT BOND $l$,
-#md meaning sites $1\ldots l$ are left-canonical and sites $l+1\ldots L$ are right-canonical.
+# ## (c) Mixed-canonical form
+#
+# Put the orthogonality centre at site $l$: sites $1\ldots l-1$ are left-canonical,
+# site $l$ is unconstrained (carries the full norm), sites $l+1\ldots L$ are right-canonical.
+#
+# API: `canonicalize(mps, BondCanonical(l))` — returns a new MPS with center AT BOND $l$,
+# meaning sites $1\ldots l$ are left-canonical and sites $l+1\ldots L$ are right-canonical.
 
 l = 5
 mps_M = canonicalize(mps_L, BondCanonical(l))

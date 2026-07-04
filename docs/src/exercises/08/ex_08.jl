@@ -10,15 +10,15 @@ palette = [:royalblue, :teal, :olivedrab, :darkorange, :crimson]
 colors  = Dict(zip(L_values, palette))
 println("Chain lengths: ", L_values, "  dt=$dt  nsteps=$nsteps  D=$D  T=", dt*nsteps)
 
-#md # Ex 8. Real-Time TEBD: Néel Quench under XXZ
-#md
-#md We start the Néel product state $|\uparrow\downarrow\uparrow\downarrow\cdots\rangle$
-#md and quench under the XXZ Hamiltonian.  Two signatures of many-body dynamics are
-#md monitored:
-#md - **Staggered magnetization** $M_{\rm stag}(t) = \sum_i(-1)^i \langle S^z_i\rangle$
-#md   decays from its initial value $-L/2$ as spins begin to flip.
-#md - **Entanglement entropy** $S(t)$ at the central bond grows linearly with time
-#md   (ballistic spreading of entanglement).
+# # Ex 8. Real-Time TEBD: Néel Quench under XXZ
+#
+# We start the Néel product state $|\uparrow\downarrow\uparrow\downarrow\cdots\rangle$
+# and quench under the XXZ Hamiltonian.  Two signatures of many-body dynamics are
+# monitored:
+# - **Staggered magnetization** $M_{\rm stag}(t) = \sum_i(-1)^i \langle S^z_i\rangle$
+#   decays from its initial value $-L/2$ as spins begin to flip.
+# - **Entanglement entropy** $S(t)$ at the central bond grows linearly with time
+#   (ballistic spreading of entanglement).
 
 # For each L: build Néel state, run TEBD, record Mstag and central-bond entropy.
 # Both observables are computed in one pass — no need to re-run the evolution.
@@ -92,12 +92,12 @@ for L in L_values
     println("  L=$L:  vₑ ≈ ", round(v_E; sigdigits=3), " bits/time")
 end
 
-#md Key design choices:
-#md - The old notebook ran TEBD twice per L (once via solve(…, tracker=…), once in the entropy loop) — the new code does a single manual Trotter loop that computes both observables in one pass.
-#md - times now starts at t=0 (product state as the zeroth point), so the initial Mstag = −L/2 and S=0 anchor is visible in the plots.
-#md - Each chain length gets a distinct color from the palette dict so the legend is unambiguous.
-#md
-#md ★ Insight ─────────────────────────────────────
-#md Finite-size effects to look for in the plots: (1) Mstag decays faster for smaller L because the finite system equilibrates sooner — for very small L the revival is visible within t=3. (2) Entropy grows linearly at short times at the same rate across all L (same entanglement velocity vₑ), but saturates earlier for smaller L once the bond dimension is capped by min(2^(L/2), D) — this is how D=64 becomes irrelevant for L=4 (max Schmidt rank = 4) while mattering for L=12.
+# Key design choices:
+# - The old notebook ran TEBD twice per L (once via solve(…, tracker=…), once in the entropy loop) — the new code does a single manual Trotter loop that computes both observables in one pass.
+# - times now starts at t=0 (product state as the zeroth point), so the initial Mstag = −L/2 and S=0 anchor is visible in the plots.
+# - Each chain length gets a distinct color from the palette dict so the legend is unambiguous.
+#
+# ★ Insight ─────────────────────────────────────
+# Finite-size effects to look for in the plots: (1) Mstag decays faster for smaller L because the finite system equilibrates sooner — for very small L the revival is visible within t=3. (2) Entropy grows linearly at short times at the same rate across all L (same entanglement velocity vₑ), but saturates earlier for smaller L once the bond dimension is capped by min(2^(L/2), D) — this is how D=64 becomes irrelevant for L=4 (max Schmidt rank = 4) while mattering for L=12.
 
-#md
+#

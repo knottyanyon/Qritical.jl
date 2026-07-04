@@ -1,4 +1,4 @@
-#md # Ex 10. A Toy ED Code
+# # Ex 10. A Toy ED Code
 
 # making sure that the correct julia project is activated instead of the current directory so all exports are available.
 
@@ -7,14 +7,14 @@ using LinearAlgebra
 using SparseArrays # stdlib module support for sparse vectors and sparse matrices
 # arpack
 
-#md ## (a) Write the operators for $\alpha=x,y,z$ in the many-body Hilbert space.
-#md
-#md The many-body Hilbert space for $L$ spin-½ sites is $\mathcal{H} = \bigotimes_{i=1}^{L} \mathbb{C}^2$, $D=2^L$. 
-#md
-#md The spin-½ matrices are
-#md $$S^z = \tfrac12\begin{pmatrix}1&0\\0&-1\end{pmatrix},\quad
-#md S^+ = \begin{pmatrix}0&1\\0&0\end{pmatrix},\quad
-#md S^x = \tfrac{1}{2}(S^++S^-),\quad S^y = \tfrac{1}{2i}(S^+-S^-).$$
+# ## (a) Write the operators for $\alpha=x,y,z$ in the many-body Hilbert space.
+#
+# The many-body Hilbert space for $L$ spin-½ sites is $\mathcal{H} = \bigotimes_{i=1}^{L} \mathbb{C}^2$, $D=2^L$. 
+#
+# The spin-½ matrices are
+# $$S^z = \tfrac12\begin{pmatrix}1&0\\0&-1\end{pmatrix},\quad
+# S^+ = \begin{pmatrix}0&1\\0&0\end{pmatrix},\quad
+# S^x = \tfrac{1}{2}(S^++S^-),\quad S^y = \tfrac{1}{2i}(S^+-S^-).$$
 
 """
     create_XXZ_L_spin_chain(L; Jxy=1.0, Jz=1.0, h=0.0)
@@ -44,30 +44,30 @@ end
 @show ops.Sz
 @show local_dim(dof)
 
-#md ### (a.1) One-site operator $S^{\alpha}_i$
-#md
-#md <div style="text-align: center">
-#md <img src="10_a_1.svg" width="50%">
-#md <div>
-#md
-#md \begin{equation}
-#md \hat{O}_\ell = \left[O_{\ell}\right]^{{\sigma'}_{\ell}}_{{\sigma}_{\ell}} \ket{{\sigma'}_{\ell}} \bra{{\sigma}_{\ell}}
-#md \end{equation}
+# ### (a.1) One-site operator $S^{\alpha}_i$
+#
+# <div style="text-align: center">
+# <img src="10_a_1.svg" width="50%">
+# <div>
+#
+# \begin{equation}
+# \hat{O}_\ell = \left[O_{\ell}\right]^{{\sigma'}_{\ell}}_{{\sigma}_{\ell}} \ket{{\sigma'}_{\ell}} \bra{{\sigma}_{\ell}}
+# \end{equation}
 
 # Single-site: Sᶻ at site 2 embedded in the full 2^L Hilbert space
 Sz_op_2  = op_at_site(lattice, dof, :Sz, 2)   # geometry required — sets the Kronecker-product size
 Sz_mat_2 = matrix_repr(Sz_op_2)               # 16×16 dense matrix for L=4
 @show size(Sz_mat_2)   # (16, 16)  — identity ⊗ Sz ⊗ identity ⊗ identity
 
-#md ### (a.2) Two-site operator $S^{\alpha}_i S^{\alpha}_{i+1}$
-#md
-#md <div style="text-align: center">
-#md <img src="10_a_2.svg" width="50%">
-#md <div>
-#md
-#md \begin{equation}
-#md \hat{O}_{\ell,\ell+1}= \left[O_{\ell,\ell+1}\right]^{{\sigma'}_{\ell}{\sigma'}_{\ell+1}}_{{\sigma}_{\ell}{\sigma}_{\ell+1}} \ket{{\sigma'}_{\ell} {\sigma'}_{\ell+1}} \bra{{\sigma}_{\ell}{\sigma}_{\ell+1}}
-#md \end{equation}
+# ### (a.2) Two-site operator $S^{\alpha}_i S^{\alpha}_{i+1}$
+#
+# <div style="text-align: center">
+# <img src="10_a_2.svg" width="50%">
+# <div>
+#
+# \begin{equation}
+# \hat{O}_{\ell,\ell+1}= \left[O_{\ell,\ell+1}\right]^{{\sigma'}_{\ell}{\sigma'}_{\ell+1}}_{{\sigma}_{\ell}{\sigma}_{\ell+1}} \ket{{\sigma'}_{\ell} {\sigma'}_{\ell+1}} \bra{{\sigma}_{\ell}{\sigma}_{\ell+1}}
+# \end{equation}
 
 # Two-site: Sz_1 Sz_2  (nearest-neighbour)
 SzSz_12_op  = two_site_op(lattice, SpinHalf(), :Sz, 1, :Sz, 2)
@@ -89,10 +89,10 @@ evals_Sz2 = sort(unique(round.(real.(eigvals(Sz_mat_2)), digits=10)))
 @assert evals_Sz2 ≈ [-0.5, 0.5] atol=1e-10 "Sz₂ embed: eigenvalues wrong"
 println("local algebra and embedding checks passed ✓")
 
-#md ## (b) Construct from (a) the Hamiltonian $H$ of a XXZ spin chain
-#md
-#md $$H = \sum_{i=1}^{L-1} \Bigl[ \tfrac{J}{2}(S_i^+ S_{i+1}^- + S_i^- S_{i+1}^+)
-#md     + J_z\, S_i^z S_{i+1}^z \Bigr] - h \sum_i S_i^z.$$
+# ## (b) Construct from (a) the Hamiltonian $H$ of a XXZ spin chain
+#
+# $$H = \sum_{i=1}^{L-1} \Bigl[ \tfrac{J}{2}(S_i^+ S_{i+1}^- + S_i^- S_{i+1}^+)
+#     + J_z\, S_i^z S_{i+1}^z \Bigr] - h \sum_i S_i^z.$$
 
 # ── Build XXZ for L=6, J=Jz=1 (isotropic Heisenberg), no field ──────────────
 (; L, hamiltonian) = create_XXZ_L_spin_chain(6)
@@ -170,14 +170,14 @@ ev2 = sort(real.(eigvals(Hermitian(matrix_repr(H2)))))
 @assert norm(M_dense - Matrix(M_sparse)) < 1e-13  "dense ≠ sparse"
 println("Hermiticity, L=2 spectrum, and sparse/dense consistency passed ✓")
 
-#md ## (c) Determine the GS of $H$ using a sparse eigenspectrum solver.
-#md
-#md Qritical wraps KrylovKit's Lanczos under `ExactDiagonalization(:ground)`.  This
-#md only computes the lowest eigenvalue and its eigenvector — cost $O(2^L)$ per
-#md matrix–vector product, with the Krylov subspace kept small.
-#md
-#md API: `solve(H, GroundState(), ExactDiagonalization(:ground))` → `EDResult`
-#md with fields `.energy` and `.state`.
+# ## (c) Determine the GS of $H$ using a sparse eigenspectrum solver.
+#
+# Qritical wraps KrylovKit's Lanczos under `ExactDiagonalization(:ground)`.  This
+# only computes the lowest eigenvalue and its eigenvector — cost $O(2^L)$ per
+# matrix–vector product, with the Krylov subspace kept small.
+#
+# API: `solve(H, GroundState(), ExactDiagonalization(:ground))` → `EDResult`
+# with fields `.energy` and `.state`.
 
 # ── Ground state, isotropic Heisenberg L=8 ──────────────────────────────────
 (; L, hamiltonian) = create_XXZ_L_spin_chain(8)
@@ -210,12 +210,12 @@ residual = norm((Matrix(matrix_repr(H6, SparseFormat())) - gs6.energy * I) * gs6
 println("Part (c) ✓  —  E₀ matches dense, unit norm, eigenstate residual = ",
         round(residual, sigdigits=3))
 
-#md ## (d) Determine the full eigenspectrum of $H$
-#md
-#md `ExactDiagonalization(:full)` calls Julia's dense `eigen(Hermitian(M))` — cost
-#md $O(d^{3L})$.  The result `.spectrum` contains **all** $2^L$ eigenvalues sorted
-#md ascending.  Only practical for $L \lesssim 14$; the $2^{20}$ guard in
-#md `matrix_repr(H, DenseFormat())` blocks accidental use on larger systems.
+# ## (d) Determine the full eigenspectrum of $H$
+#
+# `ExactDiagonalization(:full)` calls Julia's dense `eigen(Hermitian(M))` — cost
+# $O(d^{3L})$.  The result `.spectrum` contains **all** $2^L$ eigenvalues sorted
+# ascending.  Only practical for $L \lesssim 14$; the $2^{20}$ guard in
+# `matrix_repr(H, DenseFormat())` blocks accidental use on larger systems.
 
 # ── Full spectrum of Heisenberg L=6 ─────────────────────────────────────────
 (; hamiltonian) = create_XXZ_L_spin_chain(6)
@@ -245,20 +245,20 @@ gs6 = solve(H6, GroundState(), ExactDiagonalization(:ground))
 @assert abs(sum(full6.spectrum)) < 1e-10  "Tr(H) ≠ 0: $(sum(full6.spectrum))"
 println("Part (d) ✓  —  ", 2^6, " eigenvalues, sorted, Tr=0, GS consistent with Lanczos.")
 
-#md ## (e) Write a time evolution code w.r.t to $H$ for a given initial state $|\Psi(t)\rangle = e^{-iHt}|\Psi_0\rangle$
-#md
-#md The exact propagator diagonalises $H = V\Lambda V^\dagger$ **once**, then
-#md evaluates $e^{-iHT}|\Psi_0\rangle = V\,\mathrm{diag}(e^{-i\lambda_k T})\,V^\dagger|\Psi_0\rangle$
-#md at cost $O(d^{2L})$ per time point — no Trotter error, exact to machine precision.
-#md
-#md API:
-#md ```julia
-#md sv = as_statevector(ψ₀_vec)                      # wrap Vector{ComplexF64}
-#md p  = ConstantProtocol(RealTime(), dt, nsteps, H)  # T = dt × nsteps
-#md r  = solve(H, sv, ExactDiagonalization(:time), p) # EDTimeResult
-#md r.state   # final |Ψ(T)⟩
-#md r.time    # T
-#md ```
+# ## (e) Write a time evolution code w.r.t to $H$ for a given initial state $|\Psi(t)\rangle = e^{-iHt}|\Psi_0\rangle$
+#
+# The exact propagator diagonalises $H = V\Lambda V^\dagger$ **once**, then
+# evaluates $e^{-iHT}|\Psi_0\rangle = V\,\mathrm{diag}(e^{-i\lambda_k T})\,V^\dagger|\Psi_0\rangle$
+# at cost $O(d^{2L})$ per time point — no Trotter error, exact to machine precision.
+#
+# API:
+# ```julia
+# sv = as_statevector(ψ₀_vec)                      # wrap Vector{ComplexF64}
+# p  = ConstantProtocol(RealTime(), dt, nsteps, H)  # T = dt × nsteps
+# r  = solve(H, sv, ExactDiagonalization(:time), p) # EDTimeResult
+# r.state   # final |Ψ(T)⟩
+# r.time    # T
+# ```
 
 # ── Néel initial state |↑↓↑↓…⟩ quenched under Heisenberg ───────────────────
 (; L, lattice, hamiltonian, d) = create_XXZ_L_spin_chain(6)
@@ -328,26 +328,26 @@ overlap = abs(dot(ψ_proj, gs4.state))
 @assert abs(overlap - 1.0) < 1e-10  "Imaginary-time did not converge to GS (overlap = $overlap)"
 println("Part (e) ✓  —  norm preserved, GS is phase fixed-point, imaginary-time→GS.")
 
-#md ## Summary
-#md
-#md | Part | Qritical entry point | Verified |
-#md |------|---------------------|---------|
-#md | (a) single-site $S_i^\alpha$ | `algebra_generators(SpinHalf())`, `op_at_site`, `matrix_repr(H)` | spin algebra $[S^x,S^y]=iS^z$ |
-#md | (a) two-site $S_i^\alpha S_j^\beta$ | `two_site_op(g, dof, :Sx, i, :Sz, j)`, `matrix_repr(H)` | agrees with kron product |
-#md | (b) XXZ Hamiltonian | `create_XXZ_L_spin_chain(L)`, `matrix_repr(H)` / `matrix_repr(H, SparseFormat())` | Hermitian, $L=2$ exact spectrum, sparse=dense |
-#md | (c) GS sparse Lanczos | `solve(H, GroundState(), ExactDiagonalization(:ground))` | residual, norm, matches dense |
-#md | (d) full spectrum | `solve(H, GroundState(), ExactDiagonalization(:full))` | sorted, $\mathrm{Tr}H=0$, $2^L$ values |
-#md | (e) time evolution | `as_statevector`, `ConstantProtocol(RealTime(), …)`, `solve` | norm, GS phase, imag-time→GS |
-#md
+# ## Summary
+#
+# | Part | Qritical entry point | Verified |
+# |------|---------------------|---------|
+# | (a) single-site $S_i^\alpha$ | `algebra_generators(SpinHalf())`, `op_at_site`, `matrix_repr(H)` | spin algebra $[S^x,S^y]=iS^z$ |
+# | (a) two-site $S_i^\alpha S_j^\beta$ | `two_site_op(g, dof, :Sx, i, :Sz, j)`, `matrix_repr(H)` | agrees with kron product |
+# | (b) XXZ Hamiltonian | `create_XXZ_L_spin_chain(L)`, `matrix_repr(H)` / `matrix_repr(H, SparseFormat())` | Hermitian, $L=2$ exact spectrum, sparse=dense |
+# | (c) GS sparse Lanczos | `solve(H, GroundState(), ExactDiagonalization(:ground))` | residual, norm, matches dense |
+# | (d) full spectrum | `solve(H, GroundState(), ExactDiagonalization(:full))` | sorted, $\mathrm{Tr}H=0$, $2^L$ values |
+# | (e) time evolution | `as_statevector`, `ConstantProtocol(RealTime(), …)`, `solve` | norm, GS phase, imag-time→GS |
+#
 
-#md
-#md **Performance note.** Dense ED costs $O(d^{3L})$ for the full diagonalisation;
-#md the Lanczos GS costs $O(d^L \cdot n_{\text{Krylov}})$.  For $L \gtrsim 16$ you
-#md need tensor-network methods (TEBD, DMRG) — which is where the next exercises go.
+#
+# **Performance note.** Dense ED costs $O(d^{3L})$ for the full diagonalisation;
+# the Lanczos GS costs $O(d^L \cdot n_{\text{Krylov}})$.  For $L \gtrsim 16$ you
+# need tensor-network methods (TEBD, DMRG) — which is where the next exercises go.
 
-#md ## Scaling benchmark: empirical verification
-#md
-#md Time both solvers for L = 4, 6, 8 using `@elapsed` (minimum over 15 trials to suppress GC noise), fit the resulting times in log-space via ordinary least-squares, and overlay the theoretical slopes $\beta_{\text{dense}} = 3\ln 2 \approx 2.08$ and $\beta_{\text{Lanczos}} = \ln 2 \approx 0.69$.
+# ## Scaling benchmark: empirical verification
+#
+# Time both solvers for L = 4, 6, 8 using `@elapsed` (minimum over 15 trials to suppress GC noise), fit the resulting times in log-space via ordinary least-squares, and overlay the theoretical slopes $\beta_{\text{dense}} = 3\ln 2 \approx 2.08$ and $\beta_{\text{Lanczos}} = \ln 2 \approx 0.69$.
 
 using CairoMakie
 # ── Step 1: time dense :full and Lanczos :ground for L = 4, 6, 8 ─────────────

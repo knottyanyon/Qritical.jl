@@ -6,16 +6,16 @@ g   = Chain(L)
 H   = XXZ(g; J=1.0, Jz=1.0, h=0.0)   # isotropic Heisenberg
 println("XXZ chain  L=$L  bonds=", length(bonds(g)))
 
-#md # Ex 7. Trotter–Suzuki Gates and TEBD
-#md
-#md Time evolution under a nearest-neighbour Hamiltonian is approximated by a product
-#md of two-site gates (Trotter decomposition).  Each gate is $U_{ij}(\Delta t) = e^{-i h^{(ij)} \Delta t}$
-#md for real time and $e^{-h^{(ij)} \tau}$ for imaginary time.
+# # Ex 7. Trotter–Suzuki Gates and TEBD
+#
+# Time evolution under a nearest-neighbour Hamiltonian is approximated by a product
+# of two-site gates (Trotter decomposition).  Each gate is $U_{ij}(\Delta t) = e^{-i h^{(ij)} \Delta t}$
+# for real time and $e^{-h^{(ij)} \tau}$ for imaginary time.
 
-#md ## (a) Local Hamiltonian and gate $e^{-ih^{(2)}\Delta t}$
-#md
-#md `bond_hamiltonian(H, b)` extracts the $4\times 4$ two-site matrix for bond $b$.
-#md `gate(h, dt, RealTime())` exponentiates it.
+# ## (a) Local Hamiltonian and gate $e^{-ih^{(2)}\Delta t}$
+#
+# `bond_hamiltonian(H, b)` extracts the $4\times 4$ two-site matrix for bond $b$.
+# `gate(h, dt, RealTime())` exponentiates it.
 
 h12 = bond_hamiltonian(H, 1)   # 4×4 matrix for bond (1,2)
 println("h^(1,2) eigenvalues: ", round.(sort(real.(eigvals(h12))); sigdigits=5))
@@ -33,11 +33,11 @@ gates_rt = [gate(bond_hamiltonian(H, b), dt, RealTime()).data for b in 1:L-1]
 println("All $(L-1) bond gates unitary: ",
         all(norm(U' * U - I(4)) < 1e-12 for U in gates_rt) ? "✓" : "✗")
 
-#md ## (b) Single odd / even bond sweep via `apply_gate`
-#md
-#md Odd bonds $\{(1,2),(3,4),\ldots\}$ and even bonds $\{(2,3),(4,5),\ldots\}$ act on
-#md non-overlapping sites, so each parity sweep can be applied sequentially.
-#md `apply_gate(mps, U, bond)` returns a new MPS after SVD-truncation of the two updated sites.
+# ## (b) Single odd / even bond sweep via `apply_gate`
+#
+# Odd bonds $\{(1,2),(3,4),\ldots\}$ and even bonds $\{(2,3),(4,5),\ldots\}$ act on
+# non-overlapping sites, so each parity sweep can be applied sequentially.
+# `apply_gate(mps, U, bond)` returns a new MPS after SVD-truncation of the two updated sites.
 
 # Build a generic initial MPS in left-canonical form.
 # apply_gate / trotter_step consume a canonical FiniteMPS (not Vidal Γ-tensors).
@@ -61,11 +61,11 @@ for b in 2:2:(L-1)
 end
 println("After odd+even sweep ⟨ψ|ψ⟩ = ", round(real(overlap(mps_both, mps_both)); sigdigits=8))
 
-#md ## (c) Full Trotter step via `trotter_step`
-#md
-#md `trotter_step(mps, H, dt, SuzukiTrotter(1))` applies the first-order decomposition
-#md (odd then even bonds) in one call.  `SuzukiTrotter(2)` gives the second-order
-#md palindrome: half-step forward, half-step backward.
+# ## (c) Full Trotter step via `trotter_step`
+#
+# `trotter_step(mps, H, dt, SuzukiTrotter(1))` applies the first-order decomposition
+# (odd then even bonds) in one call.  `SuzukiTrotter(2)` gives the second-order
+# palindrome: half-step forward, half-step backward.
 
 # 1st-order Trotter step (canonical MPS in, canonical MPS out)
 mps_t1 = trotter_step(mps0, H, dt, SuzukiTrotter(1); trunc=MaxBondDimTrunc(32))

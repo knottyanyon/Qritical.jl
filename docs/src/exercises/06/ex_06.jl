@@ -8,13 +8,13 @@ ops = algebra_generators(dof)
 mps    = to_mps(ψ_rand; trunc=MaxBondDimTrunc(16), form=:left)
 println("MPS  L=$L  D=", maximum(size(t.data, 3) for t in mps.tensors))
 
-#md # Ex 6. Matrix Product Operators (MPOs)
+# # Ex 6. Matrix Product Operators (MPOs)
 
-#md ## (a) XXZ MPO via `MPO(XXZ(Chain(L)))`
-#md
-#md The `MPO` constructor encodes the Hamiltonian as a finite-state machine (FSM)
-#md over the auxiliary bond.  Bond dimension is 5 for the XXZ chain:
-#md `IdL → S⁺ → S⁻ → Sᶻ → IdR`.
+# ## (a) XXZ MPO via `MPO(XXZ(Chain(L)))`
+#
+# The `MPO` constructor encodes the Hamiltonian as a finite-state machine (FSM)
+# over the auxiliary bond.  Bond dimension is 5 for the XXZ chain:
+# `IdL → S⁺ → S⁻ → Sᶻ → IdR`.
 
 H_xxz = XXZ(g; J=1.0, Jz=1.0, h=0.0)
 W_xxz = MPO(H_xxz)
@@ -37,11 +37,11 @@ M_dn = matrix_repr(H6, DenseFormat())
 println("Dense: ", size(M_dn), "  Sparse nnz: ", nnz(M_sp), " / ", prod(size(M_sp)))
 println("Hermitian: ", norm(M_dn - M_dn') < 1e-13)
 
-#md ## (b) All-to-all $\hat S^z_{\mathrm{tot}}^2 = \left(\sum_i S^z_i\right)^2$
-#md
-#md The total-$S^z$ squared is itself a `LatticeOperator` built via
-#md `total_magnetization` (returns $\hat S^z_{\mathrm{tot}}$).  Its square is an
-#md all-to-all $\sum_{i,j} S^z_i S^z_j$ operator.
+# ## (b) All-to-all $\hat S^z_{\mathrm{tot}}^2 = \left(\sum_i S^z_i\right)^2$
+#
+# The total-$S^z$ squared is itself a `LatticeOperator` built via
+# `total_magnetization` (returns $\hat S^z_{\mathrm{tot}}$).  Its square is an
+# all-to-all $\sum_{i,j} S^z_i S^z_j$ operator.
 
 # Build the staggered and total magnetization via Qritical operators
 M_stag = staggered_magnetization(g; dof=dof)   # Σᵢ (−1)ⁱ Sᶻᵢ
@@ -58,10 +58,10 @@ all_up_c = to_mps(as_state(v_up, fill(2, L)); form=:left)
 Stot_up = real(expect(all_up_c, W_tot))
 println("⟨↑↑…↑|Stot|↑↑…↑⟩ = ", round(Stot_up; sigdigits=6), "  (expected ", L/2, ")")
 
-#md ## (c) Expectation value $\langle \psi | H | \psi \rangle$ via MPO
-#md
-#md `expect(mps, mpo)` sweeps a three-legged environment (bra × MPO × ket) from
-#md left to right — cost $O(L\chi^2 d^2 \chi_W)$.
+# ## (c) Expectation value $\langle \psi | H | \psi \rangle$ via MPO
+#
+# `expect(mps, mpo)` sweeps a three-legged environment (bra × MPO × ket) from
+# left to right — cost $O(L\chi^2 d^2 \chi_W)$.
 
 E_xxz = expect(mps, W_xxz)
 println("⟨ψ|H_XXZ|ψ⟩ = ", round(real(E_xxz); sigdigits=8))
@@ -79,11 +79,11 @@ println("⟨ψ|ψ⟩   = ", round(norm2; sigdigits=8))
 @assert abs(E_Id - norm2) < 1e-12 "Identity MPO should equal norm squared"
 println("Identity MPO check ✓")
 
-#md ## (d) Applying MPO to MPS: $|\phi\rangle = H|\psi\rangle$
-#md
-#md `apply_mpo(mpo, mps)` contracts each W tensor with the corresponding site tensor,
-#md producing a new MPS with expanded bond dimension $\chi_{\mathrm{new}} = \chi \cdot \chi_W$.
-#md The result can be truncated immediately via the `trunc` keyword.
+# ## (d) Applying MPO to MPS: $|\phi\rangle = H|\psi\rangle$
+#
+# `apply_mpo(mpo, mps)` contracts each W tensor with the corresponding site tensor,
+# producing a new MPS with expanded bond dimension $\chi_{\mathrm{new}} = \chi \cdot \chi_W$.
+# The result can be truncated immediately via the `trunc` keyword.
 
 Hpsi     = apply_mpo(W_xxz, mps)
 Hpsi_can = canonicalize(Hpsi, LeftCanonical())

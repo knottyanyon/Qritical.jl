@@ -10,13 +10,13 @@ mps2 = load_mps("psi2.jls")
 N    = length(mps1.tensors)
 println("Loaded two MPS of length ", N)
 
-#md # Ex 4. Overlap, Observables, and MPS Addition
+# # Ex 4. Overlap, Observables, and MPS Addition
 
-#md ## (a) MPS overlap $\langle \psi_1 | \psi_2 \rangle$
-#md
-#md The overlap contracts the bra and ket tensors site by site through a
-#md $\chi^2$-dimensional transfer matrix — cost $O(L\chi^3 d)$, exponentially
-#md cheaper than the $O(d^L)$ full-vector dot product.
+# ## (a) MPS overlap $\langle \psi_1 | \psi_2 \rangle$
+#
+# The overlap contracts the bra and ket tensors site by site through a
+# $\chi^2$-dimensional transfer matrix — cost $O(L\chi^3 d)$, exponentially
+# cheaper than the $O(d^L)$ full-vector dot product.
 
 o11 = overlap(mps1, mps1)
 o22 = overlap(mps2, mps2)
@@ -32,11 +32,11 @@ println("⟨ψ₁|ψ₂⟩ = ", round(o12;     sigdigits=6))
 @assert abs(o12) ≤ 1.0 + 1e-10  "Cauchy-Schwarz violated"
 println("All overlap checks passed ✓")
 
-#md ## (b) Local observables $\langle \sigma^z_i \rangle$ and $\langle \sigma^x_i \rangle$
-#md
-#md `local_expectation(mps, op, site)` performs a single left-to-right environment
-#md sweep inserting `op` at `site`.  For a left-canonical MPS the left environment
-#md collapse is automatic, but the function works on any canonical form.
+# ## (b) Local observables $\langle \sigma^z_i \rangle$ and $\langle \sigma^x_i \rangle$
+#
+# `local_expectation(mps, op, site)` performs a single left-to-right environment
+# sweep inserting `op` at `site`.  For a left-canonical MPS the left environment
+# collapse is automatic, but the function works on any canonical form.
 
 ops  = algebra_generators(SpinHalf())
 σz   = ops.Sz * 2   # σᶻ = 2Sᶻ ∈ {+1, −1}
@@ -55,11 +55,11 @@ for l in 1:N
     println("  bond-center=$l: ", round(val; sigdigits=6))
 end
 
-#md ## (c) Two-site correlations $\langle \sigma^z_i \sigma^z_j \rangle$
-#md
-#md `two_site_op(mps, op_i, op_j, i, j)` inserts two operators during a single sweep —
-#md same $O(L\chi^2 d)$ cost as one local measurement.
-#md The *connected* correlator subtracts the product of single-site means.
+# ## (c) Two-site correlations $\langle \sigma^z_i \sigma^z_j \rangle$
+#
+# `two_site_op(mps, op_i, op_j, i, j)` inserts two operators during a single sweep —
+# same $O(L\chi^2 d)$ cost as one local measurement.
+# The *connected* correlator subtracts the product of single-site means.
 
 # Nearest-neighbour ⟨σᶻᵢ σᶻᵢ₊₁⟩
 zz_nn = [real(two_site_op(mps1, σz, σz, i, i+1)) for i in 1:N-1]
@@ -68,12 +68,12 @@ println("⟨σᶻᵢ σᶻᵢ₊₁⟩: ", round.(zz_nn; sigdigits=3))
 zz_c = zz_nn .- σz_vals[1:end-1] .* σz_vals[2:end]
 println("Connected: ", round.(zz_c; sigdigits=3))
 
-#md ## (d) MPS addition $a|\psi_1\rangle + b|\psi_2\rangle$
-#md
-#md `add_mps(a, ψ₁, b, ψ₂)` assembles a block-diagonal MPS of bond dimension
-#md $\chi_1 + \chi_2$, then recompresses via a left sweep.
-#md Linearity is verified via the overlap identity
-#md $\langle\psi_1 | a\psi_1 + b\psi_2\rangle = a\langle\psi_1|\psi_1\rangle + b\langle\psi_1|\psi_2\rangle$.
+# ## (d) MPS addition $a|\psi_1\rangle + b|\psi_2\rangle$
+#
+# `add_mps(a, ψ₁, b, ψ₂)` assembles a block-diagonal MPS of bond dimension
+# $\chi_1 + \chi_2$, then recompresses via a left sweep.
+# Linearity is verified via the overlap identity
+# $\langle\psi_1 | a\psi_1 + b\psi_2\rangle = a\langle\psi_1|\psi_1\rangle + b\langle\psi_1|\psi_2\rangle$.
 
 a, b = 0.6 + 0.0im, 0.8 + 0.0im
 mps_sum = add_mps(a, mps1, b, mps2)

@@ -5,22 +5,22 @@ dof = SpinHalf()
 g   = Chain(L)
 println("MBL study: L=$L spin-½ chain")
 
-#md # Ex 9. Many-Body Localization and Imaginary-Time Ground State
-#md
-#md Two problems in one:
-#md
-#md **Part A — Imaginary-time TEBD** finds the ground state of the clean XXZ chain by
-#md evolving $|\psi(\tau)\rangle = e^{-H\tau}|\psi_0\rangle / \|\cdot\|$ with $\tau\to\infty$.
-#md The norm diverges exponentially, so we re-canonicalize after each step.
-#md
-#md **Part B — MBL disorder** adds random on-site fields $h_i \in [-W, W]$ to the Hamiltonian.
-#md Above the MBL critical disorder $W_c \approx 3.5$, all eigenstates localize and entanglement
-#md growth saturates to an area law instead of growing linearly.
+# # Ex 9. Many-Body Localization and Imaginary-Time Ground State
+#
+# Two problems in one:
+#
+# **Part A — Imaginary-time TEBD** finds the ground state of the clean XXZ chain by
+# evolving $|\psi(\tau)\rangle = e^{-H\tau}|\psi_0\rangle / \|\cdot\|$ with $\tau\to\infty$.
+# The norm diverges exponentially, so we re-canonicalize after each step.
+#
+# **Part B — MBL disorder** adds random on-site fields $h_i \in [-W, W]$ to the Hamiltonian.
+# Above the MBL critical disorder $W_c \approx 3.5$, all eigenstates localize and entanglement
+# growth saturates to an area law instead of growing linearly.
 
-#md ## Part A — Ground state via imaginary-time evolution
-#md
-#md $e^{-H\tau}$ projects out excited states exponentially in $\tau$.
-#md After sufficient imaginary time, the normalized state converges to $|E_0\rangle$.
+# ## Part A — Ground state via imaginary-time evolution
+#
+# $e^{-H\tau}$ projects out excited states exponentially in $\tau$.
+# After sufficient imaginary time, the normalized state converges to $|E_0\rangle$.
 
 H_clean = XXZ(g; J=1.0, Jz=1.0, h=0.0)   # isotropic Heisenberg
 W_clean = MPO(H_clean)
@@ -60,11 +60,11 @@ hlines!(ax, [gs_ed.energy]; color=:crimson, linestyle=:dash, label="ED E₀")
 axislegend(ax)
 fig
 
-#md ## Part B — MBL: disorder realizations and entanglement saturation
-#md
-#md `disorder_realization(L, Uniform(-W, W), rng)` draws $L$ random on-site fields.
-#md Passing the field vector to `XXZ(g; h=h_vec)` builds the disordered Hamiltonian.
-#md We monitor the entanglement entropy of the final state vs disorder strength $W$.
+# ## Part B — MBL: disorder realizations and entanglement saturation
+#
+# `disorder_realization(L, Uniform(-W, W), rng)` draws $L$ random on-site fields.
+# Passing the field vector to `XXZ(g; h=h_vec)` builds the disordered Hamiltonian.
+# We monitor the entanglement entropy of the final state vs disorder strength $W$.
 
 function gs_entropy_disordered(L, W, D=24; dτ=0.05, nsteps=50, seed=42)
     rng  = MersenneTwister(seed)

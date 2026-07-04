@@ -7,16 +7,16 @@ sites  = Tuple([upper(Symbol(:s, i), d) for i in 1:N])
 mps_ref = to_mps(ψ_tens; trunc=MaxBondDimTrunc(64), form=:left)
 println("Reference MPS form: ", mps_ref.form)
 
-#md # Ex 3. Transformations Between Canonical Forms
-#md
-#md All transformations sweep along the chain applying one SVD per site — cost $O(L\chi^3)$,
-#md no reconstruction of the full $d^L$ state vector.
+# # Ex 3. Transformations Between Canonical Forms
+#
+# All transformations sweep along the chain applying one SVD per site — cost $O(L\chi^3)$,
+# no reconstruction of the full $d^L$ state vector.
 
-#md ## (a) Left → Right canonical
-#md
-#md Apply `canonicalize(mps, RightCanonical())` to an already left-canonical MPS.
-#md The sweep goes site $L \to 1$; at each step the $V^\dagger$ factor becomes the
-#md new right-canonical tensor and the $U\Sigma$ factor is absorbed leftward.
+# ## (a) Left → Right canonical
+#
+# Apply `canonicalize(mps, RightCanonical())` to an already left-canonical MPS.
+# The sweep goes site $L \to 1$; at each step the $V^\dagger$ factor becomes the
+# new right-canonical tensor and the $U\Sigma$ factor is absorbed leftward.
 
 mps_R = canonicalize(mps_ref, RightCanonical())
 println("After L→R sweep: ", mps_R.form)
@@ -33,10 +33,10 @@ println("Right-isometry errors: ", round.(errs; sigdigits=3))
 println("Bond 5 SVs (left canonical):  ", round.(mps_ref.bond_svs[6].values; sigdigits=4))
 println("Bond 5 SVs (right canonical): ", round.(mps_R.bond_svs[6].values;   sigdigits=4))
 
-#md ## (b) Right → Left canonical
-#md
-#md Reverse direction: sweep site $1 \to L$, storing the $U$ factor as the new
-#md left-canonical tensor and absorbing $\Sigma V^\dagger$ rightward.
+# ## (b) Right → Left canonical
+#
+# Reverse direction: sweep site $1 \to L$, storing the $U$ factor as the new
+# left-canonical tensor and absorbing $\Sigma V^\dagger$ rightward.
 
 mps_R2L = canonicalize(mps_R, LeftCanonical())
 println("After R→L sweep: ", mps_R2L.form)
@@ -49,12 +49,12 @@ errs2 = [let (χL, d_i, χR) = size(t.data)
          end for t in mps_R2L.tensors]
 println("Left-isometry errors: ", round.(errs2; sigdigits=3))
 
-#md ## (c) Normalization diagnostics
-#md
-#md `canonical_error(A)` measures the left-isometry deviation $\|A^\dagger A - I\|_F$.
-#md For a fully left-canonical MPS all errors should be $\approx 0$.
-#md For a right-canonical MPS the left errors should be large and right errors $\approx 0$.
-#md `is_canonical` returns true if all errors are below a tolerance.
+# ## (c) Normalization diagnostics
+#
+# `canonical_error(A)` measures the left-isometry deviation $\|A^\dagger A - I\|_F$.
+# For a fully left-canonical MPS all errors should be $\approx 0$.
+# For a right-canonical MPS the left errors should be large and right errors $\approx 0$.
+# `is_canonical` returns true if all errors are below a tolerance.
 
 function norm_table(mps, label)
     println("\n$label  (form = $(mps.form))")
