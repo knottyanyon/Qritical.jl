@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Task 6.2 — MPO II: all-to-all S^z S^z · Qritical.jl</title><meta name="title" content="Task 6.2 — MPO II: all-to-all S^z S^z · Qritical.jl"/><meta property="og:title" content="Task 6.2 — MPO II: all-to-all S^z S^z · Qritical.jl"/><meta property="twitter:title" content="Task 6.2 — MPO II: all-to-all S^z S^z · Qritical.jl"/><meta name="description" content="Documentation for Qritical.jl."/><meta property="og:description" content="Documentation for Qritical.jl."/><meta property="twitter:description" content="Documentation for Qritical.jl."/><meta property="og:url" content="https://knottyanyon.github.io/Qritical.jl/exercises/06/task_2/"/><meta property="twitter:url" content="https://knottyanyon.github.io/Qritical.jl/exercises/06/task_2/"/><link rel="canonical" href="https://knottyanyon.github.io/Qritical.jl/exercises/06/task_2/"/><script data-outdated-warner src="../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../search_index.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script><link href="../../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../../"><img class="docs-light-only" src="../../../assets/logo.svg" alt="Qritical.jl logo"/><img class="docs-dark-only" src="../../../assets/logo-dark.svg" alt="Qritical.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../../">Qritical.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../../">Home</a></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../../api/index_layer/">Index Layer</a></li><li><a class="tocitem" href="../../../api/qtensor/">QTensor</a></li><li><a class="tocitem" href="../../../api/svd/">SVD &amp; Truncation</a></li><li><a class="tocitem" href="../../../api/spectrum/">Spectra &amp; Entanglement</a></li><li><a class="tocitem" href="../../../api/io/">State Utilities &amp; I/O</a></li><li><a class="tocitem" href="../../../api/mps/">MPS &amp; Canonical Forms</a></li><li><a class="tocitem" href="../../../api/geometry/">Geometry</a></li><li><a class="tocitem" href="../../../api/dof/">Degrees of Freedom</a></li><li><a class="tocitem" href="../../../api/operator/">Operators &amp; Hamiltonians</a></li><li><a class="tocitem" href="../../../api/mpo/">MPO &amp; Expectation Values</a></li><li><a class="tocitem" href="../../../api/power_method/">Power Method</a></li><li><a class="tocitem" href="../../../api/tebd/">TEBD</a></li><li><a class="tocitem" href="../../../api/quench/">Quench &amp; TEBD Solve</a></li><li><a class="tocitem" href="../../../api/storage_format/">Storage Formats</a></li><li><a class="tocitem" href="../../../api/ed/">ExactDiagonalization</a></li><li><a class="tocitem" href="../../../api/ed_time/">ED Time Propagation</a></li><li><a class="tocitem" href="../../../api/disorder/">Disorder</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Task 6.2 — MPO II: all-to-all <span>$S^z S^z$</span></a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Task 6.2 — MPO II: all-to-all <span>$S^z S^z$</span></a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Task-6.2-—-MPO-II:-all-to-all-Sz-Sz"><a class="docs-heading-anchor" href="#Task-6.2-—-MPO-II:-all-to-all-Sz-Sz">Task 6.2 — MPO II: all-to-all <span>$S^z S^z$</span></a><a id="Task-6.2-—-MPO-II:-all-to-all-Sz-Sz-1"></a><a class="docs-heading-anchor-permalink" href="#Task-6.2-—-MPO-II:-all-to-all-Sz-Sz" title="Permalink"></a></h1><div class="admonition is-category-question" id="Task-6.2-—-MPO-II-4fa54bd407151fd4"><header class="admonition-header">Task 6.2 — MPO II<a class="admonition-anchor" href="#Task-6.2-—-MPO-II-4fa54bd407151fd4" title="Permalink"></a></header><div class="admonition-body"><p>Write a function that returns the MPO of</p><p class="math-container">\[M = \sum_{i=1}^{L} \sum_{j=1}^{L} S_i^z S_j^z = \left(\sum_i S_i^z\right)^2\]</p></div></div><pre><code class="language-julia hljs">using LinearAlgebra, Qritical</code></pre><h2 id="Construction-via-bond-dimension-3-FSM"><a class="docs-heading-anchor" href="#Construction-via-bond-dimension-3-FSM">Construction via bond-dimension 3 FSM</a><a id="Construction-via-bond-dimension-3-FSM-1"></a><a class="docs-heading-anchor-permalink" href="#Construction-via-bond-dimension-3-FSM" title="Permalink"></a></h2><p><span>$M = \hat S_\text{tot}^z \cdot \hat S_\text{tot}^z$</span> can be represented as an MPO with virtual bond dimension 3:</p><table><tr><th style="text-align: right">State</th><th style="text-align: right">Meaning</th></tr><tr><td style="text-align: right">1 = IdL</td><td style="text-align: right">no <span>$S^z$</span> applied yet</td></tr><tr><td style="text-align: right">2 = Sz</td><td style="text-align: right">one <span>$S^z$</span> started; waiting for the second at a later site</td></tr><tr><td style="text-align: right">3 = IdR</td><td style="text-align: right">both <span>$S^z$</span>s have been applied</td></tr></table><p>The non-zero W blocks at interior site <span>$i$</span> are:</p><p class="math-container">\[W[1, \sigma, \sigma&#39;, 1] = I, \qquad
+W[1, \sigma, \sigma&#39;, 2] = 2 S^z, \qquad
+W[1, \sigma, \sigma&#39;, 3] = (S^z)^2,\]</p><p class="math-container">\[W[2, \sigma, \sigma&#39;, 2] = I, \qquad
+W[2, \sigma, \sigma&#39;, 3] = S^z, \qquad
+W[3, \sigma, \sigma&#39;, 3] = I.\]</p><p>The factor <strong>2</strong> on <span>$W[1 \to 2]$</span> ensures both orderings <span>$(i,j)$</span> and <span>$(j,i)$</span> are counted, while <span>$W[1 \to 3] = (S^z)^2 = I/4$</span> handles the diagonal terms <span>$i = j$</span>.</p><p><strong>Verification for <span>$L = 2$</span>:</strong> The three FSM paths from IdL to IdR give:</p><ul><li><span>$1 \to 1 \to 3$</span>: <span>$I \otimes (S^z)^2$</span>  (diagonal at site 2)</li><li><span>$1 \to 2 \to 3$</span>: <span>$2 S^z \otimes S^z$</span>  (off-diagonal, both orderings)</li><li><span>$1 \to 3 \to 3$</span>: <span>$(S^z)^2 \otimes I$</span>  (diagonal at site 1)</li></ul><p>Sum = <span>$(S_1^z)^2 + 2 S_1^z S_2^z + (S_2^z)^2 = \sum_{ij} S_i^z S_j^z$</span> ✓</p><pre><code class="language-julia hljs">function sz_sz_mpo(L::Int; T::Type{&lt;:Number}=Float64)
+    # Returns Vector{Array{T,4}} of W tensors with shape (χL, d_ket, d_bra, χR).
+    # Bond dimension is 3.  IdL = 1, IdR = 3.
+    d   = 2
+    χ   = 3
+    Id  = Matrix{T}(I, d, d)
+    Sz  = T[1//2 0; 0 -1//2]
+    Sz2 = Sz * Sz   ## = I/4 for spin-1/2
+
+    tensors = Vector{Array{T,4}}(undef, L)
+    for i in 1:L
+        W = zeros(T, χ, d, d, χ)
+        for σ in 1:d, σ′ in 1:d
+            W[1, σ, σ′, 1] = Id[σ′, σ]
+            W[1, σ, σ′, 2] = 2 * Sz[σ′, σ]   ## factor 2: both orderings (i,j) and (j,i)
+            W[1, σ, σ′, 3] = Sz2[σ′, σ]       ## diagonal (S^z)^2 = I/4
+            W[2, σ, σ′, 2] = Id[σ′, σ]
+            W[2, σ, σ′, 3] = Sz[σ′, σ]
+            W[3, σ, σ′, 3] = Id[σ′, σ]
+        end
+
+        tensors[i] = if L == 1
+            reshape(W[1:1, :, :, 3:3], 1, d, d, 1)
+        elseif i == 1
+            reshape(W[1:1, :, :, :], 1, d, d, χ)
+        elseif i == L
+            reshape(W[:, :, :, 3:3], χ, d, d, 1)
+        else
+            copy(W)
+        end
+    end
+    return tensors
+end</code></pre><pre><code class="nohighlight hljs">sz_sz_mpo (generic function with 1 method)</code></pre><h2 id="Verify:-all-up-state-…⟩"><a class="docs-heading-anchor" href="#Verify:-all-up-state-…⟩">Verify: all-up state <span>$|↑↑…↑⟩$</span></a><a id="Verify:-all-up-state-…⟩-1"></a><a class="docs-heading-anchor-permalink" href="#Verify:-all-up-state-…⟩" title="Permalink"></a></h2><p>For the all-up state <span>$|\psi\rangle = |↑↑\cdots↑\rangle$</span>:</p><p class="math-container">\[\langle M \rangle
+  = \left(\sum_i \langle S_i^z \rangle\right)^2
+  = \left(\frac{L}{2}\right)^2 = \frac{L^2}{4}\]</p><pre><code class="language-julia hljs">L = 6
+M_tensors = sz_sz_mpo(L)
+println(&quot;Bond dimensions: &quot;, [size(W, 1) for W in M_tensors], &quot; → &quot;, size(M_tensors[end], 4))
+println(&quot;Interior W shape: &quot;, size(M_tensors[3]))</code></pre><pre><code class="nohighlight hljs">Bond dimensions: [1, 3, 3, 3, 3, 3] → 1
+Interior W shape: (3, 2, 2, 3)
+</code></pre><p>Build the all-up MPS <span>$|↑↑…↑⟩$</span> and contract ⟨ψ|M|ψ⟩ by hand. We use a simple environment sweep matching the W tensor convention.</p><pre><code class="language-julia hljs">function contract_expectation(mps_tensors, mpo_tensors)
+    T   = promote_type(eltype(mps_tensors[1]), eltype(mpo_tensors[1]))
+    env = ones(T, 1, 1, 1)   ## (χL_bra, χL_W, χL_ket)
+    for i in eachindex(mps_tensors)
+        A = conj.(mps_tensors[i])   ## bra: (χL_b, d, χR_b)
+        W = mpo_tensors[i]          ## (χL_W, d_k, d_b, χR_W)
+        B = mps_tensors[i]          ## ket: (χL_k, d, χR_k)
+        χL_b, _, χR_b = size(A)
+        χL_W, d_k, _, χR_W = size(W)
+        χL_k, _, χR_k = size(B)
+        new_env = zeros(T, χR_b, χR_W, χR_k)
+        for α_b in 1:χL_b, α_W in 1:χL_W, α_k in 1:χL_k
+            e = env[α_b, α_W, α_k]
+            iszero(e) &amp;&amp; continue
+            for σ_k in 1:d_k
+                for σ_b in 1:size(W,3)
+                    w = W[α_W, σ_k, σ_b, :]
+                    a = A[α_b, σ_b, :]
+                    b = B[α_k, σ_k, :]
+                    for β_b in 1:χR_b, β_W in 1:χR_W, β_k in 1:χR_k
+                        new_env[β_b, β_W, β_k] += e * a[β_b] * w[β_W] * b[β_k]
+                    end
+                end
+            end
+        end
+        env = new_env
+    end
+    return real(env[1, 1, 1])
+end</code></pre><pre><code class="nohighlight hljs">contract_expectation (generic function with 1 method)</code></pre><pre><code class="language-julia hljs"># All-up state: one-hot tensors with σ=1 (↑), bond dim 1 everywhere
+all_up = [reshape([1.0, 0.0], 1, 2, 1) for _ in 1:L]
+# Normalize: ⟨ψ|ψ⟩ = 1 already for product state with one-hot entries
+
+expected = (L / 2)^2
+result   = contract_expectation(all_up, M_tensors)
+
+println(&quot;\n⟨↑↑…↑|M|↑↑…↑⟩ = &quot;, round(result; sigdigits=6))
+println(&quot;Expected (L/2)² = &quot;, expected)
+println(&quot;Error: &quot;, abs(result - expected))</code></pre><pre><code class="nohighlight hljs">
+⟨↑↑…↑|M|↑↑…↑⟩ = 9.0
+Expected (L/2)² = 9.0
+Error: 0.0
+</code></pre><h2 id="Néel-state-…⟩-verification"><a class="docs-heading-anchor" href="#Néel-state-…⟩-verification">Néel state <span>$|↑↓↑↓…⟩$</span> verification</a><a id="Néel-state-…⟩-verification-1"></a><a class="docs-heading-anchor-permalink" href="#Néel-state-…⟩-verification" title="Permalink"></a></h2><p>For the alternating Néel state, total <span>$S^z_\text{tot} = 0$</span> (for even <span>$L$</span>), so <span>$\langle M \rangle = 0$</span>.</p><pre><code class="language-julia hljs">neel = [reshape(isodd(i) ? [1.0, 0.0] : [0.0, 1.0], 1, 2, 1) for i in 1:L]
+neel_result = contract_expectation(neel, M_tensors)
+println(&quot;\n⟨Néel|M|Néel⟩ = &quot;, round(neel_result; sigdigits=6), &quot;  (expected 0)&quot;)</code></pre><pre><code class="nohighlight hljs">
+⟨Néel|M|Néel⟩ = 0.0  (expected 0)
+</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Saturday 4 July 2026 10:54">Saturday 4 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
