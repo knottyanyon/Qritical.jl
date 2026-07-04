@@ -14,9 +14,7 @@ The canonical initial state for the XXZ quench (Exercise 8) is the **Néel state
 |\psi_0\rangle = |\uparrow\downarrow\uparrow\downarrow\cdots\rangle
 ```
 
-Every site is in a definite ``S^z`` eigenstate, so the Néel state is a simple product
-state — there is no entanglement between any pair of sites. As an MPS this means bond
-dimension ``\chi = 1`` at every bond and zero entanglement entropy at every cut.
+Every site is in a definite ``S^z`` eigenstate, so the Néel state is a simple [`product state`](@ref Glossary#product-state) — there is no entanglement between any pair of sites. As an [`MPS`](@ref Glossary#matrix-product-state) this means [`bond dimension`](@ref Glossary#bond-dimension) ``\chi = 1`` at every [`bond`](@ref Glossary#bond) and zero [`entanglement entropy`](@ref Glossary#entanglement-entropy) at every cut.
 This is convenient not just computationally, but physically: it is as far from a ground
 state as possible, and the subsequent entanglement growth is the phenomenon we want to
 study.

@@ -1,19 +1,19 @@
 # Degrees of Freedom
 
-A **degree of freedom** (DoF) is what the model places at each lattice site: the local
+A **[`degree of freedom`](@ref Glossary#degree-of-freedom)** ([`DoF`](@ref Glossary#degree-of-freedom)) is what the model places at each lattice site: the local
 Hilbert space, its operator algebra, and — crucially — the **intrinsic inter-site
 statistics**. This is *not* a representation choice; it is the physical content of the
 model. A spin-½, a spin-1, a spinless fermion, a Hubbard electron, and a hard-core boson
 are genuinely different local Hilbert spaces; they are not the same object "viewed
 differently".
 
-The distinction that does the most work is the `statistics` trait:
+The distinction that does the most work is the [`canonical relation`](@ref Glossary#canonical-relation) trait:
 
-- **`Commuting`** (spins, hard-core bosons): operators on different sites commute,
+- **[`CCR`](@ref Glossary#ccr)** (spins, hard-core bosons): operators on different sites commute,
   ``[O_i, O_j] = 0`` for ``i \neq j``. No string correction is needed when assembling
   multi-site terms.
 
-- **`Anticommuting`** (fermions, Majoranas): operators on different sites anticommute,
+- **[`CAR`](@ref Glossary#car)** (fermions, Majoranas): operators on different sites anticommute,
   ``\{O_i, O_j\} = 0`` for ``i \neq j``. This is handled by one of two routes:
 
   - **Route A — Jordan–Wigner (dense):** `basis_change(H, SpinHalf())` rewrites a

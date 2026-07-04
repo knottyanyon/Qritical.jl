@@ -1,16 +1,16 @@
 # Operators & Hamiltonians
 
 A linear quantum-mechanical observable is a sum of weighted products of single-site
-operators. The **Hamiltonian** is just one such observable — the operator that drives
+operators. The **[`Hamiltonian`](@ref)** is just one such observable — the operator that drives
 dynamics. Magnetisation, density, and two-point correlators are others. Qritical builds
 all of them the same way: as an `LatticeOperator` (a term list over a geometry and DoF), so the
 same `expect(ψ, O)` routine measures energy, magnetisation, and ``\langle S^z_i S^z_j
 \rangle`` without any special-casing.
 
 The construction strategy is **lazy**: couplings and operator matrices are stored as a
-list of `OneSiteTerm`s and `TwoSiteTerm`s; the dense matrix form (`matrix_repr`) and the MPO
+list of `OneSiteTerm`s and `TwoSiteTerm`s; the dense matrix form (`matrix_repr`) and the [`MPO`](@ref Glossary#matrix-product-operator)
 form (`MPO`) are computed on demand. This means you can build an `LatticeOperator`, inspect its
-term list, modify couplings, and only pay for the MPO contraction when you actually call
+term list, modify couplings, and only pay for the [`MPO`](@ref Glossary#matrix-product-operator) contraction when you actually call
 `expect`.
 
 ### Named constructors
