@@ -97,12 +97,9 @@ end
         mps   = to_mps(ψ; trunc=NoTrunc(), form=:left)
 
         for site in 1:L
-            # as_state uses Julia column-major reshape: site 1 is the fast (LSB)
-            # axis, site L is the slow (MSB) axis.  foldl(kron, [A1,...,AL])
-            # places A1 at the MSB, so site s in the MPS maps to kron position
-            # (L + 1 - s) in the operator list.
-            kron_pos = L + 1 - site
-            ops    = [i == kron_pos ? σz : Id for i in 1:L]
+            # as_state respects kron ordering: site 1 is MSB (most significant),
+            # so kron_pos == site.
+            ops    = [i == site ? σz : Id for i in 1:L]
             O_full = foldl(kron, ops)
 
             expected = dot(ψ_vec, O_full * ψ_vec)

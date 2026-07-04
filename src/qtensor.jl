@@ -241,7 +241,7 @@ in `A.indices`.  Delegates to `complement(p, A.indices)`.
 
 # Examples
 ```jldoctest
-julia> vL = upper(:vL, 2);  σ = lower(:σ, 3);  vR = lower(:vR, 4);
+julia> vL = upper(:vL, 2);  σ = upper(:σ, 3);  vR = lower(:vR, 4);
 
 julia> A = QTensor(rand(2, 3, 4), (vL, σ, vR));
 
@@ -260,7 +260,7 @@ Construct a [`Bipartition`](@ref) for tensor `A` whose right side is
 
 # Examples
 ```jldoctest
-julia> vL = upper(:vL, 2);  σ = lower(:σ, 3);  vR = lower(:vR, 4);
+julia> vL = upper(:vL, 2);  σ = upper(:σ, 3);  vR = lower(:vR, 4);
 
 julia> A = QTensor(rand(2, 3, 4), (vL, σ, vR));
 
@@ -292,7 +292,7 @@ specified in the partition before reshaping.
 
 # Examples
 ```jldoctest
-julia> σ  = lower(:σ,  2);  vL = upper(:vL, 3);  vR = lower(:vR, 4);
+julia> σ  = upper(:σ,  2);  vL = upper(:vL, 3);  vR = lower(:vR, 4);
 
 julia> A  = QTensor(rand(2, 3, 4), (σ, vL, vR));
 
@@ -312,7 +312,7 @@ function group_legs(A::QTensor, bp::Bipartition)
 
     # locate each partition leg in A.indices (by equality)
     _find(ix) = findfirst(==(ix), all_ix)
-    left_pos  = _find.(bp.left)
+    left_pos = _find.(bp.left)
     right_pos = _find.(bp.right)
 
     any(isnothing, left_pos) && throw(
@@ -330,7 +330,7 @@ function group_legs(A::QTensor, bp::Bipartition)
     length(covered) < length(all_ix) && throw(
         ArgumentError(
             "group_legs: tensor has $(length(all_ix)) leg(s) but the bipartition " *
-            "covers only $(length(covered)) — every leg must appear on exactly one side."
+            "covers only $(length(covered)) — every leg must appear on exactly one side.",
         ),
     )
 
@@ -339,12 +339,12 @@ function group_legs(A::QTensor, bp::Bipartition)
     data_p = isempty(perm) ? A.data : permutedims(A.data, perm)
 
     # reshape into a 2D matrix
-    left_dim  = prod(dim, bp.left;  init=1)
+    left_dim = prod(dim, bp.left; init=1)
     right_dim = prod(dim, bp.right; init=1)
-    data_2d   = reshape(data_p, left_dim, right_dim)
+    data_2d = reshape(data_p, left_dim, right_dim)
 
     # attach fused index metadata
-    left_ix  = MulTIx(Tuple(bp.left))
+    left_ix = MulTIx(Tuple(bp.left))
     right_ix = MulTIx(Tuple(bp.right))
 
     QTensor(data_2d, (left_ix, right_ix))
@@ -369,6 +369,69 @@ is forwarded by the interface but does not affect index identity — the same `A
 is returned regardless.
 """
 TensorOperations.tensorstructure(t::QTensor, i::Int, ::Bool) = t.indices[i]
+
+# ==== Adjoint & flips =========================================================
+
+"""
+    Base.adjoint(A::QTensor) -> QTensor
+    A'
+
+Return the Hermitian adjoint of `A` under the von Delft covariant convention:
+**flip every leg's variance, reverse the leg order, and conjugate the data**,
+
+```math
+[A^{\\dagger}]^{\\beta}_{\\sigma\\alpha} := \\overline{A^{\\alpha\\sigma}_{\\beta}},
+```
+
+generalising ``(MN)^{\\dagger} = N^{\\dagger}M^{\\dagger}`` to arbitrary order.
+Labels are **not** primed — the daggering is carried entirely by the variance
+and the leg positions. Because position `p` is array axis `p` (row = leftmost),
+the leg reversal is mirrored on the backing array:
+`(A').data == conj(permutedims(A.data, reverse(1:ndims(A))))`.
+
+The adjoint is an involution, `(A')' == A`, and reproduces the familiar matrix
+adjoint for order-2 tensors: `(A').data == adjoint(A.data)`.
+
+This is the same operation as TensorKit's `adjoint`: swap domain and codomain,
+dualise every leg, reverse their order.
+
+See also: [`dagger`](@ref), [`flip`](@ref)
+"""
+function Base.adjoint(A::QTensor)
+    N = length(A.indices)
+    data = conj(permutedims(A.data, ntuple(k -> N + 1 - k, N)))
+    return QTensor(data, reverse(map(flip, A.indices)))
+end
+
+"""
+    dagger(A::QTensor) -> QTensor
+
+Syntactic sugar for [`Base.adjoint`](@ref): `dagger(A) == A'`. Provided for
+readability in physics-flavoured code where ``A^{\\dagger}`` is spelled out.
+"""
+dagger(A::QTensor) = adjoint(A)
+
+"""
+    flip(A::QTensor, i::Integer) -> QTensor
+
+Raise or lower leg `i` of `A`: return a `QTensor` whose `i`-th index has the
+opposite variance, all other legs untouched. With the trivial metric of an
+orthonormal basis this is numerically free, so **the backing array is reused
+as-is** — no copy, no conjugation, no permutation.
+
+Contrast with the adjoint, which flips *every* leg, reverses their order, and
+conjugates the data. Flipping a single end of a contracted bond breaks the
+upper-with-lower pairing rule; flip bonds at **both** ends (this is what a
+centre-move across a bond does).
+
+See also: [`flip(::TIx)`](@ref), [`Base.adjoint(::QTensor)`](@ref)
+"""
+function flip(A::QTensor, i::Integer)
+    1 <= i <= length(A.indices) ||
+        throw(ArgumentError("flip: leg $i out of range for an order-$(length(A.indices)) tensor."))
+    indices = ntuple(k -> k == i ? flip(A.indices[k]) : A.indices[k], length(A.indices))
+    return QTensor(A.data, indices)
+end
 
 # ==== State utilities =========================================================
 
@@ -399,8 +462,10 @@ Reshape the coefficient vector `v` into an order-`L` tensor with one physical
 leg per site.  `dof_dims[i]` is the local Hilbert-space dimension at site `i`.
 
 The result satisfies `vec(ψ.data) === v` (no copy; the tensor shares memory with
-the input vector).  Each leg is labelled `:σ1`, `:σ2`, … and typed `Lower`
-(outgoing physical index, codomain convention).
+the input vector).  Each leg is labelled `:σ1`, `:σ2`, … and typed `Upper`: the
+stored array is the ket-expansion **coefficient** tensor ``A^{\\sigma_1 \\ldots
+\\sigma_L}`` of ``|\\psi\\rangle = A^{\\vec{\\sigma}}|\\vec{\\sigma}\\rangle``,
+whose physical indices are contravariant (incoming arrows, domain convention).
 
 # Arguments
 - `v         :: AbstractVector` — full state vector of length `∏ dof_dims[i]`
@@ -417,8 +482,13 @@ dim(ψ.indices[1])  # 2
 [`bipartition_matrix`](@ref), [`QTensor`](@ref)
 """
 function as_state(v::AbstractVector, dof_dims::AbstractVector{Int})
-    indices = Tuple(lower(Symbol(:σ, i), dof_dims[i]) for i in eachindex(dof_dims))
-    data = reshape(v, dof_dims...)
-    return QTensor(data, indices)
+    L = length(dof_dims)
+    indices = Tuple(upper(Symbol(:σ, i), dof_dims[i]) for i in 1:L)
+    # Kron product ordering: site 1 is most significant (changes slowest).
+    # Julia reshape is column-major: first index varies fastest.
+    # So reshape(v, d_L,...,d_1) gives data_raw[σ_L,...,σ_1] = v[kron_index], then
+    # permutedims reverses to data[σ_1,...,σ_L] = v[kron_index(σ_1,...,σ_L)].
+    data = permutedims(reshape(v, reverse(dof_dims)...), L:-1:1)
+    return QTensor(convert(Array{ComplexF64}, data), indices)
 end
 

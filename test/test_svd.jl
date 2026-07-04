@@ -386,8 +386,8 @@ using Qritical
         # The SVD should respect the bipartition correctly.
 
         # A simple 3-site MPS-like tensor: σ_1, σ_2 (physical), vL, vR (bonds)
-        σ1 = lower(:σ1, 2)
-        σ2 = lower(:σ2, 2)
+        σ1 = upper(:σ1, 2)
+        σ2 = upper(:σ2, 2)
         vL = upper(:vL, 4)
         vR = lower(:vR, 4)
 
@@ -395,18 +395,25 @@ using Qritical
         data = randn(2, 2, 4, 4)
         A = QTensor(data, (σ1, σ2, vL, vR))
 
-        @test_broken begin
-            # Bipartition: left = [σ1, σ2, vL] (codomain), right = [vR] (codomain)
-            bp = Bipartition(Partition([σ1, σ2, vL]), Partition([vR]))
-            F = tensor_svd(A, bp, NoTrunc())
+        # Bipartition: left = [σ1, σ2, vL] (3 legs), right = [vR] (1 leg)
+        bp = Bipartition(Partition([σ1, σ2, vL]), Partition([vR]))
+        F = do_svd(A, bp, NoTrunc())
 
-            # After SVD, U should have legs (σ1, σ2, vL, λ_Left), Σ is (λ_Left, λ_Right),
-            # and Vd should have legs (λ_Right, vR).
-            # Check that the bond legs are properly constructed.
-            @test length(F.U.indices) == 4  # 3 original left + 1 bond
-            @test length(F.Σ.indices) == 2  # 2 bond legs
-            @test length(F.Vd.indices) == 2  # 1 bond + 1 original right
-        end
+        # The factor tensors carry one axis per original leg plus the bond, so a
+        # multi-leg partition yields a genuine multi-leg U / Vd (not a bare matrix).
+        @test length(F.U.indices) == 4   # σ1, σ2, vL, λ_Left
+        @test length(F.Σ.indices) == 2   # λ_Left, λ_Right
+        @test length(F.Vd.indices) == 2  # λ_Right, vR
+        @test size(F.U.data)[1:3] == (2, 2, 4)
+        @test size(F.Vd.data)[2] == 4
+
+        # The reshaped factors reconstruct the original matricized state exactly.
+        M = reshape(data, 2 * 2 * 4, 4)   # bp.left already occupies axes 1:3
+        r = length(F.spectrum.values)
+        Umat = reshape(F.U.data, 2 * 2 * 4, r)
+        Vmat = reshape(F.Vd.data, r, 4)
+        @test Umat * Diagonal(F.spectrum.values) * Vmat ≈ M
+        @test sort(F.spectrum.values; rev=true) ≈ sort(svdvals(M); rev=true)[1:r]
     end
 end  # @testset "SVD and truncation"
 
@@ -519,9 +526,9 @@ end  # @testset "SVD and truncation"
 
     # 3-qubit uniform product state — shared by both boundary-bond tests.
     @testset "Boundary bonds of open-chain product state" begin
-        let _σ1 = lower(:σ1, 2),
-            _σ2 = lower(:σ2, 2),
-            _σ3 = lower(:σ3, 2),
+        let _σ1 = upper(:σ1, 2),
+            _σ2 = upper(:σ2, 2),
+            _σ3 = upper(:σ3, 2),
             ψ_tensor = QTensor(ones(2, 2, 2) / (2 * sqrt(2)), (_σ1, _σ2, _σ3)),
             bp = Bipartition(Partition([_σ1]), Partition([_σ2, _σ3]))
 

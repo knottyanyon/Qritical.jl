@@ -25,7 +25,7 @@ The factors U and ``V^\\dagger`` satisfy:
 - `spectrum :: SingValSpectrum`  — analysis view of the singular values; shares the same
   `values` vector as `Σ.data.diag` (no extra allocation)
 - `center   :: BondCenter`       — bond on which the orthogonality centre lives;
-  `.center.bond.upper === Σ.indices[1]` and `.center.bond.lower === Σ.indices[2]`
+  `.center.bond.left === Σ.indices[1]` and `.center.bond.right === Σ.indices[2]`
 
 # See also
 [`ReducedSVD`](@ref), [`do_svd`](@ref)
@@ -96,7 +96,7 @@ Concrete subtypes:
 - [`MaxBondDimTrunc`](@ref) — keep at most `max_χ` values
 - [`ValCutoffTrunc`](@ref)  — keep all values above a threshold
 
-Julia dispatches the correct [`_truncate_singular_values`](@ref) method
+Julia dispatches the correct `_truncate_singular_values` method
 automatically based on which subtype you pass — no `if/else` needed.
 """
 abstract type AbstractTrunc end
@@ -235,7 +235,7 @@ Steps:
    is treated as a numerical zero, not a genuine Schmidt value.  This step
    happens *before* the truncation strategy sees the list, so strategies
    operate on a clean, physics-relevant spectrum.
-4. Apply [`_truncate_singular_values`](@ref) to decide how many to keep.
+4. Apply `_truncate_singular_values` to decide how many to keep.
 5. Slice `U`, `Σ`, `Vd` to keep only the leading `r` columns/rows/values.
 
 Returns raw `Matrix` / `Vector` values — not `QTensor`s. The leg metadata is
@@ -269,17 +269,32 @@ Internal helper: wraps raw factor matrices in [`QTensor`](@ref) with the
 correct index legs.
 
 Bond legs are named `:λL` (between U and Σ) and `:λR` (between Σ and Vd):
-- U  gets `(original left legs..., λL::Lower)` — λL is outgoing from U.
-- Σ  gets `(λL::Upper, λR::Lower)` — it consumes from U and feeds into Vd.
-- Vd gets `(λR::Upper, original right legs...)` — λR is incoming to Vd.
+- U  gets `(original left legs..., λL::Lower)` — arrow out of U, toward ``\\Sigma``.
+- Σ  gets `(λL::Upper, λR::Upper)` — ``\\Sigma`` is the orthogonality centre, so
+  **both** bond arrows point into it (TNB.6: ``S^{\\lambda\\lambda'}`` carries
+  two contravariant indices).
+- Vd gets `(λR::Lower, original right legs...)` — arrow out of ``V^\\dagger``,
+  toward ``\\Sigma``.
 
-The `Upper`/`Lower` variance follows the package convention: outgoing legs are
-`Lower` (codomain), incoming legs are `Upper` (domain).
+The `Upper`/`Lower` variance follows the package convention: bond arrows point
+toward the orthogonality centre; `Upper` = incoming (domain), `Lower` = outgoing
+(codomain). Each contracted pair is one `Upper` and one `Lower`.
+
+`U_mat` and `Vd_mat` come out of the matrix SVD with the partitions fused into a
+single row/column axis.  They are reshaped back into one axis per original leg —
+`U` to `(left dims..., r)` and `Vd` to `(r, right dims...)` — so the factors are
+genuine multi-leg tensors when a partition groups more than one leg.  This is the
+exact inverse of the column-major fusion done in [`group_legs`](@ref); for the
+single-leg-per-side (matrix) case the reshapes are no-ops.
 """
 function _assemble_qtensors(U_mat, svs, Vd_mat, r, bp::Bipartition)
-    U_qt = QTensor(U_mat, (bp.left..., lower(:λL, r)))
-    Σ_qt = QTensor(Diagonal(svs), (upper(:λL, r), lower(:λR, r)))
-    Vd_qt = QTensor(Vd_mat, (upper(:λR, r), bp.right...))
+    left_dims = Tuple(dim(ix) for ix in bp.left)
+    right_dims = Tuple(dim(ix) for ix in bp.right)
+    U_arr = reshape(U_mat, left_dims..., r)
+    Vd_arr = reshape(Vd_mat, r, right_dims...)
+    U_qt = QTensor(U_arr, (bp.left..., lower(:λL, r)))
+    Σ_qt = QTensor(Diagonal(svs), (upper(:λL, r), upper(:λR, r)))
+    Vd_qt = QTensor(Vd_arr, (lower(:λR, r), bp.right...))
     return U_qt, Σ_qt, Vd_qt
 end
 
@@ -300,10 +315,11 @@ Two things are computed here:
    [`SingValSpectrum`](@ref) for the full semantics of this flag.
 
 2. **Bond identity** — the [`Bond`](@ref) is read directly from the legs of
-   `Σ_qt`:  `Σ_qt.indices[1]` is `upper(:λL, r)` (the incoming leg) and
-   `Σ_qt.indices[2]` is `lower(:λR, r)` (the outgoing leg).  The resulting
-   [`BondCenter`](@ref) therefore points to the *same* `TIx` objects as the
-   ``\\Sigma`` factor — no label matching is needed downstream.
+   `Σ_qt`:  `Σ_qt.indices[1]` is `upper(:λL, r)` (the left face) and
+   `Σ_qt.indices[2]` is `upper(:λR, r)` (the right face) — both `Upper`, since
+   ``\\Sigma`` is the orthogonality centre and both bond arrows point into it.
+   The resulting [`BondCenter`](@ref) therefore points to the *same* `TIx`
+   objects as the ``\\Sigma`` factor — no label matching is needed downstream.
 
 # Arguments
 - `svs    :: AbstractVector{<:Real}` — kept singular values (already noise-cleaned and truncated)
@@ -316,8 +332,8 @@ Two things are computed here:
 function _build_spectrum_and_center(svs::AbstractVector{<:Real}, ε::Float64, Σ_qt::QTensor)
     normalized = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
     spectrum = SingValSpectrum(svs, ε, normalized)
-    # Σ.indices[1] = upper(:λL, r),  Σ.indices[2] = lower(:λR, r)
-    bond = Bond(Σ_qt.indices[2]::TIx{Lower}, Σ_qt.indices[1]::TIx{Upper})
+    # Σ.indices[1] = upper(:λL, r),  Σ.indices[2] = upper(:λR, r) — both faces of the centre
+    bond = Bond(Σ_qt.indices[1]::TIx{Upper}, Σ_qt.indices[2]::TIx{Upper})
     center = BondCenter(bond)
     return spectrum, center
 end

@@ -15,8 +15,9 @@ using Serialization
 using DelimitedFiles
 using Qritical
 
-# Scratchpad for temporary test files (fixtures, intermediate data)
-const SCRATCHPAD = "/private/tmp/claude-501/-Users-bavithra-Documents-Uni-Courses-26-HTN-Qritical-jl/8ecb12b1-c9bf-424b-bbce-2b5fba90376d/scratchpad"
+# Scratchpad for temporary test files (fixtures, intermediate data).
+# Use a fresh OS temp dir so the tests run anywhere, including CI.
+const SCRATCHPAD = mktempdir()
 
 @testset "IO and state utilities" begin
 
@@ -49,7 +50,7 @@ const SCRATCHPAD = "/private/tmp/claude-501/-Users-bavithra-Documents-Uni-Course
             let σ_vals = [0.8, 0.6],
                 spec = SingValSpectrum(σ_vals, 0.0, false),
                 # Construct a SchmidtSpectrum with dummy bond and cut
-                bond = Bond(lower(:λL, 2), upper(:λR, 2)),
+                bond = Bond(upper(:λL, 2), upper(:λR, 2)),   # both centre faces Upper
                 bp = Bipartition(Partition([lower(:i, 2)]), Partition([lower(:j, 2)])),
                 s = SchmidtSpectrum(spec, bp, BondCenter(bond))
 
@@ -175,7 +176,7 @@ const SCRATCHPAD = "/private/tmp/claude-501/-Users-bavithra-Documents-Uni-Course
         @testset "bipartition_matrix on rank-3 tensor: left partition (σ,vL) vs right (vR)" begin
             # Physics: a 3-leg tensor can be bipartitioned into a matrix.
             # Left partition: {σ, vL} → rows; right partition: {vR} → cols.
-            let σ = lower(:σ, 2),
+            let σ = upper(:σ, 2),
                 vL = upper(:vL, 3),
                 vR = lower(:vR, 5),
                 A = QTensor(randn(2, 3, 5), (σ, vL, vR)),
@@ -243,17 +244,27 @@ const SCRATCHPAD = "/private/tmp/claude-501/-Users-bavithra-Documents-Uni-Course
             end
         end
 
-        @testset "as_state round-trip: vec(reshape(v, dof_dims...)) ≈ v" begin
-            # Physics: reshaping and flattening should recover the original vector (up to ordering).
+        @testset "as_state round-trip: kron-ordering consistent with dense_matrix" begin
+            # Physics: as_state must respect the kron-product site ordering used by dense_matrix.
+            # Kron ordering: site 1 is most significant (changes slowest).
+            # For basis state e_k (only v[k]=1), the tensor should have
+            # data[σ₁,...,σ_L] = 1 at the multi-index whose kron position equals k.
             let L = 2,
                 d = 3,
-                v = randn(d^L),
-                dof_dims = fill(d, L),
-                ψ = as_state(v, dof_dims)
+                dof_dims = fill(d, L)
 
-                # Test: flattening the reshaped tensor recovers v
-                v_recovered = vec(ψ.data)
-                @test isapprox(v_recovered, v; atol=1e-14)
+                for k in 1:d^L
+                    e = zeros(d^L); e[k] = 1.0
+                    ψ = as_state(e, dof_dims)
+                    # Decode kron index k-1 = Σᵢ (σᵢ-1) * d^(L-i) → σ_i
+                    idx = k - 1
+                    σ = Vector{Int}(undef, L)
+                    for i in 1:L
+                        σ[i] = div(idx, d^(L-i)) + 1
+                        idx   = mod(idx, d^(L-i))
+                    end
+                    @test ψ.data[σ...] ≈ 1.0  atol=1e-14
+                end
             end
         end
 
