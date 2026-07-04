@@ -1,7 +1,5 @@
 # Power Method & Ground-State Search
 
-## Physics motivation
-
 The **power method** is one of the simplest algorithms for finding the ground state of a
 quantum Hamiltonian. The idea comes from imaginary-time evolution: applying ``e^{-\tau H}``
 to any state that has nonzero overlap with the ground state ``|\psi_0\rangle`` gives

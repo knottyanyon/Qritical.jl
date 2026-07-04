@@ -1,7 +1,5 @@
 # MPS & Canonical Forms
 
-## Physics motivation
-
 A **matrix product state** (MPS) for a chain of ``L`` sites with local Hilbert-space dimension ``d`` is a compressed representation of the full ``d^L``-dimensional state vector:
 
 ```math

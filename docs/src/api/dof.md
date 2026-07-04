@@ -1,7 +1,5 @@
 # Degrees of Freedom
 
-## Physics motivation
-
 A **degree of freedom** (DoF) is what the model places at each lattice site: the local
 Hilbert space, its operator algebra, and — crucially — the **intrinsic inter-site
 statistics**. This is *not* a representation choice; it is the physical content of the

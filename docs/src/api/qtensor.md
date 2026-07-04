@@ -1,7 +1,5 @@
 # QTensor
 
-## Physics motivation
-
 A raw multi-dimensional array has no memory of what its axes mean. In tensor-network computations this quickly becomes dangerous: it is easy to contract the wrong pair of legs, to forget which index is the physical spin and which is the virtual bond, or to apply a gate to the wrong site. `QTensor` solves this by bundling a numerical array with an ordered tuple of typed index legs (`TIx{Upper}` or `TIx{Lower}`), making every contraction label-driven rather than position-driven.
 
 The `{D}` parameter on `QTensor{T,N,D}` selects the execution backend without changing any algorithm code:

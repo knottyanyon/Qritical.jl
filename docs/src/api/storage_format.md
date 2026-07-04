@@ -1,7 +1,5 @@
 # Storage Formats
 
-## Motivation
-
 A [`LatticeOperator`](@ref) is stored *lazily* as a list of `OneSiteTerm`s and
 `TwoSiteTerm`s over a geometry and DoF. Turning that term list into an actual matrix —
 via [`matrix_repr`](@ref) — can be done two ways, and the right choice depends entirely

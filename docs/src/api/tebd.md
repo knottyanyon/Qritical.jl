@@ -1,7 +1,5 @@
 # TEBD & Suzuki-Trotter Time Evolution
 
-## Physics motivation
-
 **Time-Evolving Block Decimation (TEBD)** is the workhorse algorithm for time-evolving
 an MPS under a nearest-neighbour Hamiltonian. The core idea is to approximate the
 global time-evolution operator ``e^{-i\Delta t H}`` as a product of cheap two-site

@@ -1,7 +1,5 @@
 # SVD & Truncation
 
-## Physics motivation
-
 The Schmidt decomposition is the fundamental tool of tensor-network methods. For a bipartite quantum state ``|\psi\rangle \in \mathcal{H}_A \otimes \mathcal{H}_B``, the Schmidt decomposition reads
 
 ```math

@@ -1,7 +1,5 @@
 # Spectra & Entanglement
 
-## Physics motivation
-
 The singular values of an SVD are not just intermediate numerical results — they are physical observables that characterise the quantum state. Keeping them as a first-class object (rather than buried inside a factored matrix) makes entanglement analysis, convergence diagnostics, and canonical-form bookkeeping all natural.
 
 The spectrum hierarchy in Qritical reflects three genuinely different physical situations:

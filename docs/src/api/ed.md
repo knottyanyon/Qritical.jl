@@ -1,7 +1,5 @@
 # Exact Diagonalization
 
-## Physics motivation
-
 **Exact diagonalization (ED)** is the gold standard for small quantum systems: build the
 full ``d^L \times d^L`` Hamiltonian matrix and find its eigenvalues exactly, no
 approximation. Every MPS or TEBD result should be cross-validated against ED for small

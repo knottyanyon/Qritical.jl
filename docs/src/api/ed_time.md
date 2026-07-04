@@ -1,7 +1,5 @@
 # ED Time Propagation
 
-## Physics motivation
-
 ### Why exact time propagation?
 
 Most time-evolution algorithms — TEBD, Runge-Kutta, Krylov methods — introduce some

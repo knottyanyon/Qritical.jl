@@ -1,7 +1,5 @@
 # Quench & TEBD Solve Interface
 
-## Physics motivation
-
 A **quantum quench** is the simplest dynamical experiment you can run on a many-body
 system: prepare the system in some initial state ``|\psi_0\rangle`` that is *not* an
 eigenstate of the Hamiltonian ``H``, then let it evolve under ``H`` and watch what

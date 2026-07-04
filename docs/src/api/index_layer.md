@@ -1,7 +1,5 @@
 # Index Layer
 
-## Physics motivation
-
 Every tensor in quantum many-body physics carries more information than just its numerical entries: each leg has a *direction* and a *physical meaning*. In a matrix product state, the left virtual leg flows *into* a site tensor while the right virtual leg flows *out*; the physical leg ``\sigma`` labels the local Hilbert-space basis and flows out toward the ket. These distinctions are not cosmetic — they are what makes contraction rules unambiguous, what allows block-sparse symmetry sectors to be tracked automatically, and what prevents silently mis-wiring a bra where a ket is expected.
 
 The index layer makes this precise. Each leg is a `TIx{L}` where `L ∈ {Upper, Lower}` records the *variance* — whether the leg is contravariant (inward, domain) or covariant (outward, codomain) in the sense of von Delft's arrow convention. This is not a label one attaches by convention: it follows directly from the geometric orientation of the leg in the tensor-network diagram.

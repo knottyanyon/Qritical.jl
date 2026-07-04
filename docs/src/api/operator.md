@@ -1,7 +1,5 @@
 # Operators & Hamiltonians
 
-## Physics motivation
-
 A linear quantum-mechanical observable is a sum of weighted products of single-site
 operators. The **Hamiltonian** is just one such observable — the operator that drives
 dynamics. Magnetisation, density, and two-point correlators are others. Qritical builds
