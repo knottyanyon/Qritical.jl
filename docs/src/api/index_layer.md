@@ -76,6 +76,5 @@ lowers_range
 ```@docs
 complement
 bipartition
-group_legs
 bond_label
 ```

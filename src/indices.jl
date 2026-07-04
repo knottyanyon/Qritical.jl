@@ -298,6 +298,12 @@ Construct a tuple of upper (domain) indices from `label => dim` pairs.
 Calling with no arguments returns an empty tuple `()`, which is useful when
 chaining with `filter` or `map` that may produce no results.
 
+## Implementation
+
+Uses Julia's broadcasting operator `.` to apply the constructor element-wise:
+`first.(pairs)` extracts labels, `last.(pairs)` extracts dimensions, and
+`TIx{Upper}.(...)` broadcasts the constructor to create each index.
+
 # Examples
 
 ```jldoctest
@@ -313,10 +319,6 @@ julia> which_space(β)
 :domain
 ```
 """
-# The "." is Julia's broadcasting operator. first.(pairs) applies `first` element-wise to
-# each pair, producing a tuple of labels; last.(pairs) applies `last` to each pair,
-# producing a tuple of dimensions. TIx{Upper}.(...) then broadcasts the constructor
-# TIx{Upper}(label, dim) element-wise, zipping the two tuples together.
 uppers(pairs::Pair{Symbol,Int}...) = TIx{Upper}.(first.(pairs), last.(pairs))
 
 """
