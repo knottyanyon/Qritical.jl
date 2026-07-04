@@ -104,6 +104,9 @@ makedocs(;
             "ED Time Propagation" => "api/ed_time.md",
             "Disorder" => "api/disorder.md",
         ],
+        "References" => [
+            "Glossary" => "references/glossary.md",
+        ],
         # "Bibliography" => "references.md",
     ],
 )
