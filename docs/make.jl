@@ -19,12 +19,24 @@ for (root, dirs, files) in walkdir(exercises_dir)
         if startswith(file, "ex_") && endswith(file, ".jl")
             input_path = joinpath(root, file)
             md_filename = replace(file, ".jl" => ".md")
+            output_path = joinpath(root, md_filename)
 
             # Process with Literate - specify output directory explicitly
             # This generates .md directly in the exercise directory
+            # execute=false prevents running code blocks (they're for user interaction)
             Literate.markdown(input_path, root;
                              documenter=true,
-                             flavor=Literate.DocumenterFlavor())
+                             flavor=Literate.DocumenterFlavor(),
+                             execute=false)
+
+            # Post-process: convert @example blocks to plain code blocks
+            # (exercises contain interactive code not meant to be auto-executed)
+            if isfile(output_path)
+                content = read(output_path, String)
+                # Replace ````@example with plain ````julia (won't be executed by Documenter)
+                modified = replace(content, r"````@example ex_\d+\n" => "````julia\n")
+                write(output_path, modified)
+            end
         end
     end
 end
