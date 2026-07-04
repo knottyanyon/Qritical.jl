@@ -28,13 +28,16 @@ The {glossary:Schmidt Rank} measures entanglement.
 """
 function glossary_link_preprocessor(content::String)::String
     # Pattern: {glossary:Term Name}
-    # Replace with: [`Term Name`](../references/glossary.md#term-name)
+    # Replace with: [`Term Name`](../../references/glossary/#term-name)
+    # Uses absolute-from-build-root path that works in Documenter's HTML output
 
     result = content
     for match in eachmatch(r"\{glossary:([^}]+)\}", content)
         term = match.captures[1]
         anchor = lowercase(replace(term, r"\s+" => "-"))
-        replacement = "[`$term`](../references/glossary.md#$anchor)"
+        # Link format: /references/glossary/#anchor (absolute path works from any page)
+        # Documenter converts .md to .html in build output
+        replacement = "[`$term`](/references/glossary/#$anchor)"
         result = replace(result, match.match => replacement; count=1)
     end
     return result

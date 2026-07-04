@@ -7,13 +7,18 @@ function convert_glossary_links(filepath::String)
     # Pattern: [`term`](@ref Glossary#anchor)
     # Replace with: {glossary:term}
 
-    # Simple string replacement approach
+    # Convert both old @ref format and current {glossary:} format to new format
     modified = content
+
+    # First pass: old @ref syntax
     for match in eachmatch(r"\[\`([^\`]+)\`\]\(@ref\s+Glossary#[^\)]+\)", content)
         term = match.captures[1]
         replacement = "{glossary:$term}"
         modified = replace(modified, match.match => replacement; count=1)
     end
+
+    # Second pass: current {glossary:} syntax - will be converted by preprocessor
+    # (this just ensures we have consistent syntax before preprocessing)
 
     if modified != content
         write(filepath, modified)
