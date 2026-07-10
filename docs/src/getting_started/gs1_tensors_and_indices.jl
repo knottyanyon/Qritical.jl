@@ -133,11 +133,14 @@ end
 # `draw` lays the result out as a horizontal node diagram — sites coloured by canonical
 # form, bond dimensions annotated on each edge, physical leg dimensions below each node.
 
-ψ = QTensor(randn(2^5), (upper(:s, 2^5),))  # random spin-½ state, L=5
-mps = to_mps(ψ)                              # left-canonical by default
+L = 5
+ψ = QTensor(randn(ntuple(_ -> 2, L)),               # rank-L: one spin-½ leg per site
+            ntuple(i -> upper(Symbol(:s, i), 2), L))
+mps = to_mps(ψ)                                      # left-canonical by default
 
-draw(mps)
-
+f = draw(mps)
+resize_to_layout!(f)   # shrink the figure to the diagram's true extent
+f
 # ---
 #
 # *cf. quimb's tensor basics: same idea that a shared index name forms a bond, but here
