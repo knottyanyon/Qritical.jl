@@ -119,7 +119,7 @@ function _base_leg_path(
     return attach, elbow, tip
 end
 
-# Draws a single tensor node — the shared primitive behind `tensor!` and the
+# Draws a single tensor node — the shared primitive behind `node!` and the
 # `draw` node(s) — dispatching on `shape`:
 #   :general  → circle            (generic tensor, no special structure)
 #   :diagonal → diamond           (diagonal / singular-value matrix Σ)
@@ -546,8 +546,8 @@ function Qritical.schematic(; figure_kw=(;), pad=0.6)
 end
 
 # ── tensor node ───────────────────────────────────────────────────────────────
-# Public docstring lives on the `tensor!` stub in `src/Qritical.jl`.
-function Qritical.tensor!(
+# Public docstring lives on the `node!` stub in `src/Qritical.jl`.
+function Qritical.node!(
     s::Schematic,
     name::Symbol,
     coo;
@@ -590,8 +590,8 @@ function Qritical.tensor!(
 end
 
 # ── bond (line between two tensors / points) ──────────────────────────────────
-# Public docstring lives on the `bond!` stub in `src/Qritical.jl`.
-function Qritical.bond!(
+# Public docstring lives on the `wire!` stub in `src/Qritical.jl`.
+function Qritical.wire!(
     s::Schematic,
     a,
     b;
@@ -638,8 +638,8 @@ function Qritical.bond!(
 end
 
 # ── dangling / open leg ───────────────────────────────────────────────────────
-# Public docstring lives on the `leg!` stub in `src/Qritical.jl`.
-function Qritical.leg!(
+# Public docstring lives on the `stub!` stub in `src/Qritical.jl`.
+function Qritical.stub!(
     s::Schematic,
     a,
     dir;
@@ -708,8 +708,8 @@ function Qritical.leg!(
 end
 
 # ── partition blob ────────────────────────────────────────────────────────────
-# Public docstring lives on the `partition!` stub in `src/Qritical.jl`.
-function Qritical.partition!(
+# Public docstring lives on the `region!` stub in `src/Qritical.jl`.
+function Qritical.region!(
     s::Schematic,
     members;
     padding=0.4,

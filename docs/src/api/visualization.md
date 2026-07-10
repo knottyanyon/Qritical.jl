@@ -36,9 +36,9 @@ drawing verbs, then display the canvas's `.fig`:
 
 ```@docs
 schematic
-tensor!
-bond!
-leg!
-partition!
+node!
+wire!
+stub!
+region!
 note!
 ```

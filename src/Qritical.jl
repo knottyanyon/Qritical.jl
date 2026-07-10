@@ -147,7 +147,7 @@ For a `QTensor`, `A` becomes a single labelled node with one directed leg stub
 per index: blue stubs with an inward arrow are `Upper` (incoming / contravariant)
 indices, grey stubs with an outward arrow are `Lower` (outgoing / covariant). The
 node itself follows the tensor-kind shape convention described on
-[`tensor!`](@ref) via `shape`/`rotation`.
+[`node!`](@ref) via `shape`/`rotation`.
 
 For a `FiniteMPS`, sites are drawn as a horizontal chain coloured by canonical
 form (**blue** left-canonical, **red** orthogonality centre, **green**
@@ -162,7 +162,7 @@ narrow end points toward the bond they contract onto; the orthogonality centre
 - `name` — label inside the tensor node (`QTensor` only)
 - `show_dims::Bool` — annotate bond / leg dimensions (default `true`)
 - `show_arrows::Bool` — draw directed arrowheads (default `true`)
-- `shape`, `rotation` — node shape/orientation (`QTensor` only); see [`tensor!`](@ref)
+- `shape`, `rotation` — node shape/orientation (`QTensor` only); see [`node!`](@ref)
 - `show_shapes::Bool` — auto-select isometry wedges by canonical form (`FiniteMPS` only, default `true`)
 - `show_legend::Bool` — show the canonical-form colour legend (`FiniteMPS` only, default `true`)
 - `figure_kw` — named-tuple forwarded to `Makie.Figure`
@@ -179,7 +179,7 @@ manual counterpart to [`draw`](@ref), in the spirit of quimb's `schematic.Drawin
 Requires a Makie backend (`using CairoMakie`).
 
 Build a diagram by threading the returned canvas through the drawing verbs
-[`tensor!`](@ref), [`bond!`](@ref), [`leg!`](@ref), [`partition!`](@ref) and
+[`node!`](@ref), [`wire!`](@ref), [`stub!`](@ref), [`region!`](@ref) and
 [`note!`](@ref), then display its `.fig` field. Everything is drawn in data
 coordinates and the view box auto-expands (with margin `pad`) so nothing is
 cropped. `figure_kw` is forwarded to `Makie.Figure`.
@@ -188,20 +188,20 @@ cropped. `figure_kw` is forwarded to `Makie.Figure`.
 ```julia
 using Qritical, CairoMakie
 s = schematic()
-tensor!(s, :A, (0, 0)); tensor!(s, :B, (1, 0))
-bond!(s, :A, :B; label="χ")
-partition!(s, [:A, :B]; label="block", color=:steelblue)
+node!(s, :A, (0, 0)); node!(s, :B, (1, 0))
+wire!(s, :A, :B; label="χ")
+region!(s, [:A, :B]; label="block", color=:steelblue)
 s.fig
 ```
 """
 function schematic end
 
 """
-    tensor!(s, name::Symbol, coo; radius=0.22, color, label=name, shape=:general, rotation=0.0, ...)
+    node!(s, name::Symbol, coo; radius=0.22, color, label=name, shape=:general, rotation=0.0, ...)
 
 Place a tensor node at `coo` (a `(x, y)` tuple or `Point2`) on a [`schematic`](@ref)
 canvas `s`, with `label` centred inside. The node is remembered under `name` so
-later [`bond!`](@ref), [`leg!`](@ref) and [`partition!`](@ref) calls can refer
+later [`wire!`](@ref), [`stub!`](@ref) and [`region!`](@ref) calls can refer
 to it by that symbol. Returns `s`.
 
 **Tensor-kind shapes**
@@ -224,25 +224,25 @@ symmetric `:general`/`:diagonal` shapes.
 ```julia
 using Qritical, CairoMakie
 s = schematic()
-tensor!(s, :U, (0, 0); shape=:unitary, label="U")                  # half disk, dome up
-tensor!(s, :W, (1, 0); shape=:isometry, rotation=0.0, label="W")   # narrow top → +x
-tensor!(s, :Σ, (2, 0); shape=:diagonal, label="Σ", color=:gray)    # diamond
+node!(s, :U, (0, 0); shape=:unitary, label="U")                  # half disk, dome up
+node!(s, :W, (1, 0); shape=:isometry, rotation=0.0, label="W")   # narrow top → +x
+node!(s, :Σ, (2, 0); shape=:diagonal, label="Σ", color=:gray)    # diamond
 s.fig
 ```
 """
-function tensor! end
+function node! end
 
 """
-    bond!(s, a, b; color, linewidth=2.5, label=nothing, arrow=false, shorten=0.0)
+    wire!(s, a, b; color, linewidth=2.5, label=nothing, arrow=false, shorten=0.0)
 
 Connect `a` and `b` — each a tensor name (`Symbol`) or a coordinate — with a
 bond line drawn *behind* the tensor circles on canvas `s`. Optionally annotate it
 with `label` (offset perpendicular to the line) and a mid-bond `arrow`. Returns `s`.
 """
-function bond! end
+function wire! end
 
 """
-    leg!(s, a, dir; length=0.5, label=nothing, arrow=false, into=false, base=false)
+    stub!(s, a, dir; length=0.5, label=nothing, arrow=false, into=false, base=false)
 
 Draw an open (dangling) leg — a physical index — from tensor/point `a` in
 direction `dir`, given either as an angle in radians or a `(dx, dy)` vector. With
@@ -254,10 +254,10 @@ that node's flat base with an L-bend — a short stub straight out of the base, 
 a turn toward `dir` — so the leg meets the base head-on instead of crossing a
 slanted edge (the tensors.net convention for legs on a wedge). Returns `s`.
 """
-function leg! end
+function stub! end
 
 """
-    partition!(s, members; padding=0.4, color, alpha=0.16, label=nothing, ...)
+    region!(s, members; padding=0.4, color, alpha=0.16, label=nothing, ...)
 
 Highlight a group of tensors on canvas `s` with a translucent rounded blob — the
 schematic equivalent of a bipartition cut or an entanglement region. `members` is
@@ -266,7 +266,7 @@ their positions, inflated by `padding` and rounded at the corners, and is always
 drawn *behind* everything else. Overlapping calls with different `color`s show
 competing partitions. Returns `s`.
 """
-function partition! end
+function region! end
 
 """
     note!(s, coo, text; color=:black, fontsize=12, align=(:center, :center))
@@ -276,6 +276,6 @@ the view box so the note is never cropped. Returns `s`.
 """
 function note! end
 
-export draw, schematic, tensor!, bond!, leg!, partition!, note!
+export draw, schematic, node!, wire!, stub!, region!, note!
 
 end
