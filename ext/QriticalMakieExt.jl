@@ -40,23 +40,7 @@ function _arrowhead!(ax, cx, cy, θ, col, is_upper)
 end
 
 # ── QTensor diagram ───────────────────────────────────────────────────────────
-"""
-    draw(A::QTensor; name="", show_dims=true, figure_kw=(;))
-
-Draw `A` as a single tensor node: a labelled circle with one directed leg stub
-per index.
-
-- **Blue stub, arrow pointing in** → `Upper` index (incoming / contravariant)
-- **Grey stub, arrow pointing out** → `Lower` index (outgoing / covariant)
-
-The leg label and dimension are printed at the tip of each stub.
-
-# Keyword arguments
-- `name` — label drawn inside the tensor circle
-- `show_dims::Bool` — annotate each leg with its dimension (default `true`)
-- `show_arrows::Bool` — draw directed arrowheads on stubs (default `true`)
-- `figure_kw` — named-tuple forwarded to `Makie.Figure`
-"""
+# Public docstring lives on the `draw` stub in `src/Qritical.jl`.
 function Qritical.draw(A::QTensor;
     name        = "",
     show_dims   = true,
@@ -114,21 +98,7 @@ function _bond_arrow_right(i::Int, form::AbstractMPSForm)
     return i < center
 end
 
-"""
-    draw(mps::FiniteMPS; show_dims=true, show_legend=true, figure_kw=(;))
-
-Draw a horizontal tensor-network diagram of `mps`:
-- Sites as labelled circles, coloured by canonical form
-- Virtual bond lines with directed arrows converging on the ortho centre
-- Physical leg stubs (arrows pointing into the tensor, as σ is always Upper)
-- Bond and physical dimensions annotated when `show_dims=true`
-
-# Keyword arguments
-- `show_dims::Bool` — annotate bond/physical dimensions (default `true`)
-- `show_arrows::Bool` — draw directed arrowheads on bonds and physical legs (default `true`)
-- `show_legend::Bool` — show canonical-form colour legend (default `true`)
-- `figure_kw` — named-tuple forwarded to `Makie.Figure`
-"""
+# Public docstring lives on the `draw` stub in `src/Qritical.jl`.
 function Qritical.draw(mps::FiniteMPS;
     show_dims   = true,
     show_arrows = true,
@@ -212,6 +182,253 @@ function Qritical.draw(mps::FiniteMPS;
     end
 
     return fig
+end
+
+# ============================================================================
+# Schematic drawing DSL — a quimb-style hand-drawing canvas
+#
+# Mirrors `quimb.schematic.Drawing`: a thin builder that lets you place tensor
+# nodes, connect them with bonds, add dangling legs, and — most usefully —
+# highlight groups of tensors with translucent **partition** blobs.  Everything
+# lives in data coordinates so shapes stay proportional under `DataAspect`.
+# ============================================================================
+
+# Hand-drawing canvas returned by `schematic` (see the `schematic` stub in
+# `src/Qritical.jl` for the public docstring).  Holds the Makie `Figure`/`Axis`,
+# remembers each named tensor's position, and tracks a bounding box so the view
+# auto-expands as elements are added.
+mutable struct Schematic
+    fig::Makie.Figure
+    ax::Makie.Axis
+    pos::Dict{Symbol,Point2f}
+    bbox::NTuple{4,Float64}   # xmin, xmax, ymin, ymax
+    pad::Float64
+end
+
+# ── coordinate helpers ────────────────────────────────────────────────────────
+_P(x) = Point2f(x[1], x[2])   # coerce any point-like (tuple, vector, Point) to Point2f
+_resolve(s::Schematic, x::Symbol) = s.pos[x]
+_resolve(s::Schematic, x)         = _P(x)
+
+_vnorm(p) = sqrt(p[1]^2 + p[2]^2)
+function _unit(p)
+    n = _vnorm(p)
+    n == 0 ? Point2f(0, 0) : Point2f(p[1] / n, p[2] / n)
+end
+
+# Grow the tracked bounding box to include point `p` (± radius `r`) and refresh
+# the axis limits so nothing — including text near the edges — gets cropped.
+function _grow!(s::Schematic, p, r::Real=0.0)
+    xmin, xmax, ymin, ymax = s.bbox
+    s.bbox = (min(xmin, p[1] - r), max(xmax, p[1] + r),
+              min(ymin, p[2] - r), max(ymax, p[2] + r))
+    xmin, xmax, ymin, ymax = s.bbox
+    limits!(s.ax, xmin - s.pad, xmax + s.pad, ymin - s.pad, ymax + s.pad)
+    return s
+end
+
+# ── convex hull (Andrew's monotone chain), returns CCW vertices ───────────────
+function _convex_hull(pts::Vector{Point2f})
+    n = length(pts)
+    n <= 2 && return copy(pts)
+    P = sort(pts; by = p -> (p[1], p[2]))
+    cross(o, a, b) = (a[1] - o[1]) * (b[2] - o[2]) - (a[2] - o[2]) * (b[1] - o[1])
+    lower = Point2f[]
+    for p in P
+        while length(lower) >= 2 && cross(lower[end - 1], lower[end], p) <= 0
+            pop!(lower)
+        end
+        push!(lower, p)
+    end
+    upper = Point2f[]
+    for p in reverse(P)
+        while length(upper) >= 2 && cross(upper[end - 1], upper[end], p) <= 0
+            pop!(upper)
+        end
+        push!(upper, p)
+    end
+    return vcat(lower[1:end - 1], upper[1:end - 1])
+end
+
+# Rounded convex hull = Minkowski sum of the hull with a disk of radius `r`.
+# Straight offset edges joined by circular arcs at each vertex → the smooth
+# translucent blob quimb draws with `patch_around`.  Degenerate cases: a single
+# point becomes a circle, two points a stadium.
+function _rounded_hull(hull::Vector{Point2f}, r::Float64; nseg::Int=12)
+    m = length(hull)
+    m == 0 && return Point2f[]
+    if m == 1
+        c = hull[1]
+        return [Point2f(c[1] + r * cos(t), c[2] + r * sin(t))
+                for t in range(0, 2π; length = 4nseg)]
+    end
+    boundary = Point2f[]
+    for i in 1:m
+        v     = hull[i]
+        vprev = hull[mod1(i - 1, m)]
+        vnext = hull[mod1(i + 1, m)]
+        nin   = let d = _unit(v - vprev); Point2f(d[2], -d[1]) end   # outward normals
+        nout  = let d = _unit(vnext - v); Point2f(d[2], -d[1]) end
+        a0 = atan(nin[2], nin[1])
+        a1 = atan(nout[2], nout[1])
+        while a1 <= a0
+            a1 += 2π
+        end
+        for t in range(a0, a1; length = nseg)
+            push!(boundary, Point2f(v[1] + r * cos(t), v[2] + r * sin(t)))
+        end
+    end
+    return boundary
+end
+
+# ── canvas constructor ────────────────────────────────────────────────────────
+# Public docstring lives on the `schematic` stub in `src/Qritical.jl`.
+function Qritical.schematic(; figure_kw=(;), pad=0.6)
+    fig = Figure(; figure_kw...)
+    ax  = Axis(fig[1, 1]; aspect=DataAspect())
+    hidedecorations!(ax)
+    hidespines!(ax)
+    return Schematic(fig, ax, Dict{Symbol,Point2f}(), (Inf, -Inf, Inf, -Inf), Float64(pad))
+end
+
+# ── tensor node ───────────────────────────────────────────────────────────────
+# Public docstring lives on the `tensor!` stub in `src/Qritical.jl`.
+function Qritical.tensor!(s::Schematic, name::Symbol, coo;
+    radius      = 0.22,
+    color       = _ARBITRARY_COLOR,
+    label       = string(name),
+    labelcolor  = :white,
+    strokecolor = :white,
+    strokewidth = 2,
+    fontsize    = 13,
+)
+    p = _P(coo)
+    s.pos[name] = p
+    poly!(s.ax, Circle(p, Float32(radius));
+          color=color, strokecolor=strokecolor, strokewidth=strokewidth)
+    if label !== nothing && label != ""
+        text!(s.ax, p; text=string(label), fontsize=fontsize,
+              color=labelcolor, align=(:center, :center), font=:bold)
+    end
+    _grow!(s, p, radius)
+    return s
+end
+
+# ── bond (line between two tensors / points) ──────────────────────────────────
+# Public docstring lives on the `bond!` stub in `src/Qritical.jl`.
+function Qritical.bond!(s::Schematic, a, b;
+    color       = (:gray, 0.85),
+    linewidth   = 2.5,
+    label       = nothing,
+    arrow       = false,
+    shorten     = 0.0,
+    labeloffset = 0.16,
+    fontsize    = 11,
+)
+    pa, pb = _resolve(s, a), _resolve(s, b)
+    d      = _unit(pb - pa)
+    pa2    = _P(pa + shorten * d)
+    pb2    = _P(pb - shorten * d)
+    ln     = lines!(s.ax, [pa2, pb2]; color=color, linewidth=linewidth)
+    translate!(ln, 0, 0, -1)
+    mid = _P((pa2 + pb2) / 2)
+    if arrow
+        sc = scatter!(s.ax, [mid]; marker=:rtriangle, markersize=12,
+                      rotation=atan(d[2], d[1]), color=color)
+        translate!(sc, 0, 0, -1)
+    end
+    if label !== nothing
+        n = Point2f(-d[2], d[1])   # perpendicular
+        text!(s.ax, _P(mid + labeloffset * n); text=string(label),
+              fontsize=fontsize, align=(:center, :center), color=:gray)
+    end
+    _grow!(s, pa)
+    _grow!(s, pb)
+    return s
+end
+
+# ── dangling / open leg ───────────────────────────────────────────────────────
+# Public docstring lives on the `leg!` stub in `src/Qritical.jl`.
+function Qritical.leg!(s::Schematic, a, dir;
+    length    = 0.5,
+    color     = (:gray, 0.85),
+    linewidth = 2.5,
+    label     = nothing,
+    arrow     = false,
+    into      = false,
+    fontsize  = 11,
+)
+    p   = _resolve(s, a)
+    d   = dir isa Real ? Point2f(cos(dir), sin(dir)) : _unit(_P(dir))
+    tip = _P(p + length * d)
+    ln  = lines!(s.ax, [p, tip]; color=color, linewidth=linewidth)
+    translate!(ln, 0, 0, -1)
+    if arrow
+        mid = _P((p + tip) / 2)
+        θ   = into ? atan(-d[2], -d[1]) : atan(d[2], d[1])
+        sc  = scatter!(s.ax, [mid]; marker=:rtriangle, markersize=12,
+                       rotation=θ, color=color)
+        translate!(sc, 0, 0, -1)
+    end
+    if label !== nothing
+        text!(s.ax, _P(tip + 0.2 * d); text=string(label),
+              fontsize=fontsize, align=(:center, :center), color=:gray)
+    end
+    _grow!(s, tip)
+    return s
+end
+
+# ── partition blob ────────────────────────────────────────────────────────────
+# Public docstring lives on the `partition!` stub in `src/Qritical.jl`.
+function Qritical.partition!(s::Schematic, members;
+    padding     = 0.4,
+    color       = _LEFT_COLOR,
+    alpha       = 0.16,
+    strokealpha = 0.55,
+    strokewidth = 1.5,
+    linestyle   = nothing,
+    label       = nothing,
+    fontsize    = 13,
+)
+    pts      = Point2f[]
+    for m in members                       # loop (not comprehension) so a Matrix
+        push!(pts, _resolve(s, m))         # of names still flattens to a Vector
+    end
+    hull     = _convex_hull(pts)
+    boundary = _rounded_hull(hull, Float64(padding))
+    isempty(boundary) && return s
+    col = Makie.to_color(color)
+    pl  = poly!(s.ax, boundary;
+                color       = (col, alpha),
+                strokecolor = (col, strokealpha),
+                strokewidth = strokewidth)
+    linestyle !== nothing && (pl.linestyle = linestyle)
+    translate!(pl, 0, 0, -10)   # always behind tensors and bonds
+    for p in boundary
+        _grow!(s, p)
+    end
+    if label !== nothing
+        xs  = [p[1] for p in boundary]
+        ys  = [p[2] for p in boundary]
+        top = Point2f(sum(xs) / Base.length(xs), maximum(ys) + 0.14)
+        text!(s.ax, top; text=string(label), fontsize=fontsize,
+              color=col, align=(:center, :bottom), font=:bold)
+        _grow!(s, top, 0.1)
+    end
+    return s
+end
+
+# ── free-floating annotation ──────────────────────────────────────────────────
+# Public docstring lives on the `note!` stub in `src/Qritical.jl`.
+function Qritical.note!(s::Schematic, coo, text;
+    color    = :black,
+    fontsize = 12,
+    align    = (:center, :center),
+)
+    p = _P(coo)
+    text!(s.ax, p; text=string(text), fontsize=fontsize, color=color, align=align)
+    _grow!(s, p)
+    return s
 end
 
 end # module QriticalMakieExt

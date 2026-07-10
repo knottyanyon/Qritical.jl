@@ -125,33 +125,118 @@ export StatevectorState, as_statevector, EDTimeResult
 # ==== Disorder ================================================================
 export Uniform, disorder_realization, parameter_sweep
 
-# ==== Visualisation (loaded via QriticalMakieExt when Makie is available) ====
+# ==== Visualisation ==========================================================
+# Generic-function stubs; the methods are implemented in `ext/QriticalMakieExt.jl`,
+# which loads automatically once a Makie backend (e.g. CairoMakie) is imported.
+# The docstrings live here on the stubs so the API reference has a single
+# documented source per function.
+
 """
-    draw(mps::FiniteMPS; show_dims=true, show_legend=true, figure_kw=(;))
+    draw(A::QTensor;  name="", show_dims=true, show_arrows=true, figure_kw=(;))
+    draw(mps::FiniteMPS; show_dims=true, show_arrows=true, show_legend=true, figure_kw=(;))
 
-Draw a tensor-network diagram of `mps` in the style of quimb: sites as
-labelled circles connected by horizontal virtual-bond lines, physical legs as
-short vertical stubs below each site.
-
-Site colours encode the canonical form:
-- **blue** — left-canonical (``A``-tensors)
-- **red**  — orthogonality centre
-- **green** — right-canonical (``B``-tensors)
-- **grey** — unknown / arbitrary form
-
-Requires a Makie backend to be loaded before calling:
+Draw an **automatic** tensor-network diagram in the style of quimb. Requires a
+Makie backend to be loaded first:
 
 ```julia
-using CairoMakie   # or GLMakie / WGLMakie
-draw(mps)
+using Qritical, CairoMakie   # importing CairoMakie activates QriticalMakieExt
+draw(A)
 ```
 
+For a `QTensor`, `A` becomes a single labelled node with one directed leg stub
+per index: blue stubs with an inward arrow are `Upper` (incoming / contravariant)
+indices, grey stubs with an outward arrow are `Lower` (outgoing / covariant).
+
+For a `FiniteMPS`, sites are drawn as a horizontal chain of circles coloured by
+canonical form (**blue** left-canonical, **red** orthogonality centre, **green**
+right-canonical, **grey** arbitrary), with virtual-bond arrows converging on the
+centre and physical legs hanging below each site.
+
 # Keyword arguments
-- `show_dims::Bool` — annotate bond and physical dimensions (default `true`)
-- `show_legend::Bool` — show colour legend for canonical form (default `true`)
+- `name` — label inside the tensor circle (`QTensor` only)
+- `show_dims::Bool` — annotate bond / leg dimensions (default `true`)
+- `show_arrows::Bool` — draw directed arrowheads (default `true`)
+- `show_legend::Bool` — show the canonical-form colour legend (`FiniteMPS` only, default `true`)
 - `figure_kw` — named-tuple forwarded to `Makie.Figure`
+
+See also [`schematic`](@ref) for building diagrams by hand.
 """
 function draw end
-export draw
+
+"""
+    schematic(; figure_kw=(;), pad=0.6)
+
+Create an empty **hand-drawing canvas** for bespoke tensor-network diagrams — the
+manual counterpart to [`draw`](@ref), in the spirit of quimb's `schematic.Drawing`.
+Requires a Makie backend (`using CairoMakie`).
+
+Build a diagram by threading the returned canvas through the drawing verbs
+[`tensor!`](@ref), [`bond!`](@ref), [`leg!`](@ref), [`partition!`](@ref) and
+[`note!`](@ref), then display its `.fig` field. Everything is drawn in data
+coordinates and the view box auto-expands (with margin `pad`) so nothing is
+cropped. `figure_kw` is forwarded to `Makie.Figure`.
+
+# Example
+```julia
+using Qritical, CairoMakie
+s = schematic()
+tensor!(s, :A, (0, 0)); tensor!(s, :B, (1, 0))
+bond!(s, :A, :B; label="χ")
+partition!(s, [:A, :B]; label="block", color=:steelblue)
+s.fig
+```
+"""
+function schematic end
+
+"""
+    tensor!(s, name::Symbol, coo; radius=0.22, color, label=name, ...)
+
+Place a tensor node at `coo` (a `(x, y)` tuple or `Point2`) on a [`schematic`](@ref)
+canvas `s`, drawn as a filled circle with `label` centred inside. The node is
+remembered under `name` so later [`bond!`](@ref), [`leg!`](@ref) and
+[`partition!`](@ref) calls can refer to it by that symbol. Returns `s`.
+"""
+function tensor! end
+
+"""
+    bond!(s, a, b; color, linewidth=2.5, label=nothing, arrow=false, shorten=0.0)
+
+Connect `a` and `b` — each a tensor name (`Symbol`) or a coordinate — with a
+bond line drawn *behind* the tensor circles on canvas `s`. Optionally annotate it
+with `label` (offset perpendicular to the line) and a mid-bond `arrow`. Returns `s`.
+"""
+function bond! end
+
+"""
+    leg!(s, a, dir; length=0.5, label=nothing, arrow=false, into=false)
+
+Draw an open (dangling) leg — a physical index — from tensor/point `a` in
+direction `dir`, given either as an angle in radians or a `(dx, dy)` vector. With
+`arrow=true`, `into=true` points the arrowhead toward the tensor (an incoming
+`Upper` index); `into=false` points it outward. Returns `s`.
+"""
+function leg! end
+
+"""
+    partition!(s, members; padding=0.4, color, alpha=0.16, label=nothing, ...)
+
+Highlight a group of tensors on canvas `s` with a translucent rounded blob — the
+schematic equivalent of a bipartition cut or an entanglement region. `members` is
+a collection of tensor names and/or coordinates; the blob is the convex hull of
+their positions, inflated by `padding` and rounded at the corners, and is always
+drawn *behind* everything else. Overlapping calls with different `color`s show
+competing partitions. Returns `s`.
+"""
+function partition! end
+
+"""
+    note!(s, coo, text; color=:black, fontsize=12, align=(:center, :center))
+
+Place a free-floating text annotation `text` at `coo` on canvas `s`, expanding
+the view box so the note is never cropped. Returns `s`.
+"""
+function note! end
+
+export draw, schematic, tensor!, bond!, leg!, partition!, note!
 
 end
