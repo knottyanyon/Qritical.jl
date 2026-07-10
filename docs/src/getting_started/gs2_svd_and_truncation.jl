@@ -13,6 +13,9 @@ using Qritical
 using LinearAlgebra
 using TensorOperations
 using CairoMakie
+using Random
+
+Random.seed!(20260710)   # fixed seed so rebuilds don't churn the printed output
 
 # ## 1. One call, exact by default
 #

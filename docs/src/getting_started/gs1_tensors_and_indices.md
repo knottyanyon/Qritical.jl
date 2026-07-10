@@ -13,6 +13,13 @@ things a `label`, a `loc` - `Upper`/`Lower` (to denote whether it is covariant o
 using Qritical
 using TensorOperations   # we make use of the command `@tensor` to perform contractions
 using CairoMakie         # activates QriticalMakieExt and enables `draw`
+using Random
+
+Random.seed!(20260710)   # fixed seed so rebuilds don't churn the printed output
+````
+
+````
+Random.TaskLocalRNG()
 ````
 
 ## 1. The leg as the unit
@@ -62,19 +69,19 @@ A = QTensor(randn(χ, d, χ), (upper(:vL, χ), upper(:σ, d), lower(:vR, χ)))
 ````
 3×2×3 Qritical.QTensor{Float64, 3, Array{Float64, 3}}:
 [:, :, 1] =
- -0.781899  1.18534
- -1.36284   0.467738
- -0.122606  0.180674
+ -0.480327  -1.21161
+ -0.792592  -0.0679285
+ -0.286976   1.50306
 
 [:, :, 2] =
- -1.08227    0.110706
-  0.972214  -0.538527
-  0.482006  -1.82688
+ 1.55835     -0.445667
+ 0.00173221  -0.815002
+ 0.903743    -1.23056
 
 [:, :, 3] =
-  0.304537  -0.733607
- -0.715076   0.490318
- -0.491622  -0.558671
+  0.0244543  -0.941448
+ -0.65852    -0.279706
+  2.1776     -1.00818
 ````
 
 ````julia
@@ -139,19 +146,19 @@ B = QTensor(randn(χ, d, χ), (upper(:vR, χ), upper(:σ2, d), lower(:vR2, χ)))
 ````
 3×2×3 Qritical.QTensor{Float64, 3, Array{Float64, 3}}:
 [:, :, 1] =
-  0.866672   0.546017
- -1.04799    0.0479252
- -0.343734  -0.0356733
+ -2.21643  0.607555
+ -1.96055  1.47874
+ -0.55591  0.87555
 
 [:, :, 2] =
-  0.721629  -0.490173
- -0.777421   0.762505
- -1.18925   -0.252576
+ -0.0323164  -1.24892
+  0.721047   -1.42092
+ -0.526347   -1.64561
 
 [:, :, 3] =
- -0.595082   0.670387
- -0.582929  -0.576174
-  0.333717  -1.54906
+ 1.49194    0.463666
+ 0.193714  -0.594486
+ 0.270703   0.221455
 ````
 
 Contract A and B over the shared bond `:vR`. The index names in `@tensor` are

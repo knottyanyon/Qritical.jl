@@ -18,6 +18,13 @@ using Qritical
 using LinearAlgebra
 using TensorOperations
 using CairoMakie
+using Random
+
+Random.seed!(20260710)   # fixed seed so rebuilds don't churn the printed output
+````
+
+````
+Random.TaskLocalRNG()
 ````
 
 ## 1. One call, exact by default
@@ -33,13 +40,13 @@ A = QTensor(Amat, (upper(:i, m), lower(:j, n)))
 ````
 
 ````
-6×4 QTensor{Float64, 2, Matrix{Float64}}:
-  0.692867   0.876762  1.53543    0.166821
- -1.00793    0.195413  0.313048  -0.191783
- -0.110579   2.49386   0.676153  -1.02802
- -0.246108   0.378749  0.913469  -0.701485
- -0.906965  -1.76384   0.194754   0.094344
-  1.11547    0.728755  0.827007   1.14628
+6×4 Qritical.QTensor{Float64, 2, Matrix{Float64}}:
+ -0.480327    1.55835      0.0244543   1.29693
+ -0.792592    0.00173221  -0.65852     0.350661
+ -0.286976    0.903743     2.1776     -0.679682
+ -1.21161    -0.445667    -0.941448    1.42437
+ -0.0679285  -0.815002     3.41422    -0.0953633
+  1.50306    -1.23056     -0.0504355   3.71009e-5
 ````
 
 ````julia
@@ -50,7 +57,7 @@ typeof(F)                                # FullSVD
 ````
 
 ````
-FullSVD
+Qritical.FullSVD
 ````
 
 ````julia
@@ -72,7 +79,7 @@ maximum(abs, Arec .- Amat)               # ≈ machine epsilon — reconstructio
 ````
 
 ````
-8.881784197001252e-16
+1.1934897514720433e-15
 ````
 
 ## 2. An SVD across a cut *is* a Schmidt decomposition
@@ -95,8 +102,8 @@ schmidt ./ sqrt(sum(abs2, schmidt))      # normalised Schmidt coefficients acros
 
 ````
 2-element Vector{Float64}:
- 0.9334309308213303
- 0.35875715656419255
+ 0.9692652177623905
+ 0.2460181652561974
 ````
 
 `group_legs` did the matricise-then-SVD internally; you only ever named the cut.
@@ -123,9 +130,9 @@ end
 ````
 
 ````
-χ = 1   kept r = 1   ε = 2.89
-χ = 2   kept r = 2   ε = 1.8
-χ = 3   kept r = 3   ε = 0.695
+χ = 1   kept r = 1   ε = 3.7
+χ = 2   kept r = 2   ε = 2.34
+χ = 3   kept r = 3   ε = 1.26
 χ = 4   kept r = 4   ε = 0.0
 
 ````

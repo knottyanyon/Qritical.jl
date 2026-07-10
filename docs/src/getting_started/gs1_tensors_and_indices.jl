@@ -8,6 +8,9 @@
 using Qritical
 using TensorOperations   # we make use of the command `@tensor` to perform contractions
 using CairoMakie         # activates QriticalMakieExt and enables `draw`
+using Random
+
+Random.seed!(20260710)   # fixed seed so rebuilds don't churn the printed output
 
 # ## 1. The leg as the unit
 #
