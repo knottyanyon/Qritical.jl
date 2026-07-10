@@ -1,14 +1,13 @@
 # # GS-1 · Tensors & Indices
 #
 # This page introduces the atomic object in Qritical: the **leg**. A leg carries three
-# things — a `label`, a `variance` (`Upper`/`Lower`), and a `dim`. Tensors are arrays
-# plus a tuple of legs, one per axis. Contraction is label-matching with a variance rule.
-# Getting this straight now pays off on every later page (MPS, MPO, SVD).
+# things a `label`, a `loc` - `Upper`/`Lower` (to denote whether it is covariant or contravariant), and a `dim`. For the scope of this project we consider Tensors to just be multi-dimensional array with complex numbers. The tensors have a tuple of `legs`, one for each axis dimension. A Contraction is performed by matching index labels and locations.
 #
 # ---
 
 using Qritical
-using TensorOperations   # @tensor
+using TensorOperations   # we make use of the command `@tensor` to perform contractions
+using CairoMakie         # activates QriticalMakieExt and enables `draw`
 
 # ## 1. The leg as the unit
 #
@@ -46,6 +45,11 @@ A = QTensor(randn(χ, d, χ), (upper(:vL, χ), upper(:σ, d), lower(:vR, χ)))
 # The legs follow the **left-canonical** convention: `vL` is `Upper` (incoming),
 # physical `σ` is `Upper` (always contravariant), and `vR` is `Lower` (outgoing
 # toward the next site).
+#
+# `draw` renders this as a node diagram — blue stubs are `Upper` (incoming),
+# grey stubs are `Lower` (outgoing):
+
+draw(A; name="A")
 
 # ## 3. Variance is the convention, not decoration
 #
@@ -121,6 +125,18 @@ try
 catch e
     e
 end
+
+# ## 7. Visualising a tensor network
+#
+# A chain of site tensors connected by shared virtual bonds is a **Matrix Product State**.
+# `to_mps` decomposes a rank-``L`` state tensor into such a chain via iterated SVD.
+# `draw` lays the result out as a horizontal node diagram — sites coloured by canonical
+# form, bond dimensions annotated on each edge, physical leg dimensions below each node.
+
+ψ = QTensor(randn(2^5), (upper(:s, 2^5),))  # random spin-½ state, L=5
+mps = to_mps(ψ)                              # left-canonical by default
+
+draw(mps)
 
 # ---
 #

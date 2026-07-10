@@ -5,15 +5,14 @@ EditURL = "gs1_tensors_and_indices.jl"
 # GS-1 · Tensors & Indices
 
 This page introduces the atomic object in Qritical: the **leg**. A leg carries three
-things — a `label`, a `variance` (`Upper`/`Lower`), and a `dim`. Tensors are arrays
-plus a tuple of legs, one per axis. Contraction is label-matching with a variance rule.
-Getting this straight now pays off on every later page (MPS, MPO, SVD).
+things a `label`, a `loc` - `Upper`/`Lower` (to denote whether it is covariant or contravariant), and a `dim`. For the scope of this project we consider Tensors to just be multi-dimensional array with complex numbers. The tensors have a tuple of `legs`, one for each axis dimension. A Contraction is performed by matching index labels and locations.
 
 ---
 
 ````julia
 using Qritical
-using TensorOperations   # @tensor
+using TensorOperations   # we make use of the command `@tensor` to perform contractions
+using CairoMakie         # activates QriticalMakieExt and enables `draw`
 ````
 
 ## 1. The leg as the unit
@@ -63,19 +62,19 @@ A = QTensor(randn(χ, d, χ), (upper(:vL, χ), upper(:σ, d), lower(:vR, χ)))
 ````
 3×2×3 QTensor{Float64, 3, Array{Float64, 3}}:
 [:, :, 1] =
-  1.01732  -1.124
- -1.13217  -1.16162
- -2.2616    0.270842
+ 3.03774    0.11054
+ 2.2133    -1.16336
+ 0.833084  -0.806292
 
 [:, :, 2] =
-  2.37954   -0.891297
-  1.18252    0.620531
- -0.896726  -0.215068
+ -0.359419  -0.572326
+ -1.29532   -0.650727
+ -0.855253   1.82701
 
 [:, :, 3] =
- -0.0891484  0.0846648
-  0.435919   0.504792
- -1.07048    0.594161
+  0.0401783  -0.625323
+  1.38889    -0.531986
+ -0.509559    0.667472
 ````
 
 ````julia
@@ -90,6 +89,17 @@ A = QTensor(randn(χ, d, χ), (upper(:vL, χ), upper(:σ, d), lower(:vR, χ)))
 The legs follow the **left-canonical** convention: `vL` is `Upper` (incoming),
 physical `σ` is `Upper` (always contravariant), and `vR` is `Lower` (outgoing
 toward the next site).
+
+`draw` renders this as a node diagram — blue stubs are `Upper` (incoming),
+grey stubs are `Lower` (outgoing):
+
+````julia
+draw(A; name="A")
+````
+
+
+![](gs1_tensors_and_indices-fig-1.png)
+
 
 ## 3. Variance is the convention, not decoration
 
@@ -129,19 +139,19 @@ B = QTensor(randn(χ, d, χ), (upper(:vR, χ), upper(:σ2, d), lower(:vR2, χ)))
 ````
 3×2×3 QTensor{Float64, 3, Array{Float64, 3}}:
 [:, :, 1] =
- -0.619698  0.855928
- -0.214922  0.031965
-  0.311329  0.513623
+ 0.621897   1.49035
+ 0.201616  -0.51143
+ 0.415144  -0.740592
 
 [:, :, 2] =
-  1.68352   -0.127066
- -0.572157  -1.03554
- -0.983497   0.0209342
+ -0.165142    -0.339587
+ -0.406923    -0.333995
+  0.00795278  -0.34824
 
 [:, :, 3] =
- -0.578172   0.389097
- -0.778033   0.496279
- -0.222102  -1.40518
+ -2.06089   -0.341123
+ -0.970782  -0.426458
+  0.335142  -0.19001
 ````
 
 Contract A and B over the shared bond `:vR`. The index names in `@tensor` are
@@ -213,6 +223,24 @@ end
 ````
 ArgumentError("leg 2: array size 3 ≠ index dim 99")
 ````
+
+## 7. Visualising a tensor network
+
+A chain of site tensors connected by shared virtual bonds is a **Matrix Product State**.
+`to_mps` decomposes a rank-``L`` state tensor into such a chain via iterated SVD.
+`draw` lays the result out as a horizontal node diagram — sites coloured by canonical
+form, bond dimensions annotated on each edge, physical leg dimensions below each node.
+
+````julia
+ψ = QTensor(randn(2^5), (upper(:s, 2^5),))  # random spin-½ state, L=5
+mps = to_mps(ψ)                              # left-canonical by default
+
+draw(mps)
+````
+
+
+![](gs1_tensors_and_indices-fig-2.png)
+
 
 ---
 
