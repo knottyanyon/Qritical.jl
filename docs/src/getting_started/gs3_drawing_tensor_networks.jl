@@ -137,11 +137,13 @@ sh.fig
 # | `:general`  | circle    | a generic tensor, no special structure |
 # | `:diagonal` | small dot | diagonal (e.g. a singular-value spectrum) |
 # | `:unitary`  | square    | ``U`` with ``UU^\dagger = U^\dagger U = I`` |
-# | `:isometry` | wedge     | ``W`` with ``W^\dagger W = I``; the apex points toward the *contracted* (smaller) side |
+# | `:isometry` | trapezoid | ``W`` with ``W^\dagger W = I``; the wide base is the larger index, tapering to a narrow top on the *contracted* (smaller) side |
 #
-# The wedge is the interesting one: point it with `rotation` (radians), and
-# stacking two mirrored wedges base-to-base is exactly the picture of
-# ``W^\dagger W`` collapsing to the identity.
+# The trapezoid is the interesting one: its narrow end points (via `rotation`,
+# in radians) toward the smaller index, so stacking two mirrored wedges
+# base-to-base is exactly the picture of ``W^\dagger W`` collapsing to the
+# identity — the isometry never tapers to a point, since that would mean the
+# contracted index has dimension one.
 
 s = schematic(; figure_kw=(size=(720, 220),))
 tensor!(s, :U0, (0, 0);   shape=:general,  label="U₀")
@@ -167,7 +169,7 @@ s.fig
 
 s = schematic(; figure_kw=(size=(820, 300),))
 site_shapes    = [:isometry, :isometry, :general, :isometry, :isometry]
-site_rotations = [0.0, 0.0, 0.0, π, π]      # left-canonical → apex right, right-canonical → apex left
+site_rotations = [0.0, 0.0, 0.0, π, π]      # left-canonical → narrow end right, right-canonical → narrow end left
 colors         = [:steelblue, :steelblue, :tomato, :seagreen, :seagreen]
 for i in 1:5
     tensor!(s, Symbol(:m, i), (i - 1, 0);

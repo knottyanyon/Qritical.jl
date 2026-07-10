@@ -15,14 +15,16 @@ const _LOWER_COLOR = RGBf(0.68, 0.70, 0.74)       # outgoing / covariant
 
 # ── Tensor-kind shapes (tensors.net convention) ────────────────────────────────
 # https://www.tensors.net/tutorial-2 — diagonal tensors are small dots; unitaries
-# are drawn as squares (their "longer dimension" convention collapses to a
-# square for a matrix with matched in/out dims); isometries are wedges whose
-# apex points toward the *smaller* (contracted) side, so that stacking a wedge
-# against its mirror image along the flat base annihilates to the identity.
+# are drawn as squares/rectangles; isometries are trapezoidal wedges. Per the
+# tutorial, an isometry "points in the direction of the smaller dimension ...
+# such that it annihilates to identity when contracted with its conjugate along
+# the base of the wedge": the WIDE base carries the larger index and the shape
+# tapers to a NARROW (but still flat — not a point) top on the smaller-index side.
+# A triangle would be wrong: it implies the smaller index has dimension one.
 #
-# `rotation` (radians) sets the apex/orientation angle: 0 points the shape's
-# "front" along +x, π along -x, etc. Ignored for :general and :diagonal, which
-# are rotationally symmetric.
+# `rotation` (radians) orients the shape: 0 points the narrow top (isometry) /
+# the shape's front along +x, π along -x, etc. Ignored for the rotationally
+# symmetric :general and :diagonal.
 function _shape_points(shape::Symbol, p::Point2f, radius::Real, rotation::Real)
     r      = Float32(radius)
     c, sn  = Float32(cos(rotation)), Float32(sin(rotation))
@@ -30,10 +32,12 @@ function _shape_points(shape::Symbol, p::Point2f, radius::Real, rotation::Real)
     if shape === :unitary
         return [rot(-r, -r), rot(-r, r), rot(r, r), rot(r, -r)]
     elseif shape === :isometry
-        apex_x = r * 1.15f0
-        base_x = -r * 0.55f0
-        half_w = r * 0.95f0
-        return [rot(apex_x, 0.0f0), rot(base_x, half_w), rot(base_x, -half_w)]
+        base_x  = -r * 0.85f0    # wide base — larger index
+        top_x   =  r * 0.85f0    # narrow top — smaller (contracted) index
+        base_hw =  r             # base half-width
+        top_hw  =  r * 0.42f0    # top half-width (nonzero: a trapezoid, not a triangle)
+        return [rot(base_x, -base_hw), rot(top_x, -top_hw),
+                rot(top_x, top_hw), rot(base_x, base_hw)]
     else
         throw(ArgumentError("no polygon for shape :$shape"))
     end
@@ -44,7 +48,7 @@ end
 #   :general  → circle            (generic tensor, no special structure)
 #   :diagonal → small filled dot  (diagonal / singular-value tensor)
 #   :unitary  → square            (U with UU† = U†U = I)
-#   :isometry → wedge             (W with W†W = I; apex points toward the
+#   :isometry → trapezoidal wedge (W with W†W = I; narrow top points toward the
 #                                   contracted/smaller side, per `rotation`)
 function _draw_node!(ax, p::Point2f, radius::Real;
     shape       = :general,
@@ -165,9 +169,9 @@ function _site_shape(i::Int, form::AbstractMPSForm)
     return :general
 end
 
-# Wedge apex points toward the side the isometry contracts onto: left-canonical
-# sites contract (vL,σ)→vR, so the apex points right (toward the next site);
-# right-canonical sites contract (σ,vR)→vL, so it points left.
+# The wedge's narrow top points toward the side the isometry contracts onto:
+# left-canonical sites contract (vL,σ)→vR, so the narrow end points right (toward
+# the next site); right-canonical sites contract (σ,vR)→vL, so it points left.
 function _site_rotation(i::Int, form::AbstractMPSForm)
     form isa CanonicalForm && i >= form.rlim && return Float64(π)
     return 0.0

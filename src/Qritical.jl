@@ -154,9 +154,9 @@ form (**blue** left-canonical, **red** orthogonality centre, **green**
 right-canonical, **grey** arbitrary), with virtual-bond arrows converging on the
 centre and physical legs hanging below each site. Left/right-canonical sites are
 genuine isometries (``A^\\dagger A = I`` resp. ``BB^\\dagger = I``), so — when
-`show_shapes=true` — they are automatically drawn as isometry wedges whose apex
-points toward the bond they contract onto; the orthogonality centre (no such
-guarantee) stays a general circle.
+`show_shapes=true` — they are automatically drawn as isometry wedges whose
+narrow end points toward the bond they contract onto; the orthogonality centre
+(no such guarantee) stays a general circle.
 
 # Keyword arguments
 - `name` — label inside the tensor node (`QTensor` only)
@@ -214,20 +214,19 @@ to it by that symbol. Returns `s`.
 | `:general`  | circle       | a generic tensor with no special structure |
 | `:diagonal` | small dot    | a diagonal tensor (e.g. a singular-value spectrum) |
 | `:unitary`  | square       | ``U`` with ``UU^\\dagger = U^\\dagger U = I`` |
-| `:isometry` | wedge        | ``W`` with ``W^\\dagger W = I``; the apex points toward the *contracted* (smaller) side, so that stacking a wedge against its mirror image along the flat base annihilates to the identity |
+| `:isometry` | trapezoid    | ``W`` with ``W^\\dagger W = I``; the wide base carries the larger index and the shape tapers to a narrow top on the *contracted* (smaller) side, so that stacking two mirrored wedges base-to-base annihilates to the identity |
 
 `rotation` (radians) sets the orientation of `:unitary`/`:isometry` shapes — `0`
-points the shape's "front" (the wedge apex) along `+x`, `π` along `-x`, and so
-on; it has no effect on the rotationally symmetric `:general`/`:diagonal`
-shapes. `label` is skipped for `:diagonal` nodes, which are drawn too small to
-hold text.
+points the isometry's narrow top along `+x`, `π` along `-x`, and so on; it has
+no effect on the rotationally symmetric `:general`/`:diagonal` shapes. `label`
+is skipped for `:diagonal` nodes, which are drawn too small to hold text.
 
 # Example
 ```julia
 using Qritical, CairoMakie
 s = schematic()
 tensor!(s, :U, (0, 0); shape=:unitary, label="U")
-tensor!(s, :W, (1, 0); shape=:isometry, rotation=0.0, label="W")   # apex → +x
+tensor!(s, :W, (1, 0); shape=:isometry, rotation=0.0, label="W")   # narrow top → +x
 tensor!(s, :Σ, (2, 0); shape=:diagonal, color=:gray)
 s.fig
 ```
