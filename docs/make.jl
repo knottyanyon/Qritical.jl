@@ -60,6 +60,21 @@ for (root, dirs, files) in walkdir(exercises_dir)
     end
 end
 
+# Process Getting Started tutorial pages with Literate.jl.
+# These are always executed (they depend only on the stable index/QTensor/SVD layer).
+const GS_DIR = joinpath(@__DIR__, "src", "getting_started")
+for gs_file in ["gs1_tensors_and_indices.jl", "gs2_svd_and_truncation.jl"]
+    input_path = joinpath(GS_DIR, gs_file)
+    md_filename = replace(gs_file, ".jl" => ".md")
+    output_path = joinpath(GS_DIR, md_filename)
+    if !isfile(output_path) || mtime(output_path) < mtime(input_path)
+        Literate.markdown(input_path, GS_DIR;
+                         documenter=true,
+                         flavor=Literate.DocumenterFlavor(),
+                         execute=true)
+    end
+end
+
 # Scan exercise notebooks and prepare symbol usage mapping
 exercise_usage = find_notebook_symbol_usage(exercises_dir)
 exercise_pages = create_exercise_page_mapping(exercises_dir)
@@ -121,6 +136,12 @@ makedocs(;
     plugins=[bib],
     pages=[
         "Home" => "index.md",
+        "Getting Started" => [
+            "Overview" => "getting_started/index.md",
+            "Installation" => "getting_started/installation.md",
+            "GS-1: Tensors & Indices" => "getting_started/gs1_tensors_and_indices.md",
+            "GS-2: SVD & Truncation" => "getting_started/gs2_svd_and_truncation.md",
+        ],
         "Exercises" => [
             "Exercise 01" => "exercises/01/ex_01.md",
             "Exercise 02" => "exercises/02/ex_02.md",
