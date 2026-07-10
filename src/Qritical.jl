@@ -125,4 +125,33 @@ export StatevectorState, as_statevector, EDTimeResult
 # ==== Disorder ================================================================
 export Uniform, disorder_realization, parameter_sweep
 
+# ==== Visualisation (loaded via QriticalMakieExt when Makie is available) ====
+"""
+    draw(mps::FiniteMPS; show_dims=true, show_legend=true, figure_kw=(;))
+
+Draw a tensor-network diagram of `mps` in the style of quimb: sites as
+labelled circles connected by horizontal virtual-bond lines, physical legs as
+short vertical stubs below each site.
+
+Site colours encode the canonical form:
+- **blue** — left-canonical (``A``-tensors)
+- **red**  — orthogonality centre
+- **green** — right-canonical (``B``-tensors)
+- **grey** — unknown / arbitrary form
+
+Requires a Makie backend to be loaded before calling:
+
+```julia
+using CairoMakie   # or GLMakie / WGLMakie
+draw(mps)
+```
+
+# Keyword arguments
+- `show_dims::Bool` — annotate bond and physical dimensions (default `true`)
+- `show_legend::Bool` — show colour legend for canonical form (default `true`)
+- `figure_kw` — named-tuple forwarded to `Makie.Figure`
+"""
+function draw end
+export draw
+
 end
