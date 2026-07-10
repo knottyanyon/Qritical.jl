@@ -93,8 +93,8 @@ s.fig
 
 ## helper: lay down the same 2×3 grid on any canvas
 function grid_2x3!(s)
-    for r in 1:2, c in 1:3
-        tensor!(s, Symbol(:g, r, c), (c - 1, r - 1); radius=0.18, color=:slategray)
+    for r in 1:2, c in 1:3   # rows spaced 1.3 apart — leaves room for partition labels
+        tensor!(s, Symbol(:g, r, c), (c - 1, 1.3 * (r - 1)); radius=0.18, color=:slategray)
     end
     for r in 1:2, c in 1:2                       # horizontal bonds
         bond!(s, Symbol(:g, r, c), Symbol(:g, r, c + 1))
@@ -116,8 +116,8 @@ sv.fig
 
 sh = schematic(; figure_kw=(size=(460, 320),))
 grid_2x3!(sh)
-partition!(sh, [Symbol(:g, 1, c) for c in 1:3]; color=:orange, label="top")
-partition!(sh, [Symbol(:g, 2, c) for c in 1:3]; color=:steelblue, label="bottom")
+partition!(sh, [Symbol(:g, 1, c) for c in 1:3]; color=:orange, label="bottom")
+partition!(sh, [Symbol(:g, 2, c) for c in 1:3]; color=:steelblue, label="top")
 note!(sh, (1.0, -0.95), "horizontal cut"; fontsize=12, color=:gray)
 sh.fig
 

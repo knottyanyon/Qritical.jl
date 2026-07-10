@@ -3,15 +3,27 @@ module QriticalMakieExt
 using Qritical
 using Makie
 
-# ── Canonical-form colour palette (mirrors quimb's convention) ────────────────
-const _LEFT_COLOR      = RGBf(0.25, 0.39, 0.85)   # Julia blue  — left-canonical
-const _CENTER_COLOR    = RGBf(0.80, 0.24, 0.20)   # Julia red   — ortho centre
-const _RIGHT_COLOR     = RGBf(0.36, 0.55, 0.24)   # Julia green — right-canonical
-const _ARBITRARY_COLOR = RGBf(0.55, 0.55, 0.55)   # grey        — unknown form
+# ── Canonical-form colour palette (muted, quimb-like tones) ───────────────────
+const _LEFT_COLOR      = RGBf(0.36, 0.53, 0.74)   # muted steel blue — left-canonical
+const _CENTER_COLOR    = RGBf(0.82, 0.47, 0.38)   # muted terracotta — ortho centre
+const _RIGHT_COLOR     = RGBf(0.48, 0.65, 0.49)   # muted sage green — right-canonical
+const _ARBITRARY_COLOR = RGBf(0.62, 0.64, 0.68)   # muted grey       — unknown form
 
 # ── Leg variance colours ──────────────────────────────────────────────────────
-const _UPPER_COLOR = RGBf(0.25, 0.39, 0.85)   # blue — incoming / contravariant
-const _LOWER_COLOR = RGBf(0.55, 0.55, 0.55)   # grey — outgoing / covariant
+const _UPPER_COLOR = _LEFT_COLOR                  # incoming / contravariant
+const _LOWER_COLOR = RGBf(0.68, 0.70, 0.74)       # outgoing / covariant
+
+# Soft drop shadow beneath a node: a few concentric circles, offset and
+# increasingly transparent as they grow, faking a blur without a real filter
+# (CairoMakie has no gaussian blur). Always drawn behind the node itself.
+function _shadow!(ax, p::Point2f, radius::Real)
+    offset = Float32(radius) * Point2f(0.12, -0.14)
+    for (rf, a) in ((1.12, 0.05), (1.0, 0.08))
+        pl = poly!(ax, Circle(p + offset, Float32(radius) * Float32(rf));
+                   color=(:black, a), strokewidth=0)
+        translate!(pl, 0, 0, -0.5)
+    end
+end
 
 # Leg angles (radians) per tensor rank — gives natural layouts for the most
 # common tensor shapes without any spring-force computation.
@@ -65,17 +77,19 @@ function Qritical.draw(A::QTensor;
         is_upper = ix isa TIx{Upper}
         col      = is_upper ? _UPPER_COLOR : _LOWER_COLOR
 
-        lines!(ax, [0.0, cx], [0.0, cy]; color=(col, 0.85), linewidth=3)
+        lines!(ax, [0.0, cx], [0.0, cy]; color=(col, 0.85), linewidth=3, linecap=:round)
         show_arrows && _arrowhead!(ax, cx, cy, θ, col, is_upper)
 
         lbl = show_dims ? "$(label(ix)) ($(dim(ix)))" : string(label(ix))
         text!(ax, lx, ly; text=lbl, fontsize=11, align=(:center, :center), color=col)
     end
 
-    scatter!(ax, [0.0], [0.0];
-             color=_ARBITRARY_COLOR, markersize=46,
-             strokecolor=:white, strokewidth=2)
-    text!(ax, 0.0, 0.0;
+    center = Point2f(0, 0)
+    r_node = 0.28
+    _shadow!(ax, center, r_node)
+    poly!(ax, Circle(center, Float32(r_node));
+          color=_ARBITRARY_COLOR, strokecolor=:white, strokewidth=2)
+    text!(ax, center;
           text=string(name), fontsize=13, align=(:center, :center),
           color=:white, font=:bold)
 
@@ -123,10 +137,10 @@ function Qritical.draw(mps::FiniteMPS;
     hidedecorations!(ax)
     hidespines!(ax)
 
-    # Virtual bond lines + arrows
+    # Virtual bond lines + arrows — the network's "spine", drawn heaviest
     for i in 1:(L - 1)
         x1, x2 = xs[i], xs[i + 1]
-        lines!(ax, [x1, x2], [0.0, 0.0]; color=(:gray, 0.7), linewidth=2.5)
+        lines!(ax, [x1, x2], [0.0, 0.0]; color=(:gray, 0.7), linewidth=3, linecap=:round)
 
         # Arrow at midpoint: direction encodes canonical form
         if show_arrows
@@ -145,9 +159,10 @@ function Qritical.draw(mps::FiniteMPS;
         end
     end
 
-    # Physical leg stubs — σ is always Upper so arrow points INTO tensor (upward)
+    # Physical leg stubs — thinner than bonds so the spine reads first.
+    # σ is always Upper so the arrow points INTO the tensor (upward).
     for i in 1:L
-        lines!(ax, [xs[i], xs[i]], [0.0, -0.5]; color=(:gray, 0.7), linewidth=2.5)
+        lines!(ax, [xs[i], xs[i]], [0.0, -0.5]; color=(:gray, 0.7), linewidth=2, linecap=:round)
         if show_arrows
             scatter!(ax, [xs[i]], [-0.26];       # midpoint, arrow points up (σ is Upper)
                      marker=:rtriangle, markersize=12, rotation=π/2,
@@ -160,12 +175,14 @@ function Qritical.draw(mps::FiniteMPS;
         end
     end
 
-    # Site circles + labels
-    scatter!(ax, xs, zeros(L);
-             color=colors, markersize=36, strokecolor=:white, strokewidth=2)
+    # Site circles + labels, each with a soft drop shadow
+    r_node = 0.22
     for i in 1:L
-        text!(ax, xs[i], 0.0;
-              text=string(i), fontsize=12, align=(:center, :center),
+        p = Point2f(xs[i], 0.0)
+        _shadow!(ax, p, r_node)
+        poly!(ax, Circle(p, Float32(r_node));
+              color=colors[i], strokecolor=:white, strokewidth=2)
+        text!(ax, p; text=string(i), fontsize=12, align=(:center, :center),
               color=:white, font=:bold)
     end
 
@@ -304,6 +321,7 @@ function Qritical.tensor!(s::Schematic, name::Symbol, coo;
 )
     p = _P(coo)
     s.pos[name] = p
+    _shadow!(s.ax, p, radius)
     poly!(s.ax, Circle(p, Float32(radius));
           color=color, strokecolor=strokecolor, strokewidth=strokewidth)
     if label !== nothing && label != ""
@@ -318,7 +336,7 @@ end
 # Public docstring lives on the `bond!` stub in `src/Qritical.jl`.
 function Qritical.bond!(s::Schematic, a, b;
     color       = (:gray, 0.85),
-    linewidth   = 2.5,
+    linewidth   = 3.0,
     label       = nothing,
     arrow       = false,
     shorten     = 0.0,
@@ -329,7 +347,7 @@ function Qritical.bond!(s::Schematic, a, b;
     d      = _unit(pb - pa)
     pa2    = _P(pa + shorten * d)
     pb2    = _P(pb - shorten * d)
-    ln     = lines!(s.ax, [pa2, pb2]; color=color, linewidth=linewidth)
+    ln     = lines!(s.ax, [pa2, pb2]; color=color, linewidth=linewidth, linecap=:round)
     translate!(ln, 0, 0, -1)
     mid = _P((pa2 + pb2) / 2)
     if arrow
@@ -352,7 +370,7 @@ end
 function Qritical.leg!(s::Schematic, a, dir;
     length    = 0.5,
     color     = (:gray, 0.85),
-    linewidth = 2.5,
+    linewidth = 2.0,
     label     = nothing,
     arrow     = false,
     into      = false,
@@ -361,7 +379,7 @@ function Qritical.leg!(s::Schematic, a, dir;
     p   = _resolve(s, a)
     d   = dir isa Real ? Point2f(cos(dir), sin(dir)) : _unit(_P(dir))
     tip = _P(p + length * d)
-    ln  = lines!(s.ax, [p, tip]; color=color, linewidth=linewidth)
+    ln  = lines!(s.ax, [p, tip]; color=color, linewidth=linewidth, linecap=:round)
     translate!(ln, 0, 0, -1)
     if arrow
         mid = _P((p + tip) / 2)
@@ -408,9 +426,10 @@ function Qritical.partition!(s::Schematic, members;
         _grow!(s, p)
     end
     if label !== nothing
-        xs  = [p[1] for p in boundary]
-        ys  = [p[2] for p in boundary]
-        top = Point2f(sum(xs) / Base.length(xs), maximum(ys) + 0.14)
+        xs   = [p[1] for p in boundary]
+        ys   = [p[2] for p in boundary]
+        gap  = max(0.18, 0.35 * padding)   # scale with blob inflation so labels
+        top  = Point2f(sum(xs) / Base.length(xs), maximum(ys) + gap)   # clear neighbours
         text!(s.ax, top; text=string(label), fontsize=fontsize,
               color=col, align=(:center, :bottom), font=:bold)
         _grow!(s, top, 0.1)
