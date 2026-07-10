@@ -33,7 +33,7 @@ vL = upper(:vL, 2)     # virtual bond leg: inward / incoming → Upper → domai
 ````
 
 ````
-Qritical.TIx{Qritical.Upper}(:σ, 2)
+TIx{Upper}(:σ, 2)
 ````
 
 ````julia
@@ -67,7 +67,7 @@ A = QTensor(randn(χ, d, χ), (upper(:vL, χ), upper(:σ, d), lower(:vR, χ)))
 ````
 
 ````
-3×2×3 Qritical.QTensor{Float64, 3, Array{Float64, 3}}:
+3×2×3 QTensor{Float64, 3, Array{Float64, 3}}:
 [:, :, 1] =
  -0.480327  -1.21161
  -0.792592  -0.0679285
@@ -144,7 +144,7 @@ B = QTensor(randn(χ, d, χ), (upper(:vR, χ), upper(:σ2, d), lower(:vR2, χ)))
 ````
 
 ````
-3×2×3 Qritical.QTensor{Float64, 3, Array{Float64, 3}}:
+3×2×3 QTensor{Float64, 3, Array{Float64, 3}}:
 [:, :, 1] =
  -2.21643  0.607555
  -1.96055  1.47874

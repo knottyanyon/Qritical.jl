@@ -14,7 +14,7 @@ The whole API is five verbs threaded through a canvas:
 
 | Verb | Draws |
 |------|-------|
-| [`tensor!`](@ref) | a named tensor node (a labelled circle) |
+| [`tensor!`](@ref) | a named tensor node (shape encodes tensor kind — §5) |
 | [`bond!`](@ref) | a bond line between two tensors |
 | [`leg!`](@ref) | a dangling / open (physical) leg |
 | [`partition!`](@ref) | a translucent blob grouping tensors |
@@ -159,30 +159,73 @@ Because `partition!` just takes whatever tensors you name, overlapping and
 nested regions work too — draw a large faint blob over the whole network and a
 smaller saturated one over a sub-block to show a region inside a region.
 
-## 5. Putting it together
+## 5. Tensor-kind shapes
+
+A circle says nothing about what a tensor *is*. [`tensor!`](@ref)'s `shape`
+keyword follows the convention from
+[tensors.net's tutorials](https://www.tensors.net/tutorial-2): the geometry
+itself carries meaning, so a diagram reads correctly even without labels.
+
+| `shape` | Geometry | Meaning |
+|:--------|:---------|:--------|
+| `:general`  | circle    | a generic tensor, no special structure |
+| `:diagonal` | small dot | diagonal (e.g. a singular-value spectrum) |
+| `:unitary`  | square    | ``U`` with ``UU^\dagger = U^\dagger U = I`` |
+| `:isometry` | wedge     | ``W`` with ``W^\dagger W = I``; the apex points toward the *contracted* (smaller) side |
+
+The wedge is the interesting one: point it with `rotation` (radians), and
+stacking two mirrored wedges base-to-base is exactly the picture of
+``W^\dagger W`` collapsing to the identity.
+
+````julia
+s = schematic(; figure_kw=(size=(720, 220),))
+tensor!(s, :U0, (0, 0);   shape=:general,  label="U₀")
+tensor!(s, :S,  (1.4, 0); shape=:diagonal, color=:gray)
+tensor!(s, :U,  (2.8, 0); shape=:unitary,  label="U", color=:steelblue)
+tensor!(s, :Wr, (4.2, 0); shape=:isometry, rotation=0.0, label="W", color=:seagreen)
+tensor!(s, :Wl, (5.6, 0); shape=:isometry, rotation=π,   label="W", color=:tomato)
+for (x, txt) in zip(0:1.4:5.6, ("general", "diagonal", "unitary", "isometry →", "isometry ←"))
+    note!(s, (x, -0.6), txt; fontsize=11, color=:gray)
+end
+s.fig
+````
+
+
+![](gs3_drawing_tensor_networks-fig-6.png)
+
+
+`draw(mps::FiniteMPS)` from GS-1 already uses this: since Qritical tracks
+each site's canonical form, left- and right-canonical sites are drawn as
+isometry wedges automatically — no manual shape bookkeeping required.
+
+## 6. Putting it together
 
 A slightly richer figure: a five-site MPS with the orthogonality centre marked,
-a bond label on every link, and a partition highlighting the two-site window an
-algorithm like DMRG or TEBD updates at each step.
+a bond label on every link, isometry wedges on the canonical sites, and a
+partition highlighting the two-site window an algorithm like DMRG or TEBD
+updates at each step.
 
 ````julia
 s = schematic(; figure_kw=(size=(820, 300),))
-colors = [:steelblue, :steelblue, :tomato, :seagreen, :seagreen]
+site_shapes    = [:isometry, :isometry, :general, :isometry, :isometry]
+site_rotations = [0.0, 0.0, 0.0, π, π]      # left-canonical → apex right, right-canonical → apex left
+colors         = [:steelblue, :steelblue, :tomato, :seagreen, :seagreen]
 for i in 1:5
-    tensor!(s, Symbol(:m, i), (i - 1, 0); color=colors[i])
+    tensor!(s, Symbol(:m, i), (i - 1, 0);
+            shape=site_shapes[i], rotation=site_rotations[i], color=colors[i])
     leg!(s, Symbol(:m, i), π/2; label="σ$i", arrow=true, into=true, length=0.5)
 end
 for i in 1:4
     bond!(s, Symbol(:m, i), Symbol(:m, i + 1); label="χ$i", arrow=true)
 end
-partition!(s, [:m2, :m3]; color=:goldenrod, padding=0.45, label="two-site update")
+partition!(s, [:m2, :m3]; color=:goldenrod, padding=0.3, label="two-site update")
 note!(s, (2.0, -1.2), "blue = left-canonical · red = centre · green = right-canonical";
       fontsize=11, color=:gray)
 s.fig
 ````
 
 
-![](gs3_drawing_tensor_networks-fig-6.png)
+![](gs3_drawing_tensor_networks-fig-7.png)
 
 
 ---

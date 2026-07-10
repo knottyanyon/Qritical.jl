@@ -132,8 +132,8 @@ export Uniform, disorder_realization, parameter_sweep
 # documented source per function.
 
 """
-    draw(A::QTensor;  name="", show_dims=true, show_arrows=true, figure_kw=(;))
-    draw(mps::FiniteMPS; show_dims=true, show_arrows=true, show_legend=true, figure_kw=(;))
+    draw(A::QTensor;  name="", show_dims=true, show_arrows=true, shape=:general, rotation=0.0, figure_kw=(;))
+    draw(mps::FiniteMPS; show_dims=true, show_arrows=true, show_shapes=true, show_legend=true, figure_kw=(;))
 
 Draw an **automatic** tensor-network diagram in the style of quimb. Requires a
 Makie backend to be loaded first:
@@ -145,17 +145,25 @@ draw(A)
 
 For a `QTensor`, `A` becomes a single labelled node with one directed leg stub
 per index: blue stubs with an inward arrow are `Upper` (incoming / contravariant)
-indices, grey stubs with an outward arrow are `Lower` (outgoing / covariant).
+indices, grey stubs with an outward arrow are `Lower` (outgoing / covariant). The
+node itself follows the tensor-kind shape convention described on
+[`tensor!`](@ref) via `shape`/`rotation`.
 
-For a `FiniteMPS`, sites are drawn as a horizontal chain of circles coloured by
-canonical form (**blue** left-canonical, **red** orthogonality centre, **green**
+For a `FiniteMPS`, sites are drawn as a horizontal chain coloured by canonical
+form (**blue** left-canonical, **red** orthogonality centre, **green**
 right-canonical, **grey** arbitrary), with virtual-bond arrows converging on the
-centre and physical legs hanging below each site.
+centre and physical legs hanging below each site. Left/right-canonical sites are
+genuine isometries (``A^\\dagger A = I`` resp. ``BB^\\dagger = I``), so — when
+`show_shapes=true` — they are automatically drawn as isometry wedges whose apex
+points toward the bond they contract onto; the orthogonality centre (no such
+guarantee) stays a general circle.
 
 # Keyword arguments
-- `name` — label inside the tensor circle (`QTensor` only)
+- `name` — label inside the tensor node (`QTensor` only)
 - `show_dims::Bool` — annotate bond / leg dimensions (default `true`)
 - `show_arrows::Bool` — draw directed arrowheads (default `true`)
+- `shape`, `rotation` — node shape/orientation (`QTensor` only); see [`tensor!`](@ref)
+- `show_shapes::Bool` — auto-select isometry wedges by canonical form (`FiniteMPS` only, default `true`)
 - `show_legend::Bool` — show the canonical-form colour legend (`FiniteMPS` only, default `true`)
 - `figure_kw` — named-tuple forwarded to `Makie.Figure`
 
@@ -189,12 +197,40 @@ s.fig
 function schematic end
 
 """
-    tensor!(s, name::Symbol, coo; radius=0.22, color, label=name, ...)
+    tensor!(s, name::Symbol, coo; radius=0.22, color, label=name, shape=:general, rotation=0.0, ...)
 
 Place a tensor node at `coo` (a `(x, y)` tuple or `Point2`) on a [`schematic`](@ref)
-canvas `s`, drawn as a filled circle with `label` centred inside. The node is
-remembered under `name` so later [`bond!`](@ref), [`leg!`](@ref) and
-[`partition!`](@ref) calls can refer to it by that symbol. Returns `s`.
+canvas `s`, with `label` centred inside. The node is remembered under `name` so
+later [`bond!`](@ref), [`leg!`](@ref) and [`partition!`](@ref) calls can refer
+to it by that symbol. Returns `s`.
+
+**Tensor-kind shapes**
+
+`shape` selects the node's geometry following the convention used in
+[tensors.net's tutorials](https://www.tensors.net/tutorial-2):
+
+| `shape` | Geometry | Meaning |
+|:--------|:---------|:--------|
+| `:general`  | circle       | a generic tensor with no special structure |
+| `:diagonal` | small dot    | a diagonal tensor (e.g. a singular-value spectrum) |
+| `:unitary`  | square       | ``U`` with ``UU^\\dagger = U^\\dagger U = I`` |
+| `:isometry` | wedge        | ``W`` with ``W^\\dagger W = I``; the apex points toward the *contracted* (smaller) side, so that stacking a wedge against its mirror image along the flat base annihilates to the identity |
+
+`rotation` (radians) sets the orientation of `:unitary`/`:isometry` shapes — `0`
+points the shape's "front" (the wedge apex) along `+x`, `π` along `-x`, and so
+on; it has no effect on the rotationally symmetric `:general`/`:diagonal`
+shapes. `label` is skipped for `:diagonal` nodes, which are drawn too small to
+hold text.
+
+# Example
+```julia
+using Qritical, CairoMakie
+s = schematic()
+tensor!(s, :U, (0, 0); shape=:unitary, label="U")
+tensor!(s, :W, (1, 0); shape=:isometry, rotation=0.0, label="W")   # apex → +x
+tensor!(s, :Σ, (2, 0); shape=:diagonal, color=:gray)
+s.fig
+```
 """
 function tensor! end
 

@@ -40,7 +40,7 @@ A = QTensor(Amat, (upper(:i, m), lower(:j, n)))
 ````
 
 ````
-6×4 Qritical.QTensor{Float64, 2, Matrix{Float64}}:
+6×4 QTensor{Float64, 2, Matrix{Float64}}:
  -0.480327    1.55835      0.0244543   1.29693
  -0.792592    0.00173221  -0.65852     0.350661
  -0.286976    0.903743     2.1776     -0.679682
@@ -57,7 +57,7 @@ typeof(F)                                # FullSVD
 ````
 
 ````
-Qritical.FullSVD
+FullSVD
 ````
 
 ````julia

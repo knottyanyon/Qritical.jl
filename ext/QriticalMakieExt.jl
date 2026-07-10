@@ -25,6 +25,66 @@ function _shadow!(ax, p::Point2f, radius::Real)
     end
 end
 
+# ── Tensor-kind shapes (tensors.net convention) ────────────────────────────────
+# https://www.tensors.net/tutorial-2 — diagonal tensors are small dots; unitaries
+# are drawn as squares (their "longer dimension" convention collapses to a
+# square for a matrix with matched in/out dims); isometries are wedges whose
+# apex points toward the *smaller* (contracted) side, so that stacking a wedge
+# against its mirror image along the flat base annihilates to the identity.
+#
+# `rotation` (radians) sets the apex/orientation angle: 0 points the shape's
+# "front" along +x, π along -x, etc. Ignored for :general and :diagonal, which
+# are rotationally symmetric.
+function _shape_points(shape::Symbol, p::Point2f, radius::Real, rotation::Real)
+    r      = Float32(radius)
+    c, sn  = Float32(cos(rotation)), Float32(sin(rotation))
+    rot(x, y) = Point2f(p[1] + x * c - y * sn, p[2] + x * sn + y * c)
+    if shape === :unitary
+        return [rot(-r, -r), rot(-r, r), rot(r, r), rot(r, -r)]
+    elseif shape === :isometry
+        apex_x = r * 1.15f0
+        base_x = -r * 0.55f0
+        half_w = r * 0.95f0
+        return [rot(apex_x, 0.0f0), rot(base_x, half_w), rot(base_x, -half_w)]
+    else
+        throw(ArgumentError("no polygon for shape :$shape"))
+    end
+end
+
+# Draws a single tensor node — the shared primitive behind `tensor!` and the
+# `draw` node(s) — dispatching on `shape`:
+#   :general  → circle            (generic tensor, no special structure)
+#   :diagonal → small filled dot  (diagonal / singular-value tensor)
+#   :unitary  → square            (U with UU† = U†U = I)
+#   :isometry → wedge             (W with W†W = I; apex points toward the
+#                                   contracted/smaller side, per `rotation`)
+function _draw_node!(ax, p::Point2f, radius::Real;
+    shape       = :general,
+    rotation    = 0.0,
+    color       = _ARBITRARY_COLOR,
+    strokecolor = :white,
+    strokewidth = 2,
+    shadow      = true,
+)
+    if shape === :general
+        shadow && _shadow!(ax, p, radius)
+        poly!(ax, Circle(p, Float32(radius));
+              color=color, strokecolor=strokecolor, strokewidth=strokewidth)
+    elseif shape === :diagonal
+        shadow && _shadow!(ax, p, radius * 0.55)
+        poly!(ax, Circle(p, Float32(radius) * 0.55f0);
+              color=color, strokecolor=strokecolor, strokewidth=strokewidth)
+    elseif shape === :unitary || shape === :isometry
+        shadow && _shadow!(ax, p, radius)
+        poly!(ax, _shape_points(shape, p, radius, rotation);
+              color=color, strokecolor=strokecolor, strokewidth=strokewidth)
+    else
+        throw(ArgumentError(
+            "unknown tensor shape :$shape — expected :general, :diagonal, :unitary or :isometry"))
+    end
+    return nothing
+end
+
 # Leg angles (radians) per tensor rank — gives natural layouts for the most
 # common tensor shapes without any spring-force computation.
 const _LEG_ANGLES = Dict{Int,Vector{Float64}}(
@@ -57,6 +117,8 @@ function Qritical.draw(A::QTensor;
     name        = "",
     show_dims   = true,
     show_arrows = true,
+    shape       = :general,
+    rotation    = 0.0,
     figure_kw   = (;),
 )
     N      = ndims(A)
@@ -86,9 +148,7 @@ function Qritical.draw(A::QTensor;
 
     center = Point2f(0, 0)
     r_node = 0.28
-    _shadow!(ax, center, r_node)
-    poly!(ax, Circle(center, Float32(r_node));
-          color=_ARBITRARY_COLOR, strokecolor=:white, strokewidth=2)
+    _draw_node!(ax, center, r_node; shape=shape, rotation=rotation, color=_ARBITRARY_COLOR)
     text!(ax, center;
           text=string(name), fontsize=13, align=(:center, :center),
           color=:white, font=:bold)
@@ -112,10 +172,28 @@ function _bond_arrow_right(i::Int, form::AbstractMPSForm)
     return i < center
 end
 
+# Left/right-canonical sites are genuine isometries (A†A = I resp. BB† = I),
+# so they get the tensors.net wedge; the orthogonality centre and any site of
+# unknown/arbitrary form carry no such guarantee and stay a general circle.
+function _site_shape(i::Int, form::AbstractMPSForm)
+    form isa CanonicalForm || return :general
+    (i <= form.llim || i >= form.rlim) && return :isometry
+    return :general
+end
+
+# Wedge apex points toward the side the isometry contracts onto: left-canonical
+# sites contract (vL,σ)→vR, so the apex points right (toward the next site);
+# right-canonical sites contract (σ,vR)→vL, so it points left.
+function _site_rotation(i::Int, form::AbstractMPSForm)
+    form isa CanonicalForm && i >= form.rlim && return Float64(π)
+    return 0.0
+end
+
 # Public docstring lives on the `draw` stub in `src/Qritical.jl`.
 function Qritical.draw(mps::FiniteMPS;
     show_dims   = true,
     show_arrows = true,
+    show_shapes = true,
     show_legend = true,
     figure_kw   = (;),
 )
@@ -175,13 +253,15 @@ function Qritical.draw(mps::FiniteMPS;
         end
     end
 
-    # Site circles + labels, each with a soft drop shadow
+    # Site nodes + labels, each with a soft drop shadow. Left/right-canonical
+    # sites are drawn as isometry wedges (per tensors.net convention); the
+    # ortho centre / arbitrary-form sites stay a general circle.
     r_node = 0.22
     for i in 1:L
-        p = Point2f(xs[i], 0.0)
-        _shadow!(ax, p, r_node)
-        poly!(ax, Circle(p, Float32(r_node));
-              color=colors[i], strokecolor=:white, strokewidth=2)
+        p     = Point2f(xs[i], 0.0)
+        shape = show_shapes ? _site_shape(i, form) : :general
+        rot   = _site_rotation(i, form)
+        _draw_node!(ax, p, r_node; shape=shape, rotation=rot, color=colors[i])
         text!(ax, p; text=string(i), fontsize=12, align=(:center, :center),
               color=:white, font=:bold)
     end
@@ -194,7 +274,9 @@ function Qritical.draw(mps::FiniteMPS;
                 MarkerElement(; color=_CENTER_COLOR, marker=:circle, markersize=14),
                 MarkerElement(; color=_RIGHT_COLOR,  marker=:circle, markersize=14),
             ],
-            ["left-canonical", "ortho centre", "right-canonical"];
+            show_shapes ?
+                ["left-canonical (isometry →)", "ortho centre", "right-canonical (isometry ←)"] :
+                ["left-canonical", "ortho centre", "right-canonical"];
             framevisible=false, labelsize=11, rowgap=4)
     end
 
@@ -318,13 +400,14 @@ function Qritical.tensor!(s::Schematic, name::Symbol, coo;
     strokecolor = :white,
     strokewidth = 2,
     fontsize    = 13,
+    shape       = :general,
+    rotation    = 0.0,
 )
     p = _P(coo)
     s.pos[name] = p
-    _shadow!(s.ax, p, radius)
-    poly!(s.ax, Circle(p, Float32(radius));
-          color=color, strokecolor=strokecolor, strokewidth=strokewidth)
-    if label !== nothing && label != ""
+    _draw_node!(s.ax, p, radius; shape=shape, rotation=rotation,
+                color=color, strokecolor=strokecolor, strokewidth=strokewidth)
+    if label !== nothing && label != "" && shape !== :diagonal
         text!(s.ax, p; text=string(label), fontsize=fontsize,
               color=labelcolor, align=(:center, :center), font=:bold)
     end
