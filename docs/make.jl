@@ -115,7 +115,8 @@ end
 const GS_DIR = joinpath(@__DIR__, "src", "getting_started")
 
 if !DOCS_FAST
-    for gs_file in ("gs1_tensors_and_indices.jl", "gs2_svd_and_truncation.jl")
+    for gs_file in ("gs1_tensors_and_indices.jl", "gs2_svd_and_truncation.jl",
+                    "gs3_drawing_tensor_networks.jl")
         input_path = joinpath(GS_DIR, gs_file)
         _source_changed(input_path) || continue
         Literate.markdown(input_path, GS_DIR;
@@ -195,6 +196,7 @@ makedocs(;
             "Installation" => "getting_started/installation.md",
             "GS-1: Tensors & Indices" => "getting_started/gs1_tensors_and_indices.md",
             "GS-2: SVD & Truncation" => "getting_started/gs2_svd_and_truncation.md",
+            "GS-3: Drawing Tensor Networks" => "getting_started/gs3_drawing_tensor_networks.md",
         ],
         DOCS_FAST ? nothing : ("Exercises" => [
             "Exercise 01" => "exercises/01/ex_01.md",
@@ -227,6 +229,7 @@ makedocs(;
             "ExactDiagonalization" => "api/ed.md",
             "ED Time Propagation" => "api/ed_time.md",
             "Disorder" => "api/disorder.md",
+            "Visualisation" => "api/visualization.md",
         ],
         "References" => [
             "Glossary" => "references/glossary.md",

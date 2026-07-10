@@ -13,3 +13,4 @@ Qritical.jl is a Julia package for matrix product state (MPS) algorithms, built 
 | [Installation](@ref Installation) | How to add Qritical to a Julia environment |
 | [GS-1: Tensors & Indices](gs1_tensors_and_indices.md) | `TIx`, `MulTIx`, `QTensor`, `Partition`, `Bipartition`, `group_legs` |
 | [GS-2: SVD & Truncation](gs2_svd_and_truncation.md) | `do_svd`, `NoTrunc`, `MaxBondDimTrunc`, `ValCutoffTrunc` |
+| [GS-3: Drawing Tensor Networks](gs3_drawing_tensor_networks.md) | `schematic`, `tensor!`, `bond!`, `leg!`, `partition!`, `note!` |
