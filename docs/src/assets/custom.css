@@ -90,3 +90,70 @@
 .theme-dark img[src*="assets/diagrams"] {
     filter: invert(0.85);
 }
+
+/* ── Literate / @example output cells ──────────────────────────────────────
+   Documenter renders @example input as  <pre><code class="language-julia hljs">
+   and captured output as                <pre><code class="nohighlight hljs">
+   Input keeps its box with a blue left bar; output drops the box entirely
+   and uses only a grey left bar — works cleanly in both light and dark mode
+   since it inherits the page background rather than a fixed colour.
+─────────────────────────────────────────────────────────────────────────── */
+
+pre:has(> code.language-julia.hljs) {
+    border-left: 4px solid #4063D8;
+}
+
+pre:has(> code.nohighlight.hljs) {
+    border: none;
+    border-left: 4px solid #9aa3ad;
+    background: transparent;
+    box-shadow: none;
+}
+
+pre:has(> code.nohighlight.hljs) > code.nohighlight.hljs {
+    background: transparent;
+}
+
+.theme-dark pre:has(> code.language-julia.hljs) {
+    border-left: 4px solid #5b78e8;
+}
+
+.theme-dark pre:has(> code.nohighlight.hljs) {
+    border-left: 4px solid #545d68;
+}
+
+/* Foldable long output cells */
+details.output-fold {
+    margin-bottom: 1rem;
+}
+
+details.output-fold > summary {
+    border-left: 4px solid #9aa3ad;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    font-family: sans-serif;
+    color: #9aa3ad;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+details.output-fold > summary::-webkit-details-marker { display: none; }
+
+details.output-fold > summary::before {
+    content: "▶  output — ";
+}
+
+details.output-fold[open] > summary::before {
+    content: "▼  output — ";
+}
+
+.theme-dark details.output-fold > summary {
+    border-left-color: #545d68;
+    color: #545d68;
+}
+
+/* when open, pre immediately follows summary with no extra gap */
+details.output-fold[open] > pre {
+    margin-top: 0;
+}
