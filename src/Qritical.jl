@@ -206,28 +206,27 @@ to it by that symbol. Returns `s`.
 
 **Tensor-kind shapes**
 
-`shape` selects the node's geometry following the convention used in
-[tensors.net's tutorials](https://www.tensors.net/tutorial-2):
+`shape` selects the node's geometry; the silhouette encodes the operator's index
+structure:
 
 | `shape` | Geometry | Meaning |
 |:--------|:---------|:--------|
-| `:general`  | circle       | a generic tensor with no special structure |
-| `:diagonal` | small dot    | a diagonal tensor (e.g. a singular-value spectrum) |
-| `:unitary`  | square       | ``U`` with ``UU^\\dagger = U^\\dagger U = I`` |
-| `:isometry` | trapezoid    | ``W`` with ``W^\\dagger W = I``; the wide base carries the larger index and the shape tapers to a narrow top on the *contracted* (smaller) side, so that stacking two mirrored wedges base-to-base annihilates to the identity |
+| `:general`  | circle    | a generic tensor with no special structure |
+| `:diagonal` | diamond   | a diagonal matrix (e.g. a singular-value spectrum ``\\Sigma``) |
+| `:unitary`  | D-arch    | ``U`` with ``UU^\\dagger = U^\\dagger U = I`` — a flat base with a domed top, centred on the node |
+| `:isometry` | trapezoid | ``W`` with ``W^\\dagger W = I`` but ``WW^\\dagger \\neq I`` — the in/out dimensions *differ*, so the wide base carries the larger index and the shape tapers to a narrow top on the *contracted* (smaller) side; stacking two mirrored wedges base-to-base annihilates to the identity |
 
-`rotation` (radians) sets the orientation of `:unitary`/`:isometry` shapes — `0`
-points the isometry's narrow top along `+x`, `π` along `-x`, and so on; it has
-no effect on the rotationally symmetric `:general`/`:diagonal` shapes. `label`
-is skipped for `:diagonal` nodes, which are drawn too small to hold text.
+`rotation` (radians) orients the `:unitary` dome and the `:isometry` narrow top —
+`0` points along `+x`, `π` along `-x`, and so on; it has no visible effect on the
+symmetric `:general`/`:diagonal` shapes.
 
 # Example
 ```julia
 using Qritical, CairoMakie
 s = schematic()
-tensor!(s, :U, (0, 0); shape=:unitary, label="U")
+tensor!(s, :U, (0, 0); shape=:unitary, label="U")                  # half disk, dome up
 tensor!(s, :W, (1, 0); shape=:isometry, rotation=0.0, label="W")   # narrow top → +x
-tensor!(s, :Σ, (2, 0); shape=:diagonal, color=:gray)
+tensor!(s, :Σ, (2, 0); shape=:diagonal, label="Σ", color=:gray)    # diamond
 s.fig
 ```
 """
@@ -243,12 +242,17 @@ with `label` (offset perpendicular to the line) and a mid-bond `arrow`. Returns 
 function bond! end
 
 """
-    leg!(s, a, dir; length=0.5, label=nothing, arrow=false, into=false)
+    leg!(s, a, dir; length=0.5, label=nothing, arrow=false, into=false, base=false)
 
 Draw an open (dangling) leg — a physical index — from tensor/point `a` in
 direction `dir`, given either as an angle in radians or a `(dx, dy)` vector. With
 `arrow=true`, `into=true` points the arrowhead toward the tensor (an incoming
-`Upper` index); `into=false` points it outward. Returns `s`.
+`Upper` index); `into=false` points it outward.
+
+When `a` names an `:isometry` or `:unitary` node, `base=true` routes the leg into
+that node's flat base with an L-bend — a short stub straight out of the base, then
+a turn toward `dir` — so the leg meets the base head-on instead of crossing a
+slanted edge (the tensors.net convention for legs on a wedge). Returns `s`.
 """
 function leg! end
 
