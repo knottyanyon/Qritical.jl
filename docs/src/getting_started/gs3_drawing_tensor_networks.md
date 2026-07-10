@@ -230,6 +230,48 @@ s.fig
 ![](gs3_drawing_tensor_networks-fig-7.png)
 
 
+## 7. Stacked layers — a TEBD brick-wall circuit
+
+quimb's schematic gallery has a *pseudo-3D* figure: many rows of a tensor
+network stacked to depict an iterative process. The 3D projection is optional
+eye-candy; the useful part — **repeated layers** — reads perfectly well in 2D.
+
+Here each layer is a row of two-site gates in the brick-wall pattern of a
+[`TEBD`](@ref) (time-evolving block decimation) circuit. Time runs *upward*,
+and successive layers alternate between the even and odd bonds of a six-site
+chain — the standard first-order Trotter split of ``e^{-iHt}``.
+
+````julia
+# a two-site gate on sites (a, a+1) at height `y`; a width-1 square so it sits
+# squarely on the two integer "wire" columns x = a and x = a+1
+gate!(s, a, y) = tensor!(s, Symbol(:g, a, :_, round(Int, 10y)), (a + 0.5, y);
+                         shape=:unitary, radius=0.5, label="", color=:steelblue)
+
+s = schematic(; figure_kw=(size=(560, 520),))
+for x in 1:6                                     # six physical wires running through time
+    bond!(s, (Float64(x), 0.3), (Float64(x), 4.7))
+end
+for a in (1, 3, 5); gate!(s, a, 1.0); end        # layer 1 — odd bonds (1,2)(3,4)(5,6)
+for a in (2, 4);    gate!(s, a, 2.5); end         # layer 2 — even bonds (2,3)(4,5)
+for a in (1, 3, 5); gate!(s, a, 4.0); end         # layer 3 — odd bonds again
+note!(s, (3.5, -0.05), "initial state |ψ(0)⟩"; fontsize=11, color=:gray)
+note!(s, (3.5,  5.05), "evolved state |ψ(t)⟩"; fontsize=11, color=:gray)
+leg!(s, (0.2, 0.8), π/2; length=3.4, arrow=true, color=:tomato)   # upward "time" arrow
+note!(s, (-0.05, 2.5), "time"; fontsize=11, color=:tomato)
+s.fig
+````
+
+
+![](gs3_drawing_tensor_networks-fig-8.png)
+
+
+The wires are [`bond!`](@ref)s, the gates are width-1 `:unitary` squares that
+cover the two wires they act on, and the layer spacing lets the wires show
+through between them — nothing beyond the verbs from §1–2, just stacked.
+Colour the layers differently, or drop a [`partition!`](@ref) over one row to
+highlight a single Trotter step, and the same skeleton adapts to whatever
+iterative process you need to picture.
+
 ---
 
 *The API mirrors quimb's `schematic.Drawing` — `tensor!`/`bond!`/`leg!` for the
