@@ -13,18 +13,6 @@ const _ARBITRARY_COLOR = RGBf(0.62, 0.64, 0.68)   # muted grey       — unknown
 const _UPPER_COLOR = _LEFT_COLOR                  # incoming / contravariant
 const _LOWER_COLOR = RGBf(0.68, 0.70, 0.74)       # outgoing / covariant
 
-# Soft drop shadow beneath a node: a few concentric circles, offset and
-# increasingly transparent as they grow, faking a blur without a real filter
-# (CairoMakie has no gaussian blur). Always drawn behind the node itself.
-function _shadow!(ax, p::Point2f, radius::Real)
-    offset = Float32(radius) * Point2f(0.12, -0.14)
-    for (rf, a) in ((1.12, 0.05), (1.0, 0.08))
-        pl = poly!(ax, Circle(p + offset, Float32(radius) * Float32(rf));
-                   color=(:black, a), strokewidth=0)
-        translate!(pl, 0, 0, -0.5)
-    end
-end
-
 # ── Tensor-kind shapes (tensors.net convention) ────────────────────────────────
 # https://www.tensors.net/tutorial-2 — diagonal tensors are small dots; unitaries
 # are drawn as squares (their "longer dimension" convention collapses to a
@@ -62,20 +50,16 @@ function _draw_node!(ax, p::Point2f, radius::Real;
     shape       = :general,
     rotation    = 0.0,
     color       = _ARBITRARY_COLOR,
-    strokecolor = :white,
-    strokewidth = 2,
-    shadow      = true,
+    strokecolor = :black,
+    strokewidth = 1,
 )
     if shape === :general
-        shadow && _shadow!(ax, p, radius)
         poly!(ax, Circle(p, Float32(radius));
               color=color, strokecolor=strokecolor, strokewidth=strokewidth)
     elseif shape === :diagonal
-        shadow && _shadow!(ax, p, radius * 0.55)
         poly!(ax, Circle(p, Float32(radius) * 0.55f0);
               color=color, strokecolor=strokecolor, strokewidth=strokewidth)
     elseif shape === :unitary || shape === :isometry
-        shadow && _shadow!(ax, p, radius)
         poly!(ax, _shape_points(shape, p, radius, rotation);
               color=color, strokecolor=strokecolor, strokewidth=strokewidth)
     else
@@ -397,8 +381,8 @@ function Qritical.tensor!(s::Schematic, name::Symbol, coo;
     color       = _ARBITRARY_COLOR,
     label       = string(name),
     labelcolor  = :white,
-    strokecolor = :white,
-    strokewidth = 2,
+    strokecolor = :black,
+    strokewidth = 1,
     fontsize    = 13,
     shape       = :general,
     rotation    = 0.0,
