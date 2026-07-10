@@ -1,4 +1,5 @@
 *.DS_Store
+*.sha256
 *.jl.*.cov
 *.jl.cov
 *.jl.mem
