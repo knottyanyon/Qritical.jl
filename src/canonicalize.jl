@@ -1,7 +1,7 @@
 # ==== Sweep helpers on existing MPS ==========================================
 #
 # Unlike _left_sweep / _right_sweep (which start from a dense d^L tensor),
-# these helpers operate directly on the L rank-3 site tensors of an existing
+# these helpers operate directly on the L order-3 site tensors of an existing
 # MPS by propagating a "carry" factor between neighbours:
 #
 #   Left sweep at site i:  reshape A_i → (χL·d, χR), SVD, store U as the new
