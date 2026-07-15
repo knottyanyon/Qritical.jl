@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "1c226ec61861e6c0b8aa3f39e9dea459780c7d8e"
+project_hash = "b82b364e71f111e7892f7a07aa37a06d06c0594d"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "d9aaef7c63466eee4de23b4d9dad03629df54bea"
@@ -585,12 +585,6 @@ deps = ["Documenter", "MarkdownAST"]
 git-tree-sha1 = "c0c408289a505a15496d914b19204e272a7e8b0f"
 uuid = "a078cd44-4d9c-4618-b545-3ab9d77f9177"
 version = "0.2.0"
-
-[[deps.DotEnv]]
-deps = ["PrecompileTools"]
-git-tree-sha1 = "92e88cb68a5b10545234f46dfaeb2fa8a8a50c45"
-uuid = "4dc1fcf4-5e3b-5448-94ab-0c38ec0385c1"
-version = "1.0.0"
 
 [[deps.Downloads]]
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
