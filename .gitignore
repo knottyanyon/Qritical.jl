@@ -16,3 +16,5 @@ LocalPreferences.toml
 /CLAUDE.md
 /.claude/
 lcov.info
+.claude_tree*.txt
+/planning/
