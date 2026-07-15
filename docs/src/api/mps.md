@@ -1,22 +1,30 @@
 # MPS & Canonical Forms
 
-## Physics motivation
-
-A **matrix product state** (MPS) for a chain of ``L`` sites with local Hilbert-space dimension ``d`` is a compressed representation of the full ``d^L``-dimensional state vector:
+A **[`matrix product state`](../references/glossary.md#matrix-product-state)** ([`MPS`](../references/glossary.md#mps)) for a chain of ``L`` sites with local Hilbert-space dimension ``d`` is a compressed representation of the full ``d^L``-dimensional state vector:
 
 ```math
 |\psi\rangle = \sum_{\sigma_1, \ldots, \sigma_L} A^{\sigma_1} A^{\sigma_2} \cdots A^{\sigma_L} \, |\sigma_1 \cdots \sigma_L\rangle
 ```
 
-where each ``A^{\sigma_i}`` is a ``\chi_{i-1} \times \chi_i`` matrix (rank-3 tensor with legs ``(\text{vL}, \sigma, \text{vR})``). The bond dimensions ``\chi_i`` control the accuracy of the approximation: ``\chi = 1`` gives a product state, and ``\chi = d^{L/2}`` recovers the exact state. For ground states of local gapped Hamiltonians, the area law guarantees that ``\chi`` needed for a faithful approximation grows only polynomially in ``L`` — this is the theoretical foundation of MPS efficiency.
+where each ``A^{\sigma_i}`` is a ``\chi_{i-1} \times \chi_i`` matrix (rank-3 tensor with legs ``(\text{vL}, \sigma, \text{vR})``). The [`bond dimensions`](../references/glossary.md#bond-dimensions) ``\chi_i`` control the accuracy of the approximation: ``\chi = 1`` gives a [`product state`](../references/glossary.md#product-state), and ``\chi = d^{L/2}`` recovers the exact state. For ground states of local gapped Hamiltonians, the [`area law`](../references/glossary.md#area-law) guarantees that ``\chi`` needed for a faithful approximation grows only polynomially in ``L`` — this is the theoretical foundation of MPS efficiency.
 
-The **canonical form** is the key operational concept. A site tensor ``A_i`` is *left-isometric* if ``A_i^\dagger A_i = I`` (when reshaped as ``(\chi_L d \times \chi_R)``), and *right-isometric* if ``B_i B_i^\dagger = I`` (reshaped as ``(\chi_L \times d\chi_R)``). Canonical forms make expectation values computable in ``O(L)`` time: when bra and ket MPS are contracted site by site, the ``A_i^\dagger A_i`` pair at each left-canonical site collapses to the identity, leaving only the open right index. Without canonicalization, each contraction would cost ``O(d^L)``.
+The **[`canonical form`](../references/glossary.md#canonical-form)** is the key operational concept. A site tensor ``A_i`` is *left-isometric* if ``A_i^\dagger A_i = I`` (when reshaped as ``(\chi_L d \times \chi_R)``), and *right-isometric* if ``B_i B_i^\dagger = I`` (reshaped as ``(\chi_L \times d\chi_R)``). [`Canonical forms`](../references/glossary.md#canonical-forms) make expectation values computable in ``O(L)`` time: when bra and ket MPS are contracted site by site, the ``A_i^\dagger A_i`` pair at each left-canonical site collapses to the identity, leaving only the open right index. Without canonicalization, each contraction would cost ``O(d^L)``.
 
-`FiniteMPS` stores the ``L`` site tensors, the ``L+1`` bond singular-value spectra (boundary spectra are ``[1.0]``), a form tag recording which sites are isometric, and the accumulated truncation error ``\varepsilon``.
+`FiniteMPS` stores the ``L`` site tensors, the ``L+1`` [`bond`](../references/glossary.md#bond) singular-value spectra (boundary spectra are ``[1.0]``), a form tag recording which sites are isometric, and the accumulated [`truncation`](../references/glossary.md#truncation) error ``\varepsilon``.
 
-`to_mps` decomposes a full state tensor into an MPS by iterated SVD (carry propagation). The left sweep produces a left-canonical MPS: at each bond the carry ``(\chi_{i-1}, d_i, \ldots, d_L)`` is reshaped to ``(\chi_{i-1} d_i \times d_{i+1}\cdots d_L)``, SVD'd, and the isometric factor ``U`` becomes the site tensor while ``\Sigma V^\dagger`` propagates rightward. Per-bond cost is ``O(\chi^2 d)`` — linear in ``L``, not exponential in ``d``.
+`to_mps` decomposes a full state tensor into an [`MPS`](../references/glossary.md#mps) by iterated [`SVD`](../references/glossary.md#svd) (carry propagation). The left sweep produces a left-canonical MPS: at each bond the carry ``(\chi_{i-1}, d_i, \ldots, d_L)`` is reshaped to ``(\chi_{i-1} d_i \times d_{i+1}\cdots d_L)``, SVD'd, and the isometric factor ``U`` becomes the site tensor while ``\Sigma V^\dagger`` propagates rightward. Per-bond cost is ``O(\chi^2 d)`` — linear in ``L``, not exponential in ``d``.
 
-`add_mps` implements ``a|\psi\rangle + b|\varphi\rangle`` via a block-diagonal direct-sum construction on the virtual bonds, followed by an optional recompression sweep. The result has bond dimension at most ``\chi_\psi + \chi_\varphi`` before truncation.
+`add_mps` implements ``a|\psi\rangle + b|\varphi\rangle`` via a block-diagonal direct-sum construction on the virtual bonds, followed by an optional recompression sweep. The result has [`bond dimension`](../references/glossary.md#bond-dimension) at most ``\chi_\psi + \chi_\varphi`` before [`truncation`](../references/glossary.md#truncation).
+
+---
+
+## Quick Reference
+
+**MPS types:** [`AbstractMPSForm`](@ref) · [`CanonicalForm`](@ref) · [`VidalForm`](@ref) · [`ArbitraryForm`](@ref) · [`FiniteMPS`](@ref)
+
+**Canonical forms:** [`CanonicalizeConfig`](@ref) · [`LeftCanonical`](@ref) · [`RightCanonical`](@ref) · [`BondCanonical`](@ref) · [`SiteCanonical`](@ref)
+
+**Operations:** [`to_mps`](@ref) · [`add_mps`](@ref) · [`canonicalize`](@ref) · [`canonical_error`](@ref) · [`is_canonical`](@ref) · [`to_vidal`](@ref) · [`to_canonical`](@ref) · [`overlap`](@ref) · [`local_expectation`](@ref) · [`two_site_op`](@ref)
 
 ---
 

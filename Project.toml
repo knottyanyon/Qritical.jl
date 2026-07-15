@@ -1,6 +1,6 @@
 name = "Qritical"
 uuid = "4d77d595-865b-4fe8-9046-dbce8046f658"
-version = "0.5.0"
+version = "0.6.1"
 authors = ["Bavithra Govintharajah"]
 
 [workspace]
@@ -10,13 +10,10 @@ projects = ["docs"]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Coverage = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
-GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 HalfIntegers = "f0d1745a-41c9-11e9-1dd9-e5d34d218721"
 KrylovKit = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
-LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
-Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 ScopedValues = "7e506255-f358-4e82-b7e4-beb19740aa63"
 Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
@@ -25,18 +22,22 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 TensorKit = "07d1fe3e-3e46-537d-9eac-e9e13d0d4cec"
 TensorOperations = "6aa20fa7-93e2-5fca-9bc0-fbd0db3c71a2"
 
+[weakdeps]
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+
+[extensions]
+QriticalMakieExt = "Makie"
+
 [compat]
 Aqua = "0.8"
 CairoMakie = "0.15.10"
 Coverage = "1.8.1"
 DelimitedFiles = "1.9.1"
-GeometryBasics = "0.5.10"
 HalfIntegers = "1.6.0"
 KrylovKit = "0.10.3"
-LaTeXStrings = "1.4.0"
 LinearAlgebra = "1.12.0"
 Logging = "1.11.0"
-Makie = "0.24.9"
+Makie = "0.21 - 0.24"
 Random = "1.11.0"
 ScopedValues = "1.0"
 Serialization = "1.11.0"

@@ -1,4 +1,5 @@
 *.DS_Store
+*.sha256
 *.jl.*.cov
 *.jl.cov
 *.jl.mem
@@ -15,3 +16,5 @@ LocalPreferences.toml
 /CLAUDE.md
 /.claude/
 lcov.info
+.claude_tree*.txt
+/planning/

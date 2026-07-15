@@ -8,42 +8,40 @@ Choose a strategy by constructing the appropriate [`AbstractTrunc`](@ref) subtyp
 
 | Type | Keep condition | Typical use |
 |:-----|:---------------|:------------|
-| [`KeepFirst(r)`](@ref) | Largest `r` singular values | Fixed bond dimension cap |
-| [`KeepAbove(atol)`](@ref) | Every σ with `σ > atol` | Absolute noise floor |
-| [`KeepRelative(rtol)`](@ref) | Every σ with `σ/σ_max > rtol` | Relative threshold |
+| [`MaxBondDimTrunc(r)`](@ref) | Largest `r` singular values | Fixed bond dimension cap |
+| [`ValCutoffTrunc(atol)`](@ref) | Every σ with `σ > atol` | Absolute noise floor |
+| [`NoTrunc()`](@ref) | All singular values | Exact (no truncation) |
 
-## `tensor_svd`
+## `do_svd`
 
-[`tensor_svd`](@ref) takes an `IndexedTensor`, a `Bipartition` describing how to split the legs, and a truncation strategy. It returns a [`TensorSVD`](@ref) with four fields:
+[`do_svd`](@ref) takes a `QTensor`, a `Bipartition` describing how to split the legs, and a truncation strategy. It returns a [`FullSVD`](@ref) (exact) or [`ReducedSVD`](@ref) (truncated) with the following fields:
 
 | Field | Type | Meaning |
 |:------|:-----|:--------|
-| `U` | `IndexedTensor` | Left isometry; left-partition indices + `TIx{Lower}` bond leg |
-| `Σ` | `IndexedTensor` | Diagonal singular-value tensor; raw values via `Σ.data.diag` |
-| `Vd` | `IndexedTensor` | Right isometry; `TIx{Upper}` bond leg + right-partition indices |
-| `ε` | `Real` | `‖discarded singular values‖₂` — exact truncation error |
+| `U` | `QTensor` | Left unitary; left-partition indices + `lower` bond leg |
+| `Σ` | `QTensor` | Diagonal singular-value matrix; spectrum via `SingValSpectrum(Σ.data.diag)` |
+| `V` | `QTensor` | Right unitary; `upper` bond leg + right-partition indices |
+| `ε` | `Real` | Truncation error (0 for `NoTrunc`, nonzero for `ValCutoffTrunc`/`MaxBondDimTrunc`) |
 
 ```jldoctest svd
 julia> using Qritical, LinearAlgebra
 
-julia> vL, σ, vR = upper(:vL, 2), lower(:σ, 2), upper(:vR, 3);
+julia> i, σ, j = upper(:i, 2), lower(:σ, 2), upper(:j, 3);
 
-julia> A = IndexedTensor(rand(2, 2, 3), (vL, σ, vR));
+julia> A = QTensor(rand(2, 2, 3), (i, σ, j));
 
-julia> bp = bipartition(Partition(vL, σ), A);
+julia> bp = bipartition(Partition(i, σ), A);
 
-julia> (; U, Σ, Vd, ε) = tensor_svd(A, bp, KeepFirst(4));
+julia> result = do_svd(A, bp, MaxBondDimTrunc(4));
 
-julia> length(Σ.data.diag)   # at most 4, capped at rank(A) = min(4, 3) = 3
+julia> length(result.Σ.data.diag)   # at most 4, capped at rank(A) = min(4, 3) = 3
 3
 
-julia> Σ.data.diag == sort(Σ.data.diag; rev=true)   # sorted descending
+julia> result.Σ.data.diag == sort(result.Σ.data.diag; rev=true)   # sorted descending
 true
 
-julia> U_m = reshape(U.data, 4, :);
-
-julia> norm(U_m' * U_m - I) < 1e-12   # U†U ≈ I
-true
+julia> result.ε  # truncation error
+0.0
 ```
 
 ### Reconstruction and truncation error

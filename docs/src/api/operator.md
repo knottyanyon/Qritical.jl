@@ -1,18 +1,16 @@
 # Operators & Hamiltonians
 
-## Physics motivation
-
 A linear quantum-mechanical observable is a sum of weighted products of single-site
 operators. The **Hamiltonian** is just one such observable — the operator that drives
 dynamics. Magnetisation, density, and two-point correlators are others. Qritical builds
-all of them the same way: as an `LatticeOperator` (a term list over a geometry and DoF), so the
+all of them the same way: as a [`LatticeOperator`](@ref) (a term list over a geometry and DoF), so the
 same `expect(ψ, O)` routine measures energy, magnetisation, and ``\langle S^z_i S^z_j
 \rangle`` without any special-casing.
 
 The construction strategy is **lazy**: couplings and operator matrices are stored as a
-list of `OneSiteTerm`s and `TwoSiteTerm`s; the dense matrix form (`matrix_repr`) and the MPO
+list of `OneSiteTerm`s and `TwoSiteTerm`s; the dense matrix form (`matrix_repr`) and the [`MPO`](../references/glossary.md#mpo)
 form (`MPO`) are computed on demand. This means you can build an `LatticeOperator`, inspect its
-term list, modify couplings, and only pay for the MPO contraction when you actually call
+term list, modify couplings, and only pay for the [`MPO`](../references/glossary.md#mpo) contraction when you actually call
 `expect`.
 
 ### Named constructors
@@ -38,18 +36,74 @@ infrastructure.
 
 ---
 
+## Quick Reference
+
+**Operator types:** [`OneSiteTerm`](@ref) · [`TwoSiteTerm`](@ref) · [`LatticeOperator`](@ref)
+
+**Hamiltonian builders:** [`uniform_coupling`](@ref) · [`XXZ`](@ref) · [`Heisenberg`](@ref) · [`Ising`](@ref)
+
+**Observables:** [`total_magnetization`](@ref) · [`staggered_magnetization`](@ref) · [`op_at_site`](@ref) · [`two_site_op`](@ref) · [`identity_operator`](@ref) · [`matrix_repr`](@ref)
+
+---
+
+## Types
+
+### Terms and operators
+
 ```@docs
-uniform_coupling
 OneSiteTerm
 TwoSiteTerm
 LatticeOperator
+```
+
+## Functions
+
+### Coupling patterns
+
+```@docs
+uniform_coupling
+```
+
+### Named Hamiltonians
+
+```@docs
 XXZ
 Heisenberg
 Ising
+```
+
+### Observable constructors
+
+```@docs
 total_magnetization
 staggered_magnetization
 op_at_site
 two_site_op(g::AbstractGeometry, dof::AbstractDoF, opA::Symbol, iA::Int, opB::Symbol, iB::Int)
 identity_operator
+```
+
+### Matrix representations
+
+```@docs
 matrix_repr(H::LatticeOperator)
 ```
+
+!!! warning "Julia column-major trap when building kron comparisons"
+    When verifying MPS expectation values against a brute-force full-matrix calculation,
+    the kron order matters and is easy to get backwards.
+
+    Sequential MPS contraction places **site 1 as the least-significant index** (varies
+    fastest in memory, Julia's column-major convention). `kron(full_op, op_i)` appends
+    `op_i` as the *most*-significant factor — the opposite ordering — producing a silent
+    sign error.
+
+    The correct pattern is:
+
+    ```julia
+    # Embed op_i at site i in the full Hilbert space
+    full = kron(op_i, I_rest)   # op_i is least-significant: matches MPS site-1-first layout
+    ```
+
+    In other words, **grow the kron product outward** (`kron(op_i, full_op)`) so that
+    the first site remains the fastest-varying index. `matrix_repr` applies this
+    convention internally; replicate it whenever you build reference matrices by hand.

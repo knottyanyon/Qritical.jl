@@ -1,7 +1,5 @@
 # Exact Diagonalization
 
-## Physics motivation
-
 **Exact diagonalization (ED)** is the gold standard for small quantum systems: build the
 full ``d^L \times d^L`` Hamiltonian matrix and find its eigenvalues exactly, no
 approximation. Every MPS or TEBD result should be cross-validated against ED for small
@@ -58,10 +56,39 @@ The typical workflow is:
 
 ---
 
+## Quick Reference
+
+**Types:** [`GroundState`](@ref) · [`ExactDiagonalization`](@ref) · [`EDResult`](@ref)
+
+**Functions:** [`solve`](@ref)
+
+---
+
+## Types
+
+### Problem specification
+
 ```@docs
 GroundState
+```
+
+### Algorithms
+
+```@docs
 ExactDiagonalization
+```
+
+### Results
+
+```@docs
 EDResult
+```
+
+## Functions
+
+### Ground state search
+
+```@docs
 solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:ground})
 solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:full})
 ```

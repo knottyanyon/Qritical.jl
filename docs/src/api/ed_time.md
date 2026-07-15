@@ -1,6 +1,6 @@
 # ED Time Propagation
 
-## Why exact time propagation?
+### Why exact time propagation?
 
 Most time-evolution algorithms — TEBD, Runge-Kutta, Krylov methods — introduce some
 form of approximation error. TEBD commits Trotter error: even with a tiny step
@@ -85,9 +85,30 @@ decomposition, not just the step size.
 
 ---
 
+## Types
+
+### Problem specification
+
 ```@docs
 StatevectorState
-as_statevector
+```
+
+### Results
+
+```@docs
 EDTimeResult
+```
+
+## Functions
+
+### State representation
+
+```@docs
+as_statevector
+```
+
+### Time evolution
+
+```@docs
 solve(::LatticeOperator, ::StatevectorState, ::ExactDiagonalization{:time}, ::ConstantProtocol)
 ```

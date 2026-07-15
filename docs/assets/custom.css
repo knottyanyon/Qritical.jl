@@ -1,0 +1,141 @@
+/* Custom styling for Qritical.jl documentation */
+
+/* Glossary term styling */
+abbr {
+    border-bottom: 1px dotted currentColor;
+    cursor: help;
+    text-decoration: none;
+}
+
+/* Glossary term links */
+abbr a {
+    text-decoration: none;
+    color: inherit;
+    font-weight: 500;
+}
+
+abbr a:hover {
+    text-decoration: underline;
+    color: var(--md-primary-fg-color, #2196F3);
+}
+
+/* Tooltip styling for title attribute on abbr tags */
+abbr[title] {
+    position: relative;
+}
+
+/* Light/dark mode support for tooltips */
+@media (prefers-color-scheme: light) {
+    abbr[title]:hover::after {
+        content: attr(title);
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.5rem 0.75rem;
+        background-color: #333;
+        color: #fff;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    abbr[title]:hover::before {
+        content: '';
+        position: absolute;
+        bottom: 120%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: #333;
+        z-index: 1000;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    abbr[title]:hover::after {
+        content: attr(title);
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.5rem 0.75rem;
+        background-color: #f5f5f5;
+        color: #333;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    abbr[title]:hover::before {
+        content: '';
+        position: absolute;
+        bottom: 120%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: #f5f5f5;
+        z-index: 1000;
+    }
+}
+
+/* Glossary section page styling */
+.md-nav__item--glossary {
+    border-left: 3px solid var(--md-accent-fg-color, #7c4dff);
+    padding-left: 8px;
+}
+
+/* Glossary term definitions */
+#glossary h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+#glossary p {
+    margin: 0.25rem 0;
+    line-height: 1.6;
+}
+
+/* Glossary heading styling */
+#glossary h2 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--md-border-color, #e0e0e0);
+    padding-bottom: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+    #glossary h2 {
+        border-bottom-color: #424242;
+    }
+}
+
+/* Quick term reference at top of pages */
+.glossary-quick-ref {
+    background-color: var(--md-code-bg-color, #f5f5f5);
+    border-left: 4px solid var(--md-accent-fg-color, #7c4dff);
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+}
+
+.glossary-quick-ref strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Link to glossary in navigation */
+.md-nav__link--glossary {
+    color: var(--md-accent-fg-color, #7c4dff);
+    font-weight: 500;
+}

@@ -1,8 +1,6 @@
 # MPO & Expectation Values
 
-## Physics motivation
-
-A **Matrix Product LatticeOperator** (MPO) is the operator analogue of an MPS: a
+A **[`Matrix Product Operator`](../references/glossary.md#matrix-product-operator)** ([`MPO`](../references/glossary.md#mpo)) is the operator analogue of an [`MPS`](../references/glossary.md#mps): a
 ``d^L \times d^L`` operator factored into a product of ``L`` local rank-4 tensors
 
 ```math
@@ -12,7 +10,7 @@ O = \sum_{\{\sigma\},\{\sigma'\}} W^{\sigma_1}_{\sigma_1'} W^{\sigma_2}_{\sigma_
 
 where each ``W^{\sigma_i}_{\sigma_i'}`` is a ``\chi_{i-1} \times \chi_i`` matrix of
 ``d \times d`` operator blocks. For nearest-neighbour Hamiltonians with ``K`` distinct
-bond operator types the optimal bond dimension is ``\chi = 2 + K``.
+bond operator types the optimal [`bond dimension`](../references/glossary.md#bond-dimension) is ``\chi = 2 + K``.
 
 ### The finite-state-machine (FSM) construction
 
@@ -51,9 +49,24 @@ The result ``L^{(L)}[1,1,1]`` is the scalar expectation value. Per-site cost:
 
 ---
 
+## Quick Reference
+
+**MPO types:** [`FiniteMPO`](@ref) · [`MPO`](@ref)
+
+**Functions:** [`expect`](@ref) · [`apply_mpo`](@ref)
+
+---
+
+## Types
+
 ```@docs
 FiniteMPO
 MPO
+```
+
+## Functions
+
+```@docs
 expect(ψ::FiniteMPS, O::FiniteMPO)
 apply_mpo
 ```

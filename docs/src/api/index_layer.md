@@ -1,34 +1,91 @@
 # Index Layer
 
-## Physics motivation
+Every tensor in quantum many-body physics carries more information than just its numerical entries: each leg has a *direction* and a *physical meaning*. In a [`matrix product state`](../references/glossary.md#matrix-product-state), the left virtual leg flows *into* a site tensor while the right virtual leg flows *out*; the physical leg ``\sigma`` labels the local Hilbert-space basis and flows out toward the ket. These distinctions are not cosmetic — they are what makes contraction rules unambiguous, what allows block-sparse symmetry sectors to be tracked automatically, and what prevents silently mis-wiring a bra where a ket is expected.
 
-Every tensor in quantum many-body physics carries more information than just its numerical entries: each leg has a *direction* and a *physical meaning*. In a matrix product state, the left virtual leg flows *into* a site tensor while the right virtual leg flows *out*; the physical leg ``\sigma`` labels the local Hilbert-space basis and flows out toward the ket. These distinctions are not cosmetic — they are what makes contraction rules unambiguous, what allows block-sparse symmetry sectors to be tracked automatically, and what prevents silently mis-wiring a bra where a ket is expected.
-
-The index layer makes this precise. Each leg is a `TIx{L}` where `L ∈ {Upper, Lower}` records the *variance* — whether the leg is contravariant (inward, domain) or covariant (outward, codomain) in the sense of von Delft's arrow convention. This is not a label one attaches by convention: it follows directly from the geometric orientation of the leg in the tensor-network diagram.
+The index layer makes this precise. Each leg is a `TIx{L}` where `L ∈ {Upper, Lower}` records the *[`variance`](../references/glossary.md#variance)* — whether the leg is contravariant (inward, domain) or covariant (outward, codomain) in the sense of the [`von Delft arrow convention`](../references/glossary.md#von-delft-arrow-convention). This is not a label one attaches by convention: it follows directly from the geometric orientation of the leg in the tensor-network diagram.
 
 The settled bond convention throughout Qritical is: left virtual leg inward → `TIx{Upper}`; right virtual leg outward → `TIx{Lower}`; physical legs ``\sigma`` outward → `TIx{Lower}`. An Einstein contraction then pairs exactly one `Upper` with one `Lower` of the same label, conserving quantum numbers automatically once symmetry sectors are attached to the space.
 
-A **partition** (`Bipartition`) is orthogonal to variance: it is a per-operation choice of which legs are grouped as the matrix rows vs. columns for an SVD. For a *state*, all physical legs share `Lower` variance, so the bipartition is a free Schmidt cut. For an *operator*, the bra (`Upper`) and ket (`Lower`) physical legs have opposite variance, which pins the partition. `group_legs` mechanises this distinction so that neither state nor operator decompositions ever need to specify the row/column split by hand.
+A **[`partition`](../references/glossary.md#partition)** (`Bipartition`) is orthogonal to variance: it is a per-operation choice of which legs are grouped as the matrix rows vs. columns for an [`SVD`](../references/glossary.md#svd). For a *state*, all physical legs share `Lower` variance, so the bipartition is a free [`Schmidt cut`](../references/glossary.md#schmidt-cut). For an *operator*, the bra (`Upper`) and ket (`Lower`) physical legs have opposite variance, which pins the partition. `group_legs` mechanises this distinction so that neither state nor operator decompositions ever need to specify the row/column split by hand.
 
-The `MulTIx` type represents a fused (grouped) leg — the result of `group_legs` collapsing several legs into one. Its dimension is the product of its children's dimensions, and it carries both faces of the bond so that re-gauging (moving the orthogonality centre) is a swap, not a rebuild.
+The `MulTIx` type represents a fused (grouped) leg — the result of `group_legs` collapsing several legs into one. Its dimension is the product of its children's dimensions, and it carries both faces of the [`bond`](../references/glossary.md#bond) so that re-gauging (moving the orthogonality centre) is a swap, not a rebuild.
 
 ---
+
+## Quick Reference
+
+**Types:** [`AbstractIx`](@ref) · [`IxLoc`](@ref) · [`Upper`](@ref) · [`Lower`](@ref) · [`TIx`](@ref) · [`MulTIx`](@ref) · [`Partition`](@ref) · [`Bipartition`](@ref)
+
+**Functions:** [`dim`](@ref) · [`label`](@ref) · [`which_space`](@ref) · [`flip`](@ref) · [`upper`](@ref) · [`lower`](@ref) · [`uppers`](@ref) · [`lowers`](@ref) · [`uppers_range`](@ref) · [`lowers_range`](@ref) · [`complement`](@ref) · [`bipartition`](@ref) · [`bond_label`](@ref)
+
+---
+
+## Types
+
+### Abstract types and variance tags
 
 ```@docs
 AbstractIx
 IxLoc
 Upper
 Lower
+```
+
+### Single index
+
+```@docs
 TIx
+```
+
+The inner constructor rejects non-positive dimensions at construction time:
+
+```jldoctest
+julia> using Qritical
+
+julia> TIx{Upper}(:σ, 0)
+ERROR: ArgumentError: TIx ndim must be positive, got 0
+[...]
+```
+
+### Multi-index (fused leg)
+
+```@docs
 MulTIx
+```
+
+## Functions
+
+### Partition utilities
+
+See the [`QTensor` documentation](../api/qtensor.md) for `Partition` and `Bipartition` usage.
+
+### Accessors
+
+```@docs
 dim
 label
 which_space
+```
+
+### Index manipulation
+
+```@docs
+flip
 upper
 lower
+```
+
+### Batch constructors
+
+```@docs
 uppers
 lowers
 uppers_range
 lowers_range
+```
+
+### Partition utilities
+
+```@docs
 bond_label
 ```

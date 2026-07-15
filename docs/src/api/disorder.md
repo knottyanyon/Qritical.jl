@@ -29,10 +29,10 @@ with the volume of the subsystem ("volume law").
 
 Above a critical disorder strength ``W_c \approx 3.5`` (for the 1D XXZ chain at
 ``J = J_z = 1``), something remarkable happens: all eigenstates, not just the
-ground state, become localised.  This is **many-body localization (MBL)**.  In the
+ground state, become localised.  This is **[`many-body localization`](../references/glossary.md#many-body-localization)** ([`MBL`](../references/glossary.md#mbl)).  In the
 MBL phase:
 
-- Every eigenstate obeys an **area law** for entanglement — entropy saturates to a
+- Every eigenstate obeys an **[`area law`](../references/glossary.md#area-law)** for entanglement — entropy saturates to a
   constant independent of system size.  This is unusual: for a generic excited
   state you would expect volume-law entanglement.
 - Local observables retain memory of initial conditions forever; there is no
@@ -102,7 +102,14 @@ the identical disorder landscape.
 
 ---
 
+## Types
+
 ```@docs
 Uniform
+```
+
+## Functions
+
+```@docs
 disorder_realization
 ```

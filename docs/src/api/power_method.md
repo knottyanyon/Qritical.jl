@@ -1,7 +1,5 @@
 # Power Method & Ground-State Search
 
-## Physics motivation
-
 The **power method** is one of the simplest algorithms for finding the ground state of a
 quantum Hamiltonian. The idea comes from imaginary-time evolution: applying ``e^{-\tau H}``
 to any state that has nonzero overlap with the ground state ``|\psi_0\rangle`` gives
@@ -14,6 +12,8 @@ e^{-\tau H}|\phi\rangle = \sum_k c_k e^{-\tau E_k}|\psi_k\rangle
 because the excited components ``e^{-\tau E_k}`` decay faster than the ground-state
 component ``e^{-\tau E_0}`` whenever ``E_k > E_0``. The ground state dominates
 exponentially fast.
+
+For a converged ground state with first excited state above it, the rate of convergence is set by the [`spectral gap`](../references/glossary.md#spectral-gap) ``\Delta = E_1 - E_0``.
 
 For a small time step ``\tau``, the evolution operator expands as
 
@@ -86,7 +86,24 @@ The `converged` field of `PowerMethodResult` tells you whether this was achieved
 
 ---
 
+## Quick Reference
+
+**Types:** [`PowerMethodResult`](@ref)
+
+**Functions:** [`power_method`](@ref)
+
+---
+
+## Types
+
+### Results
+
 ```@docs
 PowerMethodResult
+```
+
+## Functions
+
+```@docs
 power_method
 ```

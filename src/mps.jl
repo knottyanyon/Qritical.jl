@@ -12,16 +12,27 @@ abstract type AbstractMPSForm end
 
 Canonical form tag for a finite MPS.
 
-- `llim::Int`: sites ``1, \\ldots, \\texttt{llim}`` are left-canonical  (``A_i^\\dagger A_i = I``)
-- `rlim::Int`: sites ``\\texttt{rlim}, \\ldots, L`` are right-canonical (``B_i B_i^\\dagger = I``)
+- `llim::Int`: first site of the orthogonality-centre region; sites ``1, \\ldots, \\texttt{llim}-1``
+  are left-isometric (``A_i^\\dagger A_i = I``).
+- `rlim::Int`: first right-isometric site; sites ``\\texttt{rlim}, \\ldots, L`` satisfy
+  ``B_i B_i^\\dagger = I``.
 
-Common cases:
+The OC region occupies sites ``\\texttt{llim} \\ldots \\texttt{rlim}-1``; those tensors hold the
+gauge weight and are **not** checked by [`is_canonical`](@ref).  The values ``\\texttt{llim}=0``
+and ``\\texttt{rlim}=L+1`` are out-of-bounds sentinels that make the corresponding range empty
+without any special-case branching.
 
-| Form | `llim` | `rlim` |
-|------|--------|--------|
-| Fully left-canonical  | ``L``   | ``L+1`` |
-| Fully right-canonical | ``0``   | ``1``   |
-| Mixed (site ``k`` is centre) | ``k`` | ``k`` |
+| Form | `llim` | `rlim` | OC region |
+|------|--------|--------|-----------|
+| Fully left-canonical ([`LeftCanonical`](@ref))  | ``L``   | ``L+1`` | site ``L`` (sentinel: no right-canonical sites) |
+| Fully right-canonical ([`RightCanonical`](@ref)) | ``0``   | ``1``   | — (sentinel: no left-canonical sites) |
+| Bond canonical at bond ``k`` ([`BondCanonical`](@ref)) | ``k`` | ``k+1`` | site ``k`` holds the singular values |
+| Site canonical at site ``k`` ([`SiteCanonical`](@ref)) | ``k-1`` | ``k+1`` | site ``k`` is the un-gauged centre tensor |
+
+!!! note "Mixed canonical vs bond canonical"
+    What the MPS literature calls *mixed canonical form* is bond canonical — singular values
+    sit on a specific bond.  Site canonical is a related but distinct gauging where the centre
+    tensor itself carries the full weight.
 """
 struct CanonicalForm <: AbstractMPSForm
     llim::Int

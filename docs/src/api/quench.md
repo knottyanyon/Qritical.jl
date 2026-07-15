@@ -1,7 +1,5 @@
 # Quench & TEBD Solve Interface
 
-## Physics motivation
-
 A **quantum quench** is the simplest dynamical experiment you can run on a many-body
 system: prepare the system in some initial state ``|\psi_0\rangle`` that is *not* an
 eigenstate of the Hamiltonian ``H``, then let it evolve under ``H`` and watch what
@@ -16,9 +14,7 @@ The canonical initial state for the XXZ quench (Exercise 8) is the **Néel state
 |\psi_0\rangle = |\uparrow\downarrow\uparrow\downarrow\cdots\rangle
 ```
 
-Every site is in a definite ``S^z`` eigenstate, so the Néel state is a simple product
-state — there is no entanglement between any pair of sites. As an MPS this means bond
-dimension ``\chi = 1`` at every bond and zero entanglement entropy at every cut.
+Every site is in a definite ``S^z`` eigenstate, so the Néel state is a simple [`product state`](../references/glossary.md#product-state) — there is no entanglement between any pair of sites. As an [`MPS`](../references/glossary.md#mps) this means [`bond dimension`](../references/glossary.md#bond-dimension) ``\chi = 1`` at every [`bond`](../references/glossary.md#bond) and zero [`entanglement entropy`](../references/glossary.md#entanglement-entropy) at every cut.
 This is convenient not just computationally, but physically: it is as far from a ground
 state as possible, and the subsequent entanglement growth is the phenomenon we want to
 study.
@@ -84,12 +80,46 @@ pass `NoTracker()` (the default) and you pay no overhead.
 
 ---
 
+## Quick Reference
+
+**Types:** [`Quench`](@ref) · [`TEBD`](@ref) · [`NoTracker`](@ref) · [`Tracker`](@ref) · [`QuenchResult`](@ref)
+
+**Functions:** [`neel_state`](@ref) · [`solve`](@ref)
+
+---
+
+## Types
+
+### Initial states
+
 ```@docs
-neel_state
 Quench
+```
+
+### Algorithms
+
+```@docs
 TEBD
+```
+
+### Tracking and results
+
+```@docs
 NoTracker
 Tracker
 QuenchResult
+```
+
+## Functions
+
+### State preparation
+
+```@docs
+neel_state
+```
+
+### Time evolution
+
+```@docs
 solve(H::LatticeOperator, quench::Quench, algo::TEBD, p::ConstantProtocol)
 ```

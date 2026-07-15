@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "f40e901fe9c4f5c0769c474612587bd7601a7dab"
+project_hash = "b82b364e71f111e7892f7a07aa37a06d06c0594d"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "d9aaef7c63466eee4de23b4d9dad03629df54bea"
@@ -580,11 +580,11 @@ git-tree-sha1 = "c9953a03a0049333bec89ac254ea28e86fa7a1a9"
 uuid = "daee34ce-89f3-4625-b898-19384cb65244"
 version = "1.4.1"
 
-[[deps.DotEnv]]
-deps = ["PrecompileTools"]
-git-tree-sha1 = "92e88cb68a5b10545234f46dfaeb2fa8a8a50c45"
-uuid = "4dc1fcf4-5e3b-5448-94ab-0c38ec0385c1"
-version = "1.0.0"
+[[deps.DocumenterMermaid]]
+deps = ["Documenter", "MarkdownAST"]
+git-tree-sha1 = "c0c408289a505a15496d914b19204e272a7e8b0f"
+uuid = "a078cd44-4d9c-4618-b545-3ab9d77f9177"
+version = "0.2.0"
 
 [[deps.Downloads]]
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
@@ -1692,10 +1692,14 @@ uuid = "4b34888f-f399-49d4-9bb3-47ed5cae4e65"
 version = "1.0.2"
 
 [[deps.Qritical]]
-deps = ["Coverage", "DelimitedFiles", "GeometryBasics", "HalfIntegers", "KrylovKit", "LaTeXStrings", "LinearAlgebra", "Logging", "Makie", "Random", "ScopedValues", "Serialization", "SparseArrays", "Statistics", "TensorKit", "TensorOperations"]
+deps = ["Coverage", "DelimitedFiles", "HalfIntegers", "KrylovKit", "LinearAlgebra", "Logging", "Random", "ScopedValues", "Serialization", "SparseArrays", "Statistics", "TensorKit", "TensorOperations"]
 path = "."
 uuid = "4d77d595-865b-4fe8-9046-dbce8046f658"
-version = "0.3.1"
+version = "0.5.0"
+weakdeps = ["Makie"]
+
+    [deps.Qritical.extensions]
+    QriticalMakieExt = "Makie"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]

@@ -1,0 +1,89 @@
+[ Info: generating markdown page from `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/01/ex_01.jl`
+[ Info: writing result to `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/01/ex_01.md`
+[ Info: generating markdown page from `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/02/ex_02.jl`
+[ Info: writing result to `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/02/ex_02.md`
+[ Info: generating markdown page from `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/03/ex_03.jl`
+[ Info: writing result to `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/03/ex_03.md`
+[ Info: generating markdown page from `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/04/ex_04.jl`
+[ Info: writing result to `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/04/ex_04.md`
+[ Info: generating markdown page from `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/05/ex_05.jl`
+[ Info: writing result to `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/05/ex_05.md`
+[ Info: generating markdown page from `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/06/ex_06.jl`
+[ Info: writing result to `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/06/ex_06.md`
+[ Info: generating markdown page from `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/07/ex_07.jl`
+[ Info: writing result to `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/07/ex_07.md`
+[ Info: generating markdown page from `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/08/ex_08.jl`
+[ Info: writing result to `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/08/ex_08.md`
+[ Info: generating markdown page from `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/09/ex_09.jl`
+[ Info: writing result to `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/09/ex_09.md`
+[ Info: generating markdown page from `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/10/ex_10.jl`
+[ Info: writing result to `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/10/ex_10.md`
+[ Info: generating markdown page from `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/11/ex_11.jl`
+[ Info: writing result to `~/Documents/Uni/Courses/26_HTN/Qritical.jl/docs/src/exercises/11/ex_11.md`
+[ Info: Found 58 symbols used in 11 exercises
+[ Info: SetupBuildDirectory: setting up build directory.
+[ Info: Doctest: skipped.
+[ Info: ExpandTemplates: expanding markdown templates.
+[ Info: CollectCitations
+[ Info: ExpandBibliography: expanding `@bibliography` blocks.
+[ Info: ExpandCitations
+[ Info: CrossReferences: building cross-references.
+┌ Warning: Cannot resolve @ref for md"[`QTensor`](@ref)" in src/api/svd.md.
+│ - Header with slug 'QTensor' is not unique in src/api/svd.md.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: Cannot resolve @ref for md"[`QTensor`](@ref)" in src/api/io.md.
+│ - Header with slug 'QTensor' is not unique in src/api/io.md.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: invalid local link/image: file does not exist in src/api/index_layer.md
+│   link =
+│    @ast MarkdownAST.Link("/api/qtensor.md", "") do
+│      MarkdownAST.Code("QTensor")
+│    end
+│    
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+┌ Warning: invalid local link/image: file does not exist in src/getting_started/indexed_tensor.md
+│   link =
+│    @ast MarkdownAST.Link("/api/qtensor.md", "") do
+│      MarkdownAST.Text("QTensor API documentation")
+│    end
+│    
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+[ Info: CheckDocument: running document checks.
+┌ Warning: 21 docstrings not included in the manual:
+│ 
+│     Qritical._assemble_qtensors :: Tuple{Any, Any, Any, Any, Bipartition}
+│     Qritical.Hamiltonian
+│     Base.getindex :: Tuple{QTensor, Vararg{Any}}
+│     Qritical._build_spectrum_and_center :: Tuple{AbstractVector{<:Real}, Float64, QTensor}
+│     Base.size :: Tuple{QTensor}
+│     Qritical._autolabel :: Tuple{Tuple{Vararg{AbstractIx}}}
+│     Qritical.center :: Tuple{SchmidtSpectrum}
+│     Base.strides :: Tuple{QTensor}
+│     Qritical._compute_svd_factors :: Tuple{QTensor, Bipartition, AbstractTrunc}
+│     Base.:* :: Tuple{Real, LatticeOperator}
+│     Qritical.parameter_sweep :: Tuple{Any, Any}
+│     Base.setindex! :: Tuple{QTensor, Any, Vararg{Any}}
+│     Base.:+ :: Tuple{FiniteMPS, FiniteMPS}
+│     Base.:+ :: Tuple{LatticeOperator, LatticeOperator}
+│     Base.IndexStyle :: Union{Tuple{Type{QTensor{E, O, D}}}, Tuple{D}, Tuple{O}, Tuple{E}} where {E, O, D}
+│     Base.unsafe_convert :: Union{Tuple{Element}, Tuple{Type{Ptr{Element}}, QTensor{Element, Order, D} where {Order, D<:AbstractArray{Element, Order}}}} where Element
+│     Qritical._scale :: Tuple{FiniteMPS, Number}
+│     Qritical._truncate_singular_values :: Tuple{AbstractVector{<:Real}, NoTrunc}
+│     Base.length :: Tuple{SingValSpectrum}
+│     Qritical._recompress_left :: Tuple{FiniteMPS, AbstractTrunc}
+│     TensorOperations.tensorstructure :: Tuple{QTensor, Int64, Bool}
+│ 
+│ These are docstrings in the checked modules (configured with the modules keyword)
+│ that are not included in canonical @docs or @autodocs blocks.
+└ @ Documenter ~/.julia/packages/Documenter/AXNMp/src/utilities/utilities.jl:49
+[ Info: Populate: populating indices.
+[ Info: RenderDocument: rendering document.
+[ Info: HTMLWriter: rendering HTML pages.
+┌ Warning: Unable to determine the repository root URL for the navbar link.
+│ This can happen when a string is passed to the `repo` keyword of `makedocs`.
+│ 
+│ To remove this warning, either pass a Remotes.Remote object to `repo` to completely
+│ specify the remote repository, or explicitly set the remote URL by setting `repolink`
+│ via `makedocs(format = HTML(repolink = "..."), ...)`.
+└ @ Documenter.HTMLWriter ~/.julia/packages/Documenter/AXNMp/src/html/HTMLWriter.jl:833
+[ Info: Automatic `version="0.5.0"` for inventory from ../Project.toml

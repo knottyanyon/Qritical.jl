@@ -1,11 +1,9 @@
 # TEBD & Suzuki-Trotter Time Evolution
 
-## Physics motivation
-
-**Time-Evolving Block Decimation (TEBD)** is the workhorse algorithm for time-evolving
-an MPS under a nearest-neighbour Hamiltonian. The core idea is to approximate the
+**[`Time-Evolving Block Decimation`](../references/glossary.md#time-evolving-block-decimation)** ([`TEBD`](../references/glossary.md#tebd)) is the workhorse algorithm for time-evolving
+an [`MPS`](../references/glossary.md#mps) under a nearest-neighbour Hamiltonian. The core idea is to approximate the
 global time-evolution operator ``e^{-i\Delta t H}`` as a product of cheap two-site
-gates — one gate per bond — using a **Suzuki-Trotter product formula**.
+gates — one gate per [`bond`](../references/glossary.md#bond) — using a **Suzuki-Trotter product formula**.
 
 ### Why the Trotter decomposition works
 
@@ -94,21 +92,59 @@ through each neighbouring bond.
 
 ---
 
+## Quick Reference
+
+**Time axis:** [`TimeAxis`](@ref) · [`RealTime`](@ref) · [`ImaginaryTime`](@ref)
+
+**Gate types:** [`Unitary`](@ref) · [`HermitianPSD`](@ref) · [`Propagator`](@ref) · [`ConstantProtocol`](@ref)
+
+**Trotter:** [`TrotterSubstep`](@ref) · [`SuzukiTrotter`](@ref)
+
+**Functions:** [`opclass`](@ref) · [`gate`](@ref) · [`apply_gate`](@ref) · [`bond_hamiltonian`](@ref) · [`total_time`](@ref) · [`trotter_steps`](@ref) · [`trotter_step`](@ref)
+
+---
+
+## Types
+
+### Time axis
+
 ```@docs
 TimeAxis
 RealTime
 ImaginaryTime
+```
+
+### Gate properties and propagators
+
+```@docs
 Unitary
 HermitianPSD
 Propagator
-opclass
-gate
 ConstantProtocol
-total_time
-bond_hamiltonian
-apply_gate
 TrotterSubstep
 SuzukiTrotter
+```
+
+## Functions
+
+### Gate construction and application
+
+```@docs
+opclass
+gate
+apply_gate
+```
+
+### Hamiltonian preparation
+
+```@docs
+bond_hamiltonian
+total_time
+```
+
+### Trotter stepping
+
+```@docs
 trotter_steps
 trotter_step
 ```

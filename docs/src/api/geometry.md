@@ -1,7 +1,5 @@
 # Geometry
 
-## Physics motivation
-
 A **geometry** answers exactly two questions: which sites exist, and which sites are
 connected by bonds. This minimal interface is all that the Hamiltonian builder (§5/§7)
 and the MPO constructor (§6) consume, so swapping a 1D open chain for a periodic chain
@@ -19,9 +17,24 @@ works unchanged.
 
 ---
 
+## Quick Reference
+
+**Types:** [`AbstractGeometry`](@ref) · [`Chain`](@ref)
+
+**Functions:** [`sites`](@ref) · [`bonds`](@ref)
+
+---
+
+## Types
+
 ```@docs
 AbstractGeometry
 Chain
+```
+
+## Functions
+
+```@docs
 sites
 bonds
 ```
