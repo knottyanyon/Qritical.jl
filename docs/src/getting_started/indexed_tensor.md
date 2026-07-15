@@ -17,7 +17,10 @@ Every leg is described by a concrete subtype of [`AbstractIx`](@ref). Two interf
 
 [`TIx{L}`](@ref) is the workhorse index type. The type parameter `L` is either `Upper` or `Lower`, encoding whether the index sits in superscript (contravariant) or subscript (covariant) position. This is a **type-level** distinction: `TIx{Upper}` and `TIx{Lower}` are different types, so matching them up for contraction can be resolved by the compiler.
 
-Use the constructor helpers `upper` and `lower` instead of the parametric form directly:
+!!! tip "Use the constructor helpers"
+    Prefer `upper` and `lower` over the parametric form `TIx{Upper}(...)` / `TIx{Lower}(...)` directly — they are shorter, read like the diagram, and make the variance immediately visible at the call site.
+
+In Julia a **symbol** is an interned identifier written with a leading colon, such as `:σ` or `:αL`. Symbols are the natural choice for index labels: they are lightweight, comparable in O(1), and display exactly as written. You create one simply by typing `:name`.
 
 ```jldoctest tix
 julia> using Qritical
@@ -45,17 +48,7 @@ julia> upper(:α, 4) == upper(:α, 4)
 true
 ```
 
-The inner constructor rejects non-positive dimensions immediately:
-
-```jldoctest
-julia> using Qritical
-
-julia> TIx{Upper}(:σ, 0)
-ERROR: ArgumentError: TIx ndim must be positive, got 0
-[...]
-```
-
-To build several indices of the same position at once, use [`uppers`](@ref) or [`lowers`](@ref):
+To build multiple upper or lower indices with different labels at once, use [`uppers`](@ref) or [`lowers`](@ref):
 
 ```jldoctest
 julia> using Qritical
@@ -67,7 +60,8 @@ julia> ndim(vL)
 1
 ```
 
-A dimension-1 virtual index appears at the open boundaries of a finite MPS, where the bond space is trivial.
+!!! note
+    A dimension-1 virtual index appears at the open boundaries of a finite MPS, where the bond space is trivial.
 
 ### `MulTIx` — a composite index
 

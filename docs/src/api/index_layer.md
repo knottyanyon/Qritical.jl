@@ -37,6 +37,16 @@ Lower
 TIx
 ```
 
+The inner constructor rejects non-positive dimensions at construction time:
+
+```jldoctest
+julia> using Qritical
+
+julia> TIx{Upper}(:σ, 0)
+ERROR: ArgumentError: TIx ndim must be positive, got 0
+[...]
+```
+
 ### Multi-index (fused leg)
 
 ```@docs

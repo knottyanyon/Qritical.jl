@@ -13,4 +13,4 @@ with_backend(:tensorkit) do
 end
 ```
 
-**Current status:** `:native` is the only active backend. `with_backend` and `current_backend` are not yet implemented — the `backend.jl` source file and `BondIndex` sector information needed to construct symmetry-aware TensorKit spaces are deferred to a future milestone. The plan is in `CORE_DESIGN_JL.md` (in `.claude/design_plans/`).
+**Current status:** `:native` is the only active backend. `with_backend` and `current_backend` are not yet implemented — the `backend.jl` source file and `BondIndex` sector information needed to construct symmetry-aware TensorKit spaces are deferred to a future milestone. The plan is in the active milestone files under `planning/active/`.

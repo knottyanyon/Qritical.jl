@@ -194,6 +194,8 @@ makedocs(;
         "Getting Started" => [
             "Overview" => "getting_started/index.md",
             "Installation" => "getting_started/installation.md",
+            "Introduction: Legs & Indices" => "getting_started/introduction.md",
+            "Indices and QTensor" => "getting_started/indexed_tensor.md",
             "GS-1: Tensors & Indices" => "getting_started/gs1_tensors_and_indices.md",
             "GS-2: SVD & Truncation" => "getting_started/gs2_svd_and_truncation.md",
             "GS-3: Drawing Tensor Networks" => "getting_started/gs3_drawing_tensor_networks.md",

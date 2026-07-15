@@ -87,3 +87,23 @@ identity_operator
 ```@docs
 matrix_repr(H::LatticeOperator)
 ```
+
+!!! warning "Julia column-major trap when building kron comparisons"
+    When verifying MPS expectation values against a brute-force full-matrix calculation,
+    the kron order matters and is easy to get backwards.
+
+    Sequential MPS contraction places **site 1 as the least-significant index** (varies
+    fastest in memory, Julia's column-major convention). `kron(full_op, op_i)` appends
+    `op_i` as the *most*-significant factor — the opposite ordering — producing a silent
+    sign error.
+
+    The correct pattern is:
+
+    ```julia
+    # Embed op_i at site i in the full Hilbert space
+    full = kron(op_i, I_rest)   # op_i is least-significant: matches MPS site-1-first layout
+    ```
+
+    In other words, **grow the kron product outward** (`kron(op_i, full_op)`) so that
+    the first site remains the fastest-varying index. `matrix_repr` applies this
+    convention internally; replicate it whenever you build reference matrices by hand.
