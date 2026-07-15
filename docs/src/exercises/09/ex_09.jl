@@ -7,6 +7,12 @@ println("MBL study: L=$L spin-½ chain")
 
 # # Ex 9. Many-Body Localization and Imaginary-Time Ground State
 #
+# **Week 9 — two faces of "how entangled is the state?"** The unifying theme is the
+# **area law**. A gapped 1D ground state is entangled only near a cut — its entropy
+# is bounded by a *constant*, so a modest bond dimension captures it (this is *why*
+# MPS/DMRG work). A generic quenched state instead fills with entanglement
+# ballistically (Week 8). This week probes both boundaries of that picture.
+#
 # Two problems in one:
 #
 # **Part A — Imaginary-time TEBD** finds the ground state of the clean XXZ chain by
@@ -16,11 +22,28 @@ println("MBL study: L=$L spin-½ chain")
 # **Part B — MBL disorder** adds random on-site fields $h_i \in [-W, W]$ to the Hamiltonian.
 # Above the MBL critical disorder $W_c \approx 3.5$, all eigenstates localize and entanglement
 # growth saturates to an area law instead of growing linearly.
+#
+# !!! info "Why the ground state is 'easy' — the area law"
+#     Ground states of gapped, short-range 1D Hamiltonians obey
+#     $S_{A|B}\lesssim\text{const}$ (only $S\sim\log L$ at criticality). Since the
+#     bond dimension needed scales as $D\sim 2^{S}$, it stays **bounded** — the
+#     relevant corner of the exponentially large Hilbert space is compressible.
+#     That is the entire reason a fixed $D=32$ below can represent the ground state
+#     of a chain whose full Hilbert space has $2^{10}$ dimensions.
 
 # ## Part A — Ground state via imaginary-time evolution
 #
 # $e^{-H\tau}$ projects out excited states exponentially in $\tau$.
 # After sufficient imaginary time, the normalized state converges to $|E_0\rangle$.
+#
+# !!! note "Imaginary-time cooling is variational and monotone"
+#     Each excited component decays as $e^{-(E_n-E_0)\tau}$ relative to the ground
+#     state, so $E(\tau)=\langle H\rangle/\langle\psi|\psi\rangle$ falls
+#     **monotonically toward $E_0$ from above** — it is a variational upper bound at
+#     every step. Two error sources keep it slightly above the exact ED value: the
+#     finite Trotter step $d\tau$ and the bond-dimension cap $D$. The convergence
+#     curve below is therefore also a diagnostic: a plateau *above* the ED line
+#     means $D$ or $d\tau$ is limiting you, not the imaginary time.
 
 H_clean = XXZ(g; J=1.0, Jz=1.0, h=0.0)   # isotropic Heisenberg
 W_clean = MPO(H_clean)
@@ -67,6 +90,23 @@ fig
 # `disorder_realization(L, Uniform(-W, W), rng)` draws $L$ random on-site fields.
 # Passing the field vector to `XXZ(g; h=h_vec)` builds the disordered Hamiltonian.
 # We monitor the entanglement entropy of the final state vs disorder strength $W$.
+#
+# !!! info "What many-body localization is — and what this probe sees"
+#     In a clean interacting chain, generic eigenstates are **thermal**: they obey
+#     the eigenstate thermalisation hypothesis (ETH) and carry *volume-law*
+#     entanglement. Strong random fields can defeat this — the system fails to act
+#     as its own heat bath, conserved *quasi-local* integrals of motion (the
+#     "l-bits") emerge, and eigenstates localise with only *area-law* entanglement.
+#     For the random-field Heisenberg chain this thermal→MBL transition sits near
+#     $W_c\approx 3.5$. Strictly that is a statement about *highly excited*
+#     eigenstates; here we use the cheaper **ground-state** entanglement as a proxy,
+#     watching disorder progressively suppress it as the state localises.
+#
+# !!! warning "Disorder means averaging"
+#     A single random field draw is not representative — MBL observables have large
+#     sample-to-sample fluctuations, so every quantity must be **averaged over
+#     disorder realisations** (distinct `seed`s). A handful suffices to see the
+#     trend; publication-quality curves need tens to hundreds.
 
 function gs_entropy_disordered(L, W, D=24; dτ=0.05, nsteps=50, seed=42)
     rng  = MersenneTwister(seed)
@@ -116,6 +156,10 @@ vlines!(ax2, [3.5]; color=:crimson, linestyle=:dash, label="Wc ≈ 3.5")
 axislegend(ax2)
 fig2
 
+# Finally, the same imaginary-time ground-state search expressed through the
+# high-level `solve` interface: the hand-rolled Trotter loop of Part A packaged as
+# a `Quench` problem with a `TEBD` method and a `ConstantProtocol`. This is the
+# production-facing API — the manual loop above shows what it does under the hood.
 # Imaginary-time ground state via the high-level solve interface.
 # ψ₀ is a plain canonical MPS; ConstantProtocol carries axis, dt, nsteps and H.
 rng_ref = MersenneTwister(1)

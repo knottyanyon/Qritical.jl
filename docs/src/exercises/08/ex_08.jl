@@ -12,6 +12,14 @@ println("Chain lengths: ", L_values, "  dt=$dt  nsteps=$nsteps  D=$D  T=", dt*ns
 
 # # Ex 8. Real-Time TEBD: Néel Quench under XXZ
 #
+# **Week 8 — the payoff of the whole time-evolution track.** Weeks 6–7 built the
+# machinery (MPO, gates, Trotter steps); this week we point it at a genuine
+# non-equilibrium problem — a **quantum quench**. Prepare a simple product state
+# that is *not* an eigenstate of $H$, switch $H$ on, and watch it relax. This is the
+# real-time twin of the imaginary-time (finite-temperature) evolution that Week 8's
+# reading (Schollwöck §7.2) covers: the same TEBD engine, run along the real axis
+# instead of the imaginary one.
+#
 # We start the Néel product state $|\uparrow\downarrow\uparrow\downarrow\cdots\rangle$
 # and quench under the XXZ Hamiltonian.  Two signatures of many-body dynamics are
 # monitored:
@@ -19,9 +27,23 @@ println("Chain lengths: ", L_values, "  dt=$dt  nsteps=$nsteps  D=$D  T=", dt*ns
 #   decays from its initial value $-L/2$ as spins begin to flip.
 # - **Entanglement entropy** $S(t)$ at the central bond grows linearly with time
 #   (ballistic spreading of entanglement).
+#
+# !!! info "Why the entropy grows linearly — the entanglement light cone"
+#     The quench injects energy locally and sets off correlations that spread at a
+#     finite maximum speed (the **Lieb–Robinson** velocity) — an emergent "light
+#     cone" for a non-relativistic lattice. Across the central cut, the number of
+#     entangled quasiparticle pairs straddling the bond grows linearly in time, so
+#     the entanglement entropy climbs like $S(t)\approx v_E\,t$. That linear growth
+#     is exactly what makes real-time evolution *hard*: the required bond dimension
+#     is $\chi\sim 2^{S(t)}\sim e^{v_E t}$, so a fixed cap $D$ can only follow the
+#     dynamics up to a finite time — the "entanglement barrier" that bounds every
+#     TEBD simulation.
 
 # For each L: build Néel state, run TEBD, record Mstag and central-bond entropy.
 # Both observables are computed in one pass — no need to re-run the evolution.
+# We sweep several chain lengths so the *finite-size* fingerprints (below) are
+# visible: short chains equilibrate and revive sooner, and their entropy saturates
+# earlier because their maximal Schmidt rank $2^{L/2}$ is smaller than the cap $D$.
 Mstag_data = Dict{Int, Vector{Float64}}()
 S_data     = Dict{Int, Vector{Float64}}()
 times      = dt .* (0:nsteps)   # include t=0
@@ -87,6 +109,12 @@ end
 axislegend(ax2; position=:lt)
 fig2
 
+# **Extracting the entanglement velocity.** The slope of $S(t)$ at short times *is*
+# the entanglement velocity $v_E$ — a physical rate set by the model, not the
+# algorithm. Because it is a property of the bulk dynamics, it should be essentially
+# **$L$-independent**: every chain grows entanglement at the same rate until finite
+# size or the bond cap intervenes. We fit a straight line over the first ten steps
+# ($t\in[0.1,1.0]$), skipping $t=0$ where $S=0$ holds trivially.
 # Short-time entanglement velocity: S(t) ≈ vₑ·t (ballistic spreading).
 # Fit over the first 10 steps (t=0.1..1.0), excluding t=0 where S=0 trivially.
 println("Short-time entanglement velocities (linear fit, t ∈ [0.1, 1.0]):")
@@ -98,12 +126,24 @@ for L in L_values
     println("  L=$L:  vₑ ≈ ", round(v_E; sigdigits=3), " bits/time")
 end
 
-# Key design choices:
-# - The old notebook ran TEBD twice per L (once via solve(…, tracker=…), once in the entropy loop) — the new code does a single manual Trotter loop that computes both observables in one pass.
-# - times now starts at t=0 (product state as the zeroth point), so the initial Mstag = −L/2 and S=0 anchor is visible in the plots.
-# - Each chain length gets a distinct color from the palette dict so the legend is unambiguous.
+# !!! note "Reading the finite-size fingerprints"
+#     Two effects are worth hunting for in the plots:
+#       1. **Staggered magnetisation** decays *faster* for smaller $L$: a small
+#          system equilibrates sooner, and once a correlation front has traversed
+#          the chain and reflected off the boundaries it can **revive**, visible for
+#          the shortest chains within $t\lesssim 3$.
+#       2. **Entanglement entropy** grows at the *same* short-time slope $v_E$ for
+#          every $L$ (the velocity is a bulk property), but **saturates earlier** for
+#          shorter chains, because the accessible entropy is capped at
+#          $\log_2\min(2^{L/2}, D)$. This is why $D=64$ is irrelevant for $L=4$
+#          (maximal Schmidt rank $2^{2}=4$) yet actively limits $L=12$.
 #
-# ★ Insight ─────────────────────────────────────
-# Finite-size effects to look for in the plots: (1) Mstag decays faster for smaller L because the finite system equilibrates sooner — for very small L the revival is visible within t=3. (2) Entropy grows linearly at short times at the same rate across all L (same entanglement velocity vₑ), but saturates earlier for smaller L once the bond dimension is capped by min(2^(L/2), D) — this is how D=64 becomes irrelevant for L=4 (max Schmidt rank = 4) while mattering for L=12.
+# !!! info "Implementation note: one pass, two observables"
+#     $M_{\rm stag}(t)$ and $S(t)$ are read off the *same* evolved state each step —
+#     the staggered magnetisation from an MPO expectation value, the entropy straight
+#     from the central bond's Schmidt spectrum after re-centring with
+#     `BondCanonical(L÷2)`. Running the Trotter loop once and harvesting both avoids
+#     evolving the state twice, and starting `times` at $t=0$ anchors the plots at
+#     the exact product-state values $M_{\rm stag}(0)=-L/2$, $S(0)=0$.
 
 #

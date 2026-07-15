@@ -1,4 +1,14 @@
 # # Ex 10. A Toy ED Code
+#
+# **Week 10 — the ground-truth reference.** Every tensor-network result so far has
+# been checked against "ED" — exact diagonalisation. This week we build that
+# reference ourselves, the honest way: embed the single-site spin operators into the
+# full $2^{L}$-dimensional Hilbert space with Kronecker products, assemble the XXZ
+# Hamiltonian as a (sparse) matrix, and hand it to a dense/sparse eigensolver. No
+# approximation, no bond dimension — and therefore no escape from the exponential
+# wall at $L\gtrsim 16$. That wall is *why* MPS exists; meeting it here, in a few
+# lines of `kron`, is the point of the exercise. Everything below doubles as the
+# oracle the earlier notebooks quietly rely on.
 
 # making sure that the correct julia project is activated instead of the current directory so all exports are available.
 

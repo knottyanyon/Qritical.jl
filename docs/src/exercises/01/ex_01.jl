@@ -5,6 +5,18 @@
 # **Does this survive a GitHub Pages build?** #src
 # Yes. When Documenter.jl runs in CI (via `docs/make.jl`), it activates the same `docs/` environment before processing any notebooks or Literate scripts. The `@__DIR__` macro expands to the *source location of the file being evaluated at runtime*, so it correctly resolves to `docs/` both on your local machine and inside the CI runner — your absolute local path never leaks into the build artefacts. #src
 
+# # Ex 1. SVD, Schmidt Rank, and Truncation
+#
+# **Week 1 — the foundation the whole course rests on.** Every later exercise —
+# canonical forms, MPS, TEBD, DMRG — is ultimately a disciplined sequence of
+# singular value decompositions. So Week 1 builds the intuition in miniature: SVD a
+# matrix, read its **Schmidt rank**, throw away small singular values and measure
+# what that costs, then watch the *same* operation act on a quantum state (where the
+# singular values become entanglement) and on an image (where they become
+# compressibility). The punchline that recurs for the rest of the course: a rapidly
+# decaying singular-value spectrum means the object is *compressible*, and that is
+# exactly when tensor-network methods win.
+
 # # 1. Julia install party
 
 # !!! question "Julia install party"
@@ -22,7 +34,14 @@ println("Qritical loaded: ", Qritical)
 const DATA_ROOT = normpath(joinpath(@__FILE__, "..", "..", "data"));
 
 # # 2. SVD a matrix
-
+#
+# ```@raw html
+# <div style="text-align: center">
+# <img src="../1_light.svg" class="docs-light-only" width="100%"/>
+# <img src="../1_dark.svg" class="docs-dark-only" width="100%"/>
+# </div>
+# ```
+#
 # !!! question "SVD a matrix"
 #     Perform an SVD on the matrix ``A`` in `A.txt` and find the Schmidt rank needed if singular values below ``10^{-3}`` are discarded.
 
@@ -46,27 +65,18 @@ i_row = upper(:i, nrows);
 j_col = lower(:j, ncols);
 @show i_row, j_col;
 
-# ### What exactly is a `QTensor`?
+# create a QTensor object with the index legs
+A = QTensor(A_mat, (i_row, j_col));
+
+# !!! info "What exactly is a `QTensor`?"
+#     A `QTensor` is, at its core, a physics-flavoured wrapper around a plain Julia array.Think of it as a named-index tensor in the sense that tensor network practitioners use the word — a multidimensional array where each axis (called a **leg**) is tagged with a name and a direction.
 #
-# A `QTensor` is, at its core, a physics-flavoured wrapper around a plain Julia array.
-# Think of it as a named-index tensor in the sense that tensor network practitioners use
-# the word — a multidimensional array where each axis (called a **leg**) is tagged with
-# a name and a direction.
+#     The two flavours of direction are: 
+#       - **Upper** — created with `upper(:name, dim)`, conventionally drawn as an upward-pointing index in Penrose notation, playing the role of a "ket" or "column" space
+#       - **Lower** — created with `lower(:name, dim)`, playing the role of a "bra" or "row" space
+
 #
-# The two flavours of direction are:
-# - **Upper** — created with `upper(:name, dim)`, conventionally drawn as an upward-pointing
-#   index in Penrose notation, playing the role of a "ket" or "column" space
-# - **Lower** — created with `lower(:name, dim)`, playing the role of a "bra" or "row" space
-#
-# The tensor-network diagram for `A` — a valence-2 tensor with row leg `i` (`Upper`)
-# and column leg `j` (`Lower`):
-#
-# ```@raw html
-# <div style="text-align: center">
-# <img src="../1_light.svg" class="docs-light-only" width="60%"/>
-# <img src="../1_dark.svg" class="docs-dark-only" width="60%"/>
-# </div>
-# ```
+
 #
 # If you're now reaching for your general relativity textbook thinking "covariant
 # transformation laws, cotangent bundles, pullbacks..." — you can put it back on the shelf.
@@ -88,9 +98,6 @@ j_col = lower(:j, ncols);
 # Under the hood the backing storage is a plain `Array{T,N}`, accessible via `.data`, so
 # every Julia linear algebra and broadcasting primitive still works when you need to drop
 # down to the raw array.
-
-# create a QTensor object with the index legs
-A = QTensor(A_mat, (i_row, j_col));
 
 # ### Bipartitions for a matrix — and why we keep it simple here
 #
@@ -410,7 +417,6 @@ end
 axislegend(ax_q; position=:rt)
 axislegend(ax_s; position=:lt)
 display(fig3)
-# @ insert another cell below it showing the SVD of a different image where we won't be able to compress much like what we were able to do with this bakhauv image. use any suitable picture from the internet that clearly shows with the SVD truncation that we cannot get rid of a lot of singular values like how we did conveniently with the bakhauv and still managed to capture the details of the picture as much as possible even after throwing out a lot of useless singular values. but there are also situations where a lot of the singular values are meaningful and can't be thrown away without losing important information about the structure.
 
 # ### Counter-example: some images simply don't compress
 #
