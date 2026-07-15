@@ -1,24 +1,32 @@
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 version: 2
 updates:
+  # GitHub Actions — weekly, all bumps in one PR
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-    # To group all GitHub Actions updates into a single PR, uncomment the following:
-    # groups:
-    #   github-actions:
-    #     patterns:
-    #       - "*"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Root Julia project — monthly, all bumps in one PR
   - package-ecosystem: "julia"
-    directories:
-      - "/"
-      - "/docs"
-      - "/test"
+    directory: "/"
     schedule:
-      interval: "weekly"
-    # To group all Julia dependency updates into a single PR, uncomment the following:
-    # groups:
-    #   julia-dependencies:
-    #     patterns:
-    #       - "*"
+      interval: "monthly"
+    groups:
+      julia-deps:
+        patterns:
+          - "*"
+
+  # Docs Julia project — monthly, all bumps in one PR
+  - package-ecosystem: "julia"
+    directory: "/docs"
+    schedule:
+      interval: "monthly"
+    groups:
+      julia-docs-deps:
+        patterns:
+          - "*"
