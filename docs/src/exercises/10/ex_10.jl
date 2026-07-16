@@ -12,8 +12,9 @@
 
 # making sure that the correct julia project is activated instead of the current directory so all exports are available.
 
-using Qritical 
+using Qritical
 using LinearAlgebra
+using Random
 using SparseArrays # stdlib module support for sparse vectors and sparse matrices
 # arpack
 
