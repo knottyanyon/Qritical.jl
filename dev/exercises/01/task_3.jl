@@ -21,20 +21,20 @@ N = ndims(ψ)
 # Using `Symbol(:s, i)` gives labels `:s1, :s2, …, :s10`.
 
 sites = [upper(Symbol(:s, i), 2) for i in 1:N]
-A     = IndexedTensor(ψ, Tuple(sites))
+A     = QTensor(ψ, Tuple(sites))
 #--
 
 # ## Part (a) — bipartition after the first site (1 | 9)
 
 bp_a  = bipartition(Partition(sites[1]), A)
-res_a = tensor_svd(A, bp_a, KeepAbove(1e-6); normalize=true)
+res_a = do_svd(A, bp_a, ValCutoffTrunc(1e-6); normalize=true)
 (bipartition = "1 | 9", Schmidt_rank = size(res_a.Σ.data, 1))
 #--
 
 # ## Part (b) — bipartition at the middle (5 | 5)
 
 bp_b  = bipartition(Partition(sites[1:N÷2]...), A)
-res_b = tensor_svd(A, bp_b, KeepAbove(1e-6); normalize=true)
+res_b = do_svd(A, bp_b, ValCutoffTrunc(1e-6); normalize=true)
 (bipartition = "5 | 5", Schmidt_rank = size(res_b.Σ.data, 1))
 #--
 
@@ -68,7 +68,7 @@ end
 
 entropies = map(1:N-1) do i
     bp  = bipartition(Partition(sites[1:i]...), A)
-    res = tensor_svd(A, bp, KeepMachineEps(); normalize=true)
+    res = do_svd(A, bp, KeepMachineEps(); normalize=true)
     entanglement_entropy(diag(res.Σ.data))
 end
 

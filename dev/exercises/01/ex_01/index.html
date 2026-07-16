@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Exercise 01 · Qritical.jl</title><meta name="title" content="Exercise 01 · Qritical.jl"/><meta property="og:title" content="Exercise 01 · Qritical.jl"/><meta property="twitter:title" content="Exercise 01 · Qritical.jl"/><meta name="description" content="Documentation for Qritical.jl."/><meta property="og:description" content="Documentation for Qritical.jl."/><meta property="twitter:description" content="Documentation for Qritical.jl."/><meta property="og:url" content="https://knottyanyon.github.io/Qritical.jl/exercises/01/ex_01/"/><meta property="twitter:url" content="https://knottyanyon.github.io/Qritical.jl/exercises/01/ex_01/"/><link rel="canonical" href="https://knottyanyon.github.io/Qritical.jl/exercises/01/ex_01/"/><script data-outdated-warner src="../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../search_index.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script><link href="../../../assets/favicon.svg" rel="icon" type="image/x-icon"/><link href="../../../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../../../assets/output-fold.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../../"><img src="../../../assets/logo.svg" alt="Qritical.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../../">Qritical.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../../">Home</a></li><li><span class="tocitem">Getting Started</span><ul><li><a class="tocitem" href="../../../getting_started/">Overview</a></li><li><a class="tocitem" href="../../../getting_started/installation/">Installation</a></li><li><a class="tocitem" href="../../../getting_started/introduction/">Introduction: Legs &amp; Indices</a></li><li><a class="tocitem" href="../../../getting_started/indexed_tensor/">Indices and QTensor</a></li><li><a class="tocitem" href="../../../getting_started/gs1_tensors_and_indices/">GS-1: Tensors &amp; Indices</a></li><li><a class="tocitem" href="../../../getting_started/gs2_svd_and_truncation/">GS-2: SVD &amp; Truncation</a></li><li><a class="tocitem" href="../../../getting_started/gs3_drawing_tensor_networks/">GS-3: Drawing Tensor Networks</a></li></ul></li><li><span class="tocitem">Exercises</span><ul><li class="is-active"><a class="tocitem" href>Exercise 01</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#1.-Julia-install-party"><span>1. Julia install party</span></a></li><li class="toplevel"><a class="tocitem" href="#2.-SVD-a-matrix"><span>2. SVD a matrix</span></a></li><li><a class="tocitem" href="#(c)-SVD-a-state-—-psi.jls"><span>(c) SVD a state — <code>psi.jls</code></span></a></li><li><a class="tocitem" href="#(d)-SVD-image-compression-—-Bahkauv.png"><span>(d) SVD image compression — <code>Bahkauv.png</code></span></a></li><li><a class="tocitem" href="#(e)-Matrix-contractions-—-naive-triple-loop-vs-BLAS"><span>(e) Matrix contractions — naive triple-loop vs BLAS</span></a></li></ul></li><li><a class="tocitem" href="../../02/ex_02/">Exercise 02</a></li><li><a class="tocitem" href="../../03/ex_03/">Exercise 03</a></li><li><a class="tocitem" href="../../04/ex_04/">Exercise 04</a></li><li><a class="tocitem" href="../../05/ex_05/">Exercise 05</a></li><li><a class="tocitem" href="../../06/ex_06/">Exercise 06</a></li><li><a class="tocitem" href="../../07/ex_07/">Exercise 07</a></li><li><a class="tocitem" href="../../08/ex_08/">Exercise 08</a></li><li><a class="tocitem" href="../../09/ex_09/">Exercise 09</a></li><li><a class="tocitem" href="../../10/ex_10/">Exercise 10</a></li><li><a class="tocitem" href="../../11/ex_11/">Exercise 11</a></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../../api/index_layer/">Index Layer</a></li><li><a class="tocitem" href="../../../api/qtensor/">QTensor</a></li><li><a class="tocitem" href="../../../api/svd/">SVD &amp; Truncation</a></li><li><a class="tocitem" href="../../../api/spectrum/">Spectra &amp; Entanglement</a></li><li><a class="tocitem" href="../../../api/io/">State Utilities &amp; I/O</a></li><li><a class="tocitem" href="../../../api/mps/">MPS &amp; Canonical Forms</a></li><li><a class="tocitem" href="../../../api/geometry/">Geometry</a></li><li><a class="tocitem" href="../../../api/dof/">Degrees of Freedom</a></li><li><a class="tocitem" href="../../../api/operator/">Operators &amp; Hamiltonians</a></li><li><a class="tocitem" href="../../../api/mpo/">MPO &amp; Expectation Values</a></li><li><a class="tocitem" href="../../../api/power_method/">Power Method</a></li><li><a class="tocitem" href="../../../api/tebd/">TEBD</a></li><li><a class="tocitem" href="../../../api/quench/">Quench &amp; TEBD Solve</a></li><li><a class="tocitem" href="../../../api/storage_format/">Storage Formats</a></li><li><a class="tocitem" href="../../../api/ed/">ExactDiagonalization</a></li><li><a class="tocitem" href="../../../api/ed_time/">ED Time Propagation</a></li><li><a class="tocitem" href="../../../api/disorder/">Disorder</a></li><li><a class="tocitem" href="../../../api/visualization/">Visualisation</a></li></ul></li><li><span class="tocitem">References</span><ul><li><a class="tocitem" href="../../../references/glossary/">Glossary</a></li></ul></li></ul><div class="docs-version-selector field has-addons visible"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"><option value="#" selected="selected">0.6.1</option></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Exercises</a></li><li class="is-active"><a href>Exercise 01</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Exercise 01</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Ex-1.-SVD,-Schmidt-Rank,-and-Truncation"><a class="docs-heading-anchor" href="#Ex-1.-SVD,-Schmidt-Rank,-and-Truncation">Ex 1. SVD, Schmidt Rank, and Truncation</a><a id="Ex-1.-SVD,-Schmidt-Rank,-and-Truncation-1"></a><a class="docs-heading-anchor-permalink" href="#Ex-1.-SVD,-Schmidt-Rank,-and-Truncation" title="Permalink"></a></h1><p><strong>Week 1 — the foundation the whole course rests on.</strong> Every later exercise — canonical forms, MPS, TEBD, DMRG — is ultimately a disciplined sequence of singular value decompositions. So Week 1 builds the intuition in miniature: SVD a matrix, read its <strong>Schmidt rank</strong>, throw away small singular values and measure what that costs, then watch the <em>same</em> operation act on a quantum state (where the singular values become entanglement) and on an image (where they become compressibility). The punchline that recurs for the rest of the course: a rapidly decaying singular-value spectrum means the object is <em>compressible</em>, and that is exactly when tensor-network methods win.</p><h1 id="1.-Julia-install-party"><a class="docs-heading-anchor" href="#1.-Julia-install-party">1. Julia install party</a><a id="1.-Julia-install-party-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Julia-install-party" title="Permalink"></a></h1><div class="admonition is-category-question" id="Julia-install-party-4bdf7c56188cf343"><header class="admonition-header">Julia install party<a class="admonition-anchor" href="#Julia-install-party-4bdf7c56188cf343" title="Permalink"></a></header><div class="admonition-body"><p>If you choose to use Julia as your programming language, try to install it on your system. This will be the language presented in the exercise class.</p></div></div><p>Verify the Julia environment and that Qritical is loaded correctly.</p><pre><code class="language-julia hljs">using LinearAlgebra, DelimitedFiles, Serialization, Qritical
+using CairoMakie, BenchmarkTools
+using InteractiveUtils   # versioninfo() (auto-loaded by IJulia, explicit for scripts/docs)
+
+versioninfo()
+println(&quot;Qritical loaded: &quot;, Qritical)
+
+const DATA_ROOT = normpath(joinpath(@__FILE__, &quot;..&quot;, &quot;..&quot;, &quot;data&quot;));</code></pre><pre><code class="nohighlight hljs">Julia Version 1.12.6
+Commit 15346901f00 (2026-04-09 19:20 UTC)
+Build Info:
+  Official https://julialang.org release
+Platform Info:
+  OS: Linux (x86_64-linux-gnu)
+  CPU: 2 × AMD EPYC 9V74 80-Core Processor
+  WORD_SIZE: 64
+  LLVM: libLLVM-18.1.7 (ORCJIT, znver4)
+  GC: Built with stock GC
+Threads: 1 default, 1 interactive, 1 GC (on 2 virtual cores)
+Qritical loaded: Qritical
+</code></pre><h1 id="2.-SVD-a-matrix"><a class="docs-heading-anchor" href="#2.-SVD-a-matrix">2. SVD a matrix</a><a id="2.-SVD-a-matrix-1"></a><a class="docs-heading-anchor-permalink" href="#2.-SVD-a-matrix" title="Permalink"></a></h1><div style="text-align: center">
+<img src="../1_light.svg" class="docs-light-only" width="100%"/>
+<img src="../1_dark.svg" class="docs-dark-only" width="100%"/>
+</div><div class="admonition is-category-question" id="SVD-a-matrix-cdeb7029af80b3ed"><header class="admonition-header">SVD a matrix<a class="admonition-anchor" href="#SVD-a-matrix-cdeb7029af80b3ed" title="Permalink"></a></header><div class="admonition-body"><p>Perform an SVD on the matrix <span>$A$</span> in <code>A.txt</code> and find the Schmidt rank needed if singular values below <span>$10^{-3}$</span> are discarded.</p></div></div><p>Load the <span>$64 \times 64$</span> matrix, wrap it in a <code>QTensor</code> with named upper/lower indices, then call <code>do_svd</code> with <code>ValCutoffTrunc(1e-3)</code> to find the Schmidt rank when singular values below <span>$10^{-3}$</span> are discarded.</p><div class="mermaid">flowchart LR
+    A[&quot;📂 Load A.txt\nraw Julia Matrix&quot;] --&gt; B[&quot;🏷️ Wrap in QTensor\nwith named legs i↑ and j↓&quot;]
+    B --&gt; C[&quot;✂️ Define Bipartition\ni on the left  ·  j on the right&quot;]
+    C --&gt; D[&quot;⚙️ do_svd\nValCutoffTrunc(1e-3)&quot;]
+    D --&gt; E[&quot;📊 U, Σ, Vd\n+ Schmidt rank r\n+ truncation error ε&quot;]</div><pre><code class="language-julia hljs">A_mat = readdlm(joinpath(DATA_ROOT, &quot;A.txt&quot;))
+println(&quot;Shape: &quot;, size(A_mat), &quot;  eltype: &quot;, eltype(A_mat))</code></pre><pre><code class="nohighlight hljs">Shape: (64, 64)  eltype: Float64
+</code></pre><pre><code class="language-julia hljs"># get the number of rows and columns from the shape of the loaded array so that a leg with the correct local dimensions can be created
+nrows, ncols = size(A_mat);
+i_row = upper(:i, nrows);
+j_col = lower(:j, ncols);
+@show i_row, j_col;</code></pre><pre><code class="nohighlight hljs">(i_row, j_col) = (TIx{Upper}(:i, 64), TIx{Lower}(:j, 64))
+</code></pre><p>create a QTensor object with the index legs</p><pre><code class="language-julia hljs">A = QTensor(A_mat, (i_row, j_col));</code></pre><div class="admonition is-info" id="What-exactly-is-a-QTensor?-8008fc322bf3dbd8"><header class="admonition-header">What exactly is a `QTensor`?<a class="admonition-anchor" href="#What-exactly-is-a-QTensor?-8008fc322bf3dbd8" title="Permalink"></a></header><div class="admonition-body"><p>A <code>QTensor</code> is, at its core, a physics-flavoured wrapper around a plain Julia array.Think of it as a named-index tensor in the sense that tensor network practitioners use the word — a multidimensional array where each axis (called a <strong>leg</strong>) is tagged with a name and a direction.</p><p>The two flavours of direction are:</p><ul><li><strong>Upper</strong> — created with <code>upper(:name, dim)</code>, conventionally drawn as an upward-pointing index in Penrose notation, playing the role of a &quot;ket&quot; or &quot;column&quot; space</li><li><strong>Lower</strong> — created with <code>lower(:name, dim)</code>, playing the role of a &quot;bra&quot; or &quot;row&quot; space</li></ul></div></div><p>If you&#39;re now reaching for your general relativity textbook thinking &quot;covariant transformation laws, cotangent bundles, pullbacks...&quot; — you can put it back on the shelf. In quantum mechanics everything lives in a finite-dimensional Hilbert space equipped with the trivial inner product (the Kronecker delta), which means the distinction between upper and lower indices reduces to a bookkeeping convention to track which legs belong to ket spaces and which to bra spaces. The full differential-geometry machinery — transformation properties, differentiability, bundles — is overkill here and simply isn&#39;t implemented.</p><p>What Qritical <em>does</em> give you by naming legs:</p><ol><li><strong>Legibility</strong> — contraction expressions read like physics equations, not a soup of integer axis indices</li><li><strong>Partition safety</strong> — <code>do_svd</code> knows which legs to group as &quot;row-like&quot; vs &quot;column-like&quot; without you manually reshaping anything</li><li><strong>Early error detection</strong> — mismatched index names produce an error at the contraction site, not a wrong-but-silent result pages later</li></ol><p>Under the hood the backing storage is a plain <code>Array{T,N}</code>, accessible via <code>.data</code>, so every Julia linear algebra and broadcasting primitive still works when you need to drop down to the raw array.</p><h3 id="Bipartitions-for-a-matrix-—-and-why-we-keep-it-simple-here"><a class="docs-heading-anchor" href="#Bipartitions-for-a-matrix-—-and-why-we-keep-it-simple-here">Bipartitions for a matrix — and why we keep it simple here</a><a id="Bipartitions-for-a-matrix-—-and-why-we-keep-it-simple-here-1"></a><a class="docs-heading-anchor-permalink" href="#Bipartitions-for-a-matrix-—-and-why-we-keep-it-simple-here" title="Permalink"></a></h3><p>To run <code>do_svd</code>, Qritical needs to know <em>how to fold the tensor into a matrix</em>: which legs pile up on the left (the &quot;row block&quot;) and which go on the right (the &quot;column block&quot;). This grouping is called a <strong>bipartition</strong>.</p><p>For a rank-2 tensor — an ordinary matrix — this is completely trivial: there is only one leg on each side. We write <code>bipartition(Partition([i_row]), A)</code> to declare that all legs in the left partition go to the &quot;row&quot; side, with everything else automatically landing on the &quot;column&quot; side.</p><p>We&#39;re deliberately <em>not</em> pulling out the full <code>Partition</code> machinery of Qritical here. The case where it really earns its keep is when you have a <strong>higher-rank tensor</strong> — like the 10-qubit quantum state <code>ψ</code> in part (c), which has 10 legs — where there is no single obvious &quot;matrix view&quot;. There you must explicitly decide which <em>subset</em> of legs to group together, and the <code>Partition</code> type manages all the necessary reshaping under the hood. That&#39;s coming up in part (c).</p><pre><code class="language-julia hljs">bp = bipartition(Partition([i_row]), A)</code></pre><pre><code class="nohighlight hljs">Bipartition(AbstractIx[TIx{Upper}(:i, 64)], AbstractIx[TIx{Lower}(:j, 64)])</code></pre><h3 id="Truncating-small-singular-values-—-a-floating-point-reality-check"><a class="docs-heading-anchor" href="#Truncating-small-singular-values-—-a-floating-point-reality-check">Truncating small singular values — a floating-point reality check</a><a id="Truncating-small-singular-values-—-a-floating-point-reality-check-1"></a><a class="docs-heading-anchor-permalink" href="#Truncating-small-singular-values-—-a-floating-point-reality-check" title="Permalink"></a></h3><p>In exact arithmetic the SVD factorisation is perfect and <code>U Σ Vᵀ</code> reconstructs <code>A</code> without any error. In floating-point land, nothing is exact.</p><p>Matrix elements are stored as 64-bit IEEE 754 doubles, which have a relative machine precision of roughly <span>$\epsilon_\text{mach} \approx 2.2 \times 10^{-16}$</span>. Any singular value smaller than <span>$\|A\|_F \cdot \epsilon_\text{mach}$</span> is dominated by rounding errors — it is encoding numerical noise rather than real structure in the matrix.</p><p>In practice the usable noise floor is not <span>$\epsilon_\text{mach}$</span> itself but its <em>square root</em>, roughly <span>$\sqrt{\epsilon_\text{mach}} \approx 1.5 \times 10^{-8}$</span>. Here is why. The SVD algorithm (LAPACK&#39;s <code>dgesdd</code>) is <em>backward stable</em>: the computed singular values are exact for a slightly perturbed matrix <span>$A + \delta A$</span> where <span>$\|\delta A\|_F \leq c\,\epsilon_\text{mach}\,\|A\|_F$</span>. But <span>$A$</span> itself was already rounded when stored, contributing a first layer of <span>$\epsilon_\text{mach}$</span> error. The algorithm then applies <span>$\mathcal{O}(n)$</span> successive Givens rotations and Householder reflections; each one introduces an additional <span>$\mathcal{O}(\epsilon_\text{mach})$</span> perturbation that compounds statistically as <span>$\mathcal{O}(\sqrt{n}\,\epsilon_\text{mach})$</span>. For matrices of modest size the combined effect lands near <span>$\sqrt{\epsilon_\text{mach}}$</span> as a practical threshold — below which a singular value is more likely amplified round-off than a genuine matrix feature. The same logic in single precision gives <span>$\sqrt{\epsilon_\text{mach,32}} \approx 3.5 \times 10^{-4}$</span> as its noise floor.</p><p>Our choice of <code>ValCutoffTrunc(1e-3)</code> is far <em>above</em> even this practical noise floor — we are not just cleaning up rounding artifacts, we are doing genuine <strong>rank reduction</strong>: deliberately asserting that the matrix is well-approximated by a simpler, lower-rank object and discarding the rest. The <code>F.ε</code> field in the output tells you exactly how much information you have thrown away by doing this.</p><pre><code class="language-julia hljs">F = do_svd(A, bp, ValCutoffTrunc(1e-3))</code></pre><pre><code class="nohighlight hljs">ReducedSVD([0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; -3.4743988404216604e-19 1.5299439309429557e-18 -3.5142565882488163e-19 7.809038862728438e-19 -6.032325715709522e-17 1.1186126470765098e-17 -2.5037644912204053e-17 -1.1102230246251565e-16 0.019243305691616964 -8.446609539717917e-18 -8.943636146423134e-17 -2.7369549938713362e-17; 1.9856433640838644e-18 -3.4238039911597915e-19 1.7263348765233531e-18 8.697128488718419e-19 -9.501065437938052e-17 1.668527800626894e-17 6.184615073638269e-17 0.0 -0.10820855546951423 1.2040301974583468e-17 -3.465653786457877e-16 1.414551836657534e-16; -8.331540358873813e-19 -0.01036131264117201 4.272939823577012e-9 2.6996387798633463e-17 3.055739536864717e-6 -0.06452351355033027 -6.790109340024825e-17 0.0 2.002046991412203e-17 7.71931811765837e-17 -0.00036289956335706014 -0.08307427329690155; -5.457178295433308e-18 -2.3250498234971517e-18 -4.885178939273218e-18 -1.2379192903919575e-18 3.1107923574780194e-17 -5.3466806506647334e-17 -4.358590023725918e-17 -2.0267496414840167e-18 0.30343362363064863 7.207133549267367e-17 6.386498109893699e-16 -2.1587597214385756e-16; 5.7669417675872e-18 0.04453812012063467 -1.8367239144441102e-8 -8.958413860019593e-17 -9.960784961870106e-6 0.21032710272022984 3.078447143242391e-17 -6.467272753252338e-31 1.1102230246251565e-16 3.0064442083668095e-16 0.0009187788534016382 0.21032509618046485; -7.880774321340449e-18 -0.08706586218347197 3.590541097775457e-8 6.69014991944899e-17 7.8275548873891e-6 -0.1652828514215106 -7.904820955649843e-17 1.2249881799549885e-30 7.013432803265607e-19 -9.685307268218686e-17 0.0005558398942574625 0.12724180447608135; 0.03609001181097693 -2.0772031329436685e-18 -2.6469779601696886e-23 0.07902708709817305 2.220446049250313e-16 -3.9651470606662036e-17 -0.0851413655487351 0.0 7.315183741231582e-18 -0.18946217829623188 2.1968646519987534e-17 4.401204899152618e-16; 1.5950969481627978e-17 -8.957373417214226e-20 8.847270533653984e-18 -1.4904044360162375e-17 0.0 1.5466619100921042e-16 1.0671408113454347e-16 3.605455785408387e-18 -0.5399425088552021 -1.6218825382211145e-16 -8.186539553894923e-16 2.256292483578115e-16; -8.674469375914965e-18 -0.09548546689513171 3.9377602838445174e-8 1.4349048907291272e-16 1.778831179832331e-5 -0.3756093618269288 -1.0989871325798282e-16 1.3744311348751936e-30 -3.958180499328937e-18 -3.5843313879414014e-17 -0.0015764560659526222 -0.36087930459801887; 2.3243431105605256e-17 0.2462067263531959 -1.0153409730021167e-7 -9.860214410260374e-17 -1.428672684376754e-5 0.301671592741421 -8.565355981313095e-17 -3.439008766912746e-30 -2.3045893900003873e-17 -3.8834396712583774e-17 -0.0013178020164713589 -0.30166871476688245; -0.11792421879787995 1.1258153129973321e-17 -7.37325879685303e-25 -0.21790655659048078 1.696297984381544e-17 -1.0322379915732087e-16 0.17278251465753874 0.0 -2.2333621227770564e-17 0.3844870397313374 2.1349973655312993e-16 3.623199944473248e-16; -2.2768245622195593e-17 -0.2559579411852293 1.0555543664463824e-7 1.8214596497756474e-17 1.0040210899566214e-6 -0.0212004222284697 -2.2084848852438983e-17 3.5311338151061625e-30 3.4208236679323887e-17 2.5004703770522565e-17 0.0009217741945029302 0.2110107839307494; 0.17430719991533294 -1.4039736666513406e-17 1.0807112893858726e-24 0.20839155793731645 8.89638744847956e-18 7.745946896051126e-17 -0.010823629555273578 0.0 2.8589506496166e-17 -0.1621213951160048 1.785435338528922e-16 1.034924872726128e-17; -0.1333392947174615 1.393503807189295e-17 -8.242473591801944e-25 0.046787332790441546 -2.5831467061542628e-17 -1.1102230246251565e-16 -0.2746603294878829 0.0 -1.3856020630566614e-17 0.16500855959103056 -4.3073975884309803e-16 -1.884181025040981e-16; 6.081916896928157e-17 5.790918737735578e-8 0.14042210280409717 2.6810975060762758e-17 0.19434586531174405 9.203936856216899e-6 -1.0408340855860843e-16 4.6958095194421554e-24 -4.679241486780269e-16 -6.448292420857538e-17 0.25022105339065825 -0.0010930593481537803; -1.6038592019082244e-17 2.296547796471091e-19 -1.0596915236306236e-17 1.3879783287944032e-18 8.893387515444418e-17 1.3715157481941631e-17 9.71445146547012e-17 -4.2622031499225055e-18 0.6384024837329767 3.3306690738754696e-16 1.0233784306090676e-15 1.602318197337771e-16; 1.1395609959561914e-17 0.12428880418926623 -5.125591702876694e-8 -1.6439905370829836e-16 -2.0562352077973157e-5 0.43418465052967575 -4.9809096322996336e-17 -1.7805744386139108e-30 3.57966335275629e-18 -2.7755575615628914e-17 0.0018966631985080386 0.4341805083684611; -3.206989947036803e-17 -0.35515853393490043 1.4646513389652054e-7 1.1408891665563503e-16 1.4250706704083187e-5 -0.3009110089471527 -5.3429408944702774e-17 4.940772585445368e-30 3.5926547719273994e-17 6.798435327173274e-18 0.001374025756993546 0.3145393458109622; 0.1829637533953916 -1.6860792836244026e-17 1.1373986739475908e-24 0.3027846557679109 -3.0218068976892153e-18 1.2293199510999506e-16 -0.20781310993456073 0.0 3.3277548221751725e-17 -0.38449318612189315 2.6107588313450947e-16 2.220446049250313e-16; 4.3626667937344864e-17 0.4822537185022834 -1.988783844497655e-7 4.9343475071514075e-17 6.2193502572126e-6 -0.13132478267650047 -4.440892098500626e-16 -6.627815828660772e-30 -6.65712433778922e-17 4.229961191551204e-18 -0.0005736704004871371 -0.1313235298260866; -0.35355339059327395 3.2967726345071093e-17 -2.2062500964699154e-24 -0.35355339059327373 3.491062443118685e-17 -1.2323083524533602e-16 -3.885780586188048e-16 0.0 -5.529945553108874e-17 -1.6648885358338433e-15 3.8496500649506707e-16 -2.5287321607329882e-17; 0.3003693992252773 -2.907509801410551e-17 1.8651580045665208e-24 -0.16454838721873136 2.8278723602091935e-17 -5.717225277861912e-17 0.45226251092918346 0.0 2.891281015157406e-17 -0.22267299289347195 2.795401974717329e-17 -7.276341076745378e-17; -8.154567137737814e-17 -1.40561887787568e-7 -0.3408439446664268 -5.50042205205908e-17 -0.3577301487976574 -1.6941578334261976e-5 1.8543186266533617e-16 -1.1396756471118834e-23 2.1340308172409755e-15 -6.610681058594464e-17 -0.3577267360193735 0.0015626844647645764; -2.902215795203829e-17 -0.3196254130593579 1.318114995064113e-7 -1.053403828466722e-16 -1.3179360583140236e-5 0.27828898402783026 -1.1474369720274352e-16 4.364603515564494e-30 4.7176216207335124e-17 -3.6259992752337934e-17 -0.0009185333404434267 -0.2102688938239757; 0.2715601175204497 -2.6654225023308445e-17 1.696376016793839e-24 0.17644375228911982 -3.298288153940935e-17 6.499344409833537e-17 0.006561608521736261 0.0 3.877530388656437e-17 0.3379312965329555 6.023922423569974e-16 -8.301043138776528e-17; -0.30547423967522985 2.714116362153752e-17 -1.9033166848544444e-24 0.27445888232162613 -8.063880915630573e-18 9.81911431285491e-17 -0.13575461875563158 0.0 -2.52397473581844e-17 0.06683925049485387 4.0555155702088224e-16 8.860325772712213e-17; -1.1245390025691673e-18 1.657070261913599e-7 0.40181757196472523 1.8950099638573243e-17 0.18361865321100962 8.6959117297358e-6 2.3588433916175442e-17 1.3436819365360117e-23 -7.823481780716103e-16 -1.0367610515092704e-16 0.02768551657282878 -0.00012094071337465446; 0.1444718056575602 -1.4541011932454833e-17 8.99126715027014e-25 -0.22458976125058341 1.2161447859100238e-17 -8.7770349226241e-17 -0.2556119732921752 0.0 8.253050786846222e-18 -0.049834653072782925 -8.110513079109875e-17 2.864868300606357e-17; 4.230308343489378e-17 -1.1158099791042563e-7 -0.2705691284729834 1.8005813547999048e-17 0.1761345798341501 8.341476925184897e-6 1.8082682783278043e-16 -9.046672102123469e-24 -1.318595614118353e-15 3.00965086529375e-17 0.17613289949417738 -0.000769414522482015; 1.0257543590028704e-16 3.735867882945117e-8 0.09058984381733147 -2.9166340365327495e-17 -0.29581772158095954 -1.400949603963361e-5 -1.251055181913276e-17 3.0275776397716475e-24 -1.274953601251247e-16 -6.682748417244542e-17 0.3092153821520928 -0.0013507686882232473; -8.037248406713546e-18 -1.8145662534749145e-17 -9.46908064796256e-21 -8.119580636850527e-17 9.437880169261885e-17 -2.0361439074279468e-17 -1.561282659045915e-17 0.4435684791036789 -3.450213074193558e-17 2.16972056328131e-17 -1.2085610687342508e-16 -1.9066497910366324e-17; 1.13608042909256e-17 -9.68880923638566e-19 7.510635068190798e-18 -2.553941714238096e-18 -5.814544493466192e-17 -9.236090343890213e-17 -1.4936691409661208e-16 2.9611558793887497e-18 -0.44356847910367947 -8.96205160554258e-17 -6.539446407564652e-16 -1.8968116762004308e-16; -8.305947448813567e-18 -0.09058984381733129 3.735867883384907e-8 1.1213959674611128e-16 1.4009496039602362e-5 -0.29581772158096015 4.756038632877533e-18 1.2946278273142003e-30 -2.109062222352348e-18 2.5318275230396294e-17 -0.0013507686882223587 -0.3092153821520894; 2.444687333348034e-17 0.27056912847298326 -1.1158099790253996e-7 -6.694411955566455e-17 -8.341476925175857e-6 0.17613457983415035 -1.470212797912741e-17 -3.75611630521725e-30 -2.8107483748960564e-17 -1.1436434474059976e-17 -0.0007694145224824023 -0.1761328994941768; -0.14447180565756026 1.60022336860906e-17 -8.947862857042128e-25 -0.22458976125058322 -9.448993988576653e-18 -8.101551637250393e-17 0.14701345389799478 0.0 -2.5712535651401078e-17 0.21496050313996098 -4.570152529443305e-17 -8.404058514100228e-17; -3.6388327449825085e-17 -0.40181757196472495 1.657070261771171e-7 -6.928107323324259e-17 -8.695911729709773e-6 0.18361865321101012 -8.997103203750452e-17 5.5114755944712506e-30 5.587762573257345e-17 -1.5585677462634074e-17 -0.0001209407133744238 -0.027685516572831068; 0.3054742396752299 -3.0982393691602156e-17 1.9038943033856436e-24 0.2744588823216259 -2.1948049007945154e-17 1.0781102313735892e-16 -0.007594963660502176 0.0 4.6572708503265285e-17 0.1511261673145857 -9.588096656459573e-16 -6.651571052993323e-17; -0.2715601175204495 2.5903162146690364e-17 -1.696640643610811e-24 0.17644375228911985 1.2164459668836765e-17 6.922611493476229e-17 -0.31288589722608484 0.0 -2.5063375712850737e-17 0.12783986545622011 5.05771098456608e-16 -9.061011865500852e-18; 4.7544429943401555e-17 1.318114995089619e-7 0.3196254130593579 3.317101757578114e-17 0.27828898402783064 1.3179360583138505e-5 6.146901476870688e-18 1.0688469561964976e-23 6.330686270182561e-16 -2.5650025165692687e-17 0.21026889382397618 -0.0009185333404437076; 3.098445934465346e-17 0.34084394466642676 -1.4056188778649312e-7 1.3538982934586512e-16 1.6941578334246662e-5 -0.35773014879765613 1.469350095920792e-16 -4.645484630745826e-30 -5.030188355910799e-17 4.888569431882892e-17 0.0015626844647646696 0.3577267360193749; -0.3003693992252772 2.9626060025030804e-17 -1.871965336263442e-24 -0.1645483872187314 2.0501798467597734e-17 -5.582709088911409e-17 0.02530239756848835 0.0 -4.1698007703519316e-17 -0.503472371867008 -5.691585181672381e-16 -2.809507225365737e-17; 0.3535533905932738 -3.5097301761288355e-17 2.1930462029471346e-24 -0.35355339059327406 4.6253691744443243e-17 -1.3688291565144704e-16 1.3790339054810345e-15 0.0 2.7816466764645715e-17 1.2433749488031667e-15 3.558127862996662e-16 -2.966017539721266e-17; 4.3822977741062405e-17 -1.9887838446887316e-7 -0.4822537185022835 -1.5022631854147956e-17 -0.1313247826764997 -6.219350257260371e-6 -2.103765176594641e-16 -1.6122663590680697e-23 -2.2740328522765377e-15 -7.013389396891961e-18 0.13132352982608395 -0.0005736704004877249; -0.1829637533953913 1.8190078617305495e-17 -1.1341385914219003e-24 0.3027846557679111 -3.266556670460813e-17 1.190181482746155e-16 0.4353605083091626 0.0 -9.738259323672e-18 0.03850359255478661 9.84868722626691e-17 -5.63723587550542e-17; -7.509382720831473e-17 1.4646513389880952e-7 0.35515853393490054 -4.40572132255388e-17 -0.30091100894715295 -1.4250706704039673e-5 -5.971455693453646e-17 1.1873796794885145e-23 -3.029970733741561e-16 1.3341434886651834e-16 -0.3145393458109624 0.0013740257569935133; -1.4454637195683203e-16 -5.125591701341446e-8 -0.12428880418926642 5.3036834240444283e-17 0.43418465052967486 2.056235207804215e-5 -2.5797820036107306e-17 -4.154021850613161e-24 6.298681539346057e-16 1.3775936608078299e-16 -0.43418050836846406 0.0018966631985094186; 1.161918112720859e-18 -3.99295829998907e-18 5.672429405554801e-20 5.688010378088761e-17 3.2040820122910605e-17 5.650497435454809e-17 -2.278414874370441e-17 -0.6384024837329754 -7.778243019381993e-18 -3.2650222583092785e-17 -5.731526663742498e-17 -1.7677886658948103e-17; -1.279655708862233e-17 -0.1404221028040973 5.790918737432466e-8 -7.348165745479655e-17 -9.203936856266418e-6 0.19434586531174378 -8.627072232946666e-17 1.9070392628572135e-30 2.0819404039301657e-17 -4.536890875713577e-17 -0.0010930593481542597 -0.2502210533906611; 0.13333929471746161 -1.2663847726646247e-17 8.321838144602279e-25 0.04678733279044168 -1.3347781327223558e-17 1.3954402201705163e-17 -0.04270877205832295 0.0 1.748915104356693e-17 0.3175564235249701 -4.3905290500267303e-16 1.3045895121511818e-17; -0.17430719991533292 1.6458467485308515e-17 -1.0831560798304871e-24 0.20839155793731626 -1.6565879956581456e-17 8.054121398126328e-17 0.15314653201329262 0.0 -1.2388761149112122e-17 -0.05428293878754131 4.368727912458206e-17 -5.389520568085081e-17; -5.786204966794515e-17 1.0555543665480865e-7 0.2559579411852295 -5.494467879467777e-18 -0.02120042222846849 -1.0040210899213643e-6 1.8345236387685507e-16 8.557466333869836e-24 -1.5590153943953654e-15 1.0549654038211332e-17 -0.2110107839307495 0.0009217741945027882; 0.11792421879787962 -1.0923285071561889e-17 7.334988877049127e-25 -0.21790655659048108 1.2607090418209674e-17 -9.028121866697625e-17 -0.4214781977548247 0.0 5.391960886089617e-18 -0.00634112845586821 -7.11008653878126e-17 8.622393799533951e-17; 6.775230625036196e-17 -1.0153409730200677e-7 -0.2462067263531959 3.8357762255027737e-17 0.3016715927414217 1.4286726843660746e-5 1.076814660136798e-16 -8.230778937146639e-24 -6.85511815616175e-16 -1.1049989066244467e-16 0.3016687147668826 -0.0013178020164699563; 1.2044727709990403e-16 3.937760281940228e-8 0.09548546689513171 -5.65000716730403e-17 -0.37560936182692845 -1.778831179833472e-5 2.2381620906640456e-16 3.1909473969229636e-24 -8.24040692118911e-16 -1.9337327323552616e-17 0.3608793045980146 -0.0015764560659500414; 3.669204347641091e-18 1.2950881845791173e-17 -1.9650927003926814e-21 5.1729389538268505e-17 -9.349756934856361e-18 -1.344950932918778e-17 -9.395513132886012e-17 0.5399425088552031 2.396347591402539e-17 -1.2187658633598523e-17 1.2104696370684506e-16 -4.249255948381088e-17; -0.03609001181097676 3.569211594133425e-18 -2.2400746511124984e-25 0.07902708709817306 -6.180014946407024e-18 3.166942605997702e-17 0.20769016689560635 0.0 -1.1706457109331543e-18 0.003124693126052756 1.0401060018117075e-16 -2.593709236543869e-17; -2.639730758019912e-17 3.5905411086074335e-8 0.08706586218347184 -2.212056482337661e-17 -0.16528285142151178 -7.827554887567597e-6 -1.1830560407751061e-16 2.9106771156135887e-24 -3.4981096825126037e-16 2.3275549718951585e-17 -0.12724180447608172 0.0005558398942611218; -7.008594455091681e-17 -1.836723913853624e-8 -0.04453812012063476 2.5134250621653402e-17 0.21032710272022995 9.960784961882549e-6 -9.48379109210882e-18 -1.4884035497677601e-24 -1.4741309667406428e-16 6.477734357103395e-17 -0.2103250961804649 0.0009187788534023398; -4.9974580382276705e-18 9.08614203481202e-18 -8.831811111994041e-20 -1.154159911973891e-16 3.0881647409483026e-17 -8.768271430297212e-17 -5.444913130721638e-17 -0.3034336236306489 1.846427947228384e-17 4.1836163568493145e-17 2.2978718250311797e-16 -7.052813400699665e-17; 2.6985068904563205e-17 4.272939821208882e-9 0.010361312641172054 -1.0489218433675759e-17 -0.06452351355033065 -3.055739536878947e-6 3.386857903681518e-17 3.4619947411419297e-25 7.550269689892381e-18 -5.0171609388973916e-17 0.08307427329689991 -0.00036289956335732495; 1.1859037298605699e-17 2.2550734523435483e-18 3.535725418771103e-20 8.922148006860422e-17 -9.79375961790185e-17 4.1456730196720176e-17 2.7069322879127232e-17 0.10820855546951526 -5.1455062231439014e-17 4.958128860893115e-17 2.1129997803808408e-16 -9.842709697234878e-17; 1.6028088994555745e-18 2.6520902809885954e-17 1.3273325192262868e-19 -3.287353612903052e-17 -3.3223870779295696e-17 -1.1759241880457994e-18 5.556308880889159e-17 -0.019243305691617477 -7.343345312580238e-17 7.351230202238502e-17 7.38537977949287e-17 -4.0152450561089207e-17; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0], [0.8993622651407738 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.3005501045336421 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.30055010453364167 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.10043824255962536 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.012703617265554072 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.012703617265553952 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.004245312089583871 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.004245312089583863 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.004245312089583827 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.004245312089583806 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0014187041660043962 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0014187041660043767], [0.0 -4.5691066476465856e-18 3.654870585441978e-18 -1.0925216034387938e-17 -2.2223690685175885e-18 1.8048099327665007e-17 -3.672938277233388e-17 -0.036090011810976916 1.2031692373616266e-17 3.864415923376699e-17 3.302535139230214e-18 0.1179242187978799 0.0 -0.18296375339539156 0.14447180565756018 -6.436122572199577e-19 1.4373341306234845e-17 -7.604448114572005e-18 1.0467239658112253e-17 -0.17430719991533317 -9.549477997546746e-18 0.35355339059327395 -0.30547423967522974 2.5405456808318297e-18 5.639575948731265e-19 -0.2715601175204497 0.30036939922527733 -5.797353475561875e-18 -0.1333392947174617 7.724275716162484e-18 -5.8232251920777366e-18 1.6133063278259262e-17 7.210292096871468e-18 -9.70206459686015e-18 1.6994684157676953e-17 0.1333392947174617 -2.189894580106518e-17 -0.3003693992252772 0.2715601175204493 -5.847273471095111e-18 1.245179790537542e-17 0.30547423967522974 -0.3535533905932736 1.674435567259597e-17 0.1743071999153329 -2.443675354879673e-17 1.750038420980966e-17 -7.623071054053679e-17 -6.294128803429116e-18 -0.1444718056575601 0.1829637533953912 -1.807938981698237e-17 -0.11792421879787945 3.112552118981404e-17 -2.5242323657891188e-17 1.799698015563516e-16 0.03609001181097667 -2.0234028255205883e-17 2.1491162311641616e-17 -3.350879501750051e-16 -8.613734716996427e-18 3.8361524883006423e-16 -2.7363711449972766e-16 0.0; 0.0 -1.1996502612581195e-17 1.4722686349274428e-17 5.790918738218802e-8 1.8960150112853626e-17 -1.4056188775826956e-7 1.3181149956794038e-7 1.0734532422735824e-16 2.867189155662943e-18 1.6570702616319766e-7 -1.988783846496034e-7 -1.1628068299907035e-17 1.055554366185432e-7 1.7570832115226246e-17 -1.3878174230464288e-17 -0.010361312641171974 -3.236700021031571e-17 -1.1158099786704996e-7 1.4646513383841549e-7 1.6100993991370426e-17 -1.0153409725549523e-7 -3.2868379657154876e-17 2.8288660609869667e-17 0.044538120120634614 3.590541106836009e-8 2.482087193488232e-17 -2.7270374106474044e-17 -0.09548546689513154 1.2025206745805167e-17 0.12428880418926633 -0.09058984381733129 1.5017481640614393e-17 -7.92219836498197e-17 3.735867881062311e-8 -5.125591699581853e-8 -1.1445636591917985e-17 3.9377602814006176e-8 2.535532141795804e-17 -2.3010399525758858e-17 -0.0870658621834719 -1.8367239136192054e-8 -2.5014888457987146e-17 2.872620231662821e-17 0.24620672635319601 -1.4085783698755866e-17 -0.3551585339349003 0.270569128472983 -8.48639213656053e-17 4.272939820671918e-9 1.1387672174686323e-17 -1.4309133688978975e-17 -0.2559579411852296 9.160693701393918e-18 0.4822537185022833 -0.4018175719647246 2.389499335398394e-16 -2.722737006454032e-18 -0.3196254130593579 0.34084394466642676 -4.233109798681684e-16 -0.1404221028040974 5.04208923864006e-16 -3.512683353385069e-16 0.0; 0.0 3.1721139616716693e-17 8.592338035283334e-17 0.14042210280409761 1.1128813725182096e-17 -0.340843944666427 0.319625413059358 0.0 3.237834312487235e-17 0.4018175719647254 -0.48225371850228355 2.4514273526593096e-25 0.25595794118522963 -3.805235061956738e-25 3.003922748724274e-25 4.2729398230985995e-9 -6.798169091888381e-17 -0.27056912847298337 0.3551585339349003 -3.623806656285365e-25 -0.24620672635319582 7.351377843410552e-25 -6.350708017066707e-25 -1.8367239144621034e-8 0.08706586218347175 -5.645102965654022e-25 6.244445204976266e-25 3.9377602838864554e-8 -2.771040819309884e-25 -5.1255917027335264e-8 3.735867883445979e-8 2.3741550801697383e-18 2.6397732143057012e-17 0.09058984381733136 -0.12428880418926626 2.768737554413749e-25 0.09548546689513164 -6.236253757177505e-25 5.637236908889228e-25 3.5905411087605645e-8 -0.04453812012063474 6.340310860576609e-25 -7.338906125901588e-25 -1.0153409730063024e-7 3.6174829233984775e-25 1.4646513390370262e-7 -1.1158099790126803e-7 -1.3692901519326708e-17 0.010361312641172099 -2.9975831955098023e-25 3.795579353348854e-25 1.0555543664106785e-7 -2.44580124863197e-25 -1.988783844467601e-7 1.6570702617548593e-7 3.9358679263538457e-17 7.484317168384831e-26 1.3181149950370532e-7 -1.4056188779258268e-7 -1.1637011935403029e-16 5.790918737186774e-8 8.723976821196106e-17 -9.207450991765191e-17 0.0; 0.0 -5.086806760279258e-18 -8.969079611036004e-18 -1.1504469959060598e-18 -1.0586166604888894e-17 3.4543447237751054e-17 -5.731509028580339e-17 -0.07902708709817294 -1.1764062922472856e-17 -4.083120118578504e-19 2.1586710816322162e-17 0.21790655659048083 9.539094469564798e-17 -0.3027846557679109 0.2245897612505831 1.9307184296419796e-16 3.240607952478702e-17 -5.3906075843555826e-17 4.866351932273728e-17 -0.20839155793731615 4.1520055506617116e-18 0.3535533905932735 -0.2744588823216256 -6.290129463981442e-16 -1.777498509470614e-17 -0.17644375228911963 0.16454838721873133 1.1237620808089885e-15 -0.04678733279044167 -1.2988468726191018e-15 8.843675020535713e-16 4.3679219277353434e-18 2.9132765497665813e-17 1.1325284717505328e-17 1.53915692293155e-17 -0.04678733279044183 -5.5422220298008524e-17 0.16454838721873172 -0.17644375228912013 4.931687436446409e-16 4.2713169002495515e-17 -0.2744588823216261 0.353553390593274 -9.008876855860469e-16 -0.20839155793731629 8.941658418454563e-16 -5.216215263120654e-16 -1.987098479347445e-17 -3.789075907718831e-17 0.22458976125058316 -0.3027846557679107 5.859235386492651e-17 0.2179065565904809 4.0263796992868026e-16 -5.537582905435276e-16 -8.257388604478728e-18 -0.07902708709817294 -8.371606983861194e-16 1.0763939995880373e-15 2.1506775927000907e-17 -5.83038400794148e-16 -5.495883890429033e-17 2.580643561886103e-17 0.0; 0.0 -1.803134580641242e-17 8.393950876081324e-17 0.19434586531174483 -1.5616949765356722e-17 -0.35773014879765663 0.2782889840278313 -3.485323525758712e-17 3.3306690738754696e-16 0.1836186532110089 -0.1313247826765007 2.2341285595678385e-17 -0.021200422228467512 -1.3046229421947552e-17 1.4355977602348426e-17 3.055739536878895e-6 2.5287182731342313e-17 0.17613457983415365 -0.3009110089471554 -1.1242605752580511e-17 0.30167159274141914 1.292152994816509e-18 -4.1019470001694856e-18 -9.96078496188159e-6 -0.16528285142150842 2.977358292448861e-18 -1.2618743482938612e-17 1.7788311798339233e-5 1.5516969835617181e-18 -2.0562352077969146e-5 1.4009496039616427e-5 -8.109431837897414e-18 1.8631994177030557e-17 -0.29581772158096253 0.4341846505296766 5.816206265333459e-18 -0.3756093618269253 -1.0229626621855276e-17 1.229857729243922e-17 7.82755488762856e-6 0.2103271027202253 9.858082751163735e-18 4.2601863050413333e-19 -1.4286726843731905e-5 4.33448603273259e-19 1.4250706704085653e-5 -8.341476925134044e-6 2.4058755430910295e-17 -0.06452351355032795 1.162629597075042e-18 1.2810626309311463e-18 1.0040210899386167e-6 -1.8532367113093756e-18 6.219350257152463e-6 -8.69591172971214e-6 -3.173099720698224e-17 -5.567997884607426e-19 -1.3179360583174436e-5 1.6941578334254295e-5 -7.682264996192064e-17 -9.203936856273862e-6 -1.044625448748961e-16 -3.745216733843497e-17 0.0; 0.0 3.921487639474948e-18 -4.025011535313952e-17 9.203936856263259e-6 -7.727907826272842e-17 -1.6941578334411634e-5 1.3179360583274165e-5 -2.4574226993295714e-16 -3.6505355779656105e-17 8.695911729598296e-6 -6.219350257214104e-6 6.429359414689056e-16 -1.004021090080549e-6 -9.11163505756818e-16 6.609296443471635e-16 -0.06452351355033059 3.9898639947466563e-17 8.341476925165335e-6 -1.4250706704136396e-5 -6.318625873656695e-16 1.4286726843735229e-5 1.0544877087837158e-15 -8.221222873541341e-16 0.21032710272023022 -7.82755488765131e-6 -5.208907504963536e-16 4.959594335047553e-16 -0.37560936182692917 -1.3220933977347445e-16 0.4341846505296747 -0.29581772158095876 2.1482756543863037e-18 5.77093330476749e-17 -1.4009496039506595e-5 2.05623520779288e-5 -1.3677367775222386e-16 -1.7788311798275854e-5 4.788543512855477e-16 -5.331545294075667e-16 -0.165282851421512 9.960784961782971e-6 -8.192678333021926e-16 1.0526533848858838e-15 0.301671592741422 -6.282258233759921e-16 -0.3009110089471527 0.17613457983414957 -8.68034053838875e-18 -3.055739536863485e-6 6.768689850489472e-16 -9.118144605908488e-16 -0.02120042222846834 6.546129215475977e-16 -0.1313247826765002 0.18361865321101006 2.9825188246527923e-17 -2.365609479135383e-16 0.2782889840278297 -0.357730148797656 5.513554554557881e-17 0.19434586531174333 5.592445167375513e-17 1.1380590300140075e-17 0.0; 0.0 0.0 1.2794507789150423e-16 -9.48142746022958e-17 3.3353773061626007e-16 -1.044010518938239e-16 1.026283995204213e-17 0.08514136554873342 3.7643499428696714e-16 6.245004513516506e-17 1.4224732503009818e-16 -0.17278251465753283 -2.983724378680108e-16 0.20781310993456295 -0.14701345389799675 -5.204170427930421e-18 2.706168622523819e-16 -1.2308932454876162e-16 1.2121133260187627e-16 0.010823629555275271 -7.936359902593892e-17 6.661338147750939e-16 0.0075949636605000745 4.206414317615889e-17 1.2044597341026694e-16 -0.006561608521734184 -0.02530239756848928 -7.055190676198745e-17 0.04270877205832242 9.84517922794585e-17 -5.245813417131134e-17 5.591161027723334e-17 8.168917181014557e-17 2.3139650413522048e-17 8.730278448282436e-17 0.27466032948788194 6.903555327503961e-17 -0.4522625109291897 0.3128858972260862 2.349184713925555e-17 2.815378557813862e-16 0.1357546187556269 1.6977249199744577e-15 -3.1853622221382146e-17 -0.1531465320132889 7.011430329226702e-17 -5.3957161281429666e-17 -1.1672945875008157e-16 -1.5499385198754432e-17 0.25561197329217655 -0.4353605083091663 2.2093920951554357e-17 0.42147819775482026 -6.460730789788926e-17 -3.159963491542934e-17 5.448099528510647e-16 -0.2076901668956027 -8.231434236795044e-17 6.489075251396853e-17 -7.076975183556172e-17 -6.499342707286459e-17 -4.433329471299937e-18 5.067094506099763e-16 0.0; 0.0 -0.443568479103683 0.6384024837329794 0.0 -0.5399425088551992 -1.613231567496251e-25 1.5121474214341753e-25 -0.0 0.30343362363064363 1.8992555127569285e-25 -2.27843288070643e-25 -0.0 1.2082728868406232e-25 -0.0 -0.0 6.707190820724194e-33 -0.10820855546951036 -1.2757863328840637e-25 1.6738449816040055e-25 0.0 -1.1593171967985407e-25 0.0 0.0 -2.1401020370355584e-32 4.093283894072601e-26 0.0 0.0 4.295033191118412e-32 0.0 -4.817366057820164e-32 3.5917159787021947e-32 1.8004319371839815e-19 0.019243305691615427 4.245769993657543e-26 -5.821791728087569e-26 0.0 4.467649767222697e-26 0.0 0.0 2.621964943354312e-32 -2.0797745928381902e-26 0.0 0.0 -6.271298632413384e-32 0.0 7.801263565592301e-32 -5.972929755196787e-32 -8.226714307727388e-19 4.819954030806052e-27 0.0 0.0 5.022002757529228e-32 0.0 -8.660440221581744e-32 6.92228117727407e-32 2.0813851626821572e-18 0.0 5.15257814800346e-32 -5.017940401641038e-32 -3.6700075827519426e-18 1.9655661135577835e-32 4.205701142711959e-18 -2.900012080015233e-18 0.0; 0.0 2.4286728108293855e-17 -7.886734071856827e-18 -1.6514371950755938e-16 -6.814380060660846e-18 0.0 -1.2793585635328952e-16 -9.324138683375338e-18 2.4247985711269254e-17 1.597928425897882e-17 -1.302902355219048e-16 3.626888614998003e-17 1.6644614436226732e-16 -6.199704840729926e-17 5.130436991606779e-17 -3.836725713939173e-18 -2.695687614442996e-17 -1.952031490300048e-16 3.133635282428109e-16 -7.204645831715343e-17 -2.7718101764723395e-16 1.5734414641389217e-16 -1.4097614615895343e-16 4.79579100627499e-17 1.178672670439446e-16 -1.3627686994386068e-16 1.556981193631474e-16 -8.824398798065645e-17 -7.337487475759413e-17 9.055277752821802e-17 -6.607816304435028e-17 -0.019243305691617436 1.8235638635107707e-18 -6.735600583045814e-17 9.481463519895369e-17 8.854832135169451e-17 -8.331672249500111e-17 -2.0906142470479824e-16 1.9349758929031527e-16 -7.852142392474755e-17 5.762320634562423e-17 2.299827376190181e-16 -2.7200072062440594e-16 1.559455124633088e-16 1.3962718648473747e-16 -3.0878936248619183e-16 4.271444566109432e-16 0.10820855546951533 -2.953373518828597e-17 -1.2413818353775378e-16 1.6018913468619582e-16 -2.399970462943836e-16 -1.0693516634462923e-16 2.319068068641759e-16 -2.454563578287845e-16 -0.30343362363064974 3.4727482409597085e-17 -3.405960043598601e-16 3.7934815167644468e-16 0.5399425088552021 -9.368528673555356e-17 -0.6384024837329756 0.4435684791036779 0.0; 0.0 -9.546602705266881e-17 -1.7091626018693386e-17 -4.180119199912838e-16 -8.077793230719698e-17 -8.384010578374216e-17 -3.449105236631019e-16 0.1894621782962301 -3.842734139544394e-16 3.0198563474835574e-16 7.504290358168489e-17 -0.3844870397313388 -7.591470325998192e-17 0.3844931861218927 -0.214960503139968 -7.664225157300031e-16 -4.163336342344337e-17 3.3306690738754696e-16 1.6479873021779667e-17 0.16212139511600068 -5.177959089925124e-17 4.5975750998185385e-15 -0.15112616731458012 1.4005372392344791e-15 2.913702416355025e-16 -0.3379312965329547 0.5034723718670097 -4.960493052510834e-16 -0.3175564235249736 -1.1036706426266364e-15 1.432110127144881e-15 -1.2079149955178332e-16 -8.144897784036889e-17 -1.8884415216377515e-16 1.9939654466681846e-16 -0.16500855959102834 2.4163811516555643e-16 0.22267299289346443 -0.12783986545621948 -2.1147948506665024e-15 6.033356617406074e-16 -0.06683925049485881 2.5626870673009297e-15 1.9943398831941444e-15 0.054282938787541764 -4.508337399648073e-16 -2.9554659501902487e-16 -1.1998953114747756e-16 1.389562319921852e-17 0.04983465307278783 -0.03850359255478717 9.544141487784859e-16 0.006341128455862577 -1.825788960391659e-15 9.356845072541119e-16 6.007830585872661e-16 -0.003124693126048941 -4.493241274407038e-16 1.5674203574771375e-15 -2.0119232072816456e-17 -1.8947259170581774e-15 4.0970169006074864e-18 3.791729789871871e-16 0.0; 0.0 6.818859496063547e-17 -4.679138127418365e-16 0.25022105339065726 -8.446045035355591e-16 -0.35772673601937355 0.21026889382398367 -7.779097864642214e-16 7.352245982167327e-18 0.02768551657282814 0.13132352982609052 -5.793976409762536e-16 -0.21101078393075 -2.424369231301786e-16 -2.524768046539838e-16 -0.0003628995633572538 7.74770237183431e-16 0.1761328994941768 -0.31453934581096343 -1.3400738851920835e-16 0.30166871476687995 -2.86694513738224e-17 5.451097282462454e-17 0.0009187788534022164 -0.12724180447607644 1.0493388018332838e-16 5.757515076381383e-16 -0.0015764560659500743 1.1426006304870092e-16 0.0018966631985087895 -0.0013507686882231415 -2.5625100736399308e-17 1.0185481817742893e-15 0.3092153821520943 -0.4341805083684657 -3.0162603046306736e-17 0.36087930459801576 -1.3525237935895782e-16 -4.2621405987763114e-16 0.0005558398942610329 -0.21032509618045953 -1.945160681819134e-16 -2.8782095778114025e-16 -0.0013178020164705598 -1.2583287340591497e-17 0.0013740257569939598 -0.000769414522481659 1.829903703545528e-16 0.08307427329689536 7.724891341627682e-17 -1.3035101088582912e-16 0.000921774194502055 1.4042265641951007e-16 -0.0005736704004868616 -0.00012094071337499877 2.0919137767114454e-17 -2.1189280913168192e-19 -0.0009185333404429374 0.0015626844647639681 4.0988243876904697e-16 -0.0010930593481533653 -5.938083584325491e-17 3.960447608392103e-16 0.0; 0.0 -2.2193037986026983e-19 2.891018685612023e-16 -0.0010930593481533453 5.422845627732052e-16 0.001562684464764727 -0.0009185333404438514 -5.361843710402306e-16 3.052827444099482e-16 -0.00012094071337350994 -0.0005736704004870512 3.9006883660597236e-16 0.0009217741945031032 5.0045032555666563e-17 3.005609857152587e-16 -0.083074273296902 -2.3202518090763893e-16 -0.0007694145224818433 0.001374025756993263 3.3306690738754696e-16 -0.001317802016469337 -1.4621652142093183e-16 1.2825656420294368e-16 0.21032509618046308 0.0005558398942610611 -9.098814755261764e-17 -8.706743476694274e-18 -0.3608793045980166 -2.852688018418238e-16 0.43418050836846295 -0.3092153821520883 -1.1982381312762771e-17 -4.2816988328146897e-16 -0.0013507686882232865 0.001896663198509157 -1.9716897529897409e-16 -0.0015764560659493223 2.623862326709129e-16 1.210747696943977e-16 0.12724180447608477 0.0009187788534019788 7.479696773584077e-17 -2.426168737181246e-16 -0.30166871476687235 2.0358757152760672e-16 0.31453934581096665 -0.1761328994941724 8.658515170299612e-17 -0.00036289956335713776 1.1031204248432309e-16 -9.308431693115956e-17 0.21101078393075748 4.988494039366715e-17 -0.13132352982608922 -0.0276855165728311 -2.315928900806486e-16 -4.910644956492683e-17 -0.21026889382398173 0.35772673601937305 -3.3090341097467264e-16 -0.25022105339066086 -2.402299443595932e-16 -2.1524526564364444e-16 0.0], 12, 0.00025470922615255495, SingValSpectrum{Vector{Float64}}([0.8993622651407738, 0.3005501045336421, 0.30055010453364167, 0.10043824255962536, 0.012703617265554072, 0.012703617265553952, 0.004245312089583871, 0.004245312089583863, 0.004245312089583827, 0.004245312089583806, 0.0014187041660043962, 0.0014187041660043767], 0.00025470922615255495, false), BondCenter(Bond(TIx{Upper}(:λL, 12), TIx{Upper}(:λR, 12))))</code></pre><p>For richer terminal tables check out PrettyTables.jl or Term.jl</p><pre><code class="language-julia hljs">results = [
+    &quot;Full rank&quot; =&gt; minimum(size(A_mat)),
+    &quot;Schmidt rank (&gt;1e-3)&quot; =&gt; F.r,
+    &quot;Truncation error ε&quot; =&gt; round(F.ε; sigdigits=4),
+]
+println(&quot;\n  ── SVD Results ──────────────────────────────&quot;)
+for (k, v) in results
+    println(&quot;  $(rpad(k, 26)) : $v&quot;)
+end
+println(&quot;  ────────────────────────────────────────────\n&quot;)</code></pre><pre><code class="nohighlight hljs">
+  ── SVD Results ──────────────────────────────
+  Full rank                  : 64.0
+  Schmidt rank (&gt;1e-3)       : 12.0
+  Truncation error ε         : 0.0002547
+  ────────────────────────────────────────────
+
+</code></pre><p>Reconstruction error should match ε</p><pre><code class="language-julia hljs">U, Σ, Vd = F.U, F.Σ, F.Vd
+A_approx = U.data * Σ.data * Vd.data
+err = norm(A_mat .- A_approx)
+println(
+    &quot;‖A − Uᵣ Σᵣ Vdᵣ‖ = &quot;, round(err; sigdigits=4), &quot;  (≈ ε = &quot;, round(F.ε; sigdigits=4), &quot;)&quot;
+)</code></pre><pre><code class="nohighlight hljs">‖A − Uᵣ Σᵣ Vdᵣ‖ = 0.0002547  (≈ ε = 0.0002547)
+</code></pre><h3 id="Reading-the-singular-value-spectrum"><a class="docs-heading-anchor" href="#Reading-the-singular-value-spectrum">Reading the singular value spectrum</a><a id="Reading-the-singular-value-spectrum-1"></a><a class="docs-heading-anchor-permalink" href="#Reading-the-singular-value-spectrum" title="Permalink"></a></h3><p>The plot below shows all 64 singular values of <code>A</code>, sorted in descending order. A few things to look for:</p><ul><li><strong>The steep drop</strong> — the first handful of singular values are large (they capture the dominant structure of the matrix), then there&#39;s a sharp cliff. This tells us that <code>A</code> lives close to a much simpler, low-rank object in matrix space.</li><li><strong>The flat tail</strong> — the tiny values on the right are either genuine but negligible components or pure floating-point noise. Our <code>1e-3</code> cutoff sits right at the cliff edge, cleanly separating signal from noise.</li><li><strong>Why the log plot is almost always more useful</strong> — on a linear scale, a spectrum spanning four orders of magnitude just looks like a cliff followed by a flat line at zero. On a log scale you can see the full <em>shape</em> of the decay — is it exponential? power-law? — which in the quantum information context of part (c) carries direct physical meaning as a fingerprint of the entanglement structure of the state.</li></ul><p>Reusable spectrum plotter: side-by-side linear and log views</p><pre><code class="language-julia hljs">function plot_spectrum(σ_vals; title=&quot;Singular value spectrum&quot;, cutoff=nothing)
+    fig = Figure(; size=(900, 340))
+    ax1 = Axis(fig[1, 1]; title=title * &quot; (linear)&quot;, xlabel=&quot;index&quot;, ylabel=&quot;σᵢ&quot;)
+    ax2 = Axis(
+        fig[1, 2]; title=title * &quot; (log scale)&quot;, xlabel=&quot;index&quot;, ylabel=&quot;σᵢ&quot;, yscale=log10
+    )
+    for ax in (ax1, ax2)
+        scatterlines!(ax, 1:length(σ_vals), σ_vals; color=:steelblue)
+        if !isnothing(cutoff)
+            hlines!(ax, [cutoff]; color=:crimson, linestyle=:dash, label=&quot;cutoff $cutoff&quot;)
+            axislegend(ax)
+        end
+    end
+    fig
+end
+F_full = do_svd(A, bp, NoTrunc())
+σ_vals = F_full.spectrum.values
+plot_spectrum(σ_vals; title=&quot;Singular values of A&quot;, cutoff=1e-3)</code></pre><p><img src="../ex_01-fig-1.png" alt/></p><h2 id="(c)-SVD-a-state-—-psi.jls"><a class="docs-heading-anchor" href="#(c)-SVD-a-state-—-psi.jls">(c) SVD a state — <code>psi.jls</code></a><a id="(c)-SVD-a-state-—-psi.jls-1"></a><a class="docs-heading-anchor-permalink" href="#(c)-SVD-a-state-—-psi.jls" title="Permalink"></a></h2><p>Load the 10-qubit state tensor of shape <span>$(2,2,\ldots,2)$</span>, bipartition it at (1|9) and (5|5), then sweep all boundaries to build the entanglement entropy profile.</p><pre><code class="language-julia hljs">ψ_raw = deserialize(joinpath(DATA_ROOT, &quot;psi.jls&quot;))
+N = ndims(ψ_raw)</code></pre><pre><code class="nohighlight hljs">10</code></pre><p>Builds upper(:s1, 2), upper(:s2, 2), ... via a comprehension. Equivalent shorthand: uppers_range(:s, 2, N) returns the same vector of upper indices — handy when all sites share the same local dimension.</p><pre><code class="language-julia hljs">sites = Tuple([upper(Symbol(:s, i), 2) for i in 1:N])
+ψ = QTensor(ψ_raw, sites)
+println(&quot;State shape: &quot;, size(ψ_raw), &quot;   N = &quot;, N)</code></pre><pre><code class="nohighlight hljs">State shape: (2, 2, 2, 2, 2, 2, 2, 2, 2, 2)   N = 10
+</code></pre><p>Partition is an alias for Vector{AbstractIx}, so it takes a <em>vector</em> of legs. do_svd handles a multi-leg partition directly — no manual matricization. (c.1) Bipartition 1|9</p><pre><code class="language-julia hljs">bp_a = bipartition(Partition([sites[1]]), ψ)
+F_a = do_svd(ψ, bp_a, ValCutoffTrunc(1e-6))
+F_a_full = do_svd(ψ, bp_a, NoTrunc())
+println(&quot;Bipartition 1|9 — Schmidt rank (&gt;1e-6): &quot;, F_a.r)
+plot_spectrum(F_a_full.spectrum.values; title=&quot;Spectrum — bipartition 1|9&quot;, cutoff=1e-6)</code></pre><p><img src="../ex_01-fig-2.png" alt/></p><p>(c.2) Bipartition 5|5</p><pre><code class="language-julia hljs">bp_b = bipartition(Partition(collect(sites[1:(N ÷ 2)])), ψ)
+F_b = do_svd(ψ, bp_b, ValCutoffTrunc(1e-6))
+F_b_full = do_svd(ψ, bp_b, NoTrunc())
+println(&quot;Bipartition 5|5 — Schmidt rank (&gt;1e-6): &quot;, F_b.r)
+plot_spectrum(F_b_full.spectrum.values; title=&quot;Spectrum — bipartition 5|5&quot;, cutoff=1e-6)</code></pre><p><img src="../ex_01-fig-3.png" alt/></p><h3 id="Why-does-entanglement-depend-on-where-you-cut?"><a class="docs-heading-anchor" href="#Why-does-entanglement-depend-on-where-you-cut?">Why does entanglement depend on where you cut?</a><a id="Why-does-entanglement-depend-on-where-you-cut?-1"></a><a class="docs-heading-anchor-permalink" href="#Why-does-entanglement-depend-on-where-you-cut?" title="Permalink"></a></h3><p>The Schmidt rank — and the entanglement entropy sweeping through it in the next cell — is not a property of the state alone. It is a property of the state <em>together with a choice of bipartition</em>. Cutting at different positions along the chain gives you genuinely different numbers, and that variation encodes real physics.</p><p>Think of it this way: if you cut off just one site at the edge (<code>1|9</code>), the reduced density matrix of that single qubit is at most a <span>$2 \times 2$</span> matrix, so the Schmidt rank is at most 2 — no matter how entangled the rest of the chain is. Cut in the middle (<code>5|5</code>) and the left half&#39;s reduced density matrix can be as large as <span>$2^5 \times 2^5 = 32 \times 32$</span>, so the rank can be up to 32. The entanglement entropy at the midpoint is therefore the <em>maximum possible</em> for any bipartition, and it tells you how hard it is to represent <code>ψ</code> as an MPS with finite bond dimension — which is exactly the question DMRG and TEBD are trying to answer. We can already see this pattern clearly in the two Schmidt ranks printed above: 2 at the edge, 24 at the centre.</p><pre><code class="language-julia hljs">function entropy_bits(σ_vals)
+    p = σ_vals .^ 2
+    p ./= sum(p)
+    -sum(pᵢ -&gt; pᵢ &gt; 0 ? pᵢ * log2(pᵢ) : 0.0, p)
+end
+entropies = map(1:(N - 1)) do i
+    bp = bipartition(Partition(collect(sites[1:i])), ψ)
+    F = do_svd(ψ, bp, NoTrunc())
+    entropy_bits(F.spectrum.values)
+end
+fig = Figure(; size=(620, 320))
+ax = Axis(
+    fig[1, 1];
+    title=&quot;Entanglement entropy profile&quot;,
+    xlabel=&quot;boundary position  (i | i+1…N)&quot;,
+    ylabel=&quot;S  (bits)&quot;,
+    xticks=1:(N - 1),
+)
+lines!(ax, 1:(N - 1), entropies; color=:teal, linewidth=2.5)
+scatter!(ax, 1:(N - 1), entropies; color=:teal, markersize=9)
+fig</code></pre><p><img src="../ex_01-fig-4.png" alt/></p><h3 id="Why-are-there-small-oscillations-in-the-entropy-profile?"><a class="docs-heading-anchor" href="#Why-are-there-small-oscillations-in-the-entropy-profile?">Why are there small oscillations in the entropy profile?</a><a id="Why-are-there-small-oscillations-in-the-entropy-profile?-1"></a><a class="docs-heading-anchor-permalink" href="#Why-are-there-small-oscillations-in-the-entropy-profile?" title="Permalink"></a></h3><p>Even though the curve peaks at the midpoint (as the bipartition-size argument above predicts), it is not perfectly symmetric or monotone. The small ups and downs reflect the fact that <code>ψ</code> is a specific, structured state — it is not drawn from a random Haar measure.</p><p>In many physically relevant states (ground states of local Hamiltonians, for instance), the entanglement entropy obeys an <strong>area law</strong>: it is bounded by a constant independent of system size, and tends to be largest at the centre of the chain. Random states, by contrast, obey a <em>volume law</em> — their entropy grows with the size of the smaller block and saturates the bound at every cut. The ripples you see here are a fingerprint of the particular correlations baked into this specific <code>ψ</code>. A perfectly area-law state would show a smooth dome; a highly entangled state would show a nearly flat profile near the maximum entropy <span>$N/2$</span> bits.</p><h2 id="(d)-SVD-image-compression-—-Bahkauv.png"><a class="docs-heading-anchor" href="#(d)-SVD-image-compression-—-Bahkauv.png">(d) SVD image compression — <code>Bahkauv.png</code></a><a id="(d)-SVD-image-compression-—-Bahkauv.png-1"></a><a class="docs-heading-anchor-permalink" href="#(d)-SVD-image-compression-—-Bahkauv.png" title="Permalink"></a></h2><p>Each RGB colour channel is an independent <span>$m \times n$</span> matrix. A rank-<span>$r$</span> approximation retains the <span>$r$</span> largest singular values: <span>$M_r = U_r \Sigma_r V_r^\top$</span>.</p><h3 id="SVD-meets-image-compression-—-and-what-are-RGB-channels-anyway?"><a class="docs-heading-anchor" href="#SVD-meets-image-compression-—-and-what-are-RGB-channels-anyway?">SVD meets image compression — and what are RGB channels anyway?</a><a id="SVD-meets-image-compression-—-and-what-are-RGB-channels-anyway?-1"></a><a class="docs-heading-anchor-permalink" href="#SVD-meets-image-compression-—-and-what-are-RGB-channels-anyway?" title="Permalink"></a></h3><p>A digital image is just a matrix (or a stack of matrices) of numbers. In the RGB colour model, each pixel is described by three values — red intensity, green intensity, blue intensity — each ranging from 0 to 255 (or 0.0 to 1.0 after normalisation). That gives us three independent <span>$m \times n$</span> matrices, one per channel.</p><p>Now, each of these channel matrices has a lot of structure: nearby pixels tend to be similar in colour, which means large regions of the matrix are slowly varying. This makes the channel matrix far from random — it has low effective rank, just like <code>A.txt</code> above. The SVD exposes this structure directly: the first few singular values capture coarse shapes and large-scale colour gradients; the next layer encodes finer textures and edges; the tiny tail at the end is mostly noise or imperceptible detail.</p><p><strong>SVD compression</strong> keeps only the <span>$r$</span> largest singular values and discards the rest: <span>$M_r = U_r \, \Sigma_r \, V_r^\top$</span> The reconstructed channel uses only <span>$r(m + n + 1)$</span> numbers instead of <span>$m \times n$</span> — a massive saving once <span>$r \ll \min(m, n)$</span>. We do this independently per channel, then recombine. Simple, elegant, and it works remarkably well even at aggressive rank reductions.</p><pre><code class="language-julia hljs">using FileIO, PNGFiles, ColorTypes, FixedPointNumbers
+img = load(joinpath(DATA_ROOT, &quot;Bahkauv.png&quot;))
+R = Float64.(red.(img))
+G = Float64.(green.(img))
+B = Float64.(blue.(img))
+println(&quot;Image size: &quot;, size(img))</code></pre><pre><code class="nohighlight hljs">Image size: (1092, 800)
+</code></pre><h3 id="What-does-&quot;compressing&quot;-a-channel-actually-mean?"><a class="docs-heading-anchor" href="#What-does-&quot;compressing&quot;-a-channel-actually-mean?">What does &quot;compressing&quot; a channel actually mean?</a><a id="What-does-&quot;compressing&quot;-a-channel-actually-mean?-1"></a><a class="docs-heading-anchor-permalink" href="#What-does-&quot;compressing&quot;-a-channel-actually-mean?" title="Permalink"></a></h3><p>Each call to <code>compress_channel(M, r)</code> does three things:</p><ol><li><strong>Full SVD</strong> of the <span>$m \times n$</span> channel matrix (all singular values computed)</li><li><strong>Truncation</strong> to the top <span>$r$</span> singular values and their left/right singular vectors</li><li><strong>Reconstruction</strong> as <span>$M_r = U_r \Sigma_r V_r^\top$</span>, clamped to <code>[0,1]</code> so pixel values remain valid</li></ol><p>The storage ratio shown in the image title is <span>$r(m+n+1) / (mn)$</span>: one rank-<span>$r$</span> channel needs <span>$r$</span> columns of <span>$U_r$</span>, <span>$r$</span> singular values, and <span>$r$</span> rows of <span>$V_r^\top$</span> — compare that to <span>$mn$</span> numbers for the original.</p><p>The three plots below tell the full story: the image grid gives a <em>perceptual</em> sense of quality; the spectrum shows <em>which</em> singular values you are keeping and where your rank choices sit; and the error + storage curves give the <em>quantitative</em> trade-off. Look for the <strong>elbow</strong> in the error curve — the point where additional rank buys you very little in terms of reconstruction fidelity. Past that elbow you are paying real storage cost for barely perceptible quality improvement.</p><pre><code class="language-julia hljs">function compress_channel(M, r)
+    F = svd(M)
+    Mr = F.U[:, 1:r] * Diagonal(F.S[1:r]) * F.Vt[1:r, :]
+    clamp.(Mr, 0.0, 1.0)
+end
+function compress_image(R, G, B, r)
+    RGB.(compress_channel(R, r), compress_channel(G, r), compress_channel(B, r))
+end
+ranks = [5, 20, 50, minimum(size(R))]
+rank_colors = [:crimson, :darkorange, :forestgreen, :purple]
+m, n = size(R)</code></pre><pre><code class="nohighlight hljs">(1092, 800)</code></pre><p>── Image grid ────────────────────────────────────────────────────────────────</p><pre><code class="language-julia hljs">fig1 = Figure(; size=(210 * (1 + length(ranks)), 260))
+ax0 = Axis(fig1[1, 1]; aspect=DataAspect(), title=&quot;original&quot;)
+hidedecorations!(ax0);
+image!(ax0, rotr90(img))
+for (i, r) in enumerate(ranks)
+    ratio = round(r * (m + n + 1) / (m * n) * 100; digits=1)
+    ax = Axis(fig1[1, i + 1]; aspect=DataAspect(), title=&quot;rank $r  ($ratio%)&quot;)
+    hidedecorations!(ax)
+    image!(ax, rotr90(compress_image(R, G, B, r)))
+end
+display(fig1)</code></pre><pre><code class="nohighlight hljs">CairoMakie.Screen{IMAGE}
+</code></pre><p>── Singular value spectrum (red channel) with rank markers ───────────────────</p><pre><code class="language-julia hljs">F_R = svd(R)
+σ_R = F_R.S
+fig2 = Figure(; size=(900, 340))
+ax_lin = Axis(
+    fig2[1, 1]; title=&quot;Red-channel spectrum (linear)&quot;, xlabel=&quot;index&quot;, ylabel=&quot;σᵢ&quot;
+)
+ax_log = Axis(
+    fig2[1, 2];
+    title=&quot;Red-channel spectrum (log scale)&quot;,
+    xlabel=&quot;index&quot;,
+    ylabel=&quot;σᵢ&quot;,
+    yscale=log10,
+)
+for ax in (ax_lin, ax_log)
+    scatterlines!(ax, 1:length(σ_R), σ_R; color=:steelblue, markersize=3)
+    for (r, col) in zip(ranks[1:(end - 1)], rank_colors[1:(end - 1)])
+        vlines!(ax, [r]; color=col, linestyle=:dash, label=&quot;r=$r&quot;)
+    end
+    axislegend(ax; position=:rt)
+end
+display(fig2)</code></pre><pre><code class="nohighlight hljs">CairoMakie.Screen{IMAGE}
+</code></pre><p>── Storage and reconstruction quality vs rank ──────────────────────────────── Exploit ‖A − Aᵣ‖_F² = Σᵢ&gt;ᵣ σᵢ² to avoid recomputing svd for every rank</p><pre><code class="language-julia hljs">norm_R = norm(σ_R)   # = ‖R‖_F (Frobenius norm equals ℓ² norm of singular values)
+rank_sweep = 1:2:minimum(size(R))
+rel_errors = [sqrt(sum(F_R.S[(r + 1):end] .^ 2)) / norm_R for r in rank_sweep]
+storage_pct = [3r * (m + n + 1) / (3m * n) * 100 for r in rank_sweep]
+fig3 = Figure(; size=(900, 340))
+ax_q = Axis(
+    fig3[1, 1];
+    title=&quot;Reconstruction error vs rank&quot;,
+    xlabel=&quot;rank r&quot;,
+    ylabel=&quot;‖R − Rᵣ‖_F / ‖R‖_F&quot;,
+)
+ax_s = Axis(
+    fig3[1, 2];
+    title=&quot;Storage cost vs rank (RGB, Float64)&quot;,
+    xlabel=&quot;rank r&quot;,
+    ylabel=&quot;storage  (% of original)&quot;,
+)
+lines!(ax_q, collect(rank_sweep), rel_errors; color=:teal, linewidth=2)
+lines!(ax_s, collect(rank_sweep), storage_pct; color=:orchid, linewidth=2)
+for (r, col) in zip(ranks[1:(end - 1)], rank_colors[1:(end - 1)])
+    vlines!(ax_q, [r]; color=col, linestyle=:dash, label=&quot;r=$r&quot;)
+    vlines!(ax_s, [r]; color=col, linestyle=:dash, label=&quot;r=$r&quot;)
+end
+axislegend(ax_q; position=:rt)
+axislegend(ax_s; position=:lt)
+display(fig3)</code></pre><pre><code class="nohighlight hljs">CairoMakie.Screen{IMAGE}
+</code></pre><h3 id="Counter-example:-some-images-simply-don&#39;t-compress"><a class="docs-heading-anchor" href="#Counter-example:-some-images-simply-don&#39;t-compress">Counter-example: some images simply don&#39;t compress</a><a id="Counter-example:-some-images-simply-don&#39;t-compress-1"></a><a class="docs-heading-anchor-permalink" href="#Counter-example:-some-images-simply-don&#39;t-compress" title="Permalink"></a></h3><p>Bahkauv compresses well because it is a <em>natural image</em> — large regions of similar colour, smooth gradients, and slowly varying textures. These make the channel matrix low-rank. But not all images are like this.</p><p>Any image whose pixel values are essentially uncorrelated from one neighbour to the next will have a nearly <strong>flat singular value spectrum</strong>: every singular value carries roughly the same amount of information, so throwing away any of them degrades the reconstruction by a roughly equal amount. You cannot get away with keeping only the top few.</p><p>Classic examples of hard-to-compress images:</p><ul><li>Pure random noise (TV static) — the limiting case: exactly random, provably full-rank</li><li>Fine-grained textures (sand, pebbles, bark close-up) — high spatial frequency content</li><li>Dithered or halftoned images — deliberate high-frequency structure added during printing</li></ul><p>We generate a synthetic white-noise image below to demonstrate. It has the same resolution as a small photo but zero spatial correlation. Compare its spectrum to Bahkauv&#39;s — and notice how many more singular values you need to keep to reach the same reconstruction quality.</p><pre><code class="language-julia hljs">using Random</code></pre><p>── Generate a synthetic white-noise image ────────────────────────────────────</p><pre><code class="language-julia hljs">rng = MersenneTwister(42)
+m_n, n_n = 400, 300                       # same ballpark as a small photo
+R_n = rand(rng, Float64, m_n, n_n)
+G_n = rand(rng, Float64, m_n, n_n)
+B_n = rand(rng, Float64, m_n, n_n)
+noise_img = RGB.(R_n, G_n, B_n)</code></pre><p><img src="../ex_01-52.svg" alt/></p><p>── SVD of red channel ────────────────────────────────────────────────────────</p><pre><code class="language-julia hljs">F_noise = svd(R_n)
+σ_noise = F_noise.S</code></pre><pre><code class="nohighlight hljs">300-element Vector{Float64}:
+ 173.22122938771076
+  10.722047309690199
+  10.496777154053667
+  10.473713493567779
+  10.368693934472832
+  10.317290617364083
+  10.173611360911174
+  10.141364780790585
+  10.006885217192298
+   9.91847750518093
+   9.823015523184647
+   9.783246468548457
+   9.727281950785155
+   9.699821112040091
+   9.606352991506245
+   9.558109746831256
+   9.515942664800324
+   9.473707648400602
+   9.405276622937409
+   9.387321887345925
+   9.335753630020104
+   9.273223494886278
+   9.21828439174009
+   9.175948692061398
+   9.147638930135471
+   9.062871163257556
+   8.991627675922091
+   8.978343360540068
+   8.955124591737153
+   8.909586086544186
+   8.849032498393727
+   8.842605928197905
+   8.748498021474138
+   8.71735991598632
+   8.702790249821089
+   8.636367053625953
+   8.61430939704324
+   8.54785137355614
+   8.539124313000157
+   8.496672030444651
+   8.487404113401615
+   8.419073869329258
+   8.384409483084609
+   8.34684670056741
+   8.318645768389063
+   8.302404730743447
+   8.263837384734542
+   8.204393807485028
+   8.178651098615392
+   8.143076159434033
+   8.10052815394032
+   7.9997775102946065
+   7.939745394097454
+   7.936966575501782
+   7.925050765255921
+   7.899064203906774
+   7.879845290036384
+   7.791380558799024
+   7.7704248167778776
+   7.7549530235207875
+   7.732763294177334
+   7.704798750261223
+   7.676677139633939
+   7.639275614495169
+   7.593191350513931
+   7.554244839186165
+   7.493599875942962
+   7.467495734165012
+   7.430235127197699
+   7.395771392843368
+   7.354057381961799
+   7.340100033399404
+   7.288040443706839
+   7.273506426673026
+   7.2261372547274965
+   7.208094726379846
+   7.173475667420811
+   7.124259288138479
+   7.11818435820381
+   7.0713803576342364
+   7.020023396128832
+   6.991151043687662
+   6.971573901956977
+   6.940019820270437
+   6.901146770228554
+   6.876569311345979
+   6.824437688838473
+   6.806847112670873
+   6.74120804375939
+   6.731321549518271
+   6.7098806165758464
+   6.701080230664028
+   6.661389710820859
+   6.605580752807863
+   6.584551357571701
+   6.57836234679178
+   6.522662502554969
+   6.477209229555961
+   6.464384255433108
+   6.455021023587165
+   6.41448543292033
+   6.356775297497546
+   6.330183220812146
+   6.304690913306281
+   6.280851503028261
+   6.2384735869592856
+   6.195822169006666
+   6.181619164447532
+   6.167936580619419
+   6.154282785864573
+   6.105779419422963
+   6.073443256399308
+   6.0688472171492345
+   6.0092620629116
+   5.990873767662933
+   5.953790828690954
+   5.928118919319267
+   5.908475304794717
+   5.881021585811692
+   5.861824524283004
+   5.831017580631935
+   5.809376902268323
+   5.774288081211754
+   5.729066429469837
+   5.702654220962114
+   5.670056318852831
+   5.638492078639054
+   5.620112725482233
+   5.599579431322017
+   5.574055629531178
+   5.554917467200729
+   5.515035333353024
+   5.498145727267963
+   5.464362577516482
+   5.426254156819268
+   5.390954631432064
+   5.354747222869165
+   5.335776100414498
+   5.314542972153226
+   5.301349274744686
+   5.281650430893823
+   5.248748427754487
+   5.201398912208966
+   5.1635275182972356
+   5.130428259349267
+   5.104901122160208
+   5.069185984389386
+   5.046110444296517
+   5.006343848626942
+   4.981076370459918
+   4.954101346136117
+   4.937567151209701
+   4.892117964912497
+   4.882151576449362
+   4.8593409662331295
+   4.8121244408073665
+   4.804569661196604
+   4.7702311716478905
+   4.734565712346723
+   4.706971824424461
+   4.690400786003942
+   4.658394330947465
+   4.655873436497276
+   4.611479895555588
+   4.584332891349299
+   4.575630258370514
+   4.537615826794079
+   4.496913687867683
+   4.479365239218492
+   4.43244952211177
+   4.420544482937143
+   4.403220305767332
+   4.384915950150832
+   4.365711281573035
+   4.335047379390657
+   4.275188037092885
+   4.251890329063568
+   4.211870455218425
+   4.189401053721651
+   4.144621162692736
+   4.1264217999650405
+   4.107943091956701
+   4.091004284926548
+   4.0498319814786665
+   4.033391560030763
+   4.027326863304656
+   3.9834746907303873
+   3.952761205984066
+   3.934368149902193
+   3.8809347084881414
+   3.8788826955874267
+   3.8610717082848907
+   3.8355039032657032
+   3.798033881984832
+   3.794447765421473
+   3.750918923053602
+   3.746007121277774
+   3.6958713352879067
+   3.6605772860817054
+   3.648781827222045
+   3.595388638979144
+   3.577358653198661
+   3.551804123149412
+   3.5221120977519362
+   3.5042984714922354
+   3.4962697407088887
+   3.484130742027645
+   3.4402059421802442
+   3.41422711823792
+   3.368845857609837
+   3.337985753633206
+   3.300652459268991
+   3.2732521770276093
+   3.2615120174675845
+   3.2361534134988457
+   3.2065490007332085
+   3.1739085030502157
+   3.1620783643413937
+   3.137418248401369
+   3.0928578677294385
+   3.059713720951467
+   3.0466916380235647
+   3.0439271469450273
+   3.0129001881457516
+   2.972347443936463
+   2.9396529409819183
+   2.9131412176129152
+   2.900953810815103
+   2.8658834378288245
+   2.846319681721401
+   2.816398215572522
+   2.8057503033925792
+   2.802590334335822
+   2.7592559092272606
+   2.7430069730454663
+   2.703531823036558
+   2.6920566534742836
+   2.6447857630991676
+   2.63277053516752
+   2.5692601251618528
+   2.5551724537864837
+   2.5441771605961936
+   2.52357074290264
+   2.5178556715394818
+   2.4789217733074858
+   2.45733792704079
+   2.4362627018256404
+   2.3934439267855194
+   2.3388085883740444
+   2.3335832743306555
+   2.3037528473856796
+   2.2728823161572396
+   2.2514530234026378
+   2.2039807784915078
+   2.1782109934836185
+   2.167605733858419
+   2.1504351133157797
+   2.135083988347384
+   2.0783200427684387
+   2.034087273338352
+   2.024268144828289
+   2.001750822230222
+   1.9768592073049347
+   1.9566035974504532
+   1.938095459566718
+   1.8794132853913543
+   1.8600885263194682
+   1.8201202729904844
+   1.8146014444519492
+   1.7859070070792167
+   1.7640928515132557
+   1.7382386385002693
+   1.6889766035266296
+   1.670949427976904
+   1.6196568870541406
+   1.6015166949431514
+   1.565456818961647
+   1.5560229544664181
+   1.525385738785725
+   1.510037999393313
+   1.4917842990997245
+   1.461861649620657
+   1.400039358573157
+   1.3917316116962715
+   1.3262297006728672
+   1.2988575088368493
+   1.282581905288062
+   1.2699338797276891
+   1.2502760941688915
+   1.2035675012694782
+   1.1750961776694164
+   1.1500881485507186
+   1.0899860134828325
+   1.0326891819867534
+   1.009142242446321
+   0.9908591867467039
+   0.8851671195094456
+   0.873211889517666
+   0.8158280177532699
+   0.7821508193709166</code></pre><p>── Spectrum comparison: Bahkauv vs white noise (normalised to σ₁ = 1) ────────</p><pre><code class="language-julia hljs">fig_cmp = Figure(; size=(900, 360))
+ax_l = Axis(
+    fig_cmp[1, 1]; title=&quot;Spectrum comparison (linear)&quot;, xlabel=&quot;index&quot;, ylabel=&quot;σᵢ / σ₁&quot;
+)
+ax_r = Axis(
+    fig_cmp[1, 2];
+    title=&quot;Spectrum comparison (log scale)&quot;,
+    xlabel=&quot;index&quot;,
+    ylabel=&quot;σᵢ / σ₁&quot;,
+    yscale=log10,
+)
+for ax in (ax_l, ax_r)
+    lines!(
+        ax,
+        1:length(σ_R),
+        σ_R ./ σ_R[1];
+        color=:steelblue,
+        linewidth=2,
+        label=&quot;Bahkauv (structured)&quot;,
+    )
+    lines!(
+        ax,
+        1:length(σ_noise),
+        σ_noise ./ σ_noise[1];
+        color=:darkorange,
+        linewidth=2,
+        label=&quot;white noise&quot;,
+    )
+    axislegend(ax; position=:rt)
+end
+display(fig_cmp)</code></pre><pre><code class="nohighlight hljs">CairoMakie.Screen{IMAGE}
+</code></pre><p>── Side-by-side at rank 50: can you still recognise the image? ───────────────</p><pre><code class="language-julia hljs">r_demo = 50
+fig_imgs = Figure(; size=(700, 280))
+ax_b = Axis(fig_imgs[1, 1]; aspect=DataAspect(), title=&quot;Bahkauv — rank $r_demo&quot;)
+ax_n = Axis(fig_imgs[1, 2]; aspect=DataAspect(), title=&quot;white noise — rank $r_demo&quot;)
+hidedecorations!.((ax_b, ax_n))
+image!(ax_b, rotr90(compress_image(R, G, B, r_demo)))
+image!(
+    ax_n,
+    rotr90(
+        RGB.(
+            compress_channel(R_n, r_demo),
+            compress_channel(G_n, r_demo),
+            compress_channel(B_n, r_demo),
+        ),
+    ),
+)
+display(fig_imgs)</code></pre><pre><code class="nohighlight hljs">CairoMakie.Screen{IMAGE}
+</code></pre><p>── How many singular values are needed to capture 99% of ‖R‖_F? ─────────────</p><pre><code class="language-julia hljs">function rank_for_energy(S, frac)
+    total = sum(S .^ 2)
+    cum = 0.0
+    for (i, σ) in enumerate(S)
+        cum += σ^2
+        cum / total &gt;= frac &amp;&amp; return i
+    end
+    return length(S)
+end
+r99_bahkauv = rank_for_energy(σ_R, 0.99)
+r99_noise = rank_for_energy(σ_noise, 0.99)
+println(&quot;Ranks needed to capture 99% of Frobenius norm:&quot;)
+println(
+    &quot;  Bahkauv    : $r99_bahkauv / $(length(σ_R))   ($(round(100*r99_bahkauv/length(σ_R), digits=1))%)&quot;,
+)
+println(
+    &quot;  White noise: $r99_noise / $(length(σ_noise))  ($(round(100*r99_noise/length(σ_noise), digits=1))%)&quot;,
+)</code></pre><pre><code class="nohighlight hljs">Ranks needed to capture 99% of Frobenius norm:
+  Bahkauv    : 60 / 800   (7.5%)
+  White noise: 217 / 300  (72.3%)
+</code></pre><h2 id="(e)-Matrix-contractions-—-naive-triple-loop-vs-BLAS"><a class="docs-heading-anchor" href="#(e)-Matrix-contractions-—-naive-triple-loop-vs-BLAS">(e) Matrix contractions — naive triple-loop vs BLAS</a><a id="(e)-Matrix-contractions-—-naive-triple-loop-vs-BLAS-1"></a><a class="docs-heading-anchor-permalink" href="#(e)-Matrix-contractions-—-naive-triple-loop-vs-BLAS" title="Permalink"></a></h2><p>Compute <span>$C_{ij} = A_{ik} B_{kj}$</span> for random <span>$N \times N$</span> matrices. Benchmark both implementations and fit <span>$t(N) = aN^x$</span> in log-space.</p><h3 id="Why-does-matrix-multiplication-matter-so-much-in-tensor-networks?"><a class="docs-heading-anchor" href="#Why-does-matrix-multiplication-matter-so-much-in-tensor-networks?">Why does matrix multiplication matter so much in tensor networks?</a><a id="Why-does-matrix-multiplication-matter-so-much-in-tensor-networks?-1"></a><a class="docs-heading-anchor-permalink" href="#Why-does-matrix-multiplication-matter-so-much-in-tensor-networks?" title="Permalink"></a></h3><p>Every contraction of two tensors reduces to a matrix multiplication after appropriate reshaping. TEBD gates, MPO-MPS products, the power method — they all ultimately hit the same underlying routine. This means the performance of <em>any</em> tensor network algorithm is dominated by how fast matrix multiplication runs.</p><p>It was not always obvious that you could make this fast. Before the 1970s–80s, people wrote nested loops exactly like <code>matmul_naive</code> below, and performance scaled accordingly. Then came <strong>BLAS</strong> (Basic Linear Algebra Subprograms), a standardised API published in 1979, followed by <strong>LAPACK</strong> in 1992 (which builds higher-level operations — SVD, eigensolvers, triangular solves — on top of BLAS). The key insight was that matrix multiplication can be decomposed into <strong>cache-friendly blocked subproblems</strong> (tiles that fit in the CPU&#39;s fast on-chip L1/L2 cache), dramatically reducing the cost of memory traffic. Modern BLAS implementations (OpenBLAS, Intel MKL, Apple Accelerate) go even further by exploiting <strong>SIMD</strong> (Single Instruction, Multiple Data) vector units — a single AVX2 instruction performs 4 double-precision multiply-accumulates simultaneously; AVX-512 does 8 — effectively reaching a large fraction of the CPU&#39;s theoretical peak.</p><p>Modern GPUs push this further still: NVIDIA cuBLAS dispatches thousands of multiply-accumulate operations across tensor cores in parallel, which is exactly why large-scale ML and quantum simulation workloads shifted to GPUs. For us, Julia&#39;s <code>A * B</code> dispatches to the system BLAS (OpenBLAS or Accelerate on macOS), so all of this comes for free. The naive triple loop below exists purely to show you how large the gap is.</p><pre><code class="language-julia hljs">function matmul_naive(A, B)
+    m, p, n = size(A, 1), size(A, 2), size(B, 2)
+    C = zeros(eltype(A), m, n)
+    for k in 1:p, j in 1:n, i in 1:m     # k→j→i: innermost loop over rows → column-major friendly
+        C[i, j] += A[i, k] * B[k, j]
+    end
+    C
+end</code></pre><pre><code class="nohighlight hljs">matmul_naive (generic function with 1 method)</code></pre><h3 id="Column-major-memory-layout-and-why-loop-order-matters"><a class="docs-heading-anchor" href="#Column-major-memory-layout-and-why-loop-order-matters">Column-major memory layout and why loop order matters</a><a id="Column-major-memory-layout-and-why-loop-order-matters-1"></a><a class="docs-heading-anchor-permalink" href="#Column-major-memory-layout-and-why-loop-order-matters" title="Permalink"></a></h3><p>Julia stores arrays in <strong>column-major</strong> order: for a matrix <code>A</code>, the elements of the <em>first column</em> are contiguous in memory — <code>A[1,1]</code>, <code>A[2,1]</code>, <code>A[3,1]</code>, ... — then the second column, and so on. This is the same convention as Fortran (and the opposite of C, NumPy, and most row-major languages).</p><p>Why does this matter for loops? Modern CPUs fetch memory not one element at a time but in <strong>cache lines</strong> (typically 64 bytes = 8 <code>Float64</code> values). If your innermost loop reads elements that are contiguous in memory, each fetched cache line is used in full — fast. If your innermost loop jumps across column boundaries, every access is a potential cache miss that stalls the CPU while a new cache line is loaded — slow.</p><p>In Julia:</p><ul><li><code>for j in 1:n, i in 1:m</code> — inner loop over <code>i</code> (rows), contiguous in memory → <strong>fast</strong></li><li><code>for i in 1:m, j in 1:n</code> — inner loop over <code>j</code> (columns), strided by <code>m</code> words → <strong>slow</strong></li></ul><p>The demo below benchmarks both orderings on a <span>$1024 \times 1024$</span> array — typically a 5–10× speedup just from flipping two loop variable names. Notice that <code>matmul_naive</code> deliberately uses <code>for k, j, i</code> (innermost loop over <code>i</code>) precisely for this reason.</p><p>── Column-major vs row-major loop order demo ─────────────────────────────────</p><pre><code class="language-julia hljs">function sum_colmajor(A)            # i innermost → memory-sequential in Julia
+    s = 0.0
+    for j in 1:size(A, 2), i in 1:size(A, 1)
+        @inbounds s += A[i, j]
+    end
+    s
+end
+function sum_rowmajor(A)            # j innermost → strides across columns (slow)
+    s = 0.0
+    for i in 1:size(A, 1), j in 1:size(A, 2)
+        @inbounds s += A[i, j]
+    end
+    s
+end
+N_big = 1024
+A_big = randn(N_big, N_big)
+t_col = @belapsed sum_colmajor($A_big) seconds=1
+t_row = @belapsed sum_rowmajor($A_big) seconds=1
+println(&quot;Column-major inner loop : $(round(t_col*1e3, digits=2)) ms&quot;)
+println(&quot;Row-major inner loop    : $(round(t_row*1e3, digits=2)) ms&quot;)
+println(&quot;Speedup (col/row)       : $(round(t_row/t_col, digits=1))×&quot;)</code></pre><pre><code class="nohighlight hljs">Column-major inner loop : 1.11 ms
+Row-major inner loop    : 9.02 ms
+Speedup (col/row)       : 8.2×
+</code></pre><p>── Naive vs BLAS benchmark across sizes ─────────────────────────────────────</p><pre><code class="language-julia hljs">Ns = [4, 8, 16, 32, 64, 128]
+times_naive = Float64[]
+times_blas = Float64[]
+for N in Ns
+    A = randn(N, N)
+    B = randn(N, N)
+    push!(times_naive, @belapsed(matmul_naive($A, $B), seconds=1))
+    push!(times_blas, @belapsed($A * $B, seconds=1))
+    println(
+        &quot;N=$N  naive=$(round(times_naive[end]*1e6,digits=2))µs  BLAS=$(round(times_blas[end]*1e6,digits=2))µs&quot;,
+    )
+end</code></pre><pre><code class="nohighlight hljs">┌ Warning: Assignment to `A` in soft scope is ambiguous because a global variable by the same name exists: `A` will be treated as a new local. Disambiguate by using `local A` to suppress this warning or `global A` to assign to the existing global variable.
+└ @ ~/work/Qritical.jl/Qritical.jl/docs/src/exercises/01/ex_01.md:5
+┌ Warning: Assignment to `B` in soft scope is ambiguous because a global variable by the same name exists: `B` will be treated as a new local. Disambiguate by using `local B` to suppress this warning or `global B` to assign to the existing global variable.
+└ @ ~/work/Qritical.jl/Qritical.jl/docs/src/exercises/01/ex_01.md:6
+N=4  naive=0.15µs  BLAS=0.12µs
+N=8  naive=0.77µs  BLAS=0.19µs
+N=16  naive=4.23µs  BLAS=0.7µs
+N=32  naive=36.32µs  BLAS=3.4µs
+N=64  naive=224.33µs  BLAS=18.05µs
+N=128  naive=1649.36µs  BLAS=118.04µs
+</code></pre><p>Sweep array sizes to see how the cache-miss penalty scales with matrix dimension</p><pre><code class="language-julia hljs">Ns_mem = [128, 256, 512, 1024, 2048]
+t_cols = Float64[]
+t_rows = Float64[]
+for N in Ns_mem
+    M = randn(N, N)
+    push!(t_cols, @belapsed sum_colmajor($M) seconds=1)
+    push!(t_rows, @belapsed sum_rowmajor($M) seconds=1)
+end
+speedup = t_rows ./ t_cols
+fig_mem = Figure(; size=(900, 360))
+ax1 = Axis(
+    fig_mem[1, 1];
+    title=&quot;Access time vs array size&quot;,
+    xlabel=&quot;N&quot;,
+    ylabel=&quot;time (s)&quot;,
+    xscale=log10,
+    yscale=log10,
+    xticks=(Ns_mem, string.(Ns_mem)),
+)
+scatterlines!(
+    ax1,
+    Ns_mem,
+    t_cols;
+    color=:steelblue,
+    linewidth=2,
+    label=&quot;column-major  (inner loop over rows)&quot;,
+)
+scatterlines!(
+    ax1,
+    Ns_mem,
+    t_rows;
+    color=:darkorange,
+    linewidth=2,
+    label=&quot;row-major  (inner loop over cols)&quot;,
+)
+axislegend(ax1; position=:lt)
+ax2 = Axis(
+    fig_mem[1, 2];
+    title=&quot;Speedup: col-major relative to row-major&quot;,
+    xlabel=&quot;N&quot;,
+    ylabel=&quot;×  faster&quot;,
+    xscale=log10,
+    xticks=(Ns_mem, string.(Ns_mem)),
+)
+scatterlines!(ax2, Ns_mem, speedup; color=:teal, linewidth=2.5, markersize=9)
+hlines!(ax2, [1.0]; color=:gray, linestyle=:dash, label=&quot;no difference&quot;)
+axislegend(ax2; position=:lt)
+fig_mem</code></pre><p><img src="../ex_01-fig-5.png" alt/></p><p>Log-linear fit  log t = α + β·log N</p><pre><code class="language-julia hljs">function loglog_fit(Ns, ts)
+    x, y = log.(Float64.(Ns)), log.(ts)
+    n = length(x)
+    β = (n*sum(x .* y) - sum(x)*sum(y)) / (n*sum(x .^ 2) - sum(x)^2)
+    α = (sum(y) - β*sum(x)) / n
+    exp(α), β
+end
+a_naive, β_naive = loglog_fit(Ns, times_naive)
+a_blas, β_blas = loglog_fit(Ns, times_blas)
+println(
+    &quot;Fitted exponents:  naive β = &quot;,
+    round(β_naive; digits=2),
+    &quot;  BLAS β = &quot;,
+    round(β_blas; digits=2),
+    &quot;  (theory: both ≈ 3.0)&quot;,
+)</code></pre><pre><code class="nohighlight hljs">Fitted exponents:  naive β = 2.71  BLAS β = 2.05  (theory: both ≈ 3.0)
+</code></pre><h3 id="Why-is-BLAS-so-much-faster-—-and-why-does-the-fitted-exponent-look-wrong?"><a class="docs-heading-anchor" href="#Why-is-BLAS-so-much-faster-—-and-why-does-the-fitted-exponent-look-wrong?">Why is BLAS so much faster — and why does the fitted exponent look wrong?</a><a id="Why-is-BLAS-so-much-faster-—-and-why-does-the-fitted-exponent-look-wrong?-1"></a><a class="docs-heading-anchor-permalink" href="#Why-is-BLAS-so-much-faster-—-and-why-does-the-fitted-exponent-look-wrong?" title="Permalink"></a></h3><p>Both the naive loop and BLAS perform exactly the same number of arithmetic operations (<span>$2N^3$</span> multiply-accumulates for <span>$N \times N$</span> matrices), so in theory both should scale as <span>$\mathcal{O}(N^3)$</span>. Our fitted exponent for the naive loop (~2.9) confirms this. The BLAS exponent (~1.8) looks suspiciously low because at the matrix sizes we benchmarked (<span>$N \leq 128$</span>), BLAS is not yet in its asymptotic regime — fixed dispatch overhead and small-matrix specialisations dominate at these sizes, making the curve look shallower than <span>$N^3$</span>.</p><p>The <em>absolute</em> speedup is where it gets interesting. At <span>$N = 128$</span>, BLAS is roughly 90× faster than the naive loop. This gap grows with <span>$N$</span> because BLAS is exploiting three levels of optimisation the naive loop misses:</p><ol><li><strong>Cache blocking</strong> — the matrix is partitioned into tiles that fit in L1 or L2 cache, so each element is reused many times before being evicted; memory traffic is minimised</li><li><strong>SIMD vectorisation</strong> — a single AVX2 instruction computes 4 <code>Float64</code> multiply-adds simultaneously; AVX-512 does 8; the naive loop only does 1 per cycle</li><li><strong>Instruction-level parallelism</strong> — the CPU&#39;s out-of-order execution backend pipelines multiple independent multiply-accumulates in flight at the same time</li></ol><p>The moral: never reimplement matrix multiplication. Every BLAS call is years of micro-optimisation work packaged into a single function. For tensor network code, spending effort ensuring your contractions land on BLAS (rather than Python loops or manual reshapes that bypass it) is almost always the highest-leverage performance move.</p><pre><code class="language-julia hljs">N_range = exp.(range(log(minimum(Ns)), log(maximum(Ns)); length=200))
+fig = Figure(; size=(650, 360))
+ax = Axis(
+    fig[1, 1];
+    title=&quot;Matrix multiply scaling: naive vs BLAS&quot;,
+    xlabel=&quot;N&quot;,
+    ylabel=&quot;time (s)&quot;,
+    xscale=log10,
+    yscale=log10,
+)</code></pre><pre><code class="nohighlight hljs">Makie.Axis with 0 plots:
+</code></pre><p>data points</p><pre><code class="language-julia hljs">scatterlines!(
+    ax,
+    Ns,
+    times_naive;
+    color=:crimson,
+    markersize=9,
+    label=&quot;naive  β≈$(round(β_naive,digits=2))&quot;,
+)
+scatterlines!(
+    ax,
+    Ns,
+    times_blas;
+    color=:dodgerblue,
+    markersize=9,
+    label=&quot;BLAS   β≈$(round(β_blas,digits=2))&quot;,
+)</code></pre><pre><code class="nohighlight hljs">Makie.ScatterLines{Tuple{Vector{GeometryBasics.Point{2, Float64}}}}</code></pre><p>fitted power-law lines</p><pre><code class="language-julia hljs">lines!(
+    ax,
+    N_range,
+    a_naive .* N_range .^ β_naive;
+    color=:crimson,
+    linestyle=:dash,
+    linewidth=1.5,
+)
+lines!(
+    ax,
+    N_range,
+    a_blas .* N_range .^ β_blas;
+    color=:dodgerblue,
+    linestyle=:dash,
+    linewidth=1.5,
+)
+axislegend(ax; position=:lt)
+fig</code></pre><p><img src="../ex_01-fig-6.png" alt/></p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({
+    startOnLoad: true,
+    theme: "neutral"
+});
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../../getting_started/gs3_drawing_tensor_networks/">« GS-3: Drawing Tensor Networks</a><a class="docs-footer-nextpage" href="../../02/ex_02/">Exercise 02 »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 16 July 2026 21:19">Thursday 16 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
