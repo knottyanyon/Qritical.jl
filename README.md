@@ -1,16 +1,19 @@
-# Qritical.jl
-
 <p align="center">
-  <img src="docs/src/assets/logo.svg" alt="Qritical.jl logo" width="150"/>
+  <img src="docs/src/assets/logo.svg" alt="Qritical.jl logo" width="250"/>
+  <br/>
+  <h1 align="center">Qritical.jl</h1>
 </p>
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://knottyanyon.github.io/Qritical.jl/stable/)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://knottyanyon.github.io/Qritical.jl/dev/)
-[![Build Status](https://github.com/knottyanyon/Qritical.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/knottyanyon/Qritical.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/knottyanyon/Qritical.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/knottyanyon/Qritical.jl)
-[![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
-[![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
+<p align="center">
+  <a href="https://knottyanyon.github.io/Qritical.jl/stable/"><img src="https://img.shields.io/badge/docs-stable-blue.svg" alt="Stable"/></a>
+  <a href="https://knottyanyon.github.io/Qritical.jl/dev/"><img src="https://img.shields.io/badge/docs-dev-blue.svg" alt="Dev"/></a>
+  <a href="https://github.com/knottyanyon/Qritical.jl/actions/workflows/CI.yml?query=branch%3Amain"><img src="https://github.com/knottyanyon/Qritical.jl/actions/workflows/CI.yml/badge.svg?branch=main" alt="Build Status"/></a>
+  <a href="https://codecov.io/gh/knottyanyon/Qritical.jl"><img src="https://codecov.io/gh/knottyanyon/Qritical.jl/branch/main/graph/badge.svg" alt="Coverage"/></a>
+  <a href="https://github.com/invenia/BlueStyle"><img src="https://img.shields.io/badge/code%20style-blue-4495d1.svg" alt="Code Style: Blue"/></a>
+  <a href="https://github.com/JuliaTesting/Aqua.jl"><img src="https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg" alt="Aqua"/></a>
+</p>
 
+---
 
 ## Running tests
 
