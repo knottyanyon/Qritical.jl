@@ -166,6 +166,7 @@ makedocs(;
     authors="Bavithra Govintharajah",
     remotes=nothing,
     sitename="Qritical.jl",
+    version=string(pkgversion(Qritical)),
     format=Documenter.HTML(;
         canonical="https://knottyanyon.github.io/Qritical.jl",
         edit_link="main",
