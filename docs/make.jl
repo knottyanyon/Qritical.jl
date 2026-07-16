@@ -166,6 +166,7 @@ makedocs(;
     authors="Bavithra Govintharajah",
     remotes=nothing,
     sitename="Qritical.jl",
+    version=string(pkgversion(Qritical)),
     format=Documenter.HTML(;
         canonical="https://knottyanyon.github.io/Qritical.jl",
         edit_link="main",
@@ -179,7 +180,7 @@ makedocs(;
                 ),
             ),
         ),
-        assets=["assets/custom.css", "assets/output-fold.js"],
+        assets=["assets/favicon.svg", "assets/custom.css", "assets/output-fold.js"],
         size_threshold=30 * 2^20,   # 30 MiB — exercise pages embed CairoMakie figures
         size_threshold_warn=5 * 2^20,
     ),

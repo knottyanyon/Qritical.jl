@@ -39,6 +39,13 @@ jgrey   = RGBf(0.55, 0.55, 0.58)
 jgold   = RGBf(0.85, 0.65, 0.13);   # trailing ; suppresses the colour-swatch output
 ````
 
+````
+Precompiling packages...
+   4906.9 ms  ✓ Qritical → QriticalMakieExt
+  1 dependency successfully precompiled in 6 seconds. 347 already precompiled.
+
+````
+
 ## 1. A canvas, a tensor, a bond
 
 [`schematic`](@ref) returns an empty canvas. Every verb takes it as the first
