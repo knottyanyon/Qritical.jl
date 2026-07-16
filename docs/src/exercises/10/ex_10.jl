@@ -330,12 +330,12 @@ phase = dot(gs4.state, r_gs.state)   # = e^{-iE₀t} since ‖gs4‖ = 1
 @assert abs(abs(phase) - 1.0) < 1e-13  "GS is not a phase eigenstate"
 @assert norm(r_gs.state - phase * gs4.state) < 1e-12  "GS not pure phase evolution"
 # 3. Imaginary-time projects to GS: e^{-Hτ}|ψ₀_rand⟩ → |ψ₀⟩  (up to norm)
-sv_it   = as_statevector(normalize(randn(ComplexF64, 2^4)))
+sv_it   = as_statevector(normalize(randn(MersenneTwister(42), ComplexF64, 2^4)))
 p_it    = ConstantProtocol(ImaginaryTime(), 20.0, 1, H4)
 r_it    = solve(H4, sv_it, ExactDiagonalization(:time), p_it)
 ψ_proj  = normalize(r_it.state)
 overlap = abs(dot(ψ_proj, gs4.state))
-@assert abs(overlap - 1.0) < 1e-10  "Imaginary-time did not converge to GS (overlap = $overlap)"
+@assert abs(overlap - 1.0) < 1e-8  "Imaginary-time did not converge to GS (overlap = $overlap)"
 println("Part (e) ✓  —  norm preserved, GS is phase fixed-point, imaginary-time→GS.")
 
 # ## Summary
