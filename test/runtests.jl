@@ -8,6 +8,7 @@ using Statistics
 # planned dependencies are actually used).
 
 @testset "Qritical.jl" begin
+    include("test_packaging.jl")
     include("test_geometry.jl")
     include("test_dof.jl")
     include("test_symmetries.jl")
