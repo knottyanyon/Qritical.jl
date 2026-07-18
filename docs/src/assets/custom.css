@@ -157,3 +157,176 @@ details.output-fold[open] > summary::before {
 details.output-fold[open] > pre {
     margin-top: 0;
 }
+
+/* ================================================================
+   Brand color corrections  (design system A + B)
+   A1: link/info blue #3c5dcd → #4063d8  (Documenter default → Julia exact)
+   A2: success green  #259a12 → #389826
+   A5–A8: dark-mode tints for red/green/blue/purple
+   B1/B2: todo admonition → teal so compat and todo are visually distinct
+   Applied as plain CSS overrides (no SCSS recompile needed).
+   ================================================================ */
+
+/* Content links ― light mode */
+.content a { color: #4063d8; }
+.content a:hover { color: #092ca1; }
+
+/* Content links ― dark mode */
+html.theme--documenter-dark .content a { color: #6d90ff; }
+html.theme--documenter-dark .content a:hover { color: #a9bcff; }
+
+/* Info admonition (maps to $blue) */
+.admonition.is-category-info { border-color: #4063d8; }
+.admonition.is-category-info > .admonition-header { background-color: #4063d8; color: #fff; }
+.admonition.is-category-info > .admonition-body { background-color: #eef2fd; }
+
+html.theme--documenter-dark .admonition.is-category-info { border-color: #6d90ff; }
+html.theme--documenter-dark .admonition.is-category-info > .admonition-header {
+    background-color: #1c2740; color: #6d90ff;
+}
+
+/* Success admonition (maps to $green) */
+.admonition.is-category-success { border-color: #389826; }
+.admonition.is-category-success > .admonition-header { background-color: #389826; color: #fff; }
+.admonition.is-category-success > .admonition-body { background-color: #eaf7e8; }
+
+html.theme--documenter-dark .admonition.is-category-success { border-color: #65c553; }
+html.theme--documenter-dark .admonition.is-category-success > .admonition-header {
+    background-color: #1b2c1a; color: #65c553;
+}
+
+/* Todo admonition → teal (#1aa6a0 light, #5cc9c4 dark) */
+.admonition.is-category-todo { border-color: #1aa6a0; }
+.admonition.is-category-todo > .admonition-header { background-color: #1aa6a0; color: #fff; }
+.admonition.is-category-todo > .admonition-body { background-color: #e4f7f6; color: #1a1a2e; }
+
+html.theme--documenter-dark .admonition.is-category-todo { border-color: #5cc9c4; }
+html.theme--documenter-dark .admonition.is-category-todo > .admonition-header {
+    background-color: #0f2a28; color: #5cc9c4;
+}
+html.theme--documenter-dark .admonition.is-category-todo > .admonition-body {
+    background-color: #0a1f1e;
+}
+
+/* ================================================================
+   Breadcrumbs
+   page-toc.js removes .is-disabled and sets href on parent crumbs
+   that have a corresponding sidebar index page; this CSS handles
+   the color for those fixed links and for any that remain disabled.
+   ================================================================ */
+
+.breadcrumb li:not(.is-active) > a:not(.is-disabled) { color: #4063d8; }
+.breadcrumb li:not(.is-active) > a:not(.is-disabled):hover { color: #092ca1; }
+.breadcrumb a.is-disabled { color: #4063d8; opacity: 0.7; }
+
+html.theme--documenter-dark .breadcrumb li:not(.is-active) > a:not(.is-disabled) { color: #6d90ff; }
+html.theme--documenter-dark .breadcrumb li:not(.is-active) > a:not(.is-disabled):hover { color: #a9bcff; }
+html.theme--documenter-dark .breadcrumb a.is-disabled { color: #6d90ff; opacity: 0.7; }
+
+/* ================================================================
+   Right-side on-page TOC
+   Documenter's layout: .docs-main has max-width:52rem and
+   margin-left:20rem (position:fixed sidebar), so on wide screens
+   the viewport area to the right of docs-main is blank.  The TOC is
+   position:fixed into that blank zone — .docs-main is never touched,
+   so text width is completely unchanged.
+   page-toc.js injects <aside id="qr-page-toc"> into <body> and
+   wires scroll-spy.
+   ================================================================ */
+
+/* Hidden by default; show only when there is ≥ 180px of space to the
+   right of docs-main (viewport ≥ 73rem + 180px ≈ 1348px). */
+#qr-page-toc { display: none; }
+
+@media (min-width: calc(73rem + 180px)) {
+    #qr-page-toc {
+        display: block;
+        position: fixed;
+        top: 4.5rem;
+        left: calc(20rem + 52rem + 1.5rem);   /* sidebar + content + gap */
+        width: min(220px, calc(100vw - 73rem - 2rem));
+        max-height: calc(100vh - 5.5rem);
+        overflow-y: auto;
+        border-left: 2px solid #e1e1e6;
+        padding: 1rem 0.5rem 2rem 1rem;
+        z-index: 4;
+    }
+}
+
+html.theme--documenter-dark #qr-page-toc { border-left-color: #34353d; }
+
+.qr-toc-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #9a9aa5;
+    margin: 0 0 0.6rem 0;
+}
+
+.qr-toc-list { list-style: none; margin: 0; padding: 0; }
+.qr-toc-list li { margin: 0; padding: 0; }
+
+.qr-toc-list a {
+    display: block;
+    padding: 0.2rem 0.25rem;
+    color: #4b4b55;
+    text-decoration: none;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    border-radius: 3px;
+    transition: color 120ms;
+}
+
+.qr-toc-list a:hover { color: #4063d8; }
+.qr-toc-list li.is-active > a { color: #4063d8; font-weight: 600; }
+
+/* h3 items are indented and slightly smaller */
+.qr-toc-h3 > a { padding-left: 0.85rem; font-size: 0.8125rem; color: #6c757d; }
+.qr-toc-h3 > a:hover,
+.qr-toc-h3.is-active > a { color: #4063d8; }
+
+/* Dark mode TOC */
+html.theme--documenter-dark .qr-toc-list a { color: #c2c2cc; }
+html.theme--documenter-dark .qr-toc-list a:hover { color: #6d90ff; }
+html.theme--documenter-dark .qr-toc-list li.is-active > a { color: #6d90ff; font-weight: 600; }
+html.theme--documenter-dark .qr-toc-h3 > a { color: #9a9aa5; }
+html.theme--documenter-dark .qr-toc-h3 > a:hover,
+html.theme--documenter-dark .qr-toc-h3.is-active > a { color: #6d90ff; }
+
+/* ================================================================
+   Version badge
+   Injected by page-toc.js after .docs-package-name.
+   Two-tone pill: dark-gray "docs" label + brand-purple version.
+   ================================================================ */
+
+.qr-version-badge {
+    display: inline-flex;   /* shrink-wraps to content, ignores flex-column stretch */
+    align-self: center;     /* centres within the sidebar flex column */
+    align-items: stretch;
+    margin: 0.3rem 0 0.1rem;
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    text-decoration: none;
+}
+
+.qr-badge-left,
+.qr-badge-right {
+    /* !important guards against docs-autofit JS zeroing sidebar font-sizes */
+    font-size: 0.6875rem !important;
+    line-height: 1.4 !important;
+    color: #fff !important;
+    padding: 0.25rem 0.45rem;
+}
+
+.qr-badge-left  { background: #555; }
+.qr-badge-right { background: #9558b2; }
+
+/* Dark mode */
+html.theme--documenter-dark .qr-badge-left  { background: #444; }
+html.theme--documenter-dark .qr-badge-right { background: #b070d0; }
