@@ -1,5 +1,6 @@
 using Qritical
 using Documenter
+using Documenter: Remotes
 using DocumenterCitations
 using DocumenterMermaid
 using Literate
@@ -164,7 +165,7 @@ preprocess_glossary_links(src_dir)
 makedocs(;
     modules=[Qritical],
     authors="Bavithra Govintharajah",
-    remotes=nothing,
+    repo=Remotes.GitHub("knottyanyon", "Qritical.jl"),
     sitename="Qritical.jl",
     version=string(pkgversion(Qritical)),
     format=Documenter.HTML(;
