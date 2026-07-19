@@ -12,7 +12,44 @@ using Base64
 include(joinpath(@__DIR__, "symbol_docstring_injector.jl"))
 include(joinpath(@__DIR__, "glossary_linker.jl"))
 
-bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authoryear)
+# ── Custom citation style: author-year with square brackets ─────────────────
+# DocumenterCitations' :authoryear renders "(Author, Year)".
+# Physics convention uses "[Author, Year]" instead.  The only difference is
+# the `parentheses` keyword forwarded to format_authoryear_citation.
+
+function DocumenterCitations.format_citation(
+    style::Val{:authoryear_brackets},
+    cit::DocumenterCitations.CitationLink,
+    entries,
+    citations,
+)
+    return DocumenterCitations.format_authoryear_citation(
+        style, cit, entries, citations; parentheses="[]",
+    )
+end
+
+DocumenterCitations.format_bibliography_reference(::Val{:authoryear_brackets}, entry) =
+    DocumenterCitations.format_authoryear_bibliography_reference(
+        Val(:authoryear_brackets), entry,
+    )
+
+function DocumenterCitations.format_bibliography_label(
+    ::Val{:authoryear_brackets},
+    entry,
+    citations,
+)
+    names = DocumenterCitations.format_names(
+        entry; names=:lastonly, and=true, et_al=2, et_al_text="et al.",
+    )
+    year = isempty(entry.date.year) ? "undated" : entry.date.year
+    return "[$names, $year]"
+end
+
+DocumenterCitations.bib_html_list_style(::Val{:authoryear_brackets}) = :dl
+DocumenterCitations.bib_sorting(::Val{:authoryear_brackets}) = :nyt
+# ────────────────────────────────────────────────────────────────────────────
+
+bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authoryear_brackets)
 
 DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
 
@@ -181,7 +218,7 @@ makedocs(;
                 ),
             ),
         ),
-        assets=[asset("assets/favicon.svg", class=:ico, islocal=true), "assets/custom.css", "assets/output-fold.js", "assets/page-toc.js"],
+        assets=[asset("assets/favicon.svg", class=:ico, islocal=true), "assets/custom.css", "assets/output-fold.js", "assets/page-toc.js", "assets/math-env.js"],
         size_threshold=30 * 2^20,   # 30 MiB — tutorial pages embed CairoMakie figures
         size_threshold_warn=5 * 2^20,
     ),
@@ -252,6 +289,9 @@ makedocs(;
             "Glossary" => "references/glossary.md",
         ],
         # "Bibliography" => "references.md",
+        "Developer" => [
+            "Kitchen Sink" => "dev/kitchen_sink.md",
+        ],
     ]),
 )
 
