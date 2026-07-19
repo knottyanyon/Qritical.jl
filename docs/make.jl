@@ -288,6 +288,7 @@ makedocs(;
         "References" => [
             "Glossary" => "references/glossary.md",
         ],
+        "Changelog" => "changelog.md",
         # "Bibliography" => "references.md",
         "Developer" => [
             "Kitchen Sink" => "dev/kitchen_sink.md",
