@@ -11,6 +11,7 @@ using Base64
 # Load custom documentation hooks
 include(joinpath(@__DIR__, "symbol_docstring_injector.jl"))
 include(joinpath(@__DIR__, "glossary_linker.jl"))
+include(joinpath(@__DIR__, "page_meta_preprocessor.jl"))
 
 # ── Custom citation style: author-year with square brackets ─────────────────
 # DocumenterCitations' :authoryear renders "(Author, Year)".
@@ -198,6 +199,7 @@ end
 
 src_dir = normpath(joinpath(@__DIR__, "src"))
 preprocess_glossary_links(src_dir)
+preprocess_page_meta(src_dir)
 
 makedocs(;
     modules=[Qritical],
