@@ -1,11 +1,20 @@
-# Symbol usage injection for exercise references in docstrings
-# This file discovers which Qritical symbols are used in exercise notebooks
-# and injects "Used in exercises" sections into their docstrings.
+# Symbol usage injection for tutorial references in docstrings
+# This file discovers which Qritical symbols are used in tutorial notebooks
+# and injects "Used in tutorials" sections into their docstrings.
+
+# Maps a tutorial number ("01".."11") to the topic Part slug that its
+# directory now lives under: docs/src/tutorials/<slug>/<NN>/ex_<NN>.*
+const TUTORIAL_PART_SLUG = Dict(
+    "01" => "fundamentals",  "02" => "fundamentals",  "03" => "fundamentals",
+    "04" => "tensor_trains", "05" => "tensor_trains",
+    "06" => "dynamics", "07" => "dynamics", "08" => "dynamics", "09" => "dynamics",
+    "10" => "misc", "11" => "misc",
+)
 
 """
     find_notebook_symbol_usage(notebooks_dir::String) -> Dict{Symbol, Vector{String}}
 
-Scan Jupyter notebooks and return a mapping of symbol -> list of exercise names.
+Scan Jupyter notebooks and return a mapping of symbol -> list of tutorial names.
 Returns an empty dict if JSON is unavailable (symbol discovery is optional).
 """
 function find_notebook_symbol_usage(notebooks_dir::String)
@@ -26,13 +35,16 @@ function find_notebook_symbol_usage(notebooks_dir::String)
             if endswith(file, ".ipynb")
                 notebook_path = joinpath(root, file)
 
-                # Extract exercise number from path
-                # e.g., docs/src/exercises/01/ex_01.ipynb -> Exercise 01
+                # Extract tutorial number from path
+                # e.g., docs/src/tutorials/fundamentals/01/ex_01.ipynb -> Tutorial 01
+                # Uses the immediate parent directory (parts[end-1]) rather than
+                # parts[1], since tutorials now sit one level deeper under a
+                # topic Part folder.
                 relative = relpath(notebook_path, notebooks_dir)
                 parts = split(relative, "/")
                 if length(parts) >= 2 && startswith(parts[end], "ex_")
-                    exercise_num = parts[1]
-                    exercise_name = "Exercise $exercise_num"
+                    exercise_num = parts[end-1]
+                    exercise_name = "Tutorial $exercise_num"
 
                     try
                         # Parse notebook JSON
@@ -136,17 +148,18 @@ function extract_qritical_symbols(code::String)
 end
 
 """
-    create_exercise_page_mapping(exercises_dir::String) -> Dict{String, String}
+    create_exercise_page_mapping(tutorials_dir::String) -> Dict{String, String}
 
-Create a mapping from exercise names (e.g., "Exercise 01") to their doc page paths.
+Create a mapping from tutorial names (e.g., "Tutorial 01") to their doc page paths.
 """
-function create_exercise_page_mapping(exercises_dir::String)
+function create_exercise_page_mapping(tutorials_dir::String)
     pages = Dict{String, String}()
 
     for i in 1:11
         exercise_num = lpad(i, 2, '0')
-        exercise_name = "Exercise $exercise_num"
-        page_path = "exercises/$exercise_num/ex_$exercise_num"  # Documenter adds .md
+        exercise_name = "Tutorial $exercise_num"
+        part_slug = TUTORIAL_PART_SLUG[exercise_num]
+        page_path = "tutorials/$part_slug/$exercise_num/ex_$exercise_num"  # Documenter adds .md
         pages[exercise_name] = page_path
     end
 
@@ -157,7 +170,7 @@ end
     inject_usage_into_module_docstrings!(mod::Module, usage::Dict{Symbol, Vector{String}},
                                          exercise_pages::Dict{String, String})
 
-Inject "Used in exercises" sections with links into the docstrings of all exported symbols.
+Inject "Used in tutorials" sections with links into the docstrings of all exported symbols.
 """
 function inject_usage_into_module_docstrings!(mod::Module, usage::Dict{Symbol, Vector{String}},
                                              exercise_pages::Dict{String, String})
@@ -173,8 +186,8 @@ function inject_usage_into_module_docstrings!(mod::Module, usage::Dict{Symbol, V
                 doc = Docs.getdoc(binding)
 
                 if doc !== nothing && isa(doc, Markdown.MD)
-                    # Build "Used in exercises" section with links
-                    used_in_lines = ["## Used in exercises", ""]
+                    # Build "Used in tutorials" section with links
+                    used_in_lines = ["## Used in tutorials", ""]
                     for exercise in sort(exercises)
                         if haskey(exercise_pages, exercise)
                             page_path = exercise_pages[exercise]
