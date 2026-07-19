@@ -330,3 +330,40 @@ html.theme--documenter-dark .qr-toc-h3.is-active > a { color: #6d90ff; }
 /* Dark mode */
 html.theme--documenter-dark .qr-badge-left  { background: #444; }
 html.theme--documenter-dark .qr-badge-right { background: #b070d0; }
+
+/* ================================================================
+   Tutorials gallery
+   Card grid used on tutorials/index.md (one card per topic Part) and
+   on each Part's own index.md (one card per tutorial sheet). Color per
+   card is set inline via --card-color so one class covers all brand
+   colors; see docs/src/tutorials/index.md for usage.
+   ================================================================ */
+
+.tutorial-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.tutorial-card {
+    display: block;
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--card-color, #4063d8);
+    background: #f7f7f9;
+    text-decoration: none !important;
+    color: #1e1e1e !important;
+    transition: transform 120ms, box-shadow 120ms;
+}
+
+.tutorial-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px hsl(220 10% 10% / 0.12);
+}
+
+.tutorial-card h3 { margin: 0 0 0.35rem; color: var(--card-color, #4063d8); }
+.tutorial-card p  { margin: 0; font-size: 0.875rem; color: #4b4b55; }
+
+html.theme--documenter-dark .tutorial-card { background: #232429; color: #ededed !important; }
+html.theme--documenter-dark .tutorial-card p { color: #c2c2cc; }
