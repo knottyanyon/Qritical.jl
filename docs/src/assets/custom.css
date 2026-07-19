@@ -386,6 +386,35 @@ details.output-fold[open] > pre {
 html.theme--documenter-dark .content a { color: #6d90ff; }
 html.theme--documenter-dark .content a:hover { color: #a9bcff; }
 
+/* ── Section headings — Qritical purple ─────────────────────────
+   Heading text lives inside <a class="docs-heading-anchor">; the
+   color: inherit rule prevents the global .content a blue from
+   winning over the heading colour we set here.
+   The permalink ¶ anchor (.docs-heading-anchor-permalink) is left
+   at the link colour since it functions as a navigation link.
+   ─────────────────────────────────────────────────────────────── */
+.content h1, .content h2, .content h3,
+.content h4, .content h5, .content h6 {
+    color: #6a3a8a;
+}
+
+.content :is(h1, h2, h3, h4, h5, h6) a.docs-heading-anchor {
+    color: inherit;
+}
+
+html.theme--documenter-dark .content h1,
+html.theme--documenter-dark .content h2,
+html.theme--documenter-dark .content h3,
+html.theme--documenter-dark .content h4,
+html.theme--documenter-dark .content h5,
+html.theme--documenter-dark .content h6 {
+    color: #c080e0;
+}
+
+html.theme--documenter-dark .content :is(h1, h2, h3, h4, h5, h6) a.docs-heading-anchor {
+    color: inherit;
+}
+
 /* Info admonition (maps to $blue) */
 .admonition.is-category-info { border-color: #4063d8; }
 .admonition.is-category-info > .admonition-header { background-color: #4063d8; color: #fff; }
