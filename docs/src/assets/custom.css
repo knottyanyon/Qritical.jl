@@ -799,3 +799,96 @@ html.theme--documenter-dark .page-info-drawer > summary::before { color: #555d68
 html.theme--documenter-dark .page-info-body         { border-top-color: #34353d; }
 html.theme--documenter-dark .pi-toggle-label        { color: #9aa3ad; }
 html.theme--documenter-dark .pi-key                 { color: #9aa3ad; }
+
+/* ================================================================
+   Tensor-Network Representation switcher  (.tn-repr)
+   Two-tab component: Algebraic (LaTeX) ↔ Diagrammatic (SVG).
+   tn-repr.js injects the tab bar; this file handles all styling.
+   ================================================================ */
+
+.tn-repr {
+    margin: 1.75rem 0;
+    border: 1px solid #dde0e8;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+/* ── Tab bar ────────────────────────────────────────────────────── */
+.tn-repr-tabbar {
+    display: flex;
+    align-items: center;
+    padding: 0 0.6rem 0 0.6rem;
+    border-bottom: 1px solid #dde0e8;
+    background: #f9f7fc;
+    min-height: 2.2rem;
+}
+
+.tn-repr-btngroup {
+    display: flex;
+    gap: 0;
+}
+
+.tn-repr-tab {
+    padding: 0.4em 0.9em;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #9aa3ad;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;          /* overlap the tabbar border-bottom */
+    transition: color 0.12s, border-color 0.12s;
+    font-family: inherit;
+    line-height: 1.8;
+}
+
+.tn-repr-tab:hover {
+    color: #3d4451;
+}
+
+.tn-repr-tab.active {
+    color: #3d4451;
+    border-bottom-color: #6b7280;
+    background: transparent;
+}
+
+/* ── Content panels ─────────────────────────────────────────────── */
+.tn-repr-panel {
+    display: none;
+    padding: 1.2rem 1.5rem;
+}
+
+.tn-repr-panel.active {
+    display: block;
+}
+
+.tn-repr-panel img {
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+}
+
+/* ── Dark mode ──────────────────────────────────────────────────── */
+html.theme--documenter-dark .tn-repr {
+    border-color: #3e3f4a;
+}
+
+html.theme--documenter-dark .tn-repr-tabbar {
+    background: #1a1b22;
+    border-bottom-color: #3e3f4a;
+}
+
+html.theme--documenter-dark .tn-repr-tab {
+    color: #555d68;
+}
+
+html.theme--documenter-dark .tn-repr-tab:hover {
+    color: #c2c2cc;
+}
+
+html.theme--documenter-dark .tn-repr-tab.active {
+    color: #c2c2cc;
+    border-bottom-color: #9aa3ad;
+}

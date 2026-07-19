@@ -220,7 +220,7 @@ makedocs(;
                 ),
             ),
         ),
-        assets=[asset("assets/favicon.svg", class=:ico, islocal=true), "assets/custom.css", "assets/output-fold.js", "assets/page-toc.js", "assets/math-env.js"],
+        assets=[asset("assets/favicon.svg", class=:ico, islocal=true), "assets/custom.css", "assets/output-fold.js", "assets/page-toc.js", "assets/math-env.js", "assets/tn-repr.js"],
         size_threshold=30 * 2^20,   # 30 MiB — tutorial pages embed CairoMakie figures
         size_threshold_warn=5 * 2^20,
     ),
