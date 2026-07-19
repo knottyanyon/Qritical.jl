@@ -589,3 +589,10 @@ html.theme--documenter-dark .tutorial-card:hover {
     background: color-mix(in srgb, var(--card-color, #4063d8) 28%, #232429);
 }
 html.theme--documenter-dark .tutorial-card p { color: #c2c2cc; }
+/* ── Bibliography labels ────────────────────────────────────────────────────
+   Style the [Author, Year] <dt> labels in the definition-list bibliography
+   produced by the authoryear_brackets citation style.                       */
+.citation dl dt {
+    font-weight: 700;
+    font-style: italic;
+}
