@@ -520,6 +520,20 @@ println(
     "  White noise: $r99_noise / $(length(σ_noise))  ($(round(100*r99_noise/length(σ_noise), digits=1))%)",
 )
 
+# ### Try it yourself — interactive rank explorer
+#
+# The widget below lets you drag the rank slider and see the reconstructed image
+# update live.  The SVD was computed at documentation build time; the browser
+# handles the truncated reconstruction with no server needed.
+#
+#md # ```@raw html
+#md # <iframe
+#md #   src="../../../../assets/interactives/svd_compression.html"
+#md #   style="width:100%;height:420px;border:none;border-radius:10px;margin:1.5rem 0;display:block;"
+#md #   title="SVD image compression — interactive rank explorer"
+#md # ></iframe>
+#md # ```
+
 # ## (e) Matrix contractions — naive triple-loop vs BLAS
 #
 # Compute $C_{ij} = A_{ik} B_{kj}$ for random $N \times N$ matrices.

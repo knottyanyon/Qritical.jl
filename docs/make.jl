@@ -13,6 +13,9 @@ include(joinpath(@__DIR__, "symbol_docstring_injector.jl"))
 include(joinpath(@__DIR__, "glossary_linker.jl"))
 include(joinpath(@__DIR__, "page_meta_preprocessor.jl"))
 
+# Build interactive HTML widgets (one file per exercise, output to assets/interactives/)
+include(joinpath(@__DIR__, "interactives", "_runner.jl"))
+
 # ── Custom citation style: author-year with square brackets ─────────────────
 # DocumenterCitations' :authoryear renders "(Author, Year)".
 # Physics convention uses "[Author, Year]" instead.  The only difference is
