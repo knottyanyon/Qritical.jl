@@ -20,7 +20,7 @@ println(&quot;⟨ψ₁|ψ₁⟩ = &quot;, round(real(o11); sigdigits=8))
 println(&quot;⟨ψ₂|ψ₂⟩ = &quot;, round(real(o22); sigdigits=8))
 println(&quot;⟨ψ₁|ψ₂⟩ = &quot;, round(o12;     sigdigits=6))</code></pre><pre><code class="nohighlight hljs">⟨ψ₁|ψ₁⟩ = 1.0
 ⟨ψ₂|ψ₂⟩ = 1.0
-⟨ψ₁|ψ₂⟩ = 1.54173e-17
+⟨ψ₁|ψ₂⟩ = 1.4620100000000001e-18
 </code></pre><p>The two assertions below encode physics as guardrails: a normalised state has unit self-overlap, and Cauchy–Schwarz caps the cross-overlap of two unit vectors at <span>$|\langle\psi_1|\psi_2\rangle|\le 1$</span>. A violation would signal a bug in the contraction, not new physics. Sanity: self-overlap of a left-canonical MPS is 1 by construction</p><pre><code class="language-julia hljs">@assert abs(real(o11) - 1.0) &lt; 1e-12 &quot;‖ψ₁‖ ≠ 1: $o11&quot;
 @assert abs(real(o22) - 1.0) &lt; 1e-12 &quot;‖ψ₂‖ ≠ 1: $o22&quot;</code></pre><p>Cauchy-Schwarz: |⟨ψ₁|ψ₂⟩| ≤ 1</p><pre><code class="language-julia hljs">@assert abs(o12) ≤ 1.0 + 1e-10  &quot;Cauchy-Schwarz violated&quot;
 println(&quot;All overlap checks passed ✓&quot;)</code></pre><pre><code class="nohighlight hljs">All overlap checks passed ✓
@@ -31,26 +31,26 @@ println(&quot;All overlap checks passed ✓&quot;)</code></pre><pre><code class=
 σz_vals = [real(local_expectation(mps1, σz, i)) for i in 1:N]
 σx_vals = [real(local_expectation(mps1, σx, i)) for i in 1:N]
 println(&quot;⟨σᶻᵢ⟩: &quot;, round.(σz_vals; sigdigits=3))
-println(&quot;⟨σˣᵢ⟩: &quot;, round.(σx_vals; sigdigits=3))</code></pre><pre><code class="nohighlight hljs">⟨σᶻᵢ⟩: [4.68e-17, 1.39e-16, 1.13e-15, -1.19e-15, 2.46e-16, -2.41e-15, 1.8e-15, -2.03e-15, -1.8e-15, 2.73e-15, -5.0e-16, 1.83e-15]
-⟨σˣᵢ⟩: [1.15e-15, -1.01e-15, 1.5e-15, -1.56e-15, 2.25e-15, -1.97e-15, 3.3e-15, -4.72e-15, 2.26e-15, -1.64e-15, 2.21e-17, -8.12e-18]
+println(&quot;⟨σˣᵢ⟩: &quot;, round.(σx_vals; sigdigits=3))</code></pre><pre><code class="nohighlight hljs">⟨σᶻᵢ⟩: [6.14e-16, 2.07e-16, 1.64e-15, -9.43e-16, 7.81e-16, -3.09e-15, -5.9e-17, -1.26e-15, -9.02e-16, 1.89e-15, 5.0e-16, 4.44e-16]
+⟨σˣᵢ⟩: [-3.58e-17, -3.75e-17, 1.66e-16, -7.49e-17, 1.15e-16, -6.05e-17, -1.69e-16, 4.31e-16, -1.19e-15, 1.06e-15, -3.19e-16, 4.43e-16]
 </code></pre><p>An expectation value is a property of the <em>state</em>, so it cannot depend on where we chose to park the orthogonality centre. Recomputing <span>$\langle\sigma^z_1\rangle$</span> with the centre swept to every bond is therefore both a physics check and a demonstration that the mixed-canonical shortcut above agrees with the full sweep. Cross-check: put center at each site via BondCanonical and recompute ⟨σᶻ⟩ The value must be gauge-independent</p><pre><code class="language-julia hljs">println(&quot;⟨σᶻ₁⟩ computed with center at different bonds:&quot;)
 for l in 1:N
     mps_c = canonicalize(mps1, BondCanonical(l))
     val   = real(local_expectation(mps_c, σz, 1))
     println(&quot;  bond-center=$l: &quot;, round(val; sigdigits=6))
 end</code></pre><pre><code class="nohighlight hljs">⟨σᶻ₁⟩ computed with center at different bonds:
-  bond-center=1: -7.99708e-16
-  bond-center=2: -5.41234e-16
-  bond-center=3: -5.13478e-16
-  bond-center=4: -7.63278e-17
-  bond-center=5: -2.28983e-16
-  bond-center=6: 8.50015e-17
-  bond-center=7: 2.18575e-16
-  bond-center=8: 2.46331e-16
-  bond-center=9: 2.84495e-16
-  bond-center=10: 2.65413e-16
-  bond-center=11: 2.55004e-16
-  bond-center=12: 2.58474e-16
+  bond-center=1: 6.9042e-16
+  bond-center=2: 5.48173e-16
+  bond-center=3: 3.24393e-16
+  bond-center=4: 4.63171e-16
+  bond-center=5: 8.93383e-16
+  bond-center=6: 1.13971e-15
+  bond-center=7: 1.12584e-15
+  bond-center=8: 8.95117e-16
+  bond-center=9: 8.03177e-16
+  bond-center=10: 7.8583e-16
+  bond-center=11: 7.75421e-16
+  bond-center=12: 7.78891e-16
 </code></pre><h2 id="(c)-Two-site-correlations-\\langle-\\sigmaz_i-\\sigmaz_j-\\rangle"><a class="docs-heading-anchor" href="#(c)-Two-site-correlations-\\langle-\\sigmaz_i-\\sigmaz_j-\\rangle">(c) Two-site correlations <span>$\langle \sigma^z_i \sigma^z_j \rangle$</span></a><a id="(c)-Two-site-correlations-\\langle-\\sigmaz_i-\\sigmaz_j-\\rangle-1"></a><a class="docs-heading-anchor-permalink" href="#(c)-Two-site-correlations-\\langle-\\sigmaz_i-\\sigmaz_j-\\rangle" title="Permalink"></a></h2><p><code>two_site_op(mps, op_i, op_j, i, j)</code> inserts two operators during a single sweep — same <span>$O(L\chi^2 d)$</span> cost as one local measurement. The <em>connected</em> correlator subtracts the product of single-site means.</p><div class="admonition is-info" id="Why-the-connected-correlator-is-the-physical-one-f978941d8a0eed29"><header class="admonition-header">Why the connected correlator is the physical one<a class="admonition-anchor" href="#Why-the-connected-correlator-is-the-physical-one-f978941d8a0eed29" title="Permalink"></a></header><div class="admonition-body"><p>The raw correlator <span>$\langle\sigma^z_i\sigma^z_j\rangle$</span> contains a trivial &quot;disconnected&quot; piece <span>$\langle\sigma^z_i\rangle\langle\sigma^z_j\rangle$</span> that survives even for a product state with no correlations at all. Subtracting it,</p><p class="math-container">\[\langle\sigma^z_i\sigma^z_j\rangle_c
   = \langle\sigma^z_i\sigma^z_j\rangle - \langle\sigma^z_i\rangle\langle\sigma^z_j\rangle ,\]</p><p>isolates <em>genuine</em> correlation. Its decay with <span>$|i-j|$</span> is the fingerprint of the phase — exponential in a gapped phase (finite correlation length), algebraic at criticality.</p></div></div><p>Nearest-neighbour ⟨σᶻᵢ σᶻᵢ₊₁⟩</p><pre><code class="language-julia hljs">zz_nn = [real(two_site_op(mps1, σz, σz, i, i+1)) for i in 1:N-1]
 println(&quot;⟨σᶻᵢ σᶻᵢ₊₁⟩: &quot;, round.(zz_nn; sigdigits=3))</code></pre><pre><code class="nohighlight hljs">⟨σᶻᵢ σᶻᵢ₊₁⟩: [-0.731, -0.253, -0.549, -0.304, -0.515, -0.315, -0.515, -0.304, -0.549, -0.253, -0.731]
@@ -67,15 +67,15 @@ println(&quot;Expected ⟨ψ₁|aψ₁+bψ₂⟩ = &quot;, round(expected; sigdi
 println(&quot;Computed              = &quot;, round(computed; sigdigits=6))
 println(&quot;Error: &quot;, round(abs(expected - computed); sigdigits=3))</code></pre><pre><code class="nohighlight hljs">Expected ⟨ψ₁|aψ₁+bψ₂⟩ = 0.6 + 0.0im
 Computed              = 0.6 + 0.0im
-Error: 3.33e-16
+Error: 1.22e-15
 </code></pre><p>Now we make the recompression <em>lossy</em> on purpose: capping the bond at <code>D_max</code> discards the smallest Schmidt values of the sum. The state fidelity below measures how much of the exact superposition survived — near <span>$1$</span> when the two states were nearly collinear or low-rank, smaller when the cut bites. Compressed addition: cap bond dimension at D_max</p><pre><code class="language-julia hljs">D_max    = 8
 mps_comp = add_mps(a, mps1, b, mps2; trunc=MaxBondDimTrunc(D_max))
 println(&quot;Compressed bond dims (D_max=$D_max): &quot;, [size(t.data, 3) for t in mps_comp.tensors])</code></pre><pre><code class="nohighlight hljs">Compressed bond dims (D_max=8): [2, 4, 8, 8, 8, 8, 8, 8, 8, 8, 4, 1]
 </code></pre><p>Overlap with exact sum measures truncation fidelity</p><pre><code class="language-julia hljs">fidelity = abs(overlap(mps_comp, mps_sum))^2 / (real(overlap(mps_comp, mps_comp)) * real(overlap(mps_sum, mps_sum)))
-println(&quot;Fidelity |⟨compressed|exact⟩|² = &quot;, round(fidelity; sigdigits=5))</code></pre><pre><code class="nohighlight hljs">Fidelity |⟨compressed|exact⟩|² = 0.056551
+println(&quot;Fidelity |⟨compressed|exact⟩|² = &quot;, round(fidelity; sigdigits=5))</code></pre><pre><code class="nohighlight hljs">Fidelity |⟨compressed|exact⟩|² = 0.062432
 </code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
 mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Overview</a><a class="docs-footer-nextpage" href="../../05/ex_05/">Tutorial 05 »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 20 July 2026 06:23">Monday 20 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Overview</a><a class="docs-footer-nextpage" href="../../05/ex_05/">Tutorial 05 »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 20 July 2026 06:46">Monday 20 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
