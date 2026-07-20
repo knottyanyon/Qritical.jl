@@ -146,4 +146,13 @@ end
 #     evolving the state twice, and starting `times` at $t=0$ anchors the plots at
 #     the exact product-state values $M_{\rm stag}(0)=-L/2$, $S(0)=0$.
 
+# ### Try it yourself — interactive Néel quench explorer
+#md # ```@raw html
+#md # <iframe
+#md #   src="../../../../assets/interactives/tebd_explorer.html"
+#md #   style="width:100%;height:440px;border:none;border-radius:10px;margin:1.5rem 0;display:block;"
+#md #   title="TEBD Néel quench — interactive D and dt explorer"
+#md # ></iframe>
+#md # ```
+
 #

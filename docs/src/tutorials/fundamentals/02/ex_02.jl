@@ -1,6 +1,6 @@
 using LinearAlgebra, Serialization, Qritical
 
-const DATA_ROOT = normpath(joinpath(@__FILE__, "..", "..", "data"))
+const DATA_ROOT = normpath(joinpath(@__FILE__, "..", "..", "..", "data"))
 
 ψ_raw = deserialize(joinpath(DATA_ROOT, "psi.jls"))
 N = ndims(ψ_raw) # number of sites

@@ -11,8 +11,49 @@ using Base64
 # Load custom documentation hooks
 include(joinpath(@__DIR__, "symbol_docstring_injector.jl"))
 include(joinpath(@__DIR__, "glossary_linker.jl"))
+include(joinpath(@__DIR__, "page_meta_preprocessor.jl"))
 
-bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authoryear)
+# Build interactive HTML widgets (one file per exercise, output to assets/interactives/)
+include(joinpath(@__DIR__, "interactives", "_runner.jl"))
+
+# ── Custom citation style: author-year with square brackets ─────────────────
+# DocumenterCitations' :authoryear renders "(Author, Year)".
+# Physics convention uses "[Author, Year]" instead.  The only difference is
+# the `parentheses` keyword forwarded to format_authoryear_citation.
+
+function DocumenterCitations.format_citation(
+    style::Val{:authoryear_brackets},
+    cit::DocumenterCitations.CitationLink,
+    entries,
+    citations,
+)
+    return DocumenterCitations.format_authoryear_citation(
+        style, cit, entries, citations; parentheses="[]",
+    )
+end
+
+DocumenterCitations.format_bibliography_reference(::Val{:authoryear_brackets}, entry) =
+    DocumenterCitations.format_authoryear_bibliography_reference(
+        Val(:authoryear_brackets), entry,
+    )
+
+function DocumenterCitations.format_bibliography_label(
+    ::Val{:authoryear_brackets},
+    entry,
+    citations,
+)
+    names = DocumenterCitations.format_names(
+        entry; names=:lastonly, and=true, et_al=2, et_al_text="et al.",
+    )
+    year = isempty(entry.date.year) ? "undated" : entry.date.year
+    return "[$names, $year]"
+end
+
+DocumenterCitations.bib_html_list_style(::Val{:authoryear_brackets}) = :dl
+DocumenterCitations.bib_sorting(::Val{:authoryear_brackets}) = :nyt
+# ────────────────────────────────────────────────────────────────────────────
+
+bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authoryear_brackets)
 
 DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
 
@@ -23,12 +64,12 @@ DocMeta.setdocmeta!(Qritical, :DocTestSetup, :(using Qritical); recursive=true)
 #   Full local:   julia --project=docs -e 'using LiveServer; servedocs()'
 #   Fast local:   DOCS_FAST=1 julia --project=docs -e 'using LiveServer; servedocs()'
 #
-# DOCS_FAST=1 skips exercises entirely and only builds the Getting Started
+# DOCS_FAST=1 skips tutorials entirely and only builds the Getting Started
 # pages + API reference — makedocs finishes in under a minute instead of
 # 5-10 minutes.  Use it when iterating on prose or API docs.
 # ---------------------------------------------------------------------------
 const DOCS_FAST = get(ENV, "DOCS_FAST", "0") == "1"
-DOCS_FAST && @info "DOCS_FAST=1 — exercises skipped, building core pages only"
+DOCS_FAST && @info "DOCS_FAST=1 — tutorials skipped, building core pages only"
 
 # SHA-256 stamp-file based stale check.  More reliable than mtime comparison
 # across git checkouts (git sets all file timestamps to checkout time, making
@@ -76,13 +117,13 @@ function _debase64_images!(md_path::String)
 end
 
 # ---------------------------------------------------------------------------
-# Literate: exercises
+# Literate: tutorials
 # ---------------------------------------------------------------------------
 const EXECUTABLE_EXERCISES = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"]
-const exercises_dir = joinpath(@__DIR__, "src", "exercises")
+const tutorials_dir = joinpath(@__DIR__, "src", "tutorials")
 
 if !DOCS_FAST
-    for (root, dirs, files) in walkdir(exercises_dir)
+    for (root, dirs, files) in walkdir(tutorials_dir)
         for file in files
             startswith(file, "ex_") && endswith(file, ".jl") || continue
             input_path  = joinpath(root, file)
@@ -130,12 +171,12 @@ if !DOCS_FAST
     end
 end
 
-# Scan exercise notebooks and inject "Used in exercises" links into API docstrings.
-# Skipped in DOCS_FAST mode — API pages still build, just without the exercise cross-links.
+# Scan tutorial notebooks and inject "Used in tutorials" links into API docstrings.
+# Skipped in DOCS_FAST mode — API pages still build, just without the tutorial cross-links.
 if !DOCS_FAST
-    exercise_usage = find_notebook_symbol_usage(exercises_dir)
-    exercise_pages = create_exercise_page_mapping(exercises_dir)
-    @info "Found $(length(exercise_usage)) symbols used in $(length(exercise_pages)) exercises"
+    exercise_usage = find_notebook_symbol_usage(tutorials_dir)
+    exercise_pages = create_exercise_page_mapping(tutorials_dir)
+    @info "Found $(length(exercise_usage)) symbols used in $(length(exercise_pages)) tutorials"
     inject_usage_into_module_docstrings!(Qritical, exercise_usage, exercise_pages)
 end
 
@@ -161,6 +202,7 @@ end
 
 src_dir = normpath(joinpath(@__DIR__, "src"))
 preprocess_glossary_links(src_dir)
+preprocess_page_meta(src_dir)
 
 makedocs(;
     modules=[Qritical],
@@ -181,8 +223,8 @@ makedocs(;
                 ),
             ),
         ),
-        assets=[asset("assets/favicon.svg", class=:ico, islocal=true), "assets/custom.css", "assets/output-fold.js", "assets/page-toc.js"],
-        size_threshold=30 * 2^20,   # 30 MiB — exercise pages embed CairoMakie figures
+        assets=[asset("assets/favicon.svg", class=:ico, islocal=true), "assets/custom.css", "assets/output-fold.js", "assets/page-toc.js", "assets/math-env.js", "assets/tn-repr.js"],
+        size_threshold=30 * 2^20,   # 30 MiB — tutorial pages embed CairoMakie figures
         size_threshold_warn=5 * 2^20,
     ),
     build="build",
@@ -202,18 +244,31 @@ makedocs(;
             "GS-2: SVD & Truncation" => "getting_started/gs2_svd_and_truncation.md",
             "GS-3: Drawing Tensor Networks" => "getting_started/gs3_drawing_tensor_networks.md",
         ],
-        DOCS_FAST ? nothing : ("Exercises" => [
-            "Exercise 01" => "exercises/01/ex_01.md",
-            "Exercise 02" => "exercises/02/ex_02.md",
-            "Exercise 03" => "exercises/03/ex_03.md",
-            "Exercise 04" => "exercises/04/ex_04.md",
-            "Exercise 05" => "exercises/05/ex_05.md",
-            "Exercise 06" => "exercises/06/ex_06.md",
-            "Exercise 07" => "exercises/07/ex_07.md",
-            "Exercise 08" => "exercises/08/ex_08.md",
-            "Exercise 09" => "exercises/09/ex_09.md",
-            "Exercise 10" => "exercises/10/ex_10.md",
-            "Exercise 11" => "exercises/11/ex_11.md",
+        DOCS_FAST ? nothing : ("Tutorials" => [
+            "Overview" => "tutorials/index.md",
+            "Part 1 – Fundamentals" => [
+                "Overview" => "tutorials/fundamentals/index.md",
+                "Tutorial 01" => "tutorials/fundamentals/01/ex_01.md",
+                "Tutorial 02" => "tutorials/fundamentals/02/ex_02.md",
+                "Tutorial 03" => "tutorials/fundamentals/03/ex_03.md",
+            ],
+            "Part 2 – Tensor Trains" => [
+                "Overview" => "tutorials/tensor_trains/index.md",
+                "Tutorial 04" => "tutorials/tensor_trains/04/ex_04.md",
+                "Tutorial 05" => "tutorials/tensor_trains/05/ex_05.md",
+            ],
+            "Part 3 – Dynamics" => [
+                "Overview" => "tutorials/dynamics/index.md",
+                "Tutorial 06" => "tutorials/dynamics/06/ex_06.md",
+                "Tutorial 07" => "tutorials/dynamics/07/ex_07.md",
+                "Tutorial 08" => "tutorials/dynamics/08/ex_08.md",
+                "Tutorial 09" => "tutorials/dynamics/09/ex_09.md",
+            ],
+            "Part 4 – Misc" => [
+                "Overview" => "tutorials/misc/index.md",
+                "Tutorial 10" => "tutorials/misc/10/ex_10.md",
+                "Tutorial 11" => "tutorials/misc/11/ex_11.md",
+            ],
         ]),
         "API Reference" => [
             "Index Layer" => "api/index_layer.md",
@@ -238,7 +293,11 @@ makedocs(;
         "References" => [
             "Glossary" => "references/glossary.md",
         ],
+        "Changelog" => "changelog.md",
         # "Bibliography" => "references.md",
+        "Developer" => [
+            "Kitchen Sink" => "dev/kitchen_sink.md",
+        ],
     ]),
 )
 

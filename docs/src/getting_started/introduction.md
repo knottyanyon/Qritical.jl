@@ -1,5 +1,24 @@
 # Introduction: Legs, Indices, and the Design Idea
 
+```@raw html
+<details class="page-info-drawer">
+  <summary>
+    <span class="pi-toggle-label">Page info</span>
+    <span class="pi-pills">
+        <span class="status-pill status-needs-proofreading">needs proofreading</span>
+    </span>
+  </summary>
+  <div class="page-info-body">
+    <table class="page-info-table"><tbody>
+      <tr><td class="pi-key">status</td><td class="pi-val"><span class="status-pill status-needs-proofreading">needs proofreading</span></td></tr>
+      <tr><td class="pi-key">last updated</td><td class="pi-val">2026-07-19</td></tr>
+      <tr><td class="pi-key">written by</td><td class="pi-val">Bavithra Govintharajah</td></tr>
+      <tr><td class="pi-key">edited by</td><td class="pi-val">Claude Sonnet 4.6 — initial draft</td></tr>
+    </tbody></table>
+  </div>
+</details>
+```
+
 When you sketch a tensor network on paper, each line leaving a node has a *direction* and a *role*. In a matrix product state the physical leg points upward, labelling the local Hilbert-space basis. The left bond flows *into* the site tensor; the right bond flows *out*. These directions are not decoration — they determine which index pairs are allowed to contract, and they are the hook on which block-sparse symmetry sectors are later attached.
 
 Opening a Julia file and staring at `rand(2, 4, 4)` breaks that correspondence completely: the array has three slots but no record of which slot is the physical leg or which direction each bond points.
