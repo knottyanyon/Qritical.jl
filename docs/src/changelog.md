@@ -20,6 +20,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - GitHub edit links and repository button wired into the Documenter navbar.
 - Version number shown in the sidebar via `pkgversion`.
 - Favicon added to docs and README header polished.
+- Build-time interactive widget system (`docs/interactives/`): Julia computes heavy
+  numerics at doc-build time and serialises results into self-contained HTML iframes,
+  so readers get live interactivity with no server or Pluto runtime.
+- **Tutorial 01** — SVD image compression rank explorer: rank slider drives browser-side
+  rank-*k* reconstruction via outer-product accumulation of pre-serialised singular triplets.
+- **Tutorial 08** — TEBD Néel quench explorer: D and dt sliders update a live S(t) line
+  chart and a ⟨S_z⟩ space–time heatmap, all simulation data pre-computed and embedded as JSON.
 
 ### Changed
 
