@@ -449,19 +449,6 @@ end
         @test_throws ArgumentError group_legs(A, bp)
     end
 
-    @testset "complement + bipartition convenience used together with group_legs" begin
-        σ  = upper(:σ,  2)
-        vL = upper(:vL, 3)
-        vR = lower(:vR, 4)
-        data = rand(2, 3, 4)
-        A  = QTensor(copy(data), (σ, vL, vR))
-        # use bipartition convenience: split off vR automatically
-        bp = bipartition(Partition([σ, vL]), A)
-        M  = group_legs(A, bp)
-        @test size(M) == (6, 4)
-        recovered = reshape(M.data, dim(σ), dim(vL), dim(vR))
-        @test recovered ≈ data
-    end
 end
 
 @testset "TensorOperations.tensorstructure — exposes leg metadata to @tensor contractions" begin

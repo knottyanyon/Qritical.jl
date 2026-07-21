@@ -23,6 +23,7 @@ using Statistics
     include("test_tix.jl")
     include("test_multix.jl")
     include("test_partition.jl")
+    include("test_tensor_utils.jl")
     include("test_qtensor.jl")
     include("test_spectrum.jl")
     include("test_io_state.jl")

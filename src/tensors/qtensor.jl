@@ -53,7 +53,7 @@ struct QTensor{Element,Valence,D<:AbstractArray{Element,Valence}} <:
     function QTensor(
         data::D, indices::NTuple{Valence,AbstractIx}
     ) where {Element,Valence,D<:AbstractArray{Element,Valence}}
-        for k in 1:Valence
+        for k in 1:Valence # make sure that the local state space size of a leg matched the actual array dimensions
             size(data, k) == dim(indices[k]) || throw(
                 ArgumentError(
                     "leg $k: array size $(size(data,k)) ≠ index dim $(dim(indices[k]))"
@@ -228,49 +228,6 @@ Violating any of these conditions is undefined behaviour — hence the `unsafe` 
 function Base.unsafe_convert(::Type{Ptr{Element}}, t::QTensor{Element}) where {Element}
     return Base.unsafe_convert(Ptr{Element}, t.data)
 end
-
-# ── Partition / Bipartition convenience overloads ────────────────────────────
-# These accept a QTensor as the second argument so callers don't have to
-# extract A.indices manually.
-
-"""
-    complement(p::Partition, A::QTensor) -> Partition
-
-Return the legs of `A` that are not in partition `p`, in the order they appear
-in `A.indices`.  Delegates to `complement(p, A.indices)`.
-
-# Examples
-```jldoctest
-julia> vL = upper(:vL, 2);  σ = upper(:σ, 3);  vR = lower(:vR, 4);
-
-julia> A = QTensor(rand(2, 3, 4), (vL, σ, vR));
-
-julia> complement(Partition([vL, σ]), A)
-1-element Vector{AbstractIx}:
- TIx{Lower}(:vR, 4)
-```
-"""
-complement(p::Partition, A::QTensor) = complement(p, A.indices)
-
-"""
-    bipartition(left::Partition, A::QTensor) -> Bipartition
-
-Construct a [`Bipartition`](@ref) for tensor `A` whose right side is
-`complement(left, A)`.
-
-# Examples
-```jldoctest
-julia> vL = upper(:vL, 2);  σ = upper(:σ, 3);  vR = lower(:vR, 4);
-
-julia> A = QTensor(rand(2, 3, 4), (vL, σ, vR));
-
-julia> bp = bipartition(Partition([vL, σ]), A);
-
-julia> bp.right[1] == vR
-true
-```
-"""
-bipartition(left::Partition, A::QTensor) = bipartition(left, A.indices)
 
 # ── group_legs ────────────────────────────────────────────────────────────────
 

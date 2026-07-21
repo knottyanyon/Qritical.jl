@@ -96,29 +96,3 @@ label(g::MulTIx) = g.label
 Base.:(==)(a::MulTIx, b::MulTIx) = a.label == b.label && a.indices == b.indices
 Base.hash(g::MulTIx, h::UInt) = hash(g.label, hash(g.indices, h))
 
-
-"""
-    _autolabel(indices::Tuple{Vararg{AbstractIx}}) -> Symbol
-
-Generate a label for a fused multi-index by concatenating the labels of its constituent
-indices. Returns `:scalar` if the tuple is empty (a scalar has no indices to fuse).
-
-This is an internal helper used by the `MulTIx` constructor to auto-generate labels when
-none is provided. For example, `_autolabel((upper(:α, 3), lower(:σ, 2)))` returns `:ασ`.
-
-# Examples
-
-```jldoctest
-julia> _autolabel((upper(:α, 3), lower(:σ, 2)))
-:ασ
-
-julia> _autolabel(())
-:scalar
-```
-"""
-function _autolabel(indices::Tuple{Vararg{AbstractIx}})
-    isempty(indices) ? :scalar : Symbol(join(String.(label.(indices))))
-end
-
-MulTIx(indices::Tuple{Vararg{AbstractIx}}) = MulTIx(_autolabel(indices), indices)
-MulTIx(indices::AbstractIx...) = MulTIx(indices)
