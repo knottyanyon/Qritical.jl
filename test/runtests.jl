@@ -25,6 +25,7 @@ using Statistics
     include("test_partition.jl")
     include("test_tensor_utils.jl")
     include("test_qtensor.jl")
+    include("test_ortho_center.jl")
     include("test_spectrum.jl")
     include("test_io_state.jl")
     include("test_mps.jl")

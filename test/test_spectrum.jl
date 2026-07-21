@@ -1,5 +1,5 @@
 """
-Tests for: §1.4b Spectrum & orthogonality-centre hierarchy
+Tests for: §1.4b Singular-value spectrum hierarchy
 
 Physics invariants tested:
 - SingValSpectrum values descend, ε = 2-norm of dropped σ, normalized flag honoured
@@ -9,14 +9,13 @@ Physics invariants tested:
 - Reabsorption: U·Diagonal(s.values) and Diagonal(s.values)·Vᴴ = dense U·Σ/Σ·Vᴴ (hot-path scaling)
 - Type guard: function requiring SchmidtSpectrum rejects bare SingValSpectrum
 - Edge cases: boundary bond → [1.0], ε=0, normalized=true; zero σ excluded from entropy
-- BondCenter vs SiteCenter dispatch exhaustive over OrthoCenter
 """
 
 using Test
 using LinearAlgebra
 using Qritical
 
-@testset "Spectrum and orthogonality centre hierarchy" begin
+@testset "Singular-value spectrum hierarchy" begin
 
     # ────────────────────────────────────────────────────────────────────────
     # §1.4b.1 SingValSpectrum construction and properties
@@ -260,23 +259,7 @@ using Qritical
     end
 
     # ────────────────────────────────────────────────────────────────────────
-    # §1.4b.9 OrthoCenter dispatch: BondCenter and SiteCenter
-    # ────────────────────────────────────────────────────────────────────────
-
-    @testset "BondCenter vs SiteCenter dispatch is exhaustive over OrthoCenter" begin
-        # Physics: orthogonality centre is either a bond or a site — nothing else.
-        let bond = Bond(upper(:λL, 4), upper(:λR, 4)),   # both faces of the centre are Upper
-            bond_center = BondCenter(bond),
-            site_center = SiteCenter(upper(:σ, 2))       # physical legs are Upper
-
-            @test bond_center isa OrthoCenter
-            @test site_center isa OrthoCenter
-            @test typeof(bond_center) != typeof(site_center)
-        end
-    end
-
-    # ────────────────────────────────────────────────────────────────────────
-    # §1.4b.10 Schmidt rank and spectral gap
+    # §1.4b.9 Schmidt rank and spectral gap
     # ────────────────────────────────────────────────────────────────────────
 
     @testset "Schmidt rank and spectral gap" begin

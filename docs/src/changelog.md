@@ -44,6 +44,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   multiple prior layers: `_autolabel`, the outer `MulTIx` varargs constructors, and
   the `QTensor` overloads of `complement`/`bipartition`. These were previously
   scattered across `multix.jl` and `qtensor.jl`. No API change.
+- `src/tensors/spectrum.jl` split into `ortho_center.jl` (`Bond`, `OrthoCenter`,
+  `BondCenter`, `SiteCenter`) and `spectrum.jl` (`AbstractSpectrum`,
+  `SingValSpectrum`, `EigValSpectrum`, `SchmidtSpectrum`, and the spectrum verbs).
+  The two concerns — bond geometry and numerical spectrum — are now in separate files.
+  No API change.
 - Tutorials reorganised from a flat exercise list into four topic groups:
   **Part 1 – Fundamentals**, **Part 2 – Tensor Trains**, **Part 3 – Dynamics**,
   **Part 4 – Misc**, each with its own gallery-card overview page.
