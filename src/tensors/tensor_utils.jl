@@ -37,6 +37,8 @@ MulTIx(indices::AbstractIx...) = MulTIx(indices)
 Return the legs of `A` that are not in partition `p`, in the order they appear
 in `A.indices`.  Delegates to `complement(p, A.indices)`.
 
+See also: [`complement(::Partition, indices)`](@ref)
+
 # Examples
 ```jldoctest
 julia> vL = upper(:vL, 2);  σ = upper(:σ, 3);  vR = lower(:vR, 4);
@@ -69,3 +71,26 @@ true
 ```
 """
 bipartition(left::Partition, A::QTensor) = bipartition(left, A.indices)
+
+# ========================= Bond label utility =================================
+
+"""
+    bond_label(base::Symbol, site::Int) -> Symbol
+
+Generate a positional bond label by appending the site index to a base symbol.
+
+Used throughout the MPS layer to create unique leg names for virtual bonds.
+For example, the bond to the right of site ``i`` on a chain labelled `:χ` is
+`bond_label(:χ, i)` ``= \\texttt{:χ}_i``.
+
+# Examples
+
+```jldoctest
+julia> bond_label(:χ, 3)
+:χ3
+
+julia> bond_label(:α, 12)
+:α12
+```
+"""
+bond_label(base::Symbol, site::Int) = Symbol(base, site)

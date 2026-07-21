@@ -125,10 +125,3 @@ end
         @test bp.right == [vL, vR]
     end
 end
-
-@testset "bond_label: positional label generator" begin
-    @test bond_label(:χ, 3) == :χ3
-    @test bond_label(:α, 1) == :α1
-    @test bond_label(:χ, 12) == :χ12
-    @test bond_label(:λ, 0) == :λ0
-end

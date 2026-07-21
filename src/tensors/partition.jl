@@ -97,7 +97,7 @@ Matching is by index equality (`==`), so two legs with the same label and
 dimension but different variance (e.g. `upper(:σ, 2)` vs `lower(:σ, 2)`) are
 treated as distinct.
 
-See also: [`bipartition`](@ref), [`Bipartition`](@ref)
+See also: [`bipartition`](@ref), [`Bipartition`](@ref), [`complement(::Partition, ::QTensor)`](@ref)
 
 # Examples
 
@@ -142,26 +142,3 @@ true
 ```
 """
 bipartition(left::Partition, indices) = Bipartition(left, complement(left, indices))
-
-# ========================= Bond label utility =================================
-
-"""
-    bond_label(base::Symbol, site::Int) -> Symbol
-
-Generate a positional bond label by appending the site index to a base symbol.
-
-Used throughout the MPS layer to create unique leg names for virtual bonds.
-For example, the bond to the right of site ``i`` on a chain labelled `:χ` is
-`bond_label(:χ, i)` ``= \\texttt{:χ}_i``.
-
-# Examples
-
-```jldoctest
-julia> bond_label(:χ, 3)
-:χ3
-
-julia> bond_label(:α, 12)
-:α12
-```
-"""
-bond_label(base::Symbol, site::Int) = Symbol(base, site)
