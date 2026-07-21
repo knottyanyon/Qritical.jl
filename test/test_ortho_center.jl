@@ -1,24 +1,15 @@
 """
-Tests for: Bond, OrthoCenter, BondCenter, SiteCenter
+Tests for: OrthoCenter, BondCenter, SiteCenter
 
 Physics invariants tested:
 - BondCenter and SiteCenter are both subtypes of OrthoCenter
-- Bond legs are Upper (both arrows point into the orthogonality centre)
 - BondCenter and SiteCenter are distinct concrete types (dispatch is exhaustive)
 """
 
 using Test
 using Qritical
 
-@testset "Bond and orthogonality-centre hierarchy" begin
-
-    @testset "Bond carries two Upper legs — both arrows point into the centre" begin
-        bond = Bond(upper(:λL, 4), upper(:λR, 4))
-        @test bond.left  == upper(:λL, 4)
-        @test bond.right == upper(:λR, 4)
-        @test bond.left  isa TIx{Upper}
-        @test bond.right isa TIx{Upper}
-    end
+@testset "Orthogonality-centre hierarchy" begin
 
     @testset "BondCenter vs SiteCenter dispatch is exhaustive over OrthoCenter" begin
         # Physics: orthogonality centre is either a bond or a site — nothing else.

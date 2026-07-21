@@ -18,6 +18,7 @@ const SRCDIR = joinpath(pkgdir(Qritical), "src")
         ("tensors",                  "partition.jl"),
         ("tensors",                  "qtensor.jl"),
         ("tensors",                  "tensor_utils.jl"),
+        ("tensors",                  "bond.jl"),
         ("tensors",                  "ortho_center.jl"),
         ("tensors",                  "spectrum.jl"),
         ("tensors",                  "svd.jl"),
