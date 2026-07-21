@@ -29,6 +29,8 @@ The factors U and ``V^\\dagger`` satisfy:
 
 # See also
 [`ReducedSVD`](@ref), [`do_svd`](@ref)
+# TODO(v0.11): wire `.center` into the MPS canonical-form tracker once
+# `canonicalize.jl` is routed through `do_svd` for the symmetric-tensor path.
 """
 struct FullSVD
     U::QTensor
@@ -69,6 +71,8 @@ because columns were removed.
 
 # See also
 [`FullSVD`](@ref), [`do_svd`](@ref)
+# TODO(v0.11): same as FullSVD — wire `.center` into the MPS canonical-form tracker
+# once `canonicalize.jl` is routed through `do_svd`.
 """
 struct ReducedSVD
     U::QTensor
@@ -217,6 +221,35 @@ end
 # ==== Internal: shared SVD computation ========================================
 
 """
+    _golub_van_loan_threshold(S::AbstractVector{<:Real}) -> Float64
+
+Compute the classical Golub–Van Loan numerical-rank threshold for a vector of
+singular values `S` (assumed sorted descending):
+
+```math
+\\tau = k \\cdot \\varepsilon_{\\mathrm{machine}} \\cdot \\sigma_1
+```
+
+where ``k = \\mathrm{length}(S)`` and ``\\sigma_1`` is the largest singular value.
+
+Any ``\\sigma_i \\leq \\tau`` should be treated as a numerical zero rather than a
+genuine Schmidt value. The rationale: LAPACK's SVD is backward stable — it computes
+the exact SVD of a perturbed matrix ``A + E`` with ``\\|E\\| \\lesssim
+\\varepsilon_{\\mathrm{machine}} \\cdot \\|A\\| = \\varepsilon_{\\mathrm{machine}} \\cdot
+\\sigma_1``. Singular values below the noise floor ``\\tau`` are indistinguishable
+from zero given this perturbation; the factor ``k`` accounts for accumulation across
+``k`` floating-point operations.
+
+Returns `0.0` for an empty `S`.
+
+See also: [`_compute_svd_factors`](@ref)
+"""
+function _golub_van_loan_threshold(S::AbstractVector{<:Real})
+    isempty(S) && return 0.0
+    return length(S) * eps(eltype(S)) * S[1]
+end
+
+"""
     _compute_svd_factors(A, bp, trunc) -> (U_mat, svs, Vd_mat, r, ε)
 
 Internal helper: runs the full SVD pipeline and returns raw Julia arrays.
@@ -225,16 +258,10 @@ Steps:
 1. Reshape `A` into a matrix using `group_legs(A, bp)`.
 2. Call LAPACK's thin SVD (`LinearAlgebra.svd`), giving a ``k \\times k``
    diagonal matrix with ``k = \\min(m, n)``.
-3. Strip floating-point noise: any singular value below the classical
-   Golub–Van Loan numerical-rank threshold
-
-   ```math
-   \\tau = k \\cdot \\varepsilon_{\\mathrm{machine}} \\cdot \\sigma_1
-   ```
-
-   is treated as a numerical zero, not a genuine Schmidt value.  This step
-   happens *before* the truncation strategy sees the list, so strategies
-   operate on a clean, physics-relevant spectrum.
+3. Strip floating-point noise using [`_golub_van_loan_threshold`](@ref): singular
+   values at or below the threshold are treated as numerical zeros, not genuine
+   Schmidt values. This step happens *before* the truncation strategy sees the
+   list, so strategies operate on a clean, physics-relevant spectrum.
 4. Apply `_truncate_singular_values` to decide how many to keep.
 5. Slice `U`, `Σ`, `Vd` to keep only the leading `r` columns/rows/values.
 
@@ -245,10 +272,7 @@ function _compute_svd_factors(A::QTensor, bp::Bipartition, trunc::AbstractTrunc)
     M = group_legs(A, bp)
     decomp = svd(M.data)           # thin SVD: U (m×k), S (k,), Vt (k×n), k = min(m,n)
 
-    # Strip numerical noise introduced by LAPACK — these are not real singular values,
-    # just floating-point rounding. The threshold n·ε_machine·σ₁ is the classical
-    # Golub–Van Loan numerical-rank criterion.
-    tol = length(decomp.S) * eps(eltype(decomp.S)) * (isempty(decomp.S) ? 1.0 : decomp.S[1])
+    tol = _golub_van_loan_threshold(decomp.S)
     S_cleaned = filter(σ -> σ > tol, decomp.S)
 
     r, ε = _truncate_singular_values(S_cleaned, trunc)
