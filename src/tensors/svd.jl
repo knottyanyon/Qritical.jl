@@ -316,12 +316,18 @@ exact inverse of the column-major fusion done in [`group_legs`](@ref); for the
 single-leg-per-side (matrix) case the reshapes are no-ops.
 """
 function _assemble_qtensors(U_mat, svs, Vd_mat, r, bp::Bipartition)
+    # Read out the local state-space sizes of each left/right leg, in partition order.
     left_dims = Tuple(dim(ix) for ix in bp.left)
     right_dims = Tuple(dim(ix) for ix in bp.right)
+    # Undo the row-fusion done by group_legs: (∏ left_dims, r) → (left_dims..., r).
     U_arr = reshape(U_mat, left_dims..., r)
+    # Undo the column-fusion: (r, ∏ right_dims) → (r, right_dims...).
     Vd_arr = reshape(Vd_mat, r, right_dims...)
+    # Attach original left legs plus the outgoing bond leg λL (Lower = arrow leaving U toward Σ).
     U_qt = QTensor(U_arr, (bp.left..., lower(:λL, r)))
+    # Σ is the orthogonality centre: both bond arrows point into it, so both legs are Upper.
     Σ_qt = QTensor(Diagonal(svs), (upper(:λL, r), upper(:λR, r)))
+    # Attach the outgoing bond leg λR (Lower = arrow leaving Vd toward Σ) plus original right legs.
     Vd_qt = QTensor(Vd_arr, (lower(:λR, r), bp.right...))
     return U_qt, Σ_qt, Vd_qt
 end
@@ -358,10 +364,14 @@ Two things are computed here:
 - `(SingValSpectrum, BondCenter)`
 """
 function _build_spectrum_and_center(svs::AbstractVector{<:Real}, ε::Float64, Σ_qt::QTensor)
+    # Check Schmidt normalization: ∑ σᵢ² ≈ 1 iff the state had unit norm and no weight was truncated.
     normalized = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
+    # Bundle the kept singular values, truncation error, and normalization flag into one struct.
     spectrum = SingValSpectrum(svs, ε, normalized)
+    # Read the bond legs directly off Σ_qt so Bond holds the exact same TIx objects as the factor.
     # Σ.indices[1] = upper(:λL, r),  Σ.indices[2] = upper(:λR, r) — both faces of the centre
     bond = Bond(Σ_qt.indices[1]::TIx{Upper}, Σ_qt.indices[2]::TIx{Upper})
+    # Wrap in BondCenter to record which bond is the orthogonality centre of this decomposition.
     center = BondCenter(bond)
     return spectrum, center
 end
