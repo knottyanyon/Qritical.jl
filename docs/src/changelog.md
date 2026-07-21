@@ -40,6 +40,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `src/tensors/indices.jl` split into three focused files: `tix.jl` (variance
   types + elementary index), `multix.jl` (grouped leg), `partition.jl` (partition,
   bipartition, bond label). No API change.
+- `src/tensors/tensor_utils.jl` added for cross-cutting helpers that depend on
+  multiple prior layers: `_autolabel`, the outer `MulTIx` varargs constructors, and
+  the `QTensor` overloads of `complement`/`bipartition`. These were previously
+  scattered across `multix.jl` and `qtensor.jl`. No API change.
 - Tutorials reorganised from a flat exercise list into four topic groups:
   **Part 1 – Fundamentals**, **Part 2 – Tensor Trains**, **Part 3 – Dynamics**,
   **Part 4 – Misc**, each with its own gallery-card overview page.
