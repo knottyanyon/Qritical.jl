@@ -63,7 +63,7 @@ struct ArbitraryForm <: AbstractMPSForm end
 Matrix-product state for a finite open chain with ``L`` sites.
 
 # Fields
-- `tensors::Vector{QTensor}`: ``L`` site tensors, each order-3 with legs stored
+- `tensors::Vector{QTensor}`: ``L`` site tensors, each valence-3 with legs stored
   in the order ``(\\texttt{vL},\\; \\sigma,\\; \\texttt{vR})``
 - `bond_svs::Vector{SingValSpectrum}`: ``L+1`` bond spectra; boundaries carry the
   trivial spectrum ``[1.0]``

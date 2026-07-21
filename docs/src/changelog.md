@@ -30,6 +30,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- The `Order` type parameter of `QTensor{Element,Order,D}` has been renamed to
+  `Valence` following the Penrose/Biamonte convention: a tensor with `n` upper and
+  `m` lower indices has valence `(n,m)`, or valence-`k` for `k = n+m`. The term
+  "order" was ambiguous alongside Trotter order, order parameters, and leg-ordering
+  throughout the codebase. All docstrings updated: "order-3 site tensor" →
+  "valence-3 site tensor", etc. No public API change — the rename is internal to the
+  type parameter only.
+- `src/tensors/indices.jl` split into three focused files: `tix.jl` (variance
+  types + elementary index), `multix.jl` (grouped leg), `partition.jl` (partition,
+  bipartition, bond label). No API change.
 - Tutorials reorganised from a flat exercise list into four topic groups:
   **Part 1 – Fundamentals**, **Part 2 – Tensor Trains**, **Part 3 – Dynamics**,
   **Part 4 – Misc**, each with its own gallery-card overview page.
