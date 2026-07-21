@@ -3,15 +3,15 @@ using TensorOperations
 
 # Naming deviates from Julia convention ({T,N}) intentionally:
 #   Element — the scalar field (e.g. ComplexF64), not constrained to <:Number.
-#   Order   — number of legs; the term "rank" is reserved for the SVD
+#   Valence — number of legs (Penrose/Biamonte term); "rank" is reserved for the SVD
 """
-    QTensor{Element, Order, D<:AbstractArray{Element,Order}}
+    QTensor{Element, Valence, D<:AbstractArray{Element,Valence}}
 
-An `Order`-index tensor with a named, covariant/contravariant index attached to each leg.
+A `Valence`-index tensor with a named, covariant/contravariant index attached to each leg.
 Subtyping `AbstractArray` makes it transparent to `@tensor` contractions.
 
 The backing store `D` is a free type parameter: `:native` mode uses plain
-`Array{Element,Order}` from Julia Base; future backends may substitute other `AbstractArray`
+`Array{Element,Valence}` from Julia Base; future backends may substitute other `AbstractArray`
 subtypes without touching algorithm code. The goal is to facilitate the use of efficient
 sparse array descriptions if one wishes to implement symmetry details to take advantage
 of the block structure of the Hamiltonians that we usually deal with.
@@ -22,12 +22,12 @@ QTensor(data, indices)
 ```
 
 `data` must be an `AbstractArray` encoding the numerical data of the tensor and `indices`
-an `NTuple` of `AbstractIx` values. The shared `Order` parameter in both types enforces
+an `NTuple` of `AbstractIx` values. The shared `Valence` parameter in both types enforces
 that the number of indices equals the array rank at the type level.
 
 # Fields
 - `data::D` — the backing data array
-- `indices::NTuple{Order,AbstractIx}` — named, variance-tagged legs
+- `indices::NTuple{Valence,AbstractIx}` — named, variance-tagged legs
 
 # Examples
 ```jldoctest
@@ -45,22 +45,22 @@ julia> t[1, 1]
 1.0
 ```
 """
-struct QTensor{Element,Order,D<:AbstractArray{Element,Order}} <:
-       AbstractArray{Element,Order}
+struct QTensor{Element,Valence,D<:AbstractArray{Element,Valence}} <:
+       AbstractArray{Element,Valence}
     data::D
-    indices::NTuple{Order,AbstractIx}
+    indices::NTuple{Valence,AbstractIx}
 
     function QTensor(
-        data::D, indices::NTuple{Order,AbstractIx}
-    ) where {Element,Order,D<:AbstractArray{Element,Order}}
-        for k in 1:Order
+        data::D, indices::NTuple{Valence,AbstractIx}
+    ) where {Element,Valence,D<:AbstractArray{Element,Valence}}
+        for k in 1:Valence # make sure that the local state space size of a leg matched the actual array dimensions
             size(data, k) == dim(indices[k]) || throw(
                 ArgumentError(
                     "leg $k: array size $(size(data,k)) ≠ index dim $(dim(indices[k]))"
                 ),
             )
         end
-        new{Element,Order,D}(data, indices)
+        new{Element,Valence,D}(data, indices)
     end
 end
 
@@ -77,7 +77,7 @@ Return the dimensions of `t` as a tuple of `Int`s, or — when `dim` is given �
 length along that single dimension.
 
 Delegates to `size(t.data)`.  The one-argument form returns `(d₁, d₂, …, dₙ)` where
-`n == Order` and each `dₖ == dim(t.indices[k])`.  The two-argument form is equivalent
+`n == Valence` and each `dₖ == dim(t.indices[k])`.  The two-argument form is equivalent
 to `size(t)[dim]` but does not materialise the full tuple.
 
 `Base.size` is the primary query in Julia's `AbstractArray` interface: `ndims`, `length`,
@@ -229,49 +229,6 @@ function Base.unsafe_convert(::Type{Ptr{Element}}, t::QTensor{Element}) where {E
     return Base.unsafe_convert(Ptr{Element}, t.data)
 end
 
-# ── Partition / Bipartition convenience overloads ────────────────────────────
-# These accept a QTensor as the second argument so callers don't have to
-# extract A.indices manually.
-
-"""
-    complement(p::Partition, A::QTensor) -> Partition
-
-Return the legs of `A` that are not in partition `p`, in the order they appear
-in `A.indices`.  Delegates to `complement(p, A.indices)`.
-
-# Examples
-```jldoctest
-julia> vL = upper(:vL, 2);  σ = upper(:σ, 3);  vR = lower(:vR, 4);
-
-julia> A = QTensor(rand(2, 3, 4), (vL, σ, vR));
-
-julia> complement(Partition([vL, σ]), A)
-1-element Vector{AbstractIx}:
- TIx{Lower}(:vR, 4)
-```
-"""
-complement(p::Partition, A::QTensor) = complement(p, A.indices)
-
-"""
-    bipartition(left::Partition, A::QTensor) -> Bipartition
-
-Construct a [`Bipartition`](@ref) for tensor `A` whose right side is
-`complement(left, A)`.
-
-# Examples
-```jldoctest
-julia> vL = upper(:vL, 2);  σ = upper(:σ, 3);  vR = lower(:vR, 4);
-
-julia> A = QTensor(rand(2, 3, 4), (vL, σ, vR));
-
-julia> bp = bipartition(Partition([vL, σ]), A);
-
-julia> bp.right[1] == vR
-true
-```
-"""
-bipartition(left::Partition, A::QTensor) = bipartition(left, A.indices)
-
 # ── group_legs ────────────────────────────────────────────────────────────────
 
 """
@@ -383,14 +340,14 @@ Return the Hermitian adjoint of `A` under the von Delft covariant convention:
 [A^{\\dagger}]^{\\beta}_{\\sigma\\alpha} := \\overline{A^{\\alpha\\sigma}_{\\beta}},
 ```
 
-generalising ``(MN)^{\\dagger} = N^{\\dagger}M^{\\dagger}`` to arbitrary order.
+generalising ``(MN)^{\\dagger} = N^{\\dagger}M^{\\dagger}`` to arbitrary valence.
 Labels are **not** primed — the daggering is carried entirely by the variance
 and the leg positions. Because position `p` is array axis `p` (row = leftmost),
 the leg reversal is mirrored on the backing array:
 `(A').data == conj(permutedims(A.data, reverse(1:ndims(A))))`.
 
 The adjoint is an involution, `(A')' == A`, and reproduces the familiar matrix
-adjoint for order-2 tensors: `(A').data == adjoint(A.data)`.
+adjoint for valence-2 tensors: `(A').data == adjoint(A.data)`.
 
 This is the same operation as TensorKit's `adjoint`: swap domain and codomain,
 dualise every leg, reverse their order.
@@ -428,7 +385,7 @@ See also: [`flip(::TIx)`](@ref), [`Base.adjoint(::QTensor)`](@ref)
 """
 function flip(A::QTensor, i::Integer)
     1 <= i <= length(A.indices) ||
-        throw(ArgumentError("flip: leg $i out of range for an order-$(length(A.indices)) tensor."))
+        throw(ArgumentError("flip: leg $i out of range for a valence-$(length(A.indices)) tensor."))
     indices = ntuple(k -> k == i ? flip(A.indices[k]) : A.indices[k], length(A.indices))
     return QTensor(A.data, indices)
 end
@@ -438,7 +395,7 @@ end
 """
     bipartition_matrix(A::QTensor, bp::Bipartition) -> QTensor
 
-Reshape the tensor `A` into a matrix (order-2 `QTensor`) by grouping its legs
+Reshape the tensor `A` into a matrix (valence-2 `QTensor`) by grouping its legs
 according to the bipartition `bp`.
 
 This is a physics-vocabulary alias for [`group_legs`](@ref): left-partition legs
@@ -458,7 +415,7 @@ bipartition_matrix(A::QTensor, bp::Bipartition) = group_legs(A, bp)
 """
     as_state(v::AbstractVector, dof_dims::AbstractVector{Int}) -> QTensor
 
-Reshape the coefficient vector `v` into an order-`L` tensor with one physical
+Reshape the coefficient vector `v` into a valence-`L` tensor with one physical
 leg per site.  `dof_dims[i]` is the local Hilbert-space dimension at site `i`.
 
 The result satisfies `vec(ψ.data) === v` (no copy; the tensor shares memory with

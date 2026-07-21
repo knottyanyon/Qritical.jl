@@ -20,6 +20,8 @@ using Random
 # Import the active module (indices.jl and qtensor.jl)
 using Qritical
 
+const _gvl = Qritical._golub_van_loan_threshold
+
 # ============================================================================
 # backend-agnostic tensor_svd + truncation + TensorSVD
 # ============================================================================
@@ -414,6 +416,59 @@ using Qritical
         Vmat = reshape(F.Vd.data, r, 4)
         @test Umat * Diagonal(F.spectrum.values) * Vmat ≈ M
         @test sort(F.spectrum.values; rev=true) ≈ sort(svdvals(M); rev=true)[1:r]
+    end
+
+    # ────────────────────────────────────────────────────────────────────────
+    # _golub_van_loan_threshold: numerical-rank noise floor
+    #
+    # Source: Golub & Van Loan, "Matrix Computations", 4th ed.
+    #         Johns Hopkins University Press, 2013 — §5.4 (numerical rank).
+    #
+    # The criterion τ = k·ε_machine·σ₁ follows from backward stability of
+    # dgesvd: LAPACK computes the exact SVD of A + E with ‖E‖₂ ≲ ε·‖A‖₂ = ε·σ₁.
+    # Singular values below τ are indistinguishable from zero given this
+    # perturbation; the factor k bounds accumulation across k floating-point ops.
+    # ────────────────────────────────────────────────────────────────────────
+
+    @testset "_golub_van_loan_threshold: Golub–Van Loan numerical-rank noise floor" begin
+        @testset "empty vector returns 0.0" begin
+            @test _gvl(Float64[]) === 0.0
+        end
+
+        @testset "single value: threshold equals eps(T) * σ₁" begin
+            S = [2.0]
+            @test _gvl(S) ≈ 1 * eps(Float64) * 2.0
+        end
+
+        @testset "threshold scales linearly with length(S)" begin
+            S3 = [5.0, 1.0, 0.1]
+            S6 = [5.0, 1.0, 0.1, 0.05, 0.01, 0.001]
+            τ3 = _gvl(S3)
+            τ6 = _gvl(S6)
+            @test τ6 ≈ 2 * τ3
+        end
+
+        @testset "threshold scales with the largest singular value, not later ones" begin
+            S_big   = [100.0, 1.0, 0.5]
+            S_small = [  1.0, 1.0, 0.5]
+            @test _gvl(S_big) ≈ 100 * _gvl(S_small)
+        end
+
+        @testset "genuine noise is stripped from a rank-deficient matrix" begin
+            # A rank-1 matrix u·vᵀ has exactly one non-zero singular value ‖u‖·‖v‖.
+            # We use rank-1 specifically because the answer is known from theory: every
+            # other singular value MUST be zero, so any nonzero value LAPACK returns is
+            # pure floating-point noise. This gives the sharpest possible test of the
+            # threshold — we can assert S[2:end] ≤ τ without any tolerance fudging,
+            # because the backward-stability guarantee (§5.4, Golub & Van Loan) is tight
+            # for exactly this construction.
+            u = randn(8); v = randn(8)
+            A = u * v'
+            S = svdvals(A)  # S[1] ≈ ‖u‖‖v‖; S[2:end] ≈ machine noise
+            τ = _gvl(S)
+            @test S[1] > τ                         # genuine singular value survives
+            @test all(σ -> σ ≤ τ, S[2:end])        # ghost values are below threshold
+        end
     end
 end  # @testset "SVD and truncation"
 
