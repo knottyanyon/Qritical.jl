@@ -56,9 +56,9 @@ println(&quot;⟨↑↑…↑|Stot|↑↑…↑⟩ = &quot;, round(Stot_up; sigd
   L─── W ── W ── ⋯ ─R    operator layer  (H as MPO)
   │    │     │           physical legs
   └─ ψ ── ψ ── ⋯ ─┘      ket layer    (|ψ⟩)</code></pre><p>This is Schollwöck&#39;s <span>$L$</span>–<span>$W$</span>–<span>$R$</span> sandwich (Fig. 38): a rank-3 environment (bra bond × MPO bond × ket bond) is carried across the chain one site at a time.</p><pre><code class="language-julia hljs">E_xxz = expect(mps, W_xxz)
-println(&quot;⟨ψ|H_XXZ|ψ⟩ = &quot;, round(real(E_xxz); sigdigits=8))</code></pre><pre><code class="nohighlight hljs">⟨ψ|H_XXZ|ψ⟩ = 13.925611
+println(&quot;⟨ψ|H_XXZ|ψ⟩ = &quot;, round(real(E_xxz); sigdigits=8))</code></pre><pre><code class="nohighlight hljs">⟨ψ|H_XXZ|ψ⟩ = -3.8837836
 </code></pre><p>⟨H⟩ is a physical number, independent of the MPS gauge — recomputing it from a right-canonical copy of the same state must give the identical answer. ⟨H⟩ is gauge-invariant: recompute from a right-canonical copy of the same state</p><pre><code class="language-julia hljs">E_xxz2 = expect(canonicalize(mps, RightCanonical()), W_xxz)
-println(&quot;Same ⟨H⟩ from right-canonical: &quot;, round(real(E_xxz2); sigdigits=8))</code></pre><pre><code class="nohighlight hljs">Same ⟨H⟩ from right-canonical: 13.925611
+println(&quot;Same ⟨H⟩ from right-canonical: &quot;, round(real(E_xxz2); sigdigits=8))</code></pre><pre><code class="nohighlight hljs">Same ⟨H⟩ from right-canonical: -3.8837836
 </code></pre><p>The identity operator is the degenerate MPO (bond dimension 1): sandwiching it must reproduce <span>$\langle\psi|\psi\rangle$</span> exactly. It is the unit test for the whole expect/sandwich contraction machinery. Identity MPO: ⟨ψ|I|ψ⟩ = ⟨ψ|ψ⟩</p><pre><code class="language-julia hljs">I_op  = identity_operator(g, dof)
 W_Id  = MPO(I_op)
 E_Id  = expect(mps, W_Id)
@@ -66,31 +66,31 @@ norm2 = real(overlap(mps, mps))
 println(&quot;⟨ψ|I|ψ⟩ = &quot;, round(E_Id;  sigdigits=8))
 println(&quot;⟨ψ|ψ⟩   = &quot;, round(norm2; sigdigits=8))
 @assert abs(E_Id - norm2) &lt; 1e-12 &quot;Identity MPO should equal norm squared&quot;
-println(&quot;Identity MPO check ✓&quot;)</code></pre><pre><code class="nohighlight hljs">⟨ψ|I|ψ⟩ = 239.16049 - 7.6753642e-15im
-⟨ψ|ψ⟩   = 239.16049
+println(&quot;Identity MPO check ✓&quot;)</code></pre><pre><code class="nohighlight hljs">⟨ψ|I|ψ⟩ = 250.48249 - 7.1054274e-15im
+⟨ψ|ψ⟩   = 250.48249
 Identity MPO check ✓
 </code></pre><h2 id="(d)-Applying-MPO-to-MPS:-\\phi\\rangle-H\\psi\\rangle"><a class="docs-heading-anchor" href="#(d)-Applying-MPO-to-MPS:-\\phi\\rangle-H\\psi\\rangle">(d) Applying MPO to MPS: <span>$|\phi\rangle = H|\psi\rangle$</span></a><a id="(d)-Applying-MPO-to-MPS:-\\phi\\rangle-H\\psi\\rangle-1"></a><a class="docs-heading-anchor-permalink" href="#(d)-Applying-MPO-to-MPS:-\\phi\\rangle-H\\psi\\rangle" title="Permalink"></a></h2><p><code>apply_mpo(mpo, mps)</code> contracts each W tensor with the corresponding site tensor, producing a new MPS with expanded bond dimension <span>$\chi_{\mathrm{new}} = \chi \cdot \chi_W$</span>. The result can be truncated immediately via the <code>trunc</code> keyword.</p><div class="admonition is-info" id="Applying-an-operator-inflates-the-bond-—-then-you-compress-1440fc077936f406"><header class="admonition-header">Applying an operator inflates the bond — then you compress<a class="admonition-anchor" href="#Applying-an-operator-inflates-the-bond-—-then-you-compress-1440fc077936f406" title="Permalink"></a></header><div class="admonition-body"><p>Contracting the MPO into the MPS <em>multiplies</em> the bond dimensions, <span>$\chi\to\chi\cdot\chi_W$</span>, because the state now carries both its own entanglement and the operator&#39;s internal automaton state. Left unchecked this blows up under repeated application — so every operator application in a real algorithm (the power method here, time evolution later) is followed by a <strong>truncation</strong> back to a manageable <span>$\chi$</span>. <code>apply_mpo(...; trunc=...)</code> fuses the two steps.</p></div></div><pre><code class="language-julia hljs">Hpsi     = apply_mpo(W_xxz, mps)
 Hpsi_can = canonicalize(Hpsi, LeftCanonical())
 println(&quot;‖H|ψ⟩‖² = &quot;, round(real(overlap(Hpsi_can, Hpsi_can)); sigdigits=8))
-println(&quot;Bond dims of H|ψ⟩: &quot;, [size(t.data,3) for t in Hpsi_can.tensors])</code></pre><pre><code class="nohighlight hljs">‖H|ψ⟩‖² = 299.42671
+println(&quot;Bond dims of H|ψ⟩: &quot;, [size(t.data,3) for t in Hpsi_can.tensors])</code></pre><pre><code class="nohighlight hljs">‖H|ψ⟩‖² = 313.78403
 Bond dims of H|ψ⟩: [2, 4, 8, 16, 32, 20, 10, 1]
 </code></pre><p>A Hermitian <span>$H$</span> gives the identity <span>$\|H|\psi\rangle\|^2 = \langle\psi|H^2|\psi\rangle$</span>. Computing the right-hand side by applying <span>$H$</span> <em>twice</em> and overlapping with <span>$\langle\psi|$</span> must match the norm on the left — an end-to-end check that <code>apply_mpo</code> is exact (before truncation) and composes correctly. <span>$\langle H^2\rangle-\langle H\rangle^2$</span> is also the energy variance that certifies an eigenstate in the power method. Verify: ‖H|ψ⟩‖² = ⟨ψ|H²|ψ⟩  (if H is Hermitian)</p><pre><code class="language-julia hljs">norm2_Hpsi = real(overlap(Hpsi_can, Hpsi_can))
 HHpsi      = apply_mpo(W_xxz, Hpsi_can)
 HHpsi_c    = canonicalize(HHpsi, LeftCanonical())
 E_H2_via_apply = real(overlap(mps, HHpsi_c))  # ⟨ψ|H²|ψ⟩
 println(&quot;‖H|ψ⟩‖² via norm:      &quot;, round(norm2_Hpsi;      sigdigits=8))
-println(&quot;⟨ψ|H²|ψ⟩ via double-apply: &quot;, round(E_H2_via_apply; sigdigits=8))</code></pre><pre><code class="nohighlight hljs">‖H|ψ⟩‖² via norm:      299.42671
-⟨ψ|H²|ψ⟩ via double-apply: 299.42671
+println(&quot;⟨ψ|H²|ψ⟩ via double-apply: &quot;, round(E_H2_via_apply; sigdigits=8))</code></pre><pre><code class="nohighlight hljs">‖H|ψ⟩‖² via norm:      313.78403
+⟨ψ|H²|ψ⟩ via double-apply: 313.78403
 </code></pre><p>Now apply with a hard bond cap and measure the fidelity lost: this is the exact operation the power method iterates, so its truncation error is what limits how well repeated <span>$H$</span>-application can project onto the ground state. Truncated application</p><pre><code class="language-julia hljs">Hpsi_trunc = apply_mpo(W_xxz, mps; trunc=MaxBondDimTrunc(8))
 Hpsi_tr_c  = canonicalize(Hpsi_trunc, LeftCanonical())
 println(&quot;Truncated bond dims (D=8): &quot;, [size(t.data,3) for t in Hpsi_tr_c.tensors])
 trunc_fid  = abs(overlap(Hpsi_tr_c, Hpsi_can))^2 /
              (real(overlap(Hpsi_tr_c, Hpsi_tr_c)) * real(overlap(Hpsi_can, Hpsi_can)))
 println(&quot;Truncation fidelity: &quot;, round(trunc_fid; sigdigits=4))</code></pre><pre><code class="nohighlight hljs">Truncated bond dims (D=8): [2, 4, 8, 8, 8, 8, 8, 1]
-Truncation fidelity: 0.4165
+Truncation fidelity: 0.4986
 </code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
 mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Overview</a><a class="docs-footer-nextpage" href="../../07/ex_07/">Tutorial 07 »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 21 July 2026 21:42">Tuesday 21 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Overview</a><a class="docs-footer-nextpage" href="../../07/ex_07/">Tutorial 07 »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 21 July 2026 21:48">Tuesday 21 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

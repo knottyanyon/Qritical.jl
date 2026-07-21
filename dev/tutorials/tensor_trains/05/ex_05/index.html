@@ -74,11 +74,11 @@ nrm2 = real(overlap(mc, mc))
 σx_site = [real(local_expectation(mc, σx, i)) / nrm2 for i in 1:N]
 println(&quot;\n⟨σᶻᵢ⟩ = &quot;, round.(σz_site; sigdigits=3))
 println(&quot;⟨σˣᵢ⟩ = &quot;, round.(σx_site; sigdigits=3))</code></pre><pre><code class="nohighlight hljs">
-⟨σᶻᵢ⟩ = [-1.08e-15, 5.49e-16, -1.6e-16, -3.77e-17, -1.37e-15, 5.17e-15, -1.53e-15, -4.37e-16, -5.0e-16, -3.89e-16]
-⟨σˣᵢ⟩ = [7.0e-17, -2.02e-17, 2.81e-16, -2.32e-16, 2.12e-16, -2.85e-16, -4.03e-17, 3.64e-16, -2.04e-16, 2.69e-16]
+⟨σᶻᵢ⟩ = [-4.16e-16, 4.0e-16, -3.02e-16, -2.82e-18, 3.02e-16, -7.09e-16, -5.0e-16, 1.6e-15, -5.0e-16, 0.0]
+⟨σˣᵢ⟩ = [1.42e-15, -1.18e-15, 1.73e-15, -1.64e-15, 2.35e-15, -2.59e-15, 2.58e-15, -2.58e-15, -1.4e-16, -3.87e-17]
 </code></pre><p>The Vidal→canonical round-trip is exact, so observables from the reconstruction must match those of the original left-canonical <code>mps</code> — the ultimate check that to<em>vidal/to</em>canonical preserved the physics and did not leak through the Λ⁻¹. Cross-check: Vidal→canonical reproduces the original MPS observables</p><pre><code class="language-julia hljs">σz_orig = [real(local_expectation(mps, σz, i)) / real(overlap(mps, mps)) for i in 1:N]
 println(&quot;Max |⟨σᶻ⟩_reconstructed − ⟨σᶻ⟩_original| = &quot;,
-        round(maximum(abs.(σz_site .- σz_orig)); sigdigits=4))</code></pre><pre><code class="nohighlight hljs">Max |⟨σᶻ⟩_reconstructed − ⟨σᶻ⟩_original| = 1.874e-16
+        round(maximum(abs.(σz_site .- σz_orig)); sigdigits=4))</code></pre><pre><code class="nohighlight hljs">Max |⟨σᶻ⟩_reconstructed − ⟨σᶻ⟩_original| = 2.567e-16
 </code></pre><h2 id="(c)-Nearest-neighbour-correlations-\\langle-\\sigmaz_i-\\sigmaz_{i1}-\\rangle"><a class="docs-heading-anchor" href="#(c)-Nearest-neighbour-correlations-\\langle-\\sigmaz_i-\\sigmaz_{i1}-\\rangle">(c) Nearest-neighbour correlations <span>$\langle \sigma^z_i \sigma^z_{i+1} \rangle$</span></a><a id="(c)-Nearest-neighbour-correlations-\\langle-\\sigmaz_i-\\sigmaz_{i1}-\\rangle-1"></a><a class="docs-heading-anchor-permalink" href="#(c)-Nearest-neighbour-correlations-\\langle-\\sigmaz_i-\\sigmaz_{i1}-\\rangle" title="Permalink"></a></h2><p>The connected part <span>$\langle\sigma^z_i\sigma^z_{i+1}\rangle_c$</span> strips off the product of local magnetisations, leaving the genuine short-range correlation that nearest-neighbour bonds carry. Correlations on the canonical reconstruction (normalized)</p><pre><code class="language-julia hljs">zz_nn   = [real(two_site_op(mc, σz, σz, i, i+1)) / nrm2 for i in 1:N-1]
 zz_c_nn = zz_nn .- σz_site[1:end-1] .* σz_site[2:end]
 println(&quot;⟨σᶻᵢ σᶻᵢ₊₁⟩:      &quot;, round.(zz_nn;   sigdigits=3))
@@ -92,9 +92,9 @@ for r in 1:N-l
     println(&quot;  r=$r:  full=$(round(corrs[r]; sigdigits=4))   connected=$(round(corrs_c[r]; sigdigits=4))&quot;)
 end</code></pre><pre><code class="nohighlight hljs">⟨σᶻ_{L/2} σᶻ_{L/2+r}⟩  and  connected C(r):
   r=1:  full=-0.5325   connected=-0.5325
-  r=2:  full=-1.97e-15   connected=-1.97e-15
+  r=2:  full=1.448e-16   connected=1.448e-16
   r=3:  full=-0.09834   connected=-0.09834
-  r=4:  full=-1.388e-16   connected=-1.388e-16
+  r=4:  full=-7.112e-17   connected=-7.112e-17
   r=5:  full=-0.06095   connected=-0.06095
 </code></pre><p>Plot the full and connected correlators against distance.</p><pre><code class="language-julia hljs">fig = Figure(size=(680, 320))
 ax  = Axis(fig[1,1];
@@ -112,4 +112,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../04/ex_04/">« Tutorial 04</a><a class="docs-footer-nextpage" href="../../../dynamics/">Overview »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 21 July 2026 21:42">Tuesday 21 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../04/ex_04/">« Tutorial 04</a><a class="docs-footer-nextpage" href="../../../dynamics/">Overview »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 21 July 2026 21:48">Tuesday 21 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

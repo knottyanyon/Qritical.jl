@@ -1054,7 +1054,7 @@ println(&quot;⟨ψ|ψ⟩ preserved: &quot;, round(real(overlap(mps_R, mps_R)); 
             M = reshape(t.data, χL, d_i * χR)
             norm(M * M&#39; - I(χL))
         end for t in mps_R.tensors]
-println(&quot;Right-isometry errors: &quot;, round.(errs; sigdigits=3))</code></pre><pre><code class="nohighlight hljs">Right-isometry errors: [4.44e-16, 4.28e-16, 1.37e-15, 2.39e-15, 4.65e-15, 4.87e-15, 3.69e-15, 1.79e-15, 5.51e-16, 0.0]
+println(&quot;Right-isometry errors: &quot;, round.(errs; sigdigits=3))</code></pre><pre><code class="nohighlight hljs">Right-isometry errors: [7.77e-16, 5.82e-16, 1.08e-15, 1.62e-15, 4.2e-15, 5.87e-15, 2.92e-15, 1.78e-15, 1.43e-17, 0.0]
 </code></pre><p>The Schmidt spectrum on a bond is a <em>physical</em> property of the state, so it must survive the gauge change untouched — the left- and right-canonical numbers below should agree digit for digit. Singular values must be gauge-invariant</p><pre><code class="language-julia hljs">println(&quot;Bond 5 SVs (left canonical):  &quot;, round.(mps_ref.bond_svs[6].values; sigdigits=4))
 println(&quot;Bond 5 SVs (right canonical): &quot;, round.(mps_R.bond_svs[6].values;   sigdigits=4))</code></pre><pre><code class="nohighlight hljs">Bond 5 SVs (left canonical):  [0.7035, 0.7035, 0.05067, 0.05067, 0.05067, 0.05067, 0.00365, 0.00365, 0.0006184, 0.0006184, 0.0006184, 0.0006184, 4.455e-5, 4.455e-5, 4.455e-5, 4.455e-5, 4.455e-5, 4.455e-5, 4.455e-5, 4.455e-5, 3.209e-6, 3.209e-6, 3.209e-6, 3.209e-6, 5.437e-7, 5.437e-7, 3.916e-8, 3.916e-8, 3.916e-8, 3.916e-8, 2.821e-9, 2.821e-9]
 Bond 5 SVs (right canonical): [0.7035, 0.7035, 0.05067, 0.05067, 0.05067, 0.05067, 0.00365, 0.00365, 0.0006184, 0.0006184, 0.0006184, 0.0006184, 4.455e-5, 4.455e-5, 4.455e-5, 4.455e-5, 4.455e-5, 4.455e-5, 4.455e-5, 4.455e-5, 3.209e-6, 3.209e-6, 3.209e-6, 3.209e-6, 5.437e-7, 5.437e-7, 3.916e-8, 3.916e-8, 3.916e-8, 3.916e-8, 2.821e-9, 2.821e-9]
@@ -1066,7 +1066,7 @@ println(&quot;⟨ψ|ψ⟩ preserved: &quot;, round(real(overlap(mps_R2L, mps_R2L
              M = reshape(t.data, χL * d_i, χR)
              norm(M&#39; * M - I(χR))
          end for t in mps_R2L.tensors]
-println(&quot;Left-isometry errors: &quot;, round.(errs2; sigdigits=3))</code></pre><pre><code class="nohighlight hljs">Left-isometry errors: [4.44e-16, 6.68e-16, 1.48e-15, 3.63e-15, 6.57e-15, 3.33e-15, 2.44e-15, 8.27e-16, 4.97e-16, 4.44e-16]
+println(&quot;Left-isometry errors: &quot;, round.(errs2; sigdigits=3))</code></pre><pre><code class="nohighlight hljs">Left-isometry errors: [0.0, 1.43e-15, 1.25e-15, 3.79e-15, 4.66e-15, 3.22e-15, 2.42e-15, 1.02e-15, 3.63e-16, 2.33e-15]
 </code></pre><div class="admonition is-warning" id="Truncation-while-sweeping-has-a-direction-bias-16f8d7c4137fd3bf"><header class="admonition-header">Truncation while sweeping has a direction bias<a class="admonition-anchor" href="#Truncation-while-sweeping-has-a-direction-bias-16f8d7c4137fd3bf" title="Permalink"></a></header><div class="admonition-body"><p>Keeping the <span>$D$</span> largest singular values at each bond is the <em>optimal</em> rank-<span>$D$</span> approximation of that one matrix in Frobenius norm, with discarded weight <span>$\varepsilon = \sum_{\alpha&gt;D}\lambda_\alpha^2$</span>. But each site inherits the already-truncated factor from the previous step, so <strong>truncations on one side depend on those on the other, not vice versa</strong> (Schollwöck §4.5.1). This is harmless for small <span>$\varepsilon$</span> and mildly suboptimal for aggressive cuts — and it is exactly the truncation that TEBD and tDMRG perform while sweeping.</p></div></div><h2 id="(c)-Normalization-diagnostics"><a class="docs-heading-anchor" href="#(c)-Normalization-diagnostics">(c) Normalization diagnostics</a><a id="(c)-Normalization-diagnostics-1"></a><a class="docs-heading-anchor-permalink" href="#(c)-Normalization-diagnostics" title="Permalink"></a></h2><p><code>canonical_error(A)</code> measures the left-isometry deviation <span>$\|A^\dagger A - I\|_F$</span>. For a fully left-canonical MPS all errors should be <span>$\approx 0$</span>. For a right-canonical MPS the left errors should be large and right errors <span>$\approx 0$</span>. <code>is_canonical</code> returns true if all errors are below a tolerance.</p><div class="admonition is-info" id="Why-the-Frobenius-norm-of-(\\text{gram}-\\mathbb{1})-is-the-right-diagnostic-9ff504381d21e024"><header class="admonition-header">Why the Frobenius norm of $(\text{gram}-\mathbb{1})$ is the right diagnostic<a class="admonition-anchor" href="#Why-the-Frobenius-norm-of-(\\text{gram}-\\mathbb{1})-is-the-right-diagnostic-9ff504381d21e024" title="Permalink"></a></header><div class="admonition-body"><p>Part 3 of the sheet asks us to <em>devise a distance-from-unity measure</em>. The natural choice is <span>$\eta_i = \lVert G_i - \mathbb{1}\rVert_F$</span> where <span>$G_i=\sum_\sigma A_i^{\sigma\dagger}A_i^{\sigma}$</span> is the site&#39;s Gram matrix. It is the standard scalar diagnostic because it is <strong>basis-independent</strong> (unitarily invariant), it is <strong>exactly zero iff</strong> the tensor is canonical, and it <strong>grows smoothly</strong> as the tensor is perturbed away from isometry — so it doubles as a convergence monitor for iterative algorithms. The table below prints both the left (<span>$\eta^{(A)}$</span>) and right (<span>$\eta^{(B)}$</span>) deviation per site, which makes the <em>location of the orthogonality centre</em> visible at a glance: it is the one site where neither column is small.</p></div></div><pre><code class="language-julia hljs">function norm_table(mps, label)
     println(&quot;\n$label  (form = $(mps.form))&quot;)
     println(&quot;  site │ δ_L (left iso) │ δ_R (right iso)&quot;)
@@ -1087,28 +1087,28 @@ Left-canonical  (form = CanonicalForm(10, 11))
   site │ δ_L (left iso) │ δ_R (right iso)
   ─────┼────────────────┼────────────────
      1 │ 0.0             │ 1.0
-     2 │ 1.67e-16        │ 1.41
-     3 │ 1.28e-15        │ 2.0
-     4 │ 3.28e-15        │ 2.83
-     5 │ 4.73e-15        │ 4.0
-     6 │ 3.98e-15        │ 5.66
-     7 │ 2.21e-15        │ 3.98
-     8 │ 9.59e-16        │ 2.75
-     9 │ 3.72e-17        │ 1.74
-    10 │ 1.55e-15        │ 0.707
+     2 │ 2.49e-16        │ 1.41
+     3 │ 1.43e-15        │ 2.0
+     4 │ 3.67e-15        │ 2.83
+     5 │ 4.64e-15        │ 4.0
+     6 │ 3.55e-15        │ 5.66
+     7 │ 2.01e-15        │ 3.98
+     8 │ 8.48e-16        │ 2.75
+     9 │ 2.23e-16        │ 1.74
+    10 │ 6.66e-16        │ 0.707
 
 Right-canonical  (form = CanonicalForm(0, 1))
   site │ δ_L (left iso) │ δ_R (right iso)
   ─────┼────────────────┼────────────────
-     1 │ 0.707           │ 4.44e-16
-     2 │ 1.74            │ 4.28e-16
-     3 │ 2.75            │ 1.37e-15
-     4 │ 3.98            │ 2.39e-15
-     5 │ 5.66            │ 4.65e-15
-     6 │ 4.0             │ 4.87e-15
-     7 │ 2.83            │ 3.69e-15
-     8 │ 2.0             │ 1.79e-15
-     9 │ 1.41            │ 5.51e-16
+     1 │ 0.707           │ 7.77e-16
+     2 │ 1.74            │ 5.82e-16
+     3 │ 2.75            │ 1.08e-15
+     4 │ 3.98            │ 1.62e-15
+     5 │ 5.66            │ 4.2e-15
+     6 │ 4.0             │ 5.87e-15
+     7 │ 2.83            │ 2.92e-15
+     8 │ 2.0             │ 1.78e-15
+     9 │ 1.41            │ 1.43e-17
     10 │ 1.0             │ 0.0
 </code></pre><p>Mixed canonical: sites 1..l left-iso, site l+1..N right-iso</p><pre><code class="language-julia hljs">l = N ÷ 2
 mps_M = canonicalize(mps_ref, BondCanonical(l))
@@ -1117,14 +1117,14 @@ Mixed canonical (center bond = 5)  (form = CanonicalForm(5, 6))
   site │ δ_L (left iso) │ δ_R (right iso)
   ─────┼────────────────┼────────────────
      1 │ 0.0             │ 1.0
-     2 │ 5.73e-16        │ 1.41
-     3 │ 1.59e-15        │ 2.0
-     4 │ 2.03e-15        │ 2.83
+     2 │ 5.94e-16        │ 1.41
+     3 │ 1.01e-15        │ 2.0
+     4 │ 1.88e-15        │ 2.83
      5 │ 5.52            │ 3.83
-     6 │ 4.0             │ 4.87e-15
-     7 │ 2.83            │ 3.69e-15
-     8 │ 2.0             │ 1.79e-15
-     9 │ 1.41            │ 5.51e-16
+     6 │ 4.0             │ 5.87e-15
+     7 │ 2.83            │ 2.92e-15
+     8 │ 2.0             │ 1.78e-15
+     9 │ 1.41            │ 1.43e-17
     10 │ 1.0             │ 0.0
 </code></pre><p><code>is_canonical</code> collapses the whole table into a single yes/no by testing every <span>$\eta_i$</span> against a tolerance — the cheap flag you call in production, with the full table reserved for when it returns <code>false</code> and you need to see <em>where</em>. is_canonical as a quick flag</p><pre><code class="language-julia hljs">println(&quot;is_canonical(mps_L): &quot;, is_canonical(mps_ref))
 println(&quot;is_canonical(mps_R): &quot;, is_canonical(mps_R))
@@ -1149,4 +1149,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../02/ex_02/">« Tutorial 02</a><a class="docs-footer-nextpage" href="../../../tensor_trains/">Overview »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 21 July 2026 21:42">Tuesday 21 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../02/ex_02/">« Tutorial 02</a><a class="docs-footer-nextpage" href="../../../tensor_trains/">Overview »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 21 July 2026 21:48">Tuesday 21 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
