@@ -1,5 +1,26 @@
 # # Ex 10. A Toy ED Code
 #
+# ```@raw html
+# <details class="page-info-drawer">
+#   <summary>
+#     <span class="pi-toggle-label">Page info</span>
+#     <span class="pi-pills">
+#       <span class="status-pill status-draft">draft</span>
+#       <span class="status-pill status-needs-rewrite">needs rewrite</span>
+#       <span class="status-pill status-needs-proofreading">needs proofreading</span>
+#     </span>
+#   </summary>
+#   <div class="page-info-body">
+#     <table class="page-info-table"><tbody>
+#       <tr><td class="pi-key">status</td><td class="pi-val"><span class="status-pill status-draft">draft</span> <span class="status-pill status-needs-rewrite">needs rewrite</span> <span class="status-pill status-needs-proofreading">needs proofreading</span></td></tr>
+#       <tr><td class="pi-key">last updated</td><td class="pi-val">2026-07-19</td></tr>
+#       <tr><td class="pi-key">written by</td><td class="pi-val">Bavithra Govintharajah</td></tr>
+#       <tr><td class="pi-key">edited by</td><td class="pi-val">Claude Sonnet 4.6 — initial draft</td></tr>
+#     </tbody></table>
+#   </div>
+# </details>
+# ```
+#
 # **Week 10 — the ground-truth reference.** Every tensor-network result so far has
 # been checked against "ED" — exact diagonalisation. This week we build that
 # reference ourselves, the honest way: embed the single-site spin operators into the

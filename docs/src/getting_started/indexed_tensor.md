@@ -1,5 +1,26 @@
 # Indices and QTensor
 
+```@raw html
+<details class="page-info-drawer">
+  <summary>
+    <span class="pi-toggle-label">Page info</span>
+    <span class="pi-pills">
+      <span class="status-pill status-draft">draft</span>
+      <span class="status-pill status-needs-rewrite">needs rewrite</span>
+      <span class="status-pill status-needs-proofreading">needs proofreading</span>
+    </span>
+  </summary>
+  <div class="page-info-body">
+    <table class="page-info-table"><tbody>
+      <tr><td class="pi-key">status</td><td class="pi-val"><span class="status-pill status-draft">draft</span> <span class="status-pill status-needs-rewrite">needs rewrite</span> <span class="status-pill status-needs-proofreading">needs proofreading</span></td></tr>
+      <tr><td class="pi-key">last updated</td><td class="pi-val">2026-07-15</td></tr>
+      <tr><td class="pi-key">written by</td><td class="pi-val">Bavithra Govintharajah</td></tr>
+      <tr><td class="pi-key">edited by</td><td class="pi-val">Claude Sonnet 4.6 — initial draft</td></tr>
+    </tbody></table>
+  </div>
+</details>
+```
+
 When you draw a tensor network on paper, the correspondence between the diagram and the maths is obvious — each node is a tensor, each line is a leg with an index, and arrow directions encode covariant vs contravariant position. Opening a Julia file and staring at `rand(2, 4, 4)` breaks that correspondence: the array has three slots but no idea that slot 1 is a physical spin leg and slots 2–3 are left and right bond legs pointing in specific directions.
 
 `QTensor` closes that gap. It pairs a backing array with a named, directed index for each leg, so the diagram and the code say the same thing.
