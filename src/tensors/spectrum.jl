@@ -65,8 +65,6 @@ The eigenvalue spectrum of a Hermitian operator (density matrix, Hamiltonian,
 transfer matrix).  Unlike [`SingValSpectrum`](@ref), eigenvalues may be
 negative, so no `normalized` flag or truncation error ``\\varepsilon`` is stored.
 
-First consumer: Week-10 exact diagonalisation (§17 of MasterPlan).
-
 # Fields
 - `values :: V` — eigenvalues in descending order.
 """
