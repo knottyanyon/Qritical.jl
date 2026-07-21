@@ -13,6 +13,27 @@ println("Loaded two MPS of length ", N)
 
 # # Ex 4. Overlap, Observables, and MPS Addition
 #
+# ```@raw html
+# <details class="page-info-drawer">
+#   <summary>
+#     <span class="pi-toggle-label">Page info</span>
+#     <span class="pi-pills">
+#       <span class="status-pill status-draft">draft</span>
+#       <span class="status-pill status-needs-rewrite">needs rewrite</span>
+#       <span class="status-pill status-needs-proofreading">needs proofreading</span>
+#     </span>
+#   </summary>
+#   <div class="page-info-body">
+#     <table class="page-info-table"><tbody>
+#       <tr><td class="pi-key">status</td><td class="pi-val"><span class="status-pill status-draft">draft</span> <span class="status-pill status-needs-rewrite">needs rewrite</span> <span class="status-pill status-needs-proofreading">needs proofreading</span></td></tr>
+#       <tr><td class="pi-key">last updated</td><td class="pi-val">2026-07-19</td></tr>
+#       <tr><td class="pi-key">written by</td><td class="pi-val">Bavithra Govintharajah</td></tr>
+#       <tr><td class="pi-key">edited by</td><td class="pi-val">Claude Sonnet 4.6 — initial draft</td></tr>
+#     </tbody></table>
+#   </div>
+# </details>
+# ```
+#
 # **Week 4 — where this sits in the arc.** Weeks 2–3 taught us to *store* a state
 # as a canonical MPS. This week we start *asking questions of it*: how much do two
 # states overlap, what is the expectation value of a local operator, how do two

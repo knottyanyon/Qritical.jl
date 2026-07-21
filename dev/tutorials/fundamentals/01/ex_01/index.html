@@ -1,5 +1,22 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorial 01 · Qritical.jl</title><meta name="title" content="Tutorial 01 · Qritical.jl"/><meta property="og:title" content="Tutorial 01 · Qritical.jl"/><meta property="twitter:title" content="Tutorial 01 · Qritical.jl"/><meta name="description" content="Documentation for Qritical.jl."/><meta property="og:description" content="Documentation for Qritical.jl."/><meta property="twitter:description" content="Documentation for Qritical.jl."/><meta property="og:url" content="https://knottyanyon.github.io/Qritical.jl/tutorials/fundamentals/01/ex_01/"/><meta property="twitter:url" content="https://knottyanyon.github.io/Qritical.jl/tutorials/fundamentals/01/ex_01/"/><link rel="canonical" href="https://knottyanyon.github.io/Qritical.jl/tutorials/fundamentals/01/ex_01/"/><script data-outdated-warner src="../../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../../assets/documenter.js"></script><script src="../../../../search_index.js"></script><script src="../../../../siteinfo.js"></script><script src="../../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../../assets/themeswap.js"></script><link href="../../../../assets/favicon.svg" rel="icon" type="image/x-icon"/><link href="../../../../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../../../../assets/output-fold.js"></script><script src="../../../../assets/page-toc.js"></script><script src="../../../../assets/math-env.js"></script><script src="../../../../assets/tn-repr.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../../../"><img src="../../../../assets/logo.svg" alt="Qritical.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../../../">Qritical.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../../../">Home</a></li><li><span class="tocitem">Getting Started</span><ul><li><a class="tocitem" href="../../../../getting_started/">Overview</a></li><li><a class="tocitem" href="../../../../getting_started/installation/">Installation</a></li><li><a class="tocitem" href="../../../../getting_started/introduction/">Introduction: Legs &amp; Indices</a></li><li><a class="tocitem" href="../../../../getting_started/indexed_tensor/">Indices and QTensor</a></li><li><a class="tocitem" href="../../../../getting_started/gs1_tensors_and_indices/">GS-1: Tensors &amp; Indices</a></li><li><a class="tocitem" href="../../../../getting_started/gs2_svd_and_truncation/">GS-2: SVD &amp; Truncation</a></li><li><a class="tocitem" href="../../../../getting_started/gs3_drawing_tensor_networks/">GS-3: Drawing Tensor Networks</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../../../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox" checked/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Part 1 – Fundamentals</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../">Overview</a></li><li class="is-active"><a class="tocitem" href>Tutorial 01</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#1.-Julia-install-party"><span>1. Julia install party</span></a></li><li class="toplevel"><a class="tocitem" href="#2.-SVD-a-matrix"><span>2. SVD a matrix</span></a></li><li><a class="tocitem" href="#(c)-SVD-a-state-—-psi.jls"><span>(c) SVD a state — <code>psi.jls</code></span></a></li><li><a class="tocitem" href="#(d)-SVD-image-compression-—-Bahkauv.png"><span>(d) SVD image compression — <code>Bahkauv.png</code></span></a></li><li><a class="tocitem" href="#(e)-Matrix-contractions-—-naive-triple-loop-vs-BLAS"><span>(e) Matrix contractions — naive triple-loop vs BLAS</span></a></li></ul></li><li><a class="tocitem" href="../../02/ex_02/">Tutorial 02</a></li><li><a class="tocitem" href="../../03/ex_03/">Tutorial 03</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-3" type="checkbox"/><label class="tocitem" for="menuitem-3-3"><span class="docs-label">Part 2 – Tensor Trains</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../tensor_trains/">Overview</a></li><li><a class="tocitem" href="../../../tensor_trains/04/ex_04/">Tutorial 04</a></li><li><a class="tocitem" href="../../../tensor_trains/05/ex_05/">Tutorial 05</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-4" type="checkbox"/><label class="tocitem" for="menuitem-3-4"><span class="docs-label">Part 3 – Dynamics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../dynamics/">Overview</a></li><li><a class="tocitem" href="../../../dynamics/06/ex_06/">Tutorial 06</a></li><li><a class="tocitem" href="../../../dynamics/07/ex_07/">Tutorial 07</a></li><li><a class="tocitem" href="../../../dynamics/08/ex_08/">Tutorial 08</a></li><li><a class="tocitem" href="../../../dynamics/09/ex_09/">Tutorial 09</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-5" type="checkbox"/><label class="tocitem" for="menuitem-3-5"><span class="docs-label">Part 4 – Misc</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../misc/">Overview</a></li><li><a class="tocitem" href="../../../misc/10/ex_10/">Tutorial 10</a></li><li><a class="tocitem" href="../../../misc/11/ex_11/">Tutorial 11</a></li></ul></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../../../api/index_layer/">Index Layer</a></li><li><a class="tocitem" href="../../../../api/qtensor/">QTensor</a></li><li><a class="tocitem" href="../../../../api/svd/">SVD &amp; Truncation</a></li><li><a class="tocitem" href="../../../../api/spectrum/">Spectra &amp; Entanglement</a></li><li><a class="tocitem" href="../../../../api/io/">State Utilities &amp; I/O</a></li><li><a class="tocitem" href="../../../../api/mps/">MPS &amp; Canonical Forms</a></li><li><a class="tocitem" href="../../../../api/geometry/">Geometry</a></li><li><a class="tocitem" href="../../../../api/dof/">Degrees of Freedom</a></li><li><a class="tocitem" href="../../../../api/operator/">Operators &amp; Hamiltonians</a></li><li><a class="tocitem" href="../../../../api/mpo/">MPO &amp; Expectation Values</a></li><li><a class="tocitem" href="../../../../api/power_method/">Power Method</a></li><li><a class="tocitem" href="../../../../api/tebd/">TEBD</a></li><li><a class="tocitem" href="../../../../api/quench/">Quench &amp; TEBD Solve</a></li><li><a class="tocitem" href="../../../../api/storage_format/">Storage Formats</a></li><li><a class="tocitem" href="../../../../api/ed/">ExactDiagonalization</a></li><li><a class="tocitem" href="../../../../api/ed_time/">ED Time Propagation</a></li><li><a class="tocitem" href="../../../../api/disorder/">Disorder</a></li><li><a class="tocitem" href="../../../../api/visualization/">Visualisation</a></li></ul></li><li><span class="tocitem">References</span><ul><li><a class="tocitem" href="../../../../references/glossary/">Glossary</a></li></ul></li><li><a class="tocitem" href="../../../../changelog/">Changelog</a></li><li><span class="tocitem">Developer</span><ul><li><a class="tocitem" href="../../../../dev/kitchen_sink/">Kitchen Sink</a></li></ul></li></ul><div class="docs-version-selector field has-addons visible"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"><option value="#" selected="selected">0.6.2</option></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li><a class="is-disabled">Part 1 – Fundamentals</a></li><li class="is-active"><a href>Tutorial 01</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorial 01</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/knottyanyon/Qritical.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/knottyanyon/Qritical.jl/blob/main/docs/src/tutorials/fundamentals/01/ex_01.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Ex-1.-SVD,-Schmidt-Rank,-and-Truncation"><a class="docs-heading-anchor" href="#Ex-1.-SVD,-Schmidt-Rank,-and-Truncation">Ex 1. SVD, Schmidt Rank, and Truncation</a><a id="Ex-1.-SVD,-Schmidt-Rank,-and-Truncation-1"></a><a class="docs-heading-anchor-permalink" href="#Ex-1.-SVD,-Schmidt-Rank,-and-Truncation" title="Permalink"></a></h1><p><strong>Week 1 — the foundation the whole course rests on.</strong> Every later exercise — canonical forms, MPS, TEBD, DMRG — is ultimately a disciplined sequence of singular value decompositions. So Week 1 builds the intuition in miniature: SVD a matrix, read its <strong>Schmidt rank</strong>, throw away small singular values and measure what that costs, then watch the <em>same</em> operation act on a quantum state (where the singular values become entanglement) and on an image (where they become compressibility). The punchline that recurs for the rest of the course: a rapidly decaying singular-value spectrum means the object is <em>compressible</em>, and that is exactly when tensor-network methods win.</p><h1 id="1.-Julia-install-party"><a class="docs-heading-anchor" href="#1.-Julia-install-party">1. Julia install party</a><a id="1.-Julia-install-party-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Julia-install-party" title="Permalink"></a></h1><div class="admonition is-category-question" id="Julia-install-party-4bdf7c56188cf343"><header class="admonition-header">Julia install party<a class="admonition-anchor" href="#Julia-install-party-4bdf7c56188cf343" title="Permalink"></a></header><div class="admonition-body"><p>If you choose to use Julia as your programming language, try to install it on your system. This will be the language presented in the exercise class.</p></div></div><p>Verify the Julia environment and that Qritical is loaded correctly.</p><pre><code class="language-julia hljs">using LinearAlgebra, DelimitedFiles, Serialization, Qritical
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorial 01 · Qritical.jl</title><meta name="title" content="Tutorial 01 · Qritical.jl"/><meta property="og:title" content="Tutorial 01 · Qritical.jl"/><meta property="twitter:title" content="Tutorial 01 · Qritical.jl"/><meta name="description" content="Documentation for Qritical.jl."/><meta property="og:description" content="Documentation for Qritical.jl."/><meta property="twitter:description" content="Documentation for Qritical.jl."/><meta property="og:url" content="https://knottyanyon.github.io/Qritical.jl/tutorials/fundamentals/01/ex_01/"/><meta property="twitter:url" content="https://knottyanyon.github.io/Qritical.jl/tutorials/fundamentals/01/ex_01/"/><link rel="canonical" href="https://knottyanyon.github.io/Qritical.jl/tutorials/fundamentals/01/ex_01/"/><script data-outdated-warner src="../../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../../assets/documenter.js"></script><script src="../../../../search_index.js"></script><script src="../../../../siteinfo.js"></script><script src="../../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../../assets/themeswap.js"></script><link href="../../../../assets/favicon.svg" rel="icon" type="image/x-icon"/><link href="../../../../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../../../../assets/output-fold.js"></script><script src="../../../../assets/page-toc.js"></script><script src="../../../../assets/math-env.js"></script><script src="../../../../assets/tn-repr.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../../../"><img src="../../../../assets/logo.svg" alt="Qritical.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../../../">Qritical.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../../../">Home</a></li><li><span class="tocitem">Getting Started</span><ul><li><a class="tocitem" href="../../../../getting_started/">Overview</a></li><li><a class="tocitem" href="../../../../getting_started/installation/">Installation</a></li><li><a class="tocitem" href="../../../../getting_started/introduction/">Introduction: Legs &amp; Indices</a></li><li><a class="tocitem" href="../../../../getting_started/indexed_tensor/">Indices and QTensor</a></li><li><a class="tocitem" href="../../../../getting_started/gs1_tensors_and_indices/">GS-1: Tensors &amp; Indices</a></li><li><a class="tocitem" href="../../../../getting_started/gs2_svd_and_truncation/">GS-2: SVD &amp; Truncation</a></li><li><a class="tocitem" href="../../../../getting_started/gs3_drawing_tensor_networks/">GS-3: Drawing Tensor Networks</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../../../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox" checked/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Part 1 – Fundamentals</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../">Overview</a></li><li class="is-active"><a class="tocitem" href>Tutorial 01</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#1.-Julia-install-party"><span>1. Julia install party</span></a></li><li class="toplevel"><a class="tocitem" href="#2.-SVD-a-matrix"><span>2. SVD a matrix</span></a></li><li><a class="tocitem" href="#(c)-SVD-a-state-—-psi.jls"><span>(c) SVD a state — <code>psi.jls</code></span></a></li><li><a class="tocitem" href="#(d)-SVD-image-compression-—-Bahkauv.png"><span>(d) SVD image compression — <code>Bahkauv.png</code></span></a></li><li><a class="tocitem" href="#(e)-Matrix-contractions-—-naive-triple-loop-vs-BLAS"><span>(e) Matrix contractions — naive triple-loop vs BLAS</span></a></li></ul></li><li><a class="tocitem" href="../../02/ex_02/">Tutorial 02</a></li><li><a class="tocitem" href="../../03/ex_03/">Tutorial 03</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-3" type="checkbox"/><label class="tocitem" for="menuitem-3-3"><span class="docs-label">Part 2 – Tensor Trains</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../tensor_trains/">Overview</a></li><li><a class="tocitem" href="../../../tensor_trains/04/ex_04/">Tutorial 04</a></li><li><a class="tocitem" href="../../../tensor_trains/05/ex_05/">Tutorial 05</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-4" type="checkbox"/><label class="tocitem" for="menuitem-3-4"><span class="docs-label">Part 3 – Dynamics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../dynamics/">Overview</a></li><li><a class="tocitem" href="../../../dynamics/06/ex_06/">Tutorial 06</a></li><li><a class="tocitem" href="../../../dynamics/07/ex_07/">Tutorial 07</a></li><li><a class="tocitem" href="../../../dynamics/08/ex_08/">Tutorial 08</a></li><li><a class="tocitem" href="../../../dynamics/09/ex_09/">Tutorial 09</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-5" type="checkbox"/><label class="tocitem" for="menuitem-3-5"><span class="docs-label">Part 4 – Misc</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../misc/">Overview</a></li><li><a class="tocitem" href="../../../misc/10/ex_10/">Tutorial 10</a></li><li><a class="tocitem" href="../../../misc/11/ex_11/">Tutorial 11</a></li></ul></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../../../api/index_layer/">Index Layer</a></li><li><a class="tocitem" href="../../../../api/qtensor/">QTensor</a></li><li><a class="tocitem" href="../../../../api/svd/">SVD &amp; Truncation</a></li><li><a class="tocitem" href="../../../../api/spectrum/">Spectra &amp; Entanglement</a></li><li><a class="tocitem" href="../../../../api/io/">State Utilities &amp; I/O</a></li><li><a class="tocitem" href="../../../../api/mps/">MPS &amp; Canonical Forms</a></li><li><a class="tocitem" href="../../../../api/geometry/">Geometry</a></li><li><a class="tocitem" href="../../../../api/dof/">Degrees of Freedom</a></li><li><a class="tocitem" href="../../../../api/operator/">Operators &amp; Hamiltonians</a></li><li><a class="tocitem" href="../../../../api/mpo/">MPO &amp; Expectation Values</a></li><li><a class="tocitem" href="../../../../api/power_method/">Power Method</a></li><li><a class="tocitem" href="../../../../api/tebd/">TEBD</a></li><li><a class="tocitem" href="../../../../api/quench/">Quench &amp; TEBD Solve</a></li><li><a class="tocitem" href="../../../../api/storage_format/">Storage Formats</a></li><li><a class="tocitem" href="../../../../api/ed/">ExactDiagonalization</a></li><li><a class="tocitem" href="../../../../api/ed_time/">ED Time Propagation</a></li><li><a class="tocitem" href="../../../../api/disorder/">Disorder</a></li><li><a class="tocitem" href="../../../../api/visualization/">Visualisation</a></li></ul></li><li><span class="tocitem">References</span><ul><li><a class="tocitem" href="../../../../references/glossary/">Glossary</a></li></ul></li><li><a class="tocitem" href="../../../../changelog/">Changelog</a></li><li><span class="tocitem">Developer</span><ul><li><a class="tocitem" href="../../../../dev/kitchen_sink/">Kitchen Sink</a></li></ul></li></ul><div class="docs-version-selector field has-addons visible"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"><option value="#" selected="selected">0.6.2</option></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li><a class="is-disabled">Part 1 – Fundamentals</a></li><li class="is-active"><a href>Tutorial 01</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorial 01</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/knottyanyon/Qritical.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/knottyanyon/Qritical.jl/blob/main/docs/src/tutorials/fundamentals/01/ex_01.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Ex-1.-SVD,-Schmidt-Rank,-and-Truncation"><a class="docs-heading-anchor" href="#Ex-1.-SVD,-Schmidt-Rank,-and-Truncation">Ex 1. SVD, Schmidt Rank, and Truncation</a><a id="Ex-1.-SVD,-Schmidt-Rank,-and-Truncation-1"></a><a class="docs-heading-anchor-permalink" href="#Ex-1.-SVD,-Schmidt-Rank,-and-Truncation" title="Permalink"></a></h1><details class="page-info-drawer">
+  <summary>
+    <span class="pi-toggle-label">Page info</span>
+    <span class="pi-pills">
+      <span class="status-pill status-draft">draft</span>
+      <span class="status-pill status-needs-rewrite">needs rewrite</span>
+      <span class="status-pill status-needs-proofreading">needs proofreading</span>
+    </span>
+  </summary>
+  <div class="page-info-body">
+    <table class="page-info-table"><tbody>
+      <tr><td class="pi-key">status</td><td class="pi-val"><span class="status-pill status-draft">draft</span> <span class="status-pill status-needs-rewrite">needs rewrite</span> <span class="status-pill status-needs-proofreading">needs proofreading</span></td></tr>
+      <tr><td class="pi-key">last updated</td><td class="pi-val">2026-07-20</td></tr>
+      <tr><td class="pi-key">written by</td><td class="pi-val">Bavithra Govintharajah</td></tr>
+      <tr><td class="pi-key">edited by</td><td class="pi-val">Claude Sonnet 4.6 — initial draft</td></tr>
+    </tbody></table>
+  </div>
+</details><p><strong>Week 1 — the foundation the whole course rests on.</strong> Every later exercise — canonical forms, MPS, TEBD, DMRG — is ultimately a disciplined sequence of singular value decompositions. So Week 1 builds the intuition in miniature: SVD a matrix, read its <strong>Schmidt rank</strong>, throw away small singular values and measure what that costs, then watch the <em>same</em> operation act on a quantum state (where the singular values become entanglement) and on an image (where they become compressibility). The punchline that recurs for the rest of the course: a rapidly decaying singular-value spectrum means the object is <em>compressible</em>, and that is exactly when tensor-network methods win.</p><h1 id="1.-Julia-install-party"><a class="docs-heading-anchor" href="#1.-Julia-install-party">1. Julia install party</a><a id="1.-Julia-install-party-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Julia-install-party" title="Permalink"></a></h1><div class="admonition is-category-question" id="Julia-install-party-4bdf7c56188cf343"><header class="admonition-header">Julia install party<a class="admonition-anchor" href="#Julia-install-party-4bdf7c56188cf343" title="Permalink"></a></header><div class="admonition-body"><p>If you choose to use Julia as your programming language, try to install it on your system. This will be the language presented in the exercise class.</p></div></div><p>Verify the Julia environment and that Qritical is loaded correctly.</p><pre><code class="language-julia hljs">using LinearAlgebra, DelimitedFiles, Serialization, Qritical
 using CairoMakie, BenchmarkTools
 using InteractiveUtils   # versioninfo() (auto-loaded by IJulia, explicit for scripts/docs)
 
@@ -12,11 +29,11 @@ Build Info:
   Official https://julialang.org release
 Platform Info:
   OS: Linux (x86_64-linux-gnu)
-  CPU: 2 × AMD EPYC 7763 64-Core Processor
+  CPU: 4 × AMD EPYC 7763 64-Core Processor
   WORD_SIZE: 64
   LLVM: libLLVM-18.1.7 (ORCJIT, znver3)
   GC: Built with stock GC
-Threads: 1 default, 1 interactive, 1 GC (on 2 virtual cores)
+Threads: 1 default, 1 interactive, 1 GC (on 4 virtual cores)
 Qritical loaded: Qritical
 </code></pre><h1 id="2.-SVD-a-matrix"><a class="docs-heading-anchor" href="#2.-SVD-a-matrix">2. SVD a matrix</a><a id="2.-SVD-a-matrix-1"></a><a class="docs-heading-anchor-permalink" href="#2.-SVD-a-matrix" title="Permalink"></a></h1><div style="text-align: center">
 <img src="../1_light.svg" class="docs-light-only" width="100%"/>
@@ -186,304 +203,304 @@ noise_img = RGB.(R_n, G_n, B_n)</code></pre><p><img src="../ex_01-52.svg" alt/><
 σ_noise = F_noise.S</code></pre><pre><code class="nohighlight hljs">300-element Vector{Float64}:
  173.22122938771076
   10.722047309690199
-  10.496777154053667
+  10.496777154053666
   10.473713493567779
   10.368693934472832
   10.317290617364083
-  10.173611360911174
-  10.141364780790585
+  10.173611360911176
+  10.141364780790582
   10.006885217192298
-   9.91847750518093
-   9.823015523184647
+   9.918477505180926
+   9.82301552318465
    9.783246468548457
    9.727281950785155
-   9.699821112040091
-   9.606352991506245
+   9.699821112040084
+   9.606352991506244
    9.558109746831256
    9.515942664800324
    9.473707648400602
    9.405276622937409
-   9.387321887345925
+   9.387321887345927
    9.335753630020104
-   9.273223494886278
+   9.27322349488628
    9.21828439174009
    9.175948692061398
-   9.147638930135471
-   9.062871163257556
-   8.991627675922091
-   8.978343360540068
-   8.955124591737153
+   9.147638930135473
+   9.06287116325756
+   8.991627675922087
+   8.97834336054007
+   8.955124591737142
    8.909586086544186
-   8.849032498393727
-   8.842605928197905
-   8.748498021474138
-   8.71735991598632
+   8.849032498393731
+   8.842605928197898
+   8.748498021474136
+   8.717359915986316
    8.702790249821089
-   8.636367053625953
-   8.61430939704324
-   8.54785137355614
+   8.636367053625955
+   8.614309397043236
+   8.547851373556142
    8.539124313000157
-   8.496672030444651
+   8.49667203044465
    8.487404113401615
    8.419073869329258
    8.384409483084609
-   8.34684670056741
-   8.318645768389063
-   8.302404730743447
+   8.346846700567404
+   8.318645768389057
+   8.302404730743445
    8.263837384734542
-   8.204393807485028
+   8.20439380748503
    8.178651098615392
    8.143076159434033
-   8.10052815394032
+   8.100528153940322
    7.9997775102946065
-   7.939745394097454
-   7.936966575501782
+   7.939745394097458
+   7.9369665755017795
    7.925050765255921
-   7.899064203906774
-   7.879845290036384
+   7.899064203906781
+   7.87984529003638
    7.791380558799024
-   7.7704248167778776
-   7.7549530235207875
+   7.770424816777878
+   7.754953023520788
    7.732763294177334
-   7.704798750261223
-   7.676677139633939
-   7.639275614495169
-   7.593191350513931
-   7.554244839186165
-   7.493599875942962
-   7.467495734165012
-   7.430235127197699
-   7.395771392843368
-   7.354057381961799
-   7.340100033399404
-   7.288040443706839
+   7.704798750261225
+   7.676677139633938
+   7.639275614495168
+   7.593191350513929
+   7.554244839186162
+   7.493599875942964
+   7.467495734165005
+   7.4302351271976965
+   7.395771392843367
+   7.354057381961795
+   7.340100033399402
+   7.288040443706848
    7.273506426673026
-   7.2261372547274965
-   7.208094726379846
-   7.173475667420811
-   7.124259288138479
-   7.11818435820381
-   7.0713803576342364
-   7.020023396128832
-   6.991151043687662
-   6.971573901956977
-   6.940019820270437
-   6.901146770228554
-   6.876569311345979
-   6.824437688838473
-   6.806847112670873
-   6.74120804375939
+   7.226137254727494
+   7.208094726379847
+   7.17347566742081
+   7.1242592881384805
+   7.118184358203822
+   7.071380357634234
+   7.020023396128831
+   6.991151043687675
+   6.971573901956975
+   6.940019820270433
+   6.901146770228552
+   6.876569311345982
+   6.824437688838474
+   6.806847112670874
+   6.741208043759399
    6.731321549518271
-   6.7098806165758464
+   6.709880616575853
    6.701080230664028
-   6.661389710820859
-   6.605580752807863
+   6.661389710820857
+   6.605580752807862
    6.584551357571701
-   6.57836234679178
-   6.522662502554969
-   6.477209229555961
-   6.464384255433108
-   6.455021023587165
+   6.578362346791784
+   6.522662502554972
+   6.4772092295559585
+   6.4643842554331075
+   6.455021023587171
    6.41448543292033
-   6.356775297497546
-   6.330183220812146
-   6.304690913306281
-   6.280851503028261
-   6.2384735869592856
-   6.195822169006666
-   6.181619164447532
-   6.167936580619419
-   6.154282785864573
-   6.105779419422963
-   6.073443256399308
-   6.0688472171492345
-   6.0092620629116
-   5.990873767662933
+   6.356775297497547
+   6.330183220812148
+   6.304690913306279
+   6.28085150302826
+   6.238473586959289
+   6.195822169006669
+   6.181619164447531
+   6.167936580619418
+   6.154282785864571
+   6.105779419422967
+   6.073443256399306
+   6.068847217149225
+   6.009262062911598
+   5.990873767662932
    5.953790828690954
-   5.928118919319267
+   5.9281189193192665
    5.908475304794717
-   5.881021585811692
-   5.861824524283004
-   5.831017580631935
+   5.88102158581169
+   5.861824524282998
+   5.831017580631934
    5.809376902268323
-   5.774288081211754
-   5.729066429469837
-   5.702654220962114
-   5.670056318852831
-   5.638492078639054
-   5.620112725482233
-   5.599579431322017
-   5.574055629531178
+   5.774288081211756
+   5.729066429469836
+   5.702654220962111
+   5.670056318852829
+   5.638492078639053
+   5.620112725482231
+   5.599579431322014
+   5.5740556295311725
    5.554917467200729
-   5.515035333353024
+   5.515035333353022
    5.498145727267963
-   5.464362577516482
-   5.426254156819268
-   5.390954631432064
-   5.354747222869165
-   5.335776100414498
-   5.314542972153226
-   5.301349274744686
-   5.281650430893823
-   5.248748427754487
-   5.201398912208966
+   5.464362577516479
+   5.426254156819267
+   5.39095463143206
+   5.354747222869164
+   5.335776100414501
+   5.314542972153222
+   5.301349274744685
+   5.281650430893824
+   5.248748427754488
+   5.2013989122089646
    5.1635275182972356
-   5.130428259349267
-   5.104901122160208
+   5.130428259349266
+   5.1049011221602045
    5.069185984389386
-   5.046110444296517
-   5.006343848626942
+   5.0461104442965174
+   5.006343848626939
    4.981076370459918
-   4.954101346136117
-   4.937567151209701
-   4.892117964912497
-   4.882151576449362
-   4.8593409662331295
+   4.954101346136116
+   4.9375671512096995
+   4.892117964912496
+   4.88215157644936
+   4.859340966233127
    4.8121244408073665
-   4.804569661196604
-   4.7702311716478905
-   4.734565712346723
-   4.706971824424461
-   4.690400786003942
-   4.658394330947465
-   4.655873436497276
+   4.804569661196601
+   4.770231171647888
+   4.734565712346721
+   4.70697182442446
+   4.690400786003941
+   4.658394330947467
+   4.655873436497277
    4.611479895555588
-   4.584332891349299
-   4.575630258370514
+   4.5843328913493036
+   4.575630258370513
    4.537615826794079
-   4.496913687867683
-   4.479365239218492
-   4.43244952211177
-   4.420544482937143
-   4.403220305767332
+   4.49691368786768
+   4.479365239218489
+   4.432449522111769
+   4.420544482937146
+   4.403220305767331
    4.384915950150832
-   4.365711281573035
-   4.335047379390657
+   4.3657112815730335
+   4.335047379390655
    4.275188037092885
-   4.251890329063568
-   4.211870455218425
+   4.251890329063567
+   4.211870455218423
    4.189401053721651
-   4.144621162692736
-   4.1264217999650405
-   4.107943091956701
+   4.1446211626927365
+   4.12642179996504
+   4.1079430919567015
    4.091004284926548
-   4.0498319814786665
-   4.033391560030763
-   4.027326863304656
-   3.9834746907303873
-   3.952761205984066
-   3.934368149902193
+   4.049831981478666
+   4.033391560030766
+   4.027326863304655
+   3.983474690730388
+   3.952761205984065
+   3.934368149902192
    3.8809347084881414
-   3.8788826955874267
-   3.8610717082848907
-   3.8355039032657032
-   3.798033881984832
-   3.794447765421473
-   3.750918923053602
-   3.746007121277774
-   3.6958713352879067
-   3.6605772860817054
-   3.648781827222045
-   3.595388638979144
-   3.577358653198661
-   3.551804123149412
-   3.5221120977519362
-   3.5042984714922354
-   3.4962697407088887
-   3.484130742027645
+   3.878882695587427
+   3.86107170828489
+   3.8355039032657015
+   3.79803388198483
+   3.794447765421472
+   3.7509189230536006
+   3.7460071212777732
+   3.6958713352879062
+   3.660577286081703
+   3.648781827222044
+   3.595388638979143
+   3.5773586531986603
+   3.551804123149413
+   3.5221120977519345
+   3.5042984714922327
+   3.496269740708888
+   3.484130742027646
    3.4402059421802442
    3.41422711823792
-   3.368845857609837
-   3.337985753633206
-   3.300652459268991
-   3.2732521770276093
-   3.2615120174675845
-   3.2361534134988457
-   3.2065490007332085
+   3.368845857609838
+   3.3379857536332076
+   3.300652459268992
+   3.273252177027608
+   3.2615120174675893
+   3.2361534134988443
+   3.206549000733209
    3.1739085030502157
-   3.1620783643413937
-   3.137418248401369
-   3.0928578677294385
-   3.059713720951467
-   3.0466916380235647
-   3.0439271469450273
+   3.162078364341394
+   3.137418248401371
+   3.092857867729439
+   3.059713720951465
+   3.0466916380235642
+   3.0439271469450246
    3.0129001881457516
-   2.972347443936463
-   2.9396529409819183
+   2.9723474439364623
+   2.9396529409819196
    2.9131412176129152
-   2.900953810815103
+   2.9009538108151016
    2.8658834378288245
-   2.846319681721401
-   2.816398215572522
-   2.8057503033925792
-   2.802590334335822
+   2.8463196817214014
+   2.8163982155725225
+   2.805750303392579
+   2.8025903343358203
    2.7592559092272606
-   2.7430069730454663
+   2.743006973045467
    2.703531823036558
-   2.6920566534742836
-   2.6447857630991676
-   2.63277053516752
-   2.5692601251618528
-   2.5551724537864837
-   2.5441771605961936
+   2.6920566534742862
+   2.644785763099166
+   2.632770535167519
+   2.5692601251618554
+   2.5551724537864855
+   2.544177160596194
    2.52357074290264
    2.5178556715394818
-   2.4789217733074858
-   2.45733792704079
-   2.4362627018256404
-   2.3934439267855194
-   2.3388085883740444
-   2.3335832743306555
-   2.3037528473856796
+   2.4789217733074875
+   2.4573379270407893
+   2.4362627018256395
+   2.3934439267855208
+   2.338808588374044
+   2.333583274330656
+   2.3037528473856805
    2.2728823161572396
-   2.2514530234026378
-   2.2039807784915078
-   2.1782109934836185
-   2.167605733858419
-   2.1504351133157797
+   2.2514530234026364
+   2.203980778491508
+   2.178210993483618
+   2.1676057338584194
+   2.15043511331578
    2.135083988347384
    2.0783200427684387
-   2.034087273338352
-   2.024268144828289
-   2.001750822230222
-   1.9768592073049347
-   1.9566035974504532
-   1.938095459566718
+   2.0340872733383524
+   2.0242681448282895
+   2.001750822230221
+   1.976859207304935
+   1.9566035974504534
+   1.9380954595667172
    1.8794132853913543
    1.8600885263194682
    1.8201202729904844
-   1.8146014444519492
-   1.7859070070792167
-   1.7640928515132557
+   1.8146014444519485
+   1.7859070070792158
+   1.7640928515132546
    1.7382386385002693
    1.6889766035266296
-   1.670949427976904
+   1.6709494279769037
    1.6196568870541406
-   1.6015166949431514
-   1.565456818961647
-   1.5560229544664181
+   1.601516694943151
+   1.5654568189616462
+   1.556022954466418
    1.525385738785725
-   1.510037999393313
-   1.4917842990997245
-   1.461861649620657
-   1.400039358573157
-   1.3917316116962715
+   1.510037999393314
+   1.4917842990997239
+   1.4618616496206562
+   1.4000393585731563
+   1.3917316116962697
    1.3262297006728672
    1.2988575088368493
-   1.282581905288062
-   1.2699338797276891
+   1.2825819052880623
+   1.269933879727689
    1.2502760941688915
-   1.2035675012694782
+   1.2035675012694778
    1.1750961776694164
-   1.1500881485507186
-   1.0899860134828325
-   1.0326891819867534
-   1.009142242446321
-   0.9908591867467039
-   0.8851671195094456
-   0.873211889517666
-   0.8158280177532699
-   0.7821508193709166</code></pre><p>── Spectrum comparison: Bahkauv vs white noise (normalised to σ₁ = 1) ────────</p><pre><code class="language-julia hljs">fig_cmp = Figure(; size=(900, 360))
+   1.150088148550719
+   1.089986013482832
+   1.0326891819867527
+   1.0091422424463208
+   0.9908591867467035
+   0.8851671195094457
+   0.8732118895176662
+   0.8158280177532704
+   0.7821508193709164</code></pre><p>── Spectrum comparison: Bahkauv vs white noise (normalised to σ₁ = 1) ────────</p><pre><code class="language-julia hljs">fig_cmp = Figure(; size=(900, 360))
 ax_l = Axis(
     fig_cmp[1, 1]; title=&quot;Spectrum comparison (linear)&quot;, xlabel=&quot;index&quot;, ylabel=&quot;σᵢ / σ₁&quot;
 )
@@ -583,8 +600,8 @@ t_row = @belapsed sum_rowmajor($A_big) seconds=1
 println(&quot;Column-major inner loop : $(round(t_col*1e3, digits=2)) ms&quot;)
 println(&quot;Row-major inner loop    : $(round(t_row*1e3, digits=2)) ms&quot;)
 println(&quot;Speedup (col/row)       : $(round(t_row/t_col, digits=1))×&quot;)</code></pre><pre><code class="nohighlight hljs">Column-major inner loop : 0.97 ms
-Row-major inner loop    : 7.4 ms
-Speedup (col/row)       : 7.6×
+Row-major inner loop    : 7.43 ms
+Speedup (col/row)       : 7.7×
 </code></pre><p>── Naive vs BLAS benchmark across sizes ─────────────────────────────────────</p><pre><code class="language-julia hljs">Ns = [4, 8, 16, 32, 64, 128]
 times_naive = Float64[]
 times_blas = Float64[]
@@ -600,12 +617,12 @@ end</code></pre><pre><code class="nohighlight hljs">┌ Warning: Assignment to `
 └ @ ~/work/Qritical.jl/Qritical.jl/docs/src/tutorials/fundamentals/01/ex_01.md:5
 ┌ Warning: Assignment to `B` in soft scope is ambiguous because a global variable by the same name exists: `B` will be treated as a new local. Disambiguate by using `local B` to suppress this warning or `global B` to assign to the existing global variable.
 └ @ ~/work/Qritical.jl/Qritical.jl/docs/src/tutorials/fundamentals/01/ex_01.md:6
-N=4  naive=0.14µs  BLAS=0.13µs
-N=8  naive=0.69µs  BLAS=0.2µs
-N=16  naive=4.02µs  BLAS=0.71µs
-N=32  naive=30.49µs  BLAS=3.07µs
-N=64  naive=231.55µs  BLAS=16.4µs
-N=128  naive=1607.19µs  BLAS=107.74µs
+N=4  naive=0.15µs  BLAS=0.13µs
+N=8  naive=0.71µs  BLAS=0.2µs
+N=16  naive=4.06µs  BLAS=0.72µs
+N=32  naive=30.32µs  BLAS=3.08µs
+N=64  naive=229.89µs  BLAS=16.44µs
+N=128  naive=1600.86µs  BLAS=63.67µs
 </code></pre><p>Sweep array sizes to see how the cache-miss penalty scales with matrix dimension</p><pre><code class="language-julia hljs">Ns_mem = [128, 256, 512, 1024, 2048]
 t_cols = Float64[]
 t_rows = Float64[]
@@ -668,7 +685,7 @@ println(
     &quot;  BLAS β = &quot;,
     round(β_blas; digits=2),
     &quot;  (theory: both ≈ 3.0)&quot;,
-)</code></pre><pre><code class="nohighlight hljs">Fitted exponents:  naive β = 2.72  BLAS β = 1.99  (theory: both ≈ 3.0)
+)</code></pre><pre><code class="nohighlight hljs">Fitted exponents:  naive β = 2.72  BLAS β = 1.88  (theory: both ≈ 3.0)
 </code></pre><h3 id="Why-is-BLAS-so-much-faster-—-and-why-does-the-fitted-exponent-look-wrong?"><a class="docs-heading-anchor" href="#Why-is-BLAS-so-much-faster-—-and-why-does-the-fitted-exponent-look-wrong?">Why is BLAS so much faster — and why does the fitted exponent look wrong?</a><a id="Why-is-BLAS-so-much-faster-—-and-why-does-the-fitted-exponent-look-wrong?-1"></a><a class="docs-heading-anchor-permalink" href="#Why-is-BLAS-so-much-faster-—-and-why-does-the-fitted-exponent-look-wrong?" title="Permalink"></a></h3><p>Both the naive loop and BLAS perform exactly the same number of arithmetic operations (<span>$2N^3$</span> multiply-accumulates for <span>$N \times N$</span> matrices), so in theory both should scale as <span>$\mathcal{O}(N^3)$</span>. Our fitted exponent for the naive loop (~2.9) confirms this. The BLAS exponent (~1.8) looks suspiciously low because at the matrix sizes we benchmarked (<span>$N \leq 128$</span>), BLAS is not yet in its asymptotic regime — fixed dispatch overhead and small-matrix specialisations dominate at these sizes, making the curve look shallower than <span>$N^3$</span>.</p><p>The <em>absolute</em> speedup is where it gets interesting. At <span>$N = 128$</span>, BLAS is roughly 90× faster than the naive loop. This gap grows with <span>$N$</span> because BLAS is exploiting three levels of optimisation the naive loop misses:</p><ol><li><strong>Cache blocking</strong> — the matrix is partitioned into tiles that fit in L1 or L2 cache, so each element is reused many times before being evicted; memory traffic is minimised</li><li><strong>SIMD vectorisation</strong> — a single AVX2 instruction computes 4 <code>Float64</code> multiply-adds simultaneously; AVX-512 does 8; the naive loop only does 1 per cycle</li><li><strong>Instruction-level parallelism</strong> — the CPU&#39;s out-of-order execution backend pipelines multiple independent multiply-accumulates in flight at the same time</li></ol><p>The moral: never reimplement matrix multiplication. Every BLAS call is years of micro-optimisation work packaged into a single function. For tensor network code, spending effort ensuring your contractions land on BLAS (rather than Python loops or manual reshapes that bypass it) is almost always the highest-leverage performance move.</p><pre><code class="language-julia hljs">N_range = exp.(range(log(minimum(Ns)), log(maximum(Ns)); length=200))
 fig = Figure(; size=(650, 360))
 ax = Axis(
@@ -716,4 +733,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Overview</a><a class="docs-footer-nextpage" href="../../02/ex_02/">Tutorial 02 »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 20 July 2026 06:46">Monday 20 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Overview</a><a class="docs-footer-nextpage" href="../../02/ex_02/">Tutorial 02 »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 21 July 2026 08:30">Tuesday 21 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
