@@ -420,6 +420,14 @@ const _gvl = Qritical._golub_van_loan_threshold
 
     # ────────────────────────────────────────────────────────────────────────
     # _golub_van_loan_threshold: numerical-rank noise floor
+    #
+    # Source: Golub & Van Loan, "Matrix Computations", 4th ed.
+    #         Johns Hopkins University Press, 2013 — §5.4 (numerical rank).
+    #
+    # The criterion τ = k·ε_machine·σ₁ follows from backward stability of
+    # dgesvd: LAPACK computes the exact SVD of A + E with ‖E‖₂ ≲ ε·‖A‖₂ = ε·σ₁.
+    # Singular values below τ are indistinguishable from zero given this
+    # perturbation; the factor k bounds accumulation across k floating-point ops.
     # ────────────────────────────────────────────────────────────────────────
 
     @testset "_golub_van_loan_threshold: Golub–Van Loan numerical-rank noise floor" begin
@@ -447,7 +455,13 @@ const _gvl = Qritical._golub_van_loan_threshold
         end
 
         @testset "genuine noise is stripped from a rank-deficient matrix" begin
-            # Build exact rank-1 matrix; LAPACK produces k-1 tiny 'ghost' singular values.
+            # A rank-1 matrix u·vᵀ has exactly one non-zero singular value ‖u‖·‖v‖.
+            # We use rank-1 specifically because the answer is known from theory: every
+            # other singular value MUST be zero, so any nonzero value LAPACK returns is
+            # pure floating-point noise. This gives the sharpest possible test of the
+            # threshold — we can assert S[2:end] ≤ τ without any tolerance fudging,
+            # because the backward-stability guarantee (§5.4, Golub & Van Loan) is tight
+            # for exactly this construction.
             u = randn(8); v = randn(8)
             A = u * v'
             S = svdvals(A)  # S[1] ≈ ‖u‖‖v‖; S[2:end] ≈ machine noise

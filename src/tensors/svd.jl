@@ -242,6 +242,10 @@ from zero given this perturbation; the factor ``k`` accounts for accumulation ac
 
 Returns `0.0` for an empty `S`.
 
+# Reference
+
+[golub_vanloan_2013](@cite), §5.4 (numerical rank).
+
 See also: [`_compute_svd_factors`](@ref)
 """
 function _golub_van_loan_threshold(S::AbstractVector{<:Real})
