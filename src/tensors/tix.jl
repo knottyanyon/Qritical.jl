@@ -17,7 +17,7 @@ Variance is encoded as a **type parameter** rather than an enum value so that di
 
 See also: [`TIx`](@ref), [`which_space`](@ref)
 """
-abstract type IxLoc end
+abstract type IxLoc end   # abstract type in Julia = Python ABC; no instances can be created; only exists to be subtyped
 
 """
     Upper <: IxLoc
@@ -37,7 +37,7 @@ julia> which_space(TIx{Upper}(:α, 4))
 :domain
 ```
 """
-struct Upper <: IxLoc end
+struct Upper <: IxLoc end   # empty struct = zero-size singleton. `<: IxLoc` makes Upper a subtype of IxLoc; this type TAG IS NOT INSTANTIATED IN USER CODE — it only exists as a type parameter to TIx{Upper}
 
 """
     Lower <: IxLoc
@@ -56,7 +56,7 @@ julia> which_space(TIx{Lower}(:σ, 2))
 :codomain
 ```
 """
-struct Lower <: IxLoc end
+struct Lower <: IxLoc end   # same as Upper: zero-size singleton, lives only as a type parameter
 
 # ========================= Abstract index interface =========================
 
@@ -81,11 +81,14 @@ structural role within a tensor:
 
 Concrete subtypes: [`TIx`](@ref), [`MulTIx`](@ref).
 """
-abstract type AbstractIx end
+abstract type AbstractIx end   # root of the index hierarchy; analogous to Python `class AbstractIx(ABC): pass`
 
-dim(i::AbstractIx) = error("`dim` not implemented for $(typeof(i))")
-label(i::AbstractIx) = error("`label` not implemented for $(typeof(i))")
-which_space(i::AbstractIx) = error("`which_space` not implemented for $(typeof(i))")
+# These three functions are declared as abstract interface stubs — calling them on AbstractIx itself raises an error.
+# In Python this would be: `@abstractmethod def dim(self): ...`
+# The pattern: declare the interface here; concrete subtypes MUST provide methods, or they get the error at runtime.
+dim(i::AbstractIx) = error("`dim` not implemented for $(typeof(i))")   # `$(typeof(i))` = Python f"{type(i).__name__}"; interpolated into the error string
+label(i::AbstractIx) = error("`label` not implemented for $(typeof(i))")   # same pattern: interface stub; dispatch would reach this if a subtype forgot to implement `label`
+which_space(i::AbstractIx) = error("`which_space` not implemented for $(typeof(i))")   # same pattern
 
 # ========================= TIx — elementary typed index =========================
 
@@ -99,6 +102,7 @@ Variance is part of the index's identity: two `TIx` values with the same label
 and dimension but *different* variance are not equal. This encodes the von Delft
 convention — upper indices belong to the domain, lower indices to the codomain
 — making contraction correctness a compile-time property.
+
 # Fields
 
   - `label :: Symbol` — name used for contraction matching (e.g. `:α`, `:σ_1`)
@@ -130,14 +134,13 @@ julia> α == TIx{Lower}(:α, 4)
 false
 ```
 """
-struct TIx{L<:IxLoc} <: AbstractIx
+struct TIx{L<:IxLoc} <: AbstractIx   # parametric struct: `{L<:IxLoc}` means L must be Upper or Lower; Python: `class TIx(AbstractIx, Generic[L])`; the `<: AbstractIx` makes TIx a subtype
+    label::Symbol   # Symbol = Julia's interned string type; `:α`, `:σ_1`; unlike Python strings, Symbols have identity semantics (same symbol == same object)
+    dim::Int        # local Hilbert space dimension; must be > 0 (checked in the constructor)
 
-    label::Symbol
-    dim::Int
-
-    function TIx{L}(label::Symbol, dim::Int) where {L<:IxLoc}
-        dim > 0 || throw(ArgumentError("TIx dim must be a positive integer, got $dim."))
-        new{L}(label, dim)
+    function TIx{L}(label::Symbol, dim::Int) where {L<:IxLoc}   # inner constructor: the only way to create a TIx instance; `where {L<:IxLoc}` constrains the type parameter; Python: `def __init__(self, label, dim)` with validation
+        dim > 0 || throw(ArgumentError("TIx dim must be a positive integer, got $dim."))   # `||` short-circuit: if `dim > 0` is false, throw; Python: `if not dim > 0: raise`; `$dim` = f-string interpolation
+        new{L}(label, dim)   # `new{L}(...)` allocates and initialises the struct; must pass the type parameter explicitly in inner constructors; Python: `self.label = label` etc.
     end
 end
 
@@ -156,7 +159,7 @@ julia> dim(TIx{Lower}(:σ, 2))
 2
 ```
 """
-dim(ix::TIx) = ix.dim
+dim(ix::TIx) = ix.dim   # field access: `ix.dim` reads the stored Int; in Python: `ix.dim` or `ix._dim` with a property
 
 """
     label(ix::TIx) -> Symbol
@@ -173,23 +176,13 @@ julia> label(TIx{Lower}(:σ_1, 2))
 :σ_1
 ```
 """
-label(ix::TIx) = ix.label
+label(ix::TIx) = ix.label   # field access; returns a Julia Symbol 
 
 """
     which_space(ix::TIx) -> Symbol
 
-Return `:domain` for an [`Upper`](@ref) index and `:codomain` for a
-[`Lower`](@ref) index, reflecting the von Delft convention.
-
-The returned **space** is the Hilbert space that this index belongs to when viewed as a
-leg of a `TensorMap`. In TensorKit parlance, a `TensorMap(V → W)` maps from domain `V`
-(the input space) to codomain `W` (the output space). Each leg of the underlying dense
-tensor falls into exactly one: Upper indices map to the domain (dual `V'`, contravariant),
-while Lower indices map to the codomain (primal `W`, covariant). This correspondence
-determines tensor contraction rules and the reshape order during matricisation for SVD:
-
-  - upper = incoming arrow = contravariant coefficient index → `:domain` (dual `V'`)
-  - lower = outgoing arrow = covariant basis index → `:codomain` (primal `V`)
+Return `:domain` for an upper (contravariant) index and `:codomain` for a lower
+(covariant) index.
 
 # Examples
 
@@ -201,8 +194,8 @@ julia> which_space(TIx{Lower}(:σ, 2))
 :codomain
 ```
 """
-which_space(::TIx{Upper}) = :domain
-which_space(::TIx{Lower}) = :codomain
+which_space(::TIx{Upper}) = :domain    # dispatch on variance: upper index lives in the domain (input) space
+which_space(::TIx{Lower}) = :codomain  # same pattern: separate method per variance tag; Julia compiles these as separate functions with zero overhead
 
 # Extend Base.== and Base.hash so indices can be stored in dicts/sets and compared.
 # Two indices are equal only if they have the same label, dimension, AND variance (Upper vs Lower).
@@ -210,9 +203,9 @@ which_space(::TIx{Lower}) = :codomain
 # but not with Upper(label=:α, dim=2) or Upper(label=:β, dim=2). The hash enables fast index
 # lookup when building contraction networks; dim is included so different dimensions don't
 # collide, even if they happen to have the same label.
-Base.:(==)(a::TIx{L}, b::TIx{L}) where {L<:IxLoc} = a.label == b.label && a.dim == b.dim
-Base.:(==)(::TIx, ::TIx) = false   # different variance → never equal
-Base.hash(ix::TIx, h::UInt) = hash(ix.label, hash(ix.dim, hash(typeof(ix), h)))
+Base.:(==)(a::TIx{L}, b::TIx{L}) where {L<:IxLoc} = a.label == b.label && a.dim == b.dim   # Python: `__eq__`; `where {L<:IxLoc}` = both args must have the SAME variance tag L; `&&` = short-circuit AND
+Base.:(==)(::TIx, ::TIx) = false   # catch-all for different variances (Upper vs Lower): they are never equal; `::TIx` without a type parameter matches any TIx; this method is less specific than the one above, so it only triggers when L differs
+Base.hash(ix::TIx, h::UInt) = hash(ix.label, hash(ix.dim, hash(typeof(ix), h)))   # Python: `__hash__`; Julia's `hash(x, h)` = hash x seeded with h; `typeof(ix)` includes the variance parameter, so TIx{Upper}(:α,2) and TIx{Lower}(:α,2) hash differently; chained hashing like nested function calls
 
 """
     flip(ix::TIx) -> TIx
@@ -245,8 +238,8 @@ julia> flip(flip(upper(:a, 3))) == upper(:a, 3)
 true
 ```
 """
-flip(ix::TIx{Upper}) = TIx{Lower}(ix.label, ix.dim)
-flip(ix::TIx{Lower}) = TIx{Upper}(ix.label, ix.dim)
+flip(ix::TIx{Upper}) = TIx{Lower}(ix.label, ix.dim)   # Upper → Lower: constructs new TIx with opposite variance, same label/dim; no data copy because TIx is purely symbolic
+flip(ix::TIx{Lower}) = TIx{Upper}(ix.label, ix.dim)   # Lower → Upper: same pattern; two methods = involution
 
 # ======================= Single-index convenience constructors ======================
 
@@ -267,7 +260,7 @@ julia> dim(α)
 4
 ```
 """
-upper(label::Symbol, dim::Int) = TIx{Upper}(label, dim)
+upper(label::Symbol, dim::Int) = TIx{Upper}(label, dim)   # convenience wrapper: shorter syntax than TIx{Upper}(:α, 4)
 
 """
     lower(label::Symbol, dim::Int) -> TIx{Lower}
@@ -286,7 +279,7 @@ julia> dim(vR)
 2
 ```
 """
-lower(label::Symbol, dim::Int) = TIx{Lower}(label, dim)
+lower(label::Symbol, dim::Int) = TIx{Lower}(label, dim)   # convenience wrapper for Lower indices
 
 # ========================= Batch constructors =========================
 
@@ -319,7 +312,7 @@ julia> which_space(β)
 :domain
 ```
 """
-uppers(pairs::Pair{Symbol,Int}...) = TIx{Upper}.(first.(pairs), last.(pairs))
+uppers(pairs::Pair{Symbol,Int}...) = TIx{Upper}.(first.(pairs), last.(pairs))   # `pairs::Pair{Symbol,Int}...` = varargs of Pairs. `first.(pairs)` = broadcast `first` over pairs = extract all keys; `last.(pairs)` = extract all values; `TIx{Upper}.(...)` = broadcast constructor element-wise 
 
 """
     lowers(pairs::Pair{Symbol,Int}...) -> Tuple{TIx{Lower},...}
@@ -343,7 +336,7 @@ julia> which_space(τ)
 :codomain
 ```
 """
-lowers(pairs::Pair{Symbol,Int}...) = TIx{Lower}.(first.(pairs), last.(pairs))
+lowers(pairs::Pair{Symbol,Int}...) = TIx{Lower}.(first.(pairs), last.(pairs))   # same as `uppers` but for Lower variance
 
 """
     uppers_range(base::Symbol, dim::Int, last::Int, start::Int=1)
@@ -386,8 +379,8 @@ julia> label(r2[1]), label(r2[3])
 (:α_3, :α_5)
 ```
 """
-function uppers_range(base::Symbol, dim::Int, last::Int, start::Int=1)
-    Tuple(TIx{Upper}(Symbol(base, :_, i), dim) for i in start:last)
+function uppers_range(base::Symbol, dim::Int, last::Int, start::Int=1)   # `start::Int=1` = keyword-less default argument. returns a Tuple (immutable, compile-time-sized)
+    Tuple(TIx{Upper}(Symbol(base, :_, i), dim) for i in start:last)   # `Tuple(generator)` = collect a generator into an immutable Tuple 
 end
 
 """
@@ -427,6 +420,6 @@ julia> label(r2[1]), label(r2[3])
 (:β_4, :β_6)
 ```
 """
-function lowers_range(base::Symbol, dim::Int, last::Int, start::Int=1)
-    Tuple(TIx{Lower}(Symbol(base, :_, i), dim) for i in start:last)
+function lowers_range(base::Symbol, dim::Int, last::Int, start::Int=1)   # same as uppers_range but creates Lower indices
+    Tuple(TIx{Lower}(Symbol(base, :_, i), dim) for i in start:last)   # `Symbol(base, :_, i)` = symbol concatenation; e.g. Symbol(:χ, :_, 3) = :χ_3 (Python has no built-in Symbol type; closest is a string like "χ_3")
 end

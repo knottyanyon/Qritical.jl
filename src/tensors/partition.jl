@@ -28,7 +28,7 @@ julia> p[1] == vL
 true
 ```
 """
-const Partition = Vector{AbstractIx}
+const Partition = Vector{AbstractIx}   # `const` = assign once; `Vector{AbstractIx}` = mutable resizable array of AbstractIx elements. this is a TYPE ALIAS, not a newtype — Partition IS Vector{AbstractIx}, no wrapping
 
 """
     Bipartition
@@ -67,20 +67,20 @@ julia> bp.right[1] == vR
 true
 ```
 """
-struct Bipartition
-    left::Partition
-    right::Partition
+struct Bipartition   # immutable struct: left and right Partitions cannot be swapped after construction
+    left::Partition    # the legs that will form the row axis in the SVD reshape; `Partition` = `Vector{AbstractIx}`
+    right::Partition   # the legs that will form the column axis
 
-    function Bipartition(left::Partition, right::Partition)
-        for ix in left
-            ix ∈ right && throw(
+    function Bipartition(left::Partition, right::Partition)   # inner constructor: validates disjointness before calling `new`
+        for ix in left   # iterate over each leg in the left partition 
+            ix ∈ right && throw(   # `∈` = Unicode `in` operator. `&&` short-circuits: only throw if the condition is true
                 ArgumentError(
-                    "Bipartition: leg '$(label(ix))' (dim=$(dim(ix))) appears in both " *
+                    "Bipartition: leg '$(label(ix))' (dim=$(dim(ix))) appears in both " *   # `*` = string concatenation. `$(...)` = string interpolation 
                     "the left and right partitions — each leg must belong to exactly one side.",
                 ),
             )
         end
-        new(left, right)
+        new(left, right)   # allocate and initialize the struct fields (only callable inside an inner constructor)
     end
 end
 
@@ -116,7 +116,7 @@ julia> complement(Partition([]), [vL, σ])
  TIx{Upper}(:σ, 3)
 ```
 """
-complement(p::Partition, indices) = Partition([ix for ix in indices if ix ∉ p])
+complement(p::Partition, indices) = Partition([ix for ix in indices if ix ∉ p])   # comprehension: collect all `ix` from `indices` that are NOT in partition `p`; `∉` = Unicode `not in`. preserves original order from `indices`
 
 """
     bipartition(left::Partition, indices) -> Bipartition
@@ -141,4 +141,4 @@ julia> bp.right[1] == vR
 true
 ```
 """
-bipartition(left::Partition, indices) = Bipartition(left, complement(left, indices))
+bipartition(left::Partition, indices) = Bipartition(left, complement(left, indices))   # convenience: right side = everything not in left; calls complement to compute the right Partition, then constructs a Bipartition

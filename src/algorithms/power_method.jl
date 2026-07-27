@@ -47,11 +47,11 @@ geometrically in ``n``, with the convergence rate set by the spectral gap ``E_1 
     not have settled yet.
   - `iterations::Int`: the number of power iterations actually performed.
 """
-struct PowerMethodResult
-    state::FiniteMPS
-    energy::Float64
-    converged::Bool
-    iterations::Int
+struct PowerMethodResult   # immutable result container ; bundles the final MPS state and convergence metadata into one object
+    state::FiniteMPS     # the converged (or best-so-far) MPS ground state; `::FiniteMPS` is the concrete type annotation (required for struct fields in Julia)
+    energy::Float64      # Rayleigh-quotient estimate of E₀ = ⟨ψ|H|ψ⟩/⟨ψ|ψ⟩; stored as Float64 (64-bit float)
+    converged::Bool      # `Bool` is Julia's boolean type (values: `true` and `false`, lowercase, not Python's `True`/`False`); true if energy change < tol before maxiter
+    iterations::Int      # number of power iterations actually performed; useful for diagnosing slow convergence
 end
 
 """
@@ -146,47 +146,47 @@ dimension), or check that `shift > |E_0|`.
 """
 function power_method(
     H::LatticeOperator,
-    ψ₀::FiniteMPS;
-    shift::Real=4.0,
-    tol::Real=1e-8,
-    maxiter::Int=200,
-    trunc::AbstractTrunc=MaxBondDimTrunc(32),
+    ψ₀::FiniteMPS;   # `;` marks the end of positional arguments and start of keyword arguments; ψ₀ is a positional arg (subscript via Unicode: ψ₀ typed as \psi<Tab>\_0<Tab>)
+    shift::Real=4.0,   # keyword arg with default: energy shift λ; `Real` accepts any real numeric type; default 4.0 is only safe for small chains
+    tol::Real=1e-8,    # convergence tolerance on energy change; default 1e-8 is tight enough for most physics applications
+    maxiter::Int=200,  # maximum iterations; `Int` = 64-bit integer on 64-bit systems
+    trunc::AbstractTrunc=MaxBondDimTrunc(32),   # truncation strategy; `AbstractTrunc` is an abstract supertype; default caps bond dimension at 32
 )
-    mpo = MPO(H)
+    mpo = MPO(H)   # build the MPO representation of H once; used in every iteration for H|ψ⟩; building it outside the loop avoids redundant work
 
     # Normalise initial state
-    centre = div(1 + length(ψ₀.tensors), 2)
-    ψ = canonicalize(ψ₀, BondCanonical(centre, trunc))
+    centre = div(1 + length(ψ₀.tensors), 2)   # compute the middle bond index; `div(a, b)` is integer division; `length(ψ₀.tensors)` = number of sites L; result is the bond nearest to the middle site
+    ψ = canonicalize(ψ₀, BondCanonical(centre, trunc))   # put ψ₀ in bond-canonical form centred at the middle bond; this normalises the MPS and gives a well-defined starting state; `BondCanonical(centre, trunc)` is a struct encoding the target canonical form
 
-    norm_sq(φ) = real(overlap(φ, φ))
-    rayleigh(φ) = real(expect(φ, mpo)) / norm_sq(φ)
+    norm_sq(φ) = real(overlap(φ, φ))   # anonymous function : computes ‖φ‖² = ⟨φ|φ⟩; `real(...)` discards negligible imaginary part; used as denominator of Rayleigh quotient
+    rayleigh(φ) = real(expect(φ, mpo)) / norm_sq(φ)   # another anonymous function: Rayleigh quotient E = ⟨φ|H|φ⟩/⟨φ|φ⟩; divides by norm_sq to handle unnormalised states safely; `expect(φ, mpo)` computes ⟨φ|H|φ⟩ via the MPO zipper sweep
 
-    E_prev = rayleigh(ψ)
-    converged = false
-    iters = 0
+    E_prev = rayleigh(ψ)   # initial energy estimate before any iterations; will be updated each step
+    converged = false   # flag: starts false, set to true if tol criterion is met; `false` is Julia's boolean false
+    iters = 0   # iteration counter; will track how many steps were actually performed
 
-    for iter in 1:maxiter
-        iters = iter
+    for iter in 1:maxiter   # loop from 1 to maxiter inclusive; same semantics as Python's `for iter in range(1, maxiter+1)`
+        iters = iter   # update the counter (so we have the right value after break)
 
         # Apply (λI - H): ψ_new = λψ - H|ψ⟩
-        Hψ = apply_mpo(mpo, ψ; trunc=trunc)
-        ψ_new = add_mps(shift, ψ, -1.0, Hψ; trunc=trunc)
+        Hψ = apply_mpo(mpo, ψ; trunc=trunc)   # compute H|ψ⟩ as a new MPS; the bond dimension of Hψ is at most χ_mps × χ_mpo before truncation; `trunc=trunc` passes the keyword argument
+        ψ_new = add_mps(shift, ψ, -1.0, Hψ; trunc=trunc)   # compute λ|ψ⟩ + (−1)·H|ψ⟩ = (λI−H)|ψ⟩; `add_mps(c1, ψ1, c2, ψ2)` forms the direct-sum MPS c1|ψ1⟩ + c2|ψ2⟩ and compresses; physics: (λI−H) amplifies the GS component if λ > E_max
 
         # Renormalise by full canonicalisation
-        ψ = canonicalize(ψ_new, LeftCanonical(trunc))
+        ψ = canonicalize(ψ_new, LeftCanonical(trunc))   # left-canonical sweep: sweeps norm weight from left to right, absorbing it into the rightmost tensor; this keeps the MPS numerically stable across iterations; `LeftCanonical(trunc)` encodes the target form
 
         # Measure energy as Rayleigh quotient (handles unnormalised ψ after sweep)
-        E = rayleigh(ψ)
+        E = rayleigh(ψ)   # compute energy estimate via Rayleigh quotient; the Rayleigh quotient E = ⟨ψ|H|ψ⟩/⟨ψ|ψ⟩ works even if ψ is not unit-normalised (which can happen after LeftCanonical)
 
-        if abs(E - E_prev) < tol
-            converged = true
-            E_prev = E
-            break
+        if abs(E - E_prev) < tol   # convergence check: stop if energy changed by less than tol; `abs(...)` = absolute value; physics: convergence means the power iteration has projected onto the GS
+            converged = true   # mark as converged
+            E_prev = E   # update for the final return value
+            break   # exit the for loop immediately (same as Python `break`)
         end
-        E_prev = E
+        E_prev = E   # store current energy for comparison in the next iteration
     end
 
     # Return a properly normalized final state
-    ψ_final = canonicalize(ψ, BondCanonical(div(1 + length(ψ.tensors), 2), trunc))
-    PowerMethodResult(ψ_final, E_prev, converged, iters)
+    ψ_final = canonicalize(ψ, BondCanonical(div(1 + length(ψ.tensors), 2), trunc))   # put final state in bond-canonical form centred at the middle bond for clean normalisation; the middle-bond form is conventional for presenting the result
+    PowerMethodResult(ψ_final, E_prev, converged, iters)   # construct result struct; Julia structs are constructed by calling the struct name like a function`)
 end

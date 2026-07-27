@@ -43,7 +43,7 @@ Concrete subtypes: [`Spin`](@ref), [`SpinlessFermion`](@ref), [`Electron`](@ref)
 See also: [`local_dim`](@ref), [`canonical_relation`](@ref), [`algebra_generators`](@ref),
 [`physical_space`](@ref)
 """
-abstract type AbstractDoF end
+abstract type AbstractDoF end   # Julia abstract type: cannot be instantiated, but defines the "DoF" contract; all concrete DoF structs inherit from this; physics: each site carries a DoF that determines its local Hilbert space and operator algebra
 
 # ----------------------------------------------------------------------------------------
 # Concrete DoFs
@@ -93,7 +93,7 @@ julia> local_dim(SpinHalf())
 2
 ```
 """
-struct Spin{S} <: AbstractDoF end       # S = 1//2, 1, 3//2, …; local_dim = 2S+1
+struct Spin{S} <: AbstractDoF end       # S = 1//2, 1, 3//2, …; local_dim = 2S+1  # parametric struct `Spin{S}`: the spin quantum number S is baked into the TYPE (not a field); `Spin{1//2}` and `Spin{1}` are two completely different types; `1//2` is a Rational{Int} literal 
 
 """
     SpinHalf
@@ -111,7 +111,7 @@ julia> canonical_relation(SpinHalf()) isa CCR
 true
 ```
 """
-const SpinHalf = Spin{1//2}
+const SpinHalf = Spin{1//2}   # `const` makes this binding immutable. `= Spin{1//2}` creates a type alias — SpinHalf IS the type Spin{1//2}, not a value of that type
 
 """
     SpinOne
@@ -127,7 +127,7 @@ julia> local_dim(SpinOne())
 3
 ```
 """
-const SpinOne = Spin{1}
+const SpinOne = Spin{1}   # type alias for spin-1; used in Haldane chain models (AKLT state, etc.)
 
 """
     SpinlessFermion <: AbstractDoF
@@ -156,7 +156,7 @@ inserted for non-adjacent operators.
 See also: [`HardCoreBoson`](@ref) (same matrix structure, commuting statistics),
 [`Electron`](@ref) (spin-½ version), [`algebra_generators`](@ref)
 """
-struct SpinlessFermion <: AbstractDoF end   # 2D site {|0⟩,|1⟩}; c, c†, n
+struct SpinlessFermion <: AbstractDoF end   # 2D site {|0⟩,|1⟩}; c, c†, n  # empty struct (zero data, zero size); type identity alone determines dispatch; fermionic: canonical_relation returns CAR
 
 """
     Electron <: AbstractDoF
@@ -189,7 +189,7 @@ number `n`, and spin operators `Sz`, `Sp`, `Sm`.
 
 See also: [`SpinlessFermion`](@ref), [`algebra_generators`](@ref)
 """
-struct Electron <: AbstractDoF end   # 4D site {|0⟩,|↑⟩,|↓⟩,|↑↓⟩} 
+struct Electron <: AbstractDoF end   # 4D site {|0⟩,|↑⟩,|↓⟩,|↑↓⟩}  # spin-½ electron (Hubbard site); d=4; fermionic (CAR)
 
 """
     MajoranaFermion <: AbstractDoF
@@ -213,7 +213,7 @@ identity on the local two-dimensional space.  The inter-site statistics are
 
 See also: [`algebra_generators`](@ref)
 """
-struct MajoranaFermion <: AbstractDoF end   # Majorana modes on a paired complex-fermion site
+struct MajoranaFermion <: AbstractDoF end   # Majorana modes on a paired complex-fermion site  # two Majorana modes per paired site; d=2; fermionic (CAR)
 
 """
     HardCoreBoson <: AbstractDoF
@@ -231,7 +231,7 @@ strings are needed for non-adjacent operators.
 
 See also: [`SpinlessFermion`](@ref) (anticommuting version), [`algebra_generators`](@ref)
 """
-struct HardCoreBoson <: AbstractDoF end   # 2D site {|0⟩,|1⟩}; b, b†, n; b²=0
+struct HardCoreBoson <: AbstractDoF end   # 2D site {|0⟩,|1⟩}; b, b†, n; b²=0  # hard-core bosons: same local matrices as SpinlessFermion but COMMUTING statistics (CCR, not CAR)
 
 # ----------------------------------------------------------------------------------------
 # CanonicalRelation — exchange statistics of the DoF
@@ -260,7 +260,7 @@ string helper) without caring which specific DoF it was called with.
 
 Use [`canonical_relation`](@ref) to query the statistics of any concrete `AbstractDoF`.
 """
-abstract type CanonicalRelation end
+abstract type CanonicalRelation end   # abstract type for exchange statistics; two concrete subtypes: CCR and CAR; used for compile-time dispatch 
 
 """
     CCR <: CanonicalRelation
@@ -274,7 +274,7 @@ commuting sites.
 
 See also: [`CAR`](@ref), [`canonical_relation`](@ref)
 """
-struct CCR <: CanonicalRelation end   # operators on different sites commute
+struct CCR <: CanonicalRelation end   # operators on different sites commute  # Canonical Commutation Relations: [b_i, b_j†] = δ_ij (bosons); tag type with no fields — just identifies the statistics
 
 """
     CAR <: CanonicalRelation
@@ -290,7 +290,7 @@ replaced by native graded-space arithmetic via TensorKit.
 
 See also: [`CCR`](@ref), [`canonical_relation`](@ref)
 """
-struct CAR <: CanonicalRelation end   # operators on different sites anticommute
+struct CAR <: CanonicalRelation end   # operators on different sites anticommute  # Canonical Anticommutation Relations: {c_i, c_j†} = δ_ij (fermions); tag type used to dispatch Jordan-Wigner string insertion
 
 # ----------------------------------------------------------------------------------------
 # local_dim — local Hilbert-space dimension
@@ -333,11 +333,11 @@ julia> local_dim(Electron())
 4
 ```
 """
-local_dim(::Spin{S}) where {S} = Int(2S + 1)   # computed at compile time
-local_dim(::SpinlessFermion) = 2
-local_dim(::Electron) = 4
-local_dim(::HardCoreBoson) = 2
-local_dim(::MajoranaFermion) = 2   # per paired (complex-fermion) site
+local_dim(::Spin{S}) where {S} = Int(2S + 1)   # computed at compile time  # `where {S}` captures the type parameter S; `Int(2S+1)` converts the rational 2S+1 to an integer at compile time (no runtime arithmetic); `::Spin{S}` is the argument pattern-matching on the type — no runtime dispatch overhead 
+local_dim(::SpinlessFermion) = 2   # d=2: |0⟩, |1⟩
+local_dim(::Electron) = 4   # d=4: |0⟩, |↑⟩, |↓⟩, |↑↓⟩
+local_dim(::HardCoreBoson) = 2   # d=2: |0⟩, |1⟩
+local_dim(::MajoranaFermion) = 2   # per paired (complex-fermion) site  # each paired site hosts two Majorana modes but has d=2 Hilbert space
 
 # ----------------------------------------------------------------------------------------
 # algebra_generators — on-site operator matrices as a NamedTuple
@@ -409,47 +409,47 @@ julia> ops.Sp
  0.0+0.0im  0.0+0.0im
 ```
 """
-function algebra_generators(::Spin{1//2})
-    Sz = ComplexF64[1 0; 0 -1] / 2          # ½·diag(+1,−1); Sz|↑⟩=+½|↑⟩
-    Sp = ComplexF64[0 1; 0 0]              # S⁺|↓⟩=|↑⟩, S⁺|↑⟩=0
-    Sm = Sp'                                 # S⁻=(S⁺)†
-    Sx = (Sp + Sm) / 2
-    Sy = (Sp - Sm) / (2im)
-    I2 = LinearAlgebra.one(Sz)
-    (; Sx, Sy, Sz, Sp, Sm, I=I2)
+function algebra_generators(::Spin{1//2})   # method dispatches on the singleton type Spin{1//2}; `::Spin{1//2}` is the type dispatch argument (no variable name needed because the argument is not used in the body)
+    Sz = ComplexF64[1 0; 0 -1] / 2          # ½·diag(+1,−1); Sz|↑⟩=+½|↑⟩  # `ComplexF64[...]` is a 2×2 complex matrix literal 
+    Sp = ComplexF64[0 1; 0 0]              # S⁺|↓⟩=|↑⟩, S⁺|↑⟩=0  # S⁺ raises the spin: |↓⟩→|↑⟩; upper-triangular entry [1,2] = 1
+    Sm = Sp'                                 # S⁻=(S⁺)†  # `A'` = conjugate transpose ; S⁻ lowers the spin
+    Sx = (Sp + Sm) / 2   # Sx = ½(S⁺ + S⁻); the physical transverse spin operator
+    Sy = (Sp - Sm) / (2im)   # `2im` is the imaginary number 2i in Julia. Sy = (S⁺ - S⁻)/(2i)
+    I2 = LinearAlgebra.one(Sz)   # `LinearAlgebra.one(M)` = identity matrix of same size/type as M ; `one` is Julia's generic "multiplicative identity" function
+    (; Sx, Sy, Sz, Sp, Sm, I=I2)   # `(; ...)` creates a NamedTuple 
 end
 
 # todo: switch to using a simple function that calculates the required matrix elements for a given S using wigner-eckart theorem instead of hard-coding separately for 1//2 and 1.
-function algebra_generators(::Spin{1})
+function algebra_generators(::Spin{1})   # method for spin-1; separate dispatch from Spin{1//2} even though the formula is similar — Julia selects this at compile time with zero overhead
     # 3×3 spin-1 matrices (Condon–Shortley convention).
     # Basis ordering: |+1⟩, |0⟩, |−1⟩  (mz = 1, 0, −1).
-    Sz = ComplexF64[1 0 0; 0 0 0; 0 0 -1]
-    Sp = ComplexF64[0 √2 0; 0 0 √2; 0 0 0]   # S⁺: raises mz by 1
-    Sm = Sp'
+    Sz = ComplexF64[1 0 0; 0 0 0; 0 0 -1]   # 3×3 diagonal matrix: Sz = diag(1, 0, −1) for mz=+1, 0, −1
+    Sp = ComplexF64[0 √2 0; 0 0 √2; 0 0 0]   # S⁺: raises mz by 1  # `√2` = `sqrt(2)` (Julia allows Unicode math symbols); S⁺|mz=0⟩=√2|mz=1⟩, S⁺|mz=-1⟩=√2|mz=0⟩; from the Condon-Shortley formula sqrt(S(S+1)−mz(mz+1))
+    Sm = Sp'   # S⁻ = (S⁺)†
     Sx = (Sp + Sm) / 2
     Sy = (Sp - Sm) / (2im)
-    I3 = LinearAlgebra.one(Sz)
-    (; Sx, Sy, Sz, Sp, Sm, I=I3)
+    I3 = LinearAlgebra.one(Sz)   # 3×3 identity
+    (; Sx, Sy, Sz, Sp, Sm, I=I3)   # NamedTuple with all spin-1 operators
 end
 
 function algebra_generators(::SpinlessFermion)
     # Basis ordering: |0⟩ (vacuum, index 1), |1⟩ (occupied, index 2).
     # c destroys a particle: c|1⟩ = |0⟩, c|0⟩ = 0.
-    c = ComplexF64[0 1; 0 0]
-    cdag = c'
-    I2 = LinearAlgebra.one(c)
-    n = cdag * c   # number operator: diag(0,1)
-    (; c, cdag, n, I=I2)
+    c = ComplexF64[0 1; 0 0]   # annihilation operator: c[row,col] = ⟨row|c|col⟩; c[1,2]=1 means c|1⟩=|0⟩; all other entries are 0
+    cdag = c'   # creation operator c† = c^T (real matrix, so just transpose); `c'` = conjugate transpose
+    I2 = LinearAlgebra.one(c)   # 2×2 identity
+    n = cdag * c   # number operator: diag(0,1)  # n = c†c; explicitly computed (not hardcoded) to ensure consistency with c; `*` is matrix multiplication
+    (; c, cdag, n, I=I2)   # NamedTuple; `I=I2` renames I2 as `I`
 end
 
 function algebra_generators(::HardCoreBoson)
     # Identical matrix structure to SpinlessFermion, but commuting statistics.
     # Basis ordering: |0⟩ (vacuum, index 1), |1⟩ (occupied, index 2).
-    b = ComplexF64[0 1; 0 0]
-    bdag = b'
-    n = bdag * b
-    I2 = LinearAlgebra.one(b)
-    (; b, bdag, n, I=I2)
+    b = ComplexF64[0 1; 0 0]   # bosonic annihilator; same matrix as SpinlessFermion's `c` but field name `b` signals bosonic statistics to the caller
+    bdag = b'   # creation operator b†
+    n = bdag * b   # occupation number operator
+    I2 = LinearAlgebra.one(b)   # 2×2 identity
+    (; b, bdag, n, I=I2)   # NamedTuple; note different field names from SpinlessFermion (b/bdag vs c/cdag)
 end
 
 function algebra_generators(::Electron)
@@ -458,45 +458,45 @@ function algebra_generators(::Electron)
     # (ITensor / Essler et al.).  |↑↓⟩ ≡ c†↑ c†↓ |0⟩, so c↓|↑↓⟩ = −|↑⟩.
 
     # c↑: destroys up-spin.  |↑⟩→|0⟩  and  |↑↓⟩→|↓⟩  (no sign, up acts first).
-    cup = ComplexF64[
-        0 1 0 0;
-        0 0 0 0;
-        0 0 0 1;
-        0 0 0 0
+    cup = ComplexF64[   # 4×4 annihilator for spin-up; cup[1,2]=1 means ⟨0|c↑|↑⟩=1; cup[3,4]=1 means ⟨↓|c↑|↑↓⟩=1 (removing ↑ from a doubly-occupied site leaves ↓)
+        0 1 0 0;   # row 1 (|0⟩): cup destroys ↑ from |↑⟩ to give |0⟩
+        0 0 0 0;   # row 2 (|↑⟩): no ↑ to destroy here
+        0 0 0 1;   # row 3 (|↓⟩): cup destroys ↑ from |↑↓⟩ to give |↓⟩
+        0 0 0 0    # row 4 (|↑↓⟩): no further ↑ transition
     ]
 
     # c↓: destroys down-spin.  |↓⟩→|0⟩  and  |↑↓⟩→−|↑⟩  (−1 from ordering).
-    cdn = ComplexF64[
-        0 0 1 0;
-        0 0 0 -1;
-        0 0 0 0;
-        0 0 0 0
+    cdn = ComplexF64[   # 4×4 annihilator for spin-down; cdn[1,3]=1 means ⟨0|c↓|↓⟩=1; cdn[2,4]=-1 means ⟨↑|c↓|↑↓⟩=−1 (anticommuting past the already-present ↑ gives a sign)
+        0 0 1 0;   # row 1 (|0⟩): cdn destroys ↓ from |↓⟩ to give |0⟩
+        0 0 0 -1;  # row 2 (|↑⟩): cdn destroys ↓ from |↑↓⟩ to give −|↑⟩ (−1 from fermionic anticommutation)
+        0 0 0 0;   # row 3 (|↓⟩): no further ↓ transition
+        0 0 0 0    # row 4 (|↑↓⟩): no further ↓ transition
     ]
 
-    cupdag = cup'
-    cdndag = cdn'
-    nup = cupdag * cup
-    ndn = cdndag * cdn
-    I4 = LinearAlgebra.one(cup)
-    n = nup + ndn
+    cupdag = cup'   # c†↑ = (c↑)†; spin-up creation operator
+    cdndag = cdn'   # c†↓ = (c↓)†; spin-down creation operator
+    nup = cupdag * cup   # n↑ = c†↑c↑; spin-up number operator; diag(0,1,0,1) in the {|0⟩,|↑⟩,|↓⟩,|↑↓⟩} basis
+    ndn = cdndag * cdn   # n↓ = c†↓c↓; spin-down number operator; diag(0,0,1,1)
+    I4 = LinearAlgebra.one(cup)   # 4×4 identity
+    n = nup + ndn   # total occupation number: n = n↑ + n↓; diag(0,1,1,2)
 
     # Spin operators built from the electron operators (for observables)
-    Sz = (nup - ndn) / 2
-    Sp = cupdag * cdn    # S⁺ = c†↑ c↓
-    Sm = Sp'
+    Sz = (nup - ndn) / 2   # Sz = (n↑ − n↓)/2; spin of the electron
+    Sp = cupdag * cdn    # S⁺ = c†↑ c↓  # S⁺ flips spin ↓→↑: S⁺|↓⟩=|↑⟩; S⁺|0⟩=S⁺|↑↓⟩=0
+    Sm = Sp'   # S⁻ = (S⁺)†
 
-    (; cup, cdn, cupdag, cdndag, nup, ndn, n, Sz, Sp, Sm, I=I4)
+    (; cup, cdn, cupdag, cdndag, nup, ndn, n, Sz, Sp, Sm, I=I4)   # NamedTuple with all electron operators
 end
 
 function algebra_generators(::MajoranaFermion)
     # MajoranaFermion operators on the paired-fermion site.
     # γ₁ = c + c†  (=σˣ on the Fock site),  γ₂ = i(c† − c)  (=σʸ).
     # Both are Hermitian: γ†=γ.  Algebra: {γₐ,γᵦ}=2δₐᵦ.
-    ops = algebra_generators(SpinlessFermion())
-    γ1 = ops.c + ops.cdag
-    γ2 = im * (ops.cdag - ops.c)
-    I2 = LinearAlgebra.one(γ1)
-    (; γ1, γ2, I=I2)
+    ops = algebra_generators(SpinlessFermion())   # reuse the spinless-fermion operators; DRY principle: Majorana operators are linear combinations of c and c†
+    γ1 = ops.c + ops.cdag   # γ₁ = c + c†; Hermitian: γ₁† = c† + c = γ₁; equals σˣ in the {|0⟩,|1⟩} Fock basis
+    γ2 = im * (ops.cdag - ops.c)   # `im` = the imaginary unit. γ₂ = i(c† − c); Hermitian: γ₂† = (−i)(c − c†) = i(c† − c) = γ₂; equals σʸ in the Fock basis
+    I2 = LinearAlgebra.one(γ1)   # 2×2 identity
+    (; γ1, γ2, I=I2)   # NamedTuple; `γ1` and `γ2` use Unicode Greek letters (Julia allows Unicode identifiers — Python 3 does too)
 end
 
 """
@@ -537,8 +537,8 @@ julia> canonical_relation(HardCoreBoson()) isa CCR
 true
 ```
 """
-canonical_relation(::Spin) = CCR()
-canonical_relation(::HardCoreBoson) = CCR()
-canonical_relation(::SpinlessFermion) = CAR()
-canonical_relation(::Electron) = CAR()
-canonical_relation(::MajoranaFermion) = CAR()
+canonical_relation(::Spin) = CCR()   # all Spin{S} types → bosonic statistics; `::Spin` matches any Spin{S} regardless of S (more general than `::Spin{1//2}`); `CCR()` constructs the CCR singleton instance
+canonical_relation(::HardCoreBoson) = CCR()   # hard-core bosons commute even though their matrix structure mirrors fermions
+canonical_relation(::SpinlessFermion) = CAR()   # `CAR()` constructs the CAR singleton; fermionic DoFs anticommute on different sites
+canonical_relation(::Electron) = CAR()   # both spin-up and spin-down electrons are fermionic
+canonical_relation(::MajoranaFermion) = CAR()   # Majorana fermions inherit CAR statistics from the underlying complex fermion

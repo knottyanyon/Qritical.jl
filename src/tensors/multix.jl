@@ -51,9 +51,9 @@ julia> g == MulTIx(:ασ, (σ, α))
 false
 ```
 """
-struct MulTIx <: AbstractIx
-    label::Symbol
-    indices::Tuple{Vararg{AbstractIx}}
+struct MulTIx <: AbstractIx   # concrete struct subtyping AbstractIx; `<: AbstractIx` = Python `class MulTIx(AbstractIx)`; immutable by default
+    label::Symbol                        # name of the fused index, e.g. :vLσ; analogous to Python `str` attribute but interned
+    indices::Tuple{Vararg{AbstractIx}}   # `Tuple{Vararg{AbstractIx}}` = a Tuple of any number of AbstractIx elements. immutable and ordered — order matters for reshape correctness
 end
 
 """
@@ -75,7 +75,7 @@ julia> dim(MulTIx(:empty, ()))
 1
 ```
 """
-dim(g::MulTIx) = prod(dim, g.indices; init=1)
+dim(g::MulTIx) = prod(dim, g.indices; init=1)   # `prod(f, iter; init=1)` = reduce product of f applied to each element; `dim` here is the accessor function, not the field; `init=1` handles the empty case (empty product = 1); physics: fusing legs multiplies their dimensions (total Hilbert space dimension = product of local dimensions)
 
 """
     label(g::MulTIx) -> Symbol
@@ -91,8 +91,7 @@ julia> label(g)
 :ασ
 ```
 """
-label(g::MulTIx) = g.label
+label(g::MulTIx) = g.label   # field access; `g.label` reads the stored Symbol
 
-Base.:(==)(a::MulTIx, b::MulTIx) = a.label == b.label && a.indices == b.indices
-Base.hash(g::MulTIx, h::UInt) = hash(g.label, hash(g.indices, h))
-
+Base.:(==)(a::MulTIx, b::MulTIx) = a.label == b.label && a.indices == b.indices   # Python: `__eq__`; `&&` = AND; tuple equality checks element-by-element; order matters — (α,σ) ≠ (σ,α)
+Base.hash(g::MulTIx, h::UInt) = hash(g.label, hash(g.indices, h))   # Python: `__hash__`; hash the tuple of indices (which hashes each element in order); needed for use as Dict keys or Set members

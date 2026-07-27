@@ -38,7 +38,11 @@ No label matching is needed — the legs are the *same* `TIx` objects.
 # See also
 [`BondCenter`](@ref), [`OrthoCenter`](@ref)
 """
-struct Bond
-    left::TIx{Upper}
-    right::TIx{Upper}
+struct Bond   # immutable concrete struct (no `mutable`); Python: frozen @dataclass; once constructed, fields cannot change
+    # Physics: both legs are Upper because Σ is the orthogonality centre.
+    # In the von Delft convention, bond arrows point INTO Σ from both sides.
+    # "Upper" = incoming arrow = contravariant = domain — so both Σ legs are Upper.
+    # The partner legs on U and Vd are Lower (outgoing away from Σ).
+    left::TIx{Upper}    # left face of the bond (Σ's left leg, λL); `TIx{Upper}` = Upper-variance tensor index
+    right::TIx{Upper}   # right face of the bond (Σ's right leg, λR); both Upper because Σ is at the centre
 end

@@ -24,7 +24,7 @@ backends will then only require adding new methods.
 
 See also: [`physical_space`](@ref)
 """
-struct NoSymmetry end
+struct NoSymmetry end   # empty tag struct (zero size); used to select the "no symmetry" dispatch branch; pattern: create a type to represent a choice, then dispatch on it rather than using a runtime `if`. this makes future extension cheap — add `U1Symmetry`, `SU2Symmetry` with their own methods
 
 """
     physical_space(dof::AbstractDoF, ::NoSymmetry) -> Int
@@ -52,4 +52,4 @@ julia> physical_space(Electron(), NoSymmetry())
 4
 ```
 """
-physical_space(dof::AbstractDoF, ::NoSymmetry) = local_dim(dof)
+physical_space(dof::AbstractDoF, ::NoSymmetry) = local_dim(dof)   # dispatch on both `dof` and the `NoSymmetry` tag; `::NoSymmetry` selects this method when the symmetry argument is a `NoSymmetry()` instance; currently just returns `local_dim(dof)` (an Int); future methods for `U1Symmetry()` will return a graded space instead of an Int, enabling automatic quantum-number tracking

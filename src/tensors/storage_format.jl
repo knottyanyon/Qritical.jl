@@ -20,7 +20,7 @@ quantum-number sectors) will be added as new subtypes without changing existing 
 
 See also: [`matrix_repr`](@ref), [`DenseFormat`](@ref), [`SparseFormat`](@ref)
 """
-abstract type StorageFormat end
+abstract type StorageFormat end   # abstract type = Python ABC; no instances; exists only as a dispatch label so functions can accept any storage format; adding a new format only requires a new subtype + new methods
 
 """
     DenseFormat <: StorageFormat
@@ -35,7 +35,7 @@ systems exhaust memory.
 
 See also: [`SparseFormat`](@ref), [`matrix_repr`](@ref)
 """
-struct DenseFormat <: StorageFormat end
+struct DenseFormat <: StorageFormat end   # singleton struct: zero-size, no fields; `<: StorageFormat` makes it a subtype; the VALUE `DenseFormat()` is the tag you pass to select dense storage; Python: `class DenseFormat(StorageFormat): pass`
 
 """
     SparseFormat <: StorageFormat
@@ -48,4 +48,4 @@ that only need matrix-vector products and never form the full dense matrix.
 
 See also: [`DenseFormat`](@ref), [`matrix_repr`](@ref)
 """
-struct SparseFormat <: StorageFormat end
+struct SparseFormat <: StorageFormat end   # singleton struct for the sparse format tag; `SparseMatrixCSC` = Compressed Sparse Column format (standard format for Julia sparse arrays, analogous to `scipy.sparse.csc_matrix`)

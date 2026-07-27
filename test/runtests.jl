@@ -4,8 +4,7 @@ using TensorOperations
 using LinearAlgebra
 using Statistics
 
-# Aqua quality checks are deferred to v1.0 (stale_deps will fire until all
-# planned dependencies are actually used).
+# Aqua quality checks are deferred to v1.0 (stale_deps will fire until all planned dependencies are actually used).
 
 @testset "Qritical.jl" begin
     include("test_packaging.jl")

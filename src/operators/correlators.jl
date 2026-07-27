@@ -10,31 +10,31 @@ left-to-right using a running environment tensor.
   \\cdot A^{\\varphi}_{\\sigma_1} \\cdots A^{\\varphi}_{\\sigma_L}
 ```
 """
-function overlap(ψ::FiniteMPS, φ::FiniteMPS)
-    length(ψ.tensors) == length(φ.tensors) || throw(
+function overlap(ψ::FiniteMPS, φ::FiniteMPS)   # compute ⟨ψ|φ⟩; both MPS must have the same chain length L and the same physical dimension d at every site
+    length(ψ.tensors) == length(φ.tensors) || throw(   # check L matches; `||` short-circuit: only throws if the condition is false; `throw(ArgumentError(...))` raises a typed exception 
         ArgumentError(
-            "overlap: MPS lengths must match, got $(length(ψ.tensors)) and $(length(φ.tensors))",
+            "overlap: MPS lengths must match, got $(length(ψ.tensors)) and $(length(φ.tensors))",   # `$(...)` is Julia string interpolation 
         ),
     )
-    all(
-        size(ψ.tensors[i].data, 2) == size(φ.tensors[i].data, 2) for
-        i in 1:length(ψ.tensors)
+    all(   # `all(gen)` returns true if every element of the generator is true 
+        size(ψ.tensors[i].data, 2) == size(φ.tensors[i].data, 2) for   # check physical dimension d at every site; `size(A, 2)` = dimension along index 2 
+        i in 1:length(ψ.tensors)   # `1:length(...)` is an inclusive range 
     ) || throw(ArgumentError("overlap: physical dimensions must match at every site"))
-    L = length(ψ.tensors)
-    env = ones(promote_type(eltype(ψ.tensors[1].data), eltype(φ.tensors[1].data)), 1, 1)
-    for i in 1:L
-        Aψ = ψ.tensors[i].data    # (χLψ, d, χRψ)
-        Aφ = φ.tensors[i].data    # (χLφ, d, χRφ)
-        d = size(Aψ, 2)
-        χRψ = size(Aψ, 3)
-        χRφ = size(Aφ, 3)
-        new_env = zeros(eltype(env), χRψ, χRφ)
-        for σ in 1:d
-            new_env += Aψ[:, σ, :]' * env * Aφ[:, σ, :]
+    L = length(ψ.tensors)   # chain length
+    env = ones(promote_type(eltype(ψ.tensors[1].data), eltype(φ.tensors[1].data)), 1, 1)   # initialise 1×1 environment = scalar 1.0; `promote_type(T1, T2)` finds the common type (e.g. ComplexF64 wins over Float64); `ones(T, 1, 1)` = 1×1 matrix of ones; shape grows as we sweep right
+    for i in 1:L   # sweep left-to-right site by site
+        Aψ = ψ.tensors[i].data    # (χLψ, d, χRψ)  # bra MPS tensor at site i; `.data` extracts the raw 3D array from the QTensor wrapper
+        Aφ = φ.tensors[i].data    # (χLφ, d, χRφ)  # ket MPS tensor at site i
+        d = size(Aψ, 2)   # physical dimension at this site
+        χRψ = size(Aψ, 3)   # right bond dimension of ψ
+        χRφ = size(Aφ, 3)   # right bond dimension of φ
+        new_env = zeros(eltype(env), χRψ, χRφ)   # new environment has shape (χR_ψ, χR_φ); `zeros(T, m, n)` = Python `np.zeros((m,n), dtype=T)`
+        for σ in 1:d   # sum over physical index σ 
+            new_env += Aψ[:, σ, :]' * env * Aφ[:, σ, :]   # update env: Aψ†·env·Aφ; `A[:, σ, :]` slices the σ-th physical layer → (χL, χR) matrix; `A'` is the conjugate transpose. matrix product `*` contracts the bond indices
         end
-        env = new_env
+        env = new_env   # advance environment one site to the right
     end
-    return env[1, 1]
+    return env[1, 1]   # after all L sites: scalar result ⟨ψ|φ⟩ (boundary bond dims are 1)
 end
 
 """
@@ -64,23 +64,23 @@ exactly ``I`` up to the operator insertion site, so only the right half needs
 to be contracted explicitly.  The full left-to-right pass is used here for
 correctness on arbitrary canonical forms.
 """
-function local_expectation(ψ::FiniteMPS, op::AbstractMatrix, site::Int)
-    L = length(ψ.tensors)
-    env = ones(promote_type(eltype(ψ.tensors[1].data), eltype(op)), 1, 1)
-    for i in 1:L
-        A = ψ.tensors[i].data    # (χL, d, χR)
-        d = size(A, 2)
-        χR = size(A, 3)
-        new_env = zeros(eltype(env), χR, χR)
-        for σ in 1:d, σ′ in 1:d
+function local_expectation(ψ::FiniteMPS, op::AbstractMatrix, site::Int)   # compute ⟨ψ|O_site|ψ⟩; `op` is a d×d matrix; `AbstractMatrix` accepts any matrix type (dense, sparse, etc.)
+    L = length(ψ.tensors)   # chain length
+    env = ones(promote_type(eltype(ψ.tensors[1].data), eltype(op)), 1, 1)   # initialise 1×1 scalar environment; `promote_type` promotes to a common numeric type (so if op is Float64 and A is ComplexF64, result is ComplexF64)
+    for i in 1:L   # sweep through all sites
+        A = ψ.tensors[i].data    # (χL, d, χR)  # MPS tensor at site i
+        d = size(A, 2)   # physical dimension at this site
+        χR = size(A, 3)   # right bond dimension
+        new_env = zeros(eltype(env), χR, χR)   # new environment; initialise to zero before accumulating σ contributions
+        for σ in 1:d, σ′ in 1:d   # double loop over physical indices σ (bra) and σ′ (ket); `for σ in 1:d, σ′ in 1:d` is a combined nested loop 
             weight =
-                (i == site) ? op[σ, σ′] : (σ == σ′ ? one(eltype(op)) : zero(eltype(op)))
-            iszero(weight) && continue
-            new_env += weight * (A[:, σ, :]' * env * A[:, σ′, :])
+                (i == site) ? op[σ, σ′] : (σ == σ′ ? one(eltype(op)) : zero(eltype(op)))   # ternary: if at the operator site use op[σ,σ′]; otherwise use δ(σ,σ′) (identity insert); `one(T)` and `zero(T)` are type-generic 1 and 0 
+            iszero(weight) && continue   # skip zero-weight terms to avoid useless matrix multiplications; `iszero(x)` is true if x is exactly zero; `&& continue` short-circuits to the next loop iteration 
+            new_env += weight * (A[:, σ, :]' * env * A[:, σ′, :])   # accumulate: weight × A†_{σ} · env · A_{σ′}; note σ for bra (conjugated) and σ′ for ket (not conjugated)
         end
-        env = new_env
+        env = new_env   # advance environment
     end
-    return env[1, 1]
+    return env[1, 1]   # scalar ⟨ψ|O_site|ψ⟩
 end
 
 """
@@ -103,27 +103,29 @@ contraction steps.
 For the connected correlator ``\\langle O_i O_j \\rangle_c = \\langle O_i O_j \\rangle - \\langle O_i \\rangle \\langle O_j \\rangle``,
 compute `two_site_op` and subtract the product of two `local_expectation` calls.
 """
-function two_site_op(ψ::FiniteMPS, op_i::AbstractMatrix, op_j::AbstractMatrix, i::Int, j::Int)
-    L = length(ψ.tensors)
-    T = promote_type(eltype(ψ.tensors[1].data), eltype(op_i), eltype(op_j))
-    env = ones(T, 1, 1)
-    for site in 1:L
-        A = ψ.tensors[site].data
-        d = size(A, 2)
-        χR = size(A, 3)
-        new_env = zeros(T, χR, χR)
-        for σ in 1:d, σ′ in 1:d
-            weight = if site == i
-                op_i[σ, σ′]
+function two_site_op(
+    ψ::FiniteMPS, op_i::AbstractMatrix, op_j::AbstractMatrix, i::Int, j::Int
+)   # compute ⟨ψ|O_i O_j|ψ⟩; physics: this is the two-point correlator C(i,j) = ⟨O_i O_j⟩
+    L = length(ψ.tensors)   # chain length
+    T = promote_type(eltype(ψ.tensors[1].data), eltype(op_i), eltype(op_j))   # promote to a type that can hold all three; `promote_type(T1,T2,T3)` finds the common supertype 
+    env = ones(T, 1, 1)   # initialise 1×1 environment
+    for site in 1:L   # sweep through all L sites
+        A = ψ.tensors[site].data   # MPS tensor at current site; shape (χL, d, χR)
+        d = size(A, 2)   # physical dimension
+        χR = size(A, 3)   # right bond dimension
+        new_env = zeros(T, χR, χR)   # new environment, initialised to zero
+        for σ in 1:d, σ′ in 1:d   # double loop over physical indices
+            weight = if site == i   # Julia multi-line if-expression (like a ternary but more readable); returns the weight W[σ,σ′] for this site
+                op_i[σ, σ′]   # insert op_i at site i (the left operator of the two-point correlator)
             elseif site == j
-                op_j[σ, σ′]
+                op_j[σ, σ′]   # insert op_j at site j (the right operator)
             else
-                σ == σ′ ? one(T) : zero(T)
+                σ == σ′ ? one(T) : zero(T)   # everywhere else: insert identity δ(σ,σ′); `one(T)` = T(1), `zero(T)` = T(0)
             end
-            iszero(weight) && continue
-            new_env += weight * (A[:, σ, :]' * env * A[:, σ′, :])
+            iszero(weight) && continue   # skip zero contributions (optimization)
+            new_env += weight * (A[:, σ, :]' * env * A[:, σ′, :])   # transfer matrix step: weight × A†_σ · env · A_σ′; repeated for all non-zero (σ,σ′) pairs
         end
-        env = new_env
+        env = new_env   # advance environment one step to the right
     end
-    return env[1, 1]
+    return env[1, 1]   # final scalar = ⟨ψ|O_i O_j|ψ⟩; this is the raw two-point correlator (not connected)
 end
