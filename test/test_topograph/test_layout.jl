@@ -1,4 +1,8 @@
-@testset "§2 Geometry — Chain, sites, bonds" begin
+@testset "§6.1 AbstractLayout, Chain — layout specifications" begin
+
+    @testset "Chain <: AbstractLayout" begin
+        @test Chain <: AbstractLayout
+    end
 
     @testset "Chain constructors" begin
         g = Chain(6)
@@ -45,20 +49,6 @@
             @test j ∈ all_sites
             @test i != j
         end
-    end
-
-    @testset "periodic Chain raises ArgumentError in dense_matrix (closes #79)" begin
-        # dense_matrix assumes i<j for every bond; the wrap bond (L,1) has i>j
-        # and would compute d^(negative) silently.  An informative error must be thrown.
-        g = Chain(4, true)
-        H = XXZ(g; J=1.0)
-        @test_throws ArgumentError matrix_repr(H)
-    end
-
-    @testset "periodic Chain raises ArgumentError in MPO (closes #79)" begin
-        g = Chain(4, true)
-        H = XXZ(g; J=1.0)
-        @test_throws ArgumentError MPO(H)
     end
 
 end

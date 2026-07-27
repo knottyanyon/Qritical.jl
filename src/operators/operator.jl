@@ -128,7 +128,7 @@ Hamiltonian (time-evolution generator) and observables (expectation values) are
 # Type parameters
 
   - `D <: AbstractDoF`        — the local degree of freedom (sets operator algebra and ``d``).
-  - `G <: AbstractGeometry`   — the lattice geometry (sets site and bond lists).
+  - `G <: AbstractLayout`   — the lattice geometry (sets site and bond lists).
   - `LT`                      — concrete `OneSiteTerm` type.
   - `BT`                      — concrete `TwoSiteTerm` type.
 
@@ -142,7 +142,7 @@ Hamiltonian (time-evolution generator) and observables (expectation values) are
 See also: [`OneSiteTerm`](@ref), [`TwoSiteTerm`](@ref), [`MPO`](@ref),
 [`XXZ`](@ref), [`Heisenberg`](@ref), [`Ising`](@ref)
 """
-struct LatticeOperator{D<:AbstractDoF,G<:AbstractGeometry,LT,BT}
+struct LatticeOperator{D<:AbstractDoF,G<:AbstractLayout,LT,BT}
     dof::D
     geom::G
     onsite::Vector{LT}
@@ -320,7 +320,7 @@ end
 # ----------------------------------------------------------------------------------------
 
 """
-    total_magnetization(g::AbstractGeometry; dof=SpinHalf()) -> LatticeOperator
+    total_magnetization(g::AbstractLayout; dof=SpinHalf()) -> LatticeOperator
 
 Build the total magnetization operator ``M = \\sum_i S^z_i``.
 
@@ -331,7 +331,7 @@ on an even-``L`` chain should have ``\\langle M \\rangle = 0``.
 
 # Arguments
 
-  - `g::AbstractGeometry` — lattice geometry.
+  - `g::AbstractLayout` — lattice geometry.
   - `dof`                 — degree of freedom; its ``S^z`` operator is used.
     Default: `SpinHalf()`.
 
@@ -351,13 +351,13 @@ julia> isempty(M.bond)
 true
 ```
 """
-function total_magnetization(g::AbstractGeometry; dof=SpinHalf())
+function total_magnetization(g::AbstractLayout; dof=SpinHalf())
     ops = algebra_generators(dof)
     LatticeOperator(dof, g, [OneSiteTerm(i, ops.Sz, 1.0) for i in sites(g)], TwoSiteTerm[])
 end
 
 """
-    staggered_magnetization(g::AbstractGeometry; dof=SpinHalf()) -> LatticeOperator
+    staggered_magnetization(g::AbstractLayout; dof=SpinHalf()) -> LatticeOperator
 
 Build the staggered magnetization (Néel order parameter)
 ``M^s = \\sum_i (-1)^i S^z_i``.
@@ -374,7 +374,7 @@ very useful for finite-size scaling studies.
 
 # Arguments
 
-  - `g::AbstractGeometry` — lattice geometry.
+  - `g::AbstractLayout` — lattice geometry.
   - `dof`                 — degree of freedom. Default: `SpinHalf()`.
 
 # Returns
@@ -394,13 +394,13 @@ julia> [t.coupling for t in Ms.onsite]
   1.0
 ```
 """
-function staggered_magnetization(g::AbstractGeometry; dof=SpinHalf())
+function staggered_magnetization(g::AbstractLayout; dof=SpinHalf())
     ops = algebra_generators(dof)
     LatticeOperator(dof, g, [OneSiteTerm(i, ops.Sz, (-1.0)^i) for i in sites(g)], TwoSiteTerm[])
 end
 
 """
-    op_at_site(g::AbstractGeometry, dof::AbstractDoF, label::Symbol, site::Int) -> LatticeOperator
+    op_at_site(g::AbstractLayout, dof::AbstractDoF, label::Symbol, site::Int) -> LatticeOperator
 
 Build a single-site observable: the operator named `label` of `dof` at `site`,
 embedded in the full many-body Hilbert space defined by geometry `g`.
@@ -415,7 +415,7 @@ Use this to measure any on-site quantity — ``S^z_i``, ``n_i``, ``c_i``, etc.
 
 # Arguments
 
-  - `g::AbstractGeometry` — the full lattice geometry (e.g. `Chain(L)`).
+  - `g::AbstractLayout` — the full lattice geometry (e.g. `Chain(L)`).
   - `dof::AbstractDoF`    — the local degree of freedom (determines the operator algebra).
   - `label::Symbol`       — name of the operator to retrieve from [`algebra_generators`](@ref),
     e.g. `:Sz`, `:n`, `:cup`.
@@ -443,13 +443,13 @@ julia> size(matrix_repr(O))
 (16, 16)
 ```
 """
-function op_at_site(g::AbstractGeometry, dof::AbstractDoF, label::Symbol, site::Int)
+function op_at_site(g::AbstractLayout, dof::AbstractDoF, label::Symbol, site::Int)
     op = getproperty(algebra_generators(dof), label)
     LatticeOperator(dof, g, [OneSiteTerm(site, op, 1.0)], TwoSiteTerm[])
 end
 
 """
-    two_site_op(g::AbstractGeometry, dof::AbstractDoF,
+    two_site_op(g::AbstractLayout, dof::AbstractDoF,
               opA::Symbol, iA::Int, opB::Symbol, iB::Int) -> LatticeOperator
 
 Build the two-point operator ``A_{i_A} B_{i_B}`` whose expectation value gives
@@ -471,7 +471,7 @@ single `TwoSiteTerm` with coupling 1 and no on-site terms.
 
 # Arguments
 
-  - `g::AbstractGeometry` — lattice geometry (used to construct the `LatticeOperator`
+  - `g::AbstractLayout` — lattice geometry (used to construct the `LatticeOperator`
     container; the pair ``(i_A, i_B)`` need not be a NN bond of `g`).
   - `dof::AbstractDoF`    — local degree of freedom.
   - `opA::Symbol`         — name of the left operator, e.g. `:Sz`.
@@ -499,7 +499,7 @@ julia> O.bond[1].i, O.bond[1].j
 ```
 """
 function two_site_op(
-    g::AbstractGeometry, dof::AbstractDoF, opA::Symbol, iA::Int, opB::Symbol, iB::Int
+    g::AbstractLayout, dof::AbstractDoF, opA::Symbol, iA::Int, opB::Symbol, iB::Int
 )
     ops = algebra_generators(dof)
     Amat = getproperty(ops, opA)
@@ -508,7 +508,7 @@ function two_site_op(
 end
 
 """
-    identity_operator(g::AbstractGeometry, dof::AbstractDoF) -> LatticeOperator
+    identity_operator(g::AbstractLayout, dof::AbstractDoF) -> LatticeOperator
 
 Build the identity operator
 ``I = I_1 \\otimes I_2 \\otimes \\cdots \\otimes I_L``.
@@ -531,7 +531,7 @@ julia> isempty(I_op.onsite) && isempty(I_op.bond)
 true
 ```
 """
-function identity_operator(g::AbstractGeometry, dof::AbstractDoF)
+function identity_operator(g::AbstractLayout, dof::AbstractDoF)
     LatticeOperator(dof, g, OneSiteTerm[], TwoSiteTerm[])
 end
 
