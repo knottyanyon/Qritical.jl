@@ -10,7 +10,8 @@
         @test p isa Vector{AbstractIx}   # `isa` = isinstance check; confirms Partition is just a plain Vector; there is NO newtype wrapping
         @test length(p) == 2             # `length(p)` = Python `len(p)`; 2 legs in partition
         @test p[1] == vL                 # 1-indexed array access; first element is vL 
-        @test p[2] == σ                  # second element is σ    # Upper index with dim=4
+        @test p[2] == σ                  # second element is σ
+        α = upper(:α, 4)   # Upper index with dim=4
         β = lower(:β, 2)   # Lower index with dim=2
         p = Partition([α, β])
         @test p[1] == upper(:α, 4)   # construct a fresh TIx{Upper}(:α,4) and compare; equality checks label + dim + variance
