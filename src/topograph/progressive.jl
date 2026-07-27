@@ -9,9 +9,10 @@
 
 !!! definition "Progressive"
 
-    A generalized topological graph is **progressive** when it is oriented, ordinary (no circles), and contains no circuit.
+    A generalized topological graph is **progressive** when it is oriented, ordinary (no circles), and contains no circuit (Def. 1.1, p. 63, [joyal_street_1991](@cite)).
 
-!!! note "In practice"
+!!! note "In practice (this project's own reasoning, not a cited result)"
+    The definition above is Joyal's; the physics correspondence below is this project's own application of it, not a claim from Joyal & Street's paper or from any external tensor-network reference.
 
       - A `TensorNetwork` is always oriented, every leg carries a variance, so the real work below is checking ordinariness and the absence of circuits.
       - OBC-MPS, MPO, and TTN are progressive.
