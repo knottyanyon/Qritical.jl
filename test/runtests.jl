@@ -9,7 +9,6 @@ using Statistics
 
 @testset "Qritical.jl" begin
     include("test_packaging.jl")
-    include("test_geometry.jl")
     include("test_dof.jl")
     include("test_symmetries.jl")
     include("test_operator.jl")
@@ -30,6 +29,7 @@ using Statistics
     include("test_ortho_center.jl")
     include("test_spectrum.jl")
     include("test_topograph/test_topograph.jl")
+    include("test_min_model_kit/test_lattice/test_lattice_graph.jl")
     include("test_io_state.jl")
     include("test_mps.jl")
     include("test_convention.jl")

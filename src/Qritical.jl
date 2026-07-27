@@ -5,25 +5,7 @@ using TensorOperations
 using SparseArrays: SparseArrays
 import SparseArrays: sparse
 
-"""
-    AbstractGeometry
-
-Abstract supertype for lattice geometries.
-
-A geometry answers exactly two queries: which sites exist, and which pairs of
-sites are connected by bonds.  That is all the Hamiltonian builder needs — it
-does not care whether the underlying graph is a chain, a square lattice, or a
-torus.  Concrete subtypes only need to implement [`sites`](@ref) and
-[`bonds`](@ref).
-
-Current concrete geometry: [`Chain`](@ref) (1D open/periodic chain).
-Planned extensions: `Square`, `Torus`, `Lattice{V,E}` (see §2 of the design plan).
-
-See also: [`Chain`](@ref), [`sites`](@ref), [`bonds`](@ref)
-"""
-abstract type AbstractGeometry end
-
-include("min_model_kit/lattice/geometry.jl")
+include("topograph/layout.jl")
 include("min_model_kit/dof.jl")
 include("min_model_kit/lattice/symmetries.jl")
 include("tensors/storage_format.jl")
@@ -37,6 +19,7 @@ include("tensors/bond.jl")
 include("tensors/ortho_center.jl")
 include("tensors/spectrum.jl")
 include("topograph/gengraph.jl")
+include("topograph/ordinary_graph.jl")
 include("topograph/ids.jl")
 include("topograph/node.jl")
 include("topograph/wire.jl")
@@ -47,6 +30,7 @@ include("topograph/network.jl")
 include("topograph/pin.jl")
 include("topograph/compactify.jl")
 include("topograph/progressive.jl")
+include("min_model_kit/lattice/lattice_graph.jl")
 include("tensors/svd.jl")
 include("utils/io.jl")
 include("states/mps.jl")
@@ -97,6 +81,9 @@ export nodes, wires, legs, ends, incident, degree
 export attach!, pin!, cut!
 export compactify, boundary, is_ordinary, is_closed
 export is_progressive, has_circuit
+export OrdinaryGraphNetwork, UndirectedGraph
+export LinkId, LatticeGraph
+export links
 
 # ==== State utilities + I/O ===================================================
 export bipartition_matrix, as_state, load_array
@@ -109,7 +96,7 @@ export canonicalize, canonical_error, is_canonical, overlap, local_expectation, 
 export to_vidal, to_canonical
 
 # ==== Geometry ================================================================
-export AbstractGeometry, Chain, sites, bonds
+export AbstractLayout, Chain, sites, bonds
 
 # ==== DoF layer ===============================================================
 export AbstractDoF
