@@ -61,4 +61,46 @@ Physical legs are left out of these networks entirely: compactify only ever adds
         @test has_circuit(compactify(g))
         @test !is_progressive(g)
     end
+
+    @testset "has_circuit checks every disconnected piece, not just one starting node" begin
+        # Two entirely separate pieces sharing no wire at all: an open two-site chain, plus a
+        # single isolated node with no legs whatsoever. Neither piece has a cycle, so nothing
+        # left over after stripping should exist in either, regardless of which piece Kahn's
+        # queue happens to start from.
+        g = TensorNetwork()
+        s1, s2 = add_node!(g), add_node!(g)
+        isolated = add_node!(g)
+        A1 = QTensor(randn(2), (upper(:vR, 2),))
+        A2 = QTensor(randn(2), (lower(:vL, 2),))
+        w12 = add_wire!(g, 2; label=:bond12)
+        ℓ1R = add_leg!(g, A1, s1, w12)
+        ℓ2L = add_leg!(g, A2, s2, w12)
+        pin!(g, ℓ1R, ℓ2L)
+        @test !has_circuit(compactify(g))
+        @test is_progressive(g)
+    end
+
+    @testset "has_circuit still finds a cycle hidden in one piece of a disconnected graph" begin
+        # An acyclic two-site chain, plus a totally separate single node carrying its own
+        # trace. The cycle lives entirely in the second, unconnected piece, has_circuit must
+        # not stop looking after clearing the first (acyclic) piece.
+        g = TensorNetwork()
+        s1, s2 = add_node!(g), add_node!(g)
+        A1 = QTensor(randn(2), (upper(:vR, 2),))
+        A2 = QTensor(randn(2), (lower(:vL, 2),))
+        w12 = add_wire!(g, 2; label=:bond12)
+        ℓ1R = add_leg!(g, A1, s1, w12)
+        ℓ2L = add_leg!(g, A2, s2, w12)
+        pin!(g, ℓ1R, ℓ2L)
+
+        n3 = add_node!(g)
+        A3 = QTensor(randn(2, 2), (lower(:vL, 2), upper(:vR, 2)))
+        w33 = add_wire!(g, 2; label=:trace)
+        ℓ3L = add_leg!(g, A3, n3, w33)
+        ℓ3R = add_leg!(g, A3, n3, w33)
+        pin!(g, ℓ3R, ℓ3L)
+
+        @test has_circuit(compactify(g))
+        @test !is_progressive(g)
+    end
 end

@@ -33,19 +33,35 @@ Each pinned wire is one directed edge, from the node owning its `start` (the `Ou
 !!! note "A trace is a self-loop"
 
     A trace is a pinned wire whose two legs belong to the same node, that makes it a self-loop in this directed graph, and a self-loop is itself a cycle of length one. `has_circuit` catches traces for free, with no special case needed.
+
+Implemented via Kahn's algorithm ([kahn_1962](@cite)): repeatedly strip nodes whose remaining indegree is zero. If every node can eventually be stripped, the graph is acyclic; whatever is left over once no more nodes can be stripped is exactly the set of nodes on (or reachable only through) a cycle.
+
+!!! note "Why Kahn's algorithm and not DFS three-colouring"
+    Both run in `O(V + E)`, neither is faster or more modern than the other, Kahn dates to 1962 ([kahn_1962](@cite)) and DFS-based cycle detection is from the same era of graph theory. General-purpose graph libraries (e.g. `Graphs.jl`, not a dependency of Qritical, its `is_cyclic`/`topological_sort` use DFS three-colouring) tend to prefer DFS because they already need DFS traversal machinery for many other algorithms (connected components, Tarjan's/Kosaraju's SCC, articulation points), so cycle detection can reuse that existing infrastructure rather than needing its own. There is no such shared machinery to reuse here, this is the only place in the topograph layer that needs a directed-graph traversal, so the choice came down to whichever framing made correctness easiest to see: "nothing left over after stripping" is a direct enough statement of "no cycle" that self-loops and disconnected pieces both fall out without special-casing.
 """
 function has_circuit(g::TensorNetwork)
-    # TODO(human): detect a directed cycle among g's Pinned wires.
-    #
-    # Build the edge set first: for each w in wires(g) with attachment(g.wires[w]) === Pinned(),
-    # add a directed edge from g.legs[g.wires[w].start].owner to g.legs[g.wires[w].finish].owner.
-    # (HalfLoose/Loose/Circle wires contribute no edge; is_progressive already filters those
-    # out via is_ordinary before ever calling this on a non-compactified g.)
-    #
-    # Then decide whether that directed graph over nodes(g) contains a cycle. Consider: DFS
-    # with a three-colour (white/gray/black) visited marking, vs. Kahn's algorithm (repeatedly
-    # remove zero-indegree nodes; a cycle exists iff nodes remain when no more can be removed).
-    # Either is fine, just make sure a self-loop (a trace) is caught, and that a graph with
-    # several disconnected pieces is still checked in full, not just from one starting node.
-    error("has_circuit: not yet implemented")
+    # Kahn's algorithm: repeatedly strip nodes with zero remaining indegree. If every node can eventually be stripped, the graph is a DAG; anything left over once no more can be stripped means those nodes form (or sit on) a cycle. A self-loop node's indegree never reaches zero on its own, so a trace is caught with no special-casing, and starting the queue from ALL zero-indegree nodes (not just one) covers disconnected pieces as well.
+    ns = nodes(g)
+    out_edges = Dict{NodeId,Vector{NodeId}}(n => NodeId[] for n in ns)
+    indegree = Dict{NodeId,Int}(n => 0 for n in ns)
+    for w in wires(g)
+        wire = g.wires[w]
+        attachment(wire) === Pinned() || continue
+        from = g.legs[wire.start].owner
+        to = g.legs[wire.finish].owner
+        push!(out_edges[from], to)
+        indegree[to] += 1
+    end
+
+    queue = [n for n in ns if indegree[n] == 0]
+    visited = 0
+    while !isempty(queue)
+        n = pop!(queue)
+        visited += 1
+        for m in out_edges[n]
+            indegree[m] -= 1
+            indegree[m] == 0 && push!(queue, m)
+        end
+    end
+    return visited < length(ns)
 end
