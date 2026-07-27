@@ -55,7 +55,7 @@ end
         # Start from Neel state, evolve in imaginary time
         ψ₀ = canonicalize(neel_state(g), LeftCanonical(NoTrunc()))
         p = ConstantProtocol(ImaginaryTime(), 0.05, 120, H)
-        result = solve(H, Quench(ψ₀), TEBD(SuzukiTrotter(2), MaxBondDimTrunc(16)), p)
+        result = solve(H, Evolution(ψ₀), TEBD(SuzukiTrotter(2), MaxBondDimTrunc(16)), p)
 
         ψ_f = result.state
         mpo = MPO(H)
@@ -78,7 +78,7 @@ end
         # Imaginary time evolution
         ψ₀ = canonicalize(ψ_rand, LeftCanonical(NoTrunc()))
         p = ConstantProtocol(ImaginaryTime(), 0.05, 30, H)
-        result = solve(H, Quench(ψ₀), TEBD(SuzukiTrotter(2), MaxBondDimTrunc(8)), p)
+        result = solve(H, Evolution(ψ₀), TEBD(SuzukiTrotter(2), MaxBondDimTrunc(8)), p)
 
         ψ_f = result.state
         E_final = real(expect(ψ_f, mpo)) / real(overlap(ψ_f, ψ_f))
@@ -101,8 +101,8 @@ end
         p_clean = ConstantProtocol(RealTime(), 0.05, 40, H_clean)  # t=2.0
         p_dis   = ConstantProtocol(RealTime(), 0.05, 40, H_dis)
 
-        r_clean = solve(H_clean, Quench(ψ₀_clean), TEBD(SuzukiTrotter(2), MaxBondDimTrunc(32)), p_clean)
-        r_dis   = solve(H_dis,   Quench(ψ₀_dis),   TEBD(SuzukiTrotter(2), MaxBondDimTrunc(32)), p_dis)
+        r_clean = solve(H_clean, Evolution(ψ₀_clean), TEBD(SuzukiTrotter(2), MaxBondDimTrunc(32)), p_clean)
+        r_dis   = solve(H_dis,   Evolution(ψ₀_dis),   TEBD(SuzukiTrotter(2), MaxBondDimTrunc(32)), p_dis)
 
         # Entropy at center bond
         center = div(L, 2)
@@ -130,7 +130,7 @@ end
         # Ground state via imaginary-time TEBD
         ψ₀ = canonicalize(neel_state(g), LeftCanonical(NoTrunc()))
         p = ConstantProtocol(ImaginaryTime(), 0.05, 120, H)
-        result = solve(H, Quench(ψ₀), TEBD(SuzukiTrotter(2), MaxBondDimTrunc(16)), p)
+        result = solve(H, Evolution(ψ₀), TEBD(SuzukiTrotter(2), MaxBondDimTrunc(16)), p)
         ψ_gs = result.state
 
         # Ground state via exact diagonalization

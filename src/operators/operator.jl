@@ -35,7 +35,7 @@ julia> uniform_coupling(2, 0.0)
  0.0
 ```
 """
-uniform_coupling(n::Int, x) = fill(x, n)
+uniform_coupling(n::Int, x) = fill(x, n)   # `fill(x, n)` creates a length-n vector with all elements equal to x. used to broadcast a scalar coupling to all bonds
 
 # ----------------------------------------------------------------------------------------
 # Term types
@@ -43,7 +43,6 @@ uniform_coupling(n::Int, x) = fill(x, n)
 
 """
     OneSiteTerm{O}
-
 
 A single-site contribution ``h \\cdot O_i`` to a larger operator.
 
@@ -61,10 +60,10 @@ times a single-site operator matrix located at a specific site.  A list of
 
 See also: [`TwoSiteTerm`](@ref), [`LatticeOperator`](@ref)
 """
-struct OneSiteTerm{O}
-    site::Int
-    op::O
-    coupling::Float64
+struct OneSiteTerm{O}   # parametric struct: `{O}` is a type parameter for the operator matrix type; this allows `op` to be any matrix type (Matrix, Hermitian, Diagonal, etc.) without boxing; in Python this would just be `self.op: Any`
+    site::Int         # 1-indexed site number; `Int` = Julia's default integer (64-bit on 64-bit systems)
+    op::O             # the d×d operator matrix acting at this site; type is determined by the constructor (statically typed)
+    coupling::Float64 # the prefactor h_i for this term; `Float64` = 64-bit float = Python `float`
 end
 
 """
@@ -91,12 +90,12 @@ into the operator that opens the channel (at site ``i``).
 
 See also: [`OneSiteTerm`](@ref), [`LatticeOperator`](@ref)
 """
-struct TwoSiteTerm{O1,O2}
-    i::Int
-    j::Int
-    op_i::O1
-    op_j::O2
-    coupling::Float64
+struct TwoSiteTerm{O1,O2}   # two type parameters O1 and O2 for the left and right operator types respectively; they may differ (e.g. O1=Sp matrix, O2=Sm matrix for the flip-flop term)
+    i::Int            # left site index (1-indexed)
+    j::Int            # right site index; always j > i for open boundary chains (otherwise MPO FSM breaks)
+    op_i::O1          # d×d operator matrix at site i; type O1 captured from constructor
+    op_j::O2          # d×d operator matrix at site j; type O2 may differ from O1 (e.g. S+ and S-)
+    coupling::Float64 # bond coupling J_ij; positive = ferromagnetic, negative = antiferromagnetic (by convention)
 end
 
 # ----------------------------------------------------------------------------------------
@@ -142,11 +141,11 @@ Hamiltonian (time-evolution generator) and observables (expectation values) are
 See also: [`OneSiteTerm`](@ref), [`TwoSiteTerm`](@ref), [`MPO`](@ref),
 [`XXZ`](@ref), [`Heisenberg`](@ref), [`Ising`](@ref)
 """
-struct LatticeOperator{D<:AbstractDoF,G<:AbstractLayout,LT,BT}
-    dof::D
-    geom::G
-    onsite::Vector{LT}
-    bond::Vector{BT}
+struct LatticeOperator{D<:AbstractDoF,G<:AbstractLayout,LT,BT}   # four type parameters; `D<:AbstractDoF` constrains D to subtypes of AbstractDoF (like Python `D: AbstractDoF`); Julia encodes the full type information at compile time, so different models (XXZ vs Ising) produce different concrete types
+    dof::D               # the degree of freedom (e.g. SpinHalf()); determines the local operator algebra and dimension d
+    geom::G              # the lattice geometry (e.g. Chain(L)); determines site count and bond connectivity
+    onsite::Vector{LT}   # list of on-site terms; `Vector{LT}` is a typed vector of OneSiteTerm instances
+    bond::Vector{BT}     # list of two-site bond terms; typed vector of TwoSiteTerm instances
 end
 
 """
@@ -160,7 +159,7 @@ not by its type.  The alias exists purely for readability: writing
 `H = XXZ(g)` and treating it as a `Hamiltonian` makes the intent obvious at
 the call site.
 """
-const Hamiltonian = LatticeOperator
+const Hamiltonian = LatticeOperator   # `const` makes this binding immutable (re-assigning would warn); `=` creates a type alias: Hamiltonian and LatticeOperator are the SAME type (Python has no native type alias syntax; closest is `Hamiltonian = LatticeOperator` but Julia's is enforced at the type level)
 
 # ----------------------------------------------------------------------------------------
 # Named constructors — spin models (§7)
@@ -215,22 +214,28 @@ julia> length(H.bond)   # 3 bonds × 3 term types (Sp⊗Sm, Sm⊗Sp, Sz⊗Sz)
 9
 ```
 """
-function XXZ(g::Chain; J=1.0, Jz=1.0, h=0.0)
-    nb = length(bonds(g))
-    Jxy = J isa Number ? uniform_coupling(nb, Float64(J)) : Float64.(J)
-    Jzv = Jz isa Number ? uniform_coupling(nb, Float64(Jz)) : Float64.(Jz)
-    hv = h isa Number ? uniform_coupling(g.L, Float64(h)) : Float64.(h)
-    ops = algebra_generators(SpinHalf())
+function XXZ(g::Chain; J=1.0, Jz=1.0, h=0.0)   # named constructor for the XXZ model; `;` marks keyword arguments (J, Jz, h); all have default values so XXZ(g) uses Heisenberg couplings
+    nb = length(bonds(g))   # number of bonds = L-1 for open boundary chain; `bonds(g)` returns a list of (i,j) pairs; `length(...)` = Python `len(...)`
+    Jxy = J isa Number ? uniform_coupling(nb, Float64(J)) : Float64.(J)   # if J is a scalar, replicate it to all bonds; `isa Number` checks if J is any numeric type. `Float64(J)` converts scalar to Float64; `Float64.(J)` broadcasts element-wise conversion on a vector 
+    Jzv = Jz isa Number ? uniform_coupling(nb, Float64(Jz)) : Float64.(Jz)   # same for Jz: scalar → uniform vector, vector → Float64 conversion
+    hv = h isa Number ? uniform_coupling(g.L, Float64(h)) : Float64.(h)   # magnetic field: if scalar, replicate to all L sites (not just bonds); `g.L` is the site count
+    ops = algebra_generators(SpinHalf())   # get the spin-½ operator algebra: returns a NamedTuple with fields Sx, Sy, Sz, Sp, Sm, I; physics: S+ = [[0,1],[0,0]], S- = [[0,0],[1,0]], Sz = [[1/2,0],[0,-1/2]]
 
-    onsite = [OneSiteTerm(i, ops.Sz, -hv[i]) for i in sites(g)]
+    onsite = [OneSiteTerm(i, ops.Sz, -hv[i]) for i in sites(g)]   # create one on-site term per site: coupling = -h_i, operator = Sz; `sites(g)` returns 1:g.L; the minus sign implements the convention -h·Sz; comprehension creates a Vector{OneSiteTerm}
 
-    bond = vcat(
-        [TwoSiteTerm(i, j, ops.Sp, ops.Sm, 0.5Jxy[b]) for (b, (i, j)) in enumerate(bonds(g))],
-        [TwoSiteTerm(i, j, ops.Sm, ops.Sp, 0.5Jxy[b]) for (b, (i, j)) in enumerate(bonds(g))],
-        [TwoSiteTerm(i, j, ops.Sz, ops.Sz, Jzv[b]) for (b, (i, j)) in enumerate(bonds(g))],
+    bond = vcat(   # `vcat(a, b, c)` concatenates arrays/vectors vertically. creates the combined list of all bond terms
+        [
+            TwoSiteTerm(i, j, ops.Sp, ops.Sm, 0.5Jxy[b]) for
+            (b, (i, j)) in enumerate(bonds(g))
+        ],   # S+_i S-_j terms: the (J/2)·flip-flop part; `enumerate(bonds(g))` returns (index, (i,j)) pairs — same as Python's enumerate; `0.5Jxy[b]` = J/2 for bond b (Julia: numeric literal × variable = multiply, no `*` needed)
+        [
+            TwoSiteTerm(i, j, ops.Sm, ops.Sp, 0.5Jxy[b]) for
+            (b, (i, j)) in enumerate(bonds(g))
+        ],   # S-_i S+_j terms: the other half of the flip-flop; together S+S- + S-S+ = 2(Sx⊗Sx + Sy⊗Sy) which is the transverse exchange
+        [TwoSiteTerm(i, j, ops.Sz, ops.Sz, Jzv[b]) for (b, (i, j)) in enumerate(bonds(g))],   # Sz_i Sz_j terms: the Ising (longitudinal) part with full coupling Jz (no factor of 1/2)
     )
 
-    LatticeOperator(SpinHalf(), g, onsite, bond)
+    LatticeOperator(SpinHalf(), g, onsite, bond)   # construct the LatticeOperator; Julia infers the type parameters D, G, LT, BT from the argument types automatically
 end
 
 """
@@ -265,7 +270,7 @@ julia> H.dof
 Spin{1//2}()
 ```
 """
-Heisenberg(g::Chain; J=1.0, h=0.0) = XXZ(g; J=J, Jz=J, h=h)
+Heisenberg(g::Chain; J=1.0, h=0.0) = XXZ(g; J=J, Jz=J, h=h)   # isotropic case: set Jz=J so S+S-+S-S+ + 2*Jz*SzSz = J·(SxSx+SySy+SzSz) = J·S⃗·S⃗; one-liner delegates to XXZ with Jz=J
 
 """
     Ising(g::Chain; J=1.0, h=0.0) -> LatticeOperator
@@ -303,16 +308,18 @@ julia> length(H.bond)    # Sz⊗Sz on every NN bond
 3
 ```
 """
-function Ising(g::Chain; J=1.0, h=0.0)
-    nb = length(bonds(g))
-    Jxy = J isa Number ? uniform_coupling(nb, Float64(J)) : Float64.(J)
-    hv = h isa Number ? uniform_coupling(g.L, Float64(h)) : Float64.(h)
-    ops = algebra_generators(SpinHalf())
+function Ising(g::Chain; J=1.0, h=0.0)   # transverse-field Ising: field couples to Sx (quantum fluctuations), Ising interaction along z
+    nb = length(bonds(g))   # number of bonds L-1
+    Jxy = J isa Number ? uniform_coupling(nb, Float64(J)) : Float64.(J)   # longitudinal (Ising) coupling per bond
+    hv = h isa Number ? uniform_coupling(g.L, Float64(h)) : Float64.(h)   # transverse field per site; note: field is on all L sites, not just L-1 bonds
+    ops = algebra_generators(SpinHalf())   # get spin-½ operators
 
-    onsite = [OneSiteTerm(i, ops.Sx, -hv[i]) for i in sites(g)]
-    bond = [TwoSiteTerm(i, j, ops.Sz, ops.Sz, Jxy[b]) for (b, (i, j)) in enumerate(bonds(g))]
+    onsite = [OneSiteTerm(i, ops.Sx, -hv[i]) for i in sites(g)]   # transverse field: -h·Sx at each site; note Sx NOT Sz (hence "transverse"); this is what makes the Ising model quantum (classical Ising has no transverse field)
+    bond = [
+        TwoSiteTerm(i, j, ops.Sz, ops.Sz, Jxy[b]) for (b, (i, j)) in enumerate(bonds(g))
+    ]   # longitudinal Ising interaction J·Sz⊗Sz on each NN bond; single term type unlike XXZ
 
-    LatticeOperator(SpinHalf(), g, onsite, bond)
+    LatticeOperator(SpinHalf(), g, onsite, bond)   # construct the LatticeOperator
 end
 
 # ----------------------------------------------------------------------------------------
@@ -351,9 +358,9 @@ julia> isempty(M.bond)
 true
 ```
 """
-function total_magnetization(g::AbstractLayout; dof=SpinHalf())
-    ops = algebra_generators(dof)
-    LatticeOperator(dof, g, [OneSiteTerm(i, ops.Sz, 1.0) for i in sites(g)], TwoSiteTerm[])
+function total_magnetization(g::AbstractLayout; dof=SpinHalf())   # observable constructor; accepts any geometry type (Chain, ring, etc.) via `AbstractLayout`; `dof=SpinHalf()` default keyword arg
+    ops = algebra_generators(dof)   # get operator algebra for the given DoF
+    LatticeOperator(dof, g, [OneSiteTerm(i, ops.Sz, 1.0) for i in sites(g)], TwoSiteTerm[])   # build the operator: +1·Sz at every site, empty bond list; `TwoSiteTerm[]` is a typed empty vector. `sites(g)` returns the site indices 1:L
 end
 
 """
@@ -394,9 +401,11 @@ julia> [t.coupling for t in Ms.onsite]
   1.0
 ```
 """
-function staggered_magnetization(g::AbstractLayout; dof=SpinHalf())
-    ops = algebra_generators(dof)
-    LatticeOperator(dof, g, [OneSiteTerm(i, ops.Sz, (-1.0)^i) for i in sites(g)], TwoSiteTerm[])
+function staggered_magnetization(g::AbstractLayout; dof=SpinHalf())   # Néel order parameter: alternating ±1 couplings
+    ops = algebra_generators(dof)   # get operator algebra
+    LatticeOperator(
+        dof, g, [OneSiteTerm(i, ops.Sz, (-1.0)^i) for i in sites(g)], TwoSiteTerm[]
+    )   # `(-1.0)^i` is (-1)^i: +1 for even i, -1 for odd i; physics: staggered pattern detects antiferromagnetic order where ↑↓↑↓ gives ∑(-)^i Sz_i = L/2 > 0
 end
 
 """
@@ -443,9 +452,9 @@ julia> size(matrix_repr(O))
 (16, 16)
 ```
 """
-function op_at_site(g::AbstractLayout, dof::AbstractDoF, label::Symbol, site::Int)
-    op = getproperty(algebra_generators(dof), label)
-    LatticeOperator(dof, g, [OneSiteTerm(site, op, 1.0)], TwoSiteTerm[])
+function op_at_site(g::AbstractLayout, dof::AbstractDoF, label::Symbol, site::Int)   # `label::Symbol` requires a Julia Symbol (`:Sz`, `:Sx`, etc.); Symbols are interned strings used as identifiers 
+    op = getproperty(algebra_generators(dof), label)   # `getproperty(obj, :field)` dynamically accesses a field by name. `algebra_generators(dof)` returns a NamedTuple; `label` is a Symbol like `:Sz`; this lets us write `op_at_site(g, dof, :Sz, 2)` without hardcoding the operator
+    LatticeOperator(dof, g, [OneSiteTerm(site, op, 1.0)], TwoSiteTerm[])   # single on-site term with coupling 1.0; `TwoSiteTerm[]` empty bond list
 end
 
 """
@@ -499,12 +508,17 @@ julia> O.bond[1].i, O.bond[1].j
 ```
 """
 function two_site_op(
-    g::AbstractLayout, dof::AbstractDoF, opA::Symbol, iA::Int, opB::Symbol, iB::Int
+    g::AbstractLayout,
+    dof::AbstractDoF,
+    opA::Symbol,
+    iA::Int,
+    opB::Symbol,
+    iB::Int,   # 6 positional arguments; Symbol for operator names allows dynamic lookup in algebra_generators
 )
-    ops = algebra_generators(dof)
-    Amat = getproperty(ops, opA)
-    Bmat = getproperty(ops, opB)
-    LatticeOperator(dof, g, OneSiteTerm[], [TwoSiteTerm(iA, iB, Amat, Bmat, 1.0)])
+    ops = algebra_generators(dof)   # get full operator algebra
+    Amat = getproperty(ops, opA)   # look up operator A by name. e.g. opA=:Sz → Amat = ops.Sz
+    Bmat = getproperty(ops, opB)   # look up operator B by name
+    LatticeOperator(dof, g, OneSiteTerm[], [TwoSiteTerm(iA, iB, Amat, Bmat, 1.0)])   # single bond term with coupling 1.0; `OneSiteTerm[]` empty on-site list; note: sites iA, iB need NOT be NN — the MPO FSM handles non-adjacent pairs via channel carry
 end
 
 """
@@ -531,8 +545,8 @@ julia> isempty(I_op.onsite) && isempty(I_op.bond)
 true
 ```
 """
-function identity_operator(g::AbstractLayout, dof::AbstractDoF)
-    LatticeOperator(dof, g, OneSiteTerm[], TwoSiteTerm[])
+function identity_operator(g::AbstractLayout, dof::AbstractDoF)   # no terms needed: ⟨ψ|I|ψ⟩ = ‖ψ‖²; the MPO constructor handles the empty-terms special case by building a χ=1 all-identity MPO
+    LatticeOperator(dof, g, OneSiteTerm[], TwoSiteTerm[])   # both lists empty; `OneSiteTerm[]` and `TwoSiteTerm[]` are typed empty vectors needed so Julia can infer the LT and BT type parameters correctly
 end
 
 # ----------------------------------------------------------------------------------------
@@ -545,22 +559,22 @@ end
 
 Scale all couplings of `H` by scalar `c`.
 """
-function Base.:*(c::Real, H::LatticeOperator)
-    onsite = [OneSiteTerm(lt.site, lt.op, c * lt.coupling) for lt in H.onsite]
-    bond = [TwoSiteTerm(bt.i, bt.j, bt.op_i, bt.op_j, c * bt.coupling) for bt in H.bond]
-    LatticeOperator(H.dof, H.geom, onsite, bond)
+function Base.:*(c::Real, H::LatticeOperator)   # `Base.:*` extends Julia's built-in multiplication operator for a new type. putting it in `Base` makes `c * H` work with the standard `*` syntax; `Base.:*` is the operator function in Julia's Base module
+    onsite = [OneSiteTerm(lt.site, lt.op, c * lt.coupling) for lt in H.onsite]   # create new OneSiteTerm list with scaled couplings; immutable structs can't be modified, so we create new ones; the operator matrix `lt.op` is shared (not copied) for efficiency
+    bond = [TwoSiteTerm(bt.i, bt.j, bt.op_i, bt.op_j, c * bt.coupling) for bt in H.bond]   # same for bond terms: scale couplings, keep operator matrices
+    LatticeOperator(H.dof, H.geom, onsite, bond)   # construct new LatticeOperator; dof and geom are shared references (not copied)
 end
-Base.:*(H::LatticeOperator, c::Real) = c * H
+Base.:*(H::LatticeOperator, c::Real) = c * H   # commutative case: H * c = c * H; one-liner delegates to the above; this makes `H * 2.0` work as well as `2.0 * H`
 
 """
     Base.:+(A::LatticeOperator, B::LatticeOperator) -> LatticeOperator
 
 Merge the term lists of two operators (both must share the same DoF and geometry).
 """
-function Base.:+(A::LatticeOperator, B::LatticeOperator)
-    onsite = vcat(A.onsite, B.onsite)
-    bond = vcat(A.bond, B.bond)
-    LatticeOperator(A.dof, A.geom, onsite, bond)
+function Base.:+(A::LatticeOperator, B::LatticeOperator)   # extends `+` for LatticeOperator. adding two operators merges their term lists
+    onsite = vcat(A.onsite, B.onsite)   # concatenate on-site term lists; `vcat` merges vectors. the result is a new Vector containing all terms from both
+    bond = vcat(A.bond, B.bond)   # concatenate bond term lists
+    LatticeOperator(A.dof, A.geom, onsite, bond)   # construct merged operator; uses A's dof and geom (they should match B's)
 end
 
 # ----------------------------------------------------------------------------------------
@@ -615,45 +629,51 @@ julia> size(Ms)
 (4, 4)
 ```
 """
-matrix_repr(H::LatticeOperator) = matrix_repr(H, DenseFormat())
+matrix_repr(H::LatticeOperator) = matrix_repr(H, DenseFormat())   # default method: no format argument → dense; delegates to the 2-argument version; this is Julia's way of providing default dispatch.
 
-function matrix_repr(H::LatticeOperator, ::DenseFormat)
+function matrix_repr(H::LatticeOperator, ::DenseFormat)   # dense Kronecker-product construction; builds the full D×D matrix explicitly; only feasible for small systems (D ≤ 2^20)
     # Reject periodic geometries: wrap bond (L,1) has i>j, making d^(j-i-1) negative.
-    if any(bt -> bt.i > bt.j, H.bond)
-        throw(ArgumentError(
-            "matrix_repr(DenseFormat) does not support periodic boundary conditions: " *
-            "bond $(first(bt for bt in H.bond if bt.i > bt.j)) has i > j.  " *
-            "Use an open-boundary Chain or SparseFormat instead.",
-        ))
+    if any(bt -> bt.i > bt.j, H.bond)   # `any(predicate, collection)` returns true if any element satisfies the predicate. periodic boundary conditions create a wrap bond (L,1) where i>j, which breaks the power-of-d formula below
+        throw(
+            ArgumentError(
+                "matrix_repr(DenseFormat) does not support periodic boundary conditions: " *
+                "bond $(first(bt for bt in H.bond if bt.i > bt.j)) has i > j.  " *   # `first(...)` finds the first matching element. embedded in string interpolation `$(...)`
+                "Use an open-boundary Chain or SparseFormat instead.",
+            ),
+        )
     end
-    L = H.geom.L
-    d = local_dim(H.dof)
-    N = d^L
-    N ≤ 2^20 || throw(ArgumentError(
-        "Hilbert space dimension $N = $(d)^$L exceeds the safety limit 2^20. " *
-        "Use SparseFormat or an MPS algorithm for large systems.",
-    ))
-    mat = zeros(ComplexF64, N, N)
-    Id(n) = Matrix{ComplexF64}(I, n, n)
+    L = H.geom.L   # number of sites
+    d = local_dim(H.dof)   # local dimension
+    N = d^L   # total Hilbert space dimension
+    N ≤ 2^20 || throw(
+        ArgumentError(   # same safety guard as sparse version; `2^20` is a literal integer exponentiation
+            "Hilbert space dimension $N = $(d)^$L exceeds the safety limit 2^20. " *
+            "Use SparseFormat or an MPS algorithm for large systems.",
+        ),
+    )
+    mat = zeros(ComplexF64, N, N)   # allocate dense N×N zero matrix. will accumulate all operator contributions
+    Id(n) = Matrix{ComplexF64}(I, n, n)   # local helper function: creates an n×n identity matrix; defined inside the outer function.uses `I` (lazy identity) materialised as a concrete Matrix
 
-    for lt in H.onsite
-        i     = lt.site
-        left  = d^(i - 1)
-        right = d^(L - i)
-        mat .+= lt.coupling .* kron(kron(Id(left), ComplexF64.(lt.op)), Id(right))
-    end
-
-    for bt in H.bond
-        i      = bt.i
-        j      = bt.j
-        left   = d^(i - 1)
-        middle = d^(j - i - 1)
-        right  = d^(L - j)
-        op2 = middle == 1 ?
-            kron(ComplexF64.(bt.op_i), ComplexF64.(bt.op_j)) :
-            kron(kron(ComplexF64.(bt.op_i), Id(middle)), ComplexF64.(bt.op_j))
-        mat .+= bt.coupling .* kron(kron(Id(left), op2), Id(right))
+    for lt in H.onsite   # iterate over on-site terms
+        i = lt.site   # site index (1-indexed)
+        left = d^(i - 1)   # dimension of identity block to the LEFT of site i: d^{i-1}; physics: sites 1..i-1 are not acted on
+        right = d^(L - i)   # dimension of identity block to the RIGHT of site i: d^{L-i}; physics: sites i+1..L are not acted on
+        mat .+= lt.coupling .* kron(kron(Id(left), ComplexF64.(lt.op)), Id(right))   # build I_{d^{i-1}} ⊗ O_i ⊗ I_{d^{L-i}}; nested kron calls build left-to-right; `.+=` broadcasts in-place addition
     end
 
-    return mat
+    for bt in H.bond   # iterate over bond terms
+        i = bt.i   # left site
+        j = bt.j   # right site
+        left = d^(i - 1)   # left identity block dimension
+        middle = d^(j - i - 1)   # intermediate identity block between sites i and j: d^{j-i-1}; for NN bonds (j=i+1), middle=d^0=1 (no intermediate sites)
+        right = d^(L - j)   # right identity block dimension
+        op2 = if middle == 1   # check if there are any intermediate sites between i and j
+            kron(ComplexF64.(bt.op_i), ComplexF64.(bt.op_j))   # NN case (j=i+1): directly kron O_i ⊗ O_j (no intermediate identity needed)
+        else   # NN case (j=i+1): directly kron O_i ⊗ O_j (no intermediate identity needed)
+            kron(kron(ComplexF64.(bt.op_i), Id(middle)), ComplexF64.(bt.op_j))   # non-NN case: O_i ⊗ I_{middle} ⊗ O_j (insert identity for the sites between i and j)
+        end   # non-NN case: O_i ⊗ I_{middle} ⊗ O_j (insert identity for the sites between i and j)
+        mat .+= bt.coupling .* kron(kron(Id(left), op2), Id(right))   # embed into full Hilbert space: I_{left} ⊗ op2 ⊗ I_{right}
+    end
+
+    return mat   # return the assembled dense complex Hamiltonian matrix
 end

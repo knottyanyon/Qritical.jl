@@ -5,7 +5,7 @@
 # per-site fields; all the MBL / imaginary-time GS machinery uses the same TEBD
 # pipeline already implemented in §7–8.
 
-using Random
+using Random   # Julia's standard library for random number generation; `using Random` imports `AbstractRNG`, `MersenneTwister`, `rand`, etc.; needed for `AbstractRNG` type annotation in `disorder_realization`
 
 """
     Uniform(lo::Real, hi::Real)
@@ -22,22 +22,24 @@ a critical ``W_c \\approx 3.5`` the 1D XXZ chain enters the many-body-localised
 (MBL) phase.
 
 # Arguments
-- `lo::Real`: lower bound of the distribution interval.
-- `hi::Real`: upper bound.  Must satisfy `hi ≥ lo` conceptually; no runtime
-  check is performed, but drawing from a reversed interval returns nonsense.
+
+  - `lo::Real`: lower bound of the distribution interval.
+  - `hi::Real`: upper bound.  Must satisfy `hi ≥ lo` conceptually; no runtime
+    check is performed, but drawing from a reversed interval returns nonsense.
 
 # Examples
+
 ```jldoctest
 julia> d = Uniform(-3.5, 3.5);
 
 julia> d.lo, d.hi
 (-3.5, 3.5)
-```
+```   # immutable struct ; stores just the two interval bounds
 """
-struct Uniform
-    lo::Float64
-    hi::Float64
-    Uniform(lo::Real, hi::Real) = new(Float64(lo), Float64(hi))
+struct Uniform   # immutable struct ; stores just the two interval bounds
+    lo::Float64   # lower bound; `::Float64` enforces that the field is Float64 (64-bit floating point)
+    hi::Float64   # upper bound; fields annotated with concrete types for zero-overhead access
+    Uniform(lo::Real, hi::Real) = new(Float64(lo), Float64(hi))   # inner constructor (defined inside the struct body); `new(...)` is the low-level object allocator ` with Int args
 end
 
 """
@@ -73,17 +75,20 @@ statistics over many realizations of ``\\{h_i\\}`` while keeping each
 realization fixed between method comparisons.
 
 # Arguments
-- `n::Int`: number of sites (length of the returned field vector).
-- `dist::Uniform`: the distribution; typically `Uniform(-W, W)` for disorder
-  strength ``W``.
-- `rng::AbstractRNG`: a seeded RNG, e.g. `MersenneTwister(42)`.  The caller
-  controls the seed so that realizations are reproducible.
+
+  - `n::Int`: number of sites (length of the returned field vector).
+  - `dist::Uniform`: the distribution; typically `Uniform(-W, W)` for disorder
+    strength ``W``.
+  - `rng::AbstractRNG`: a seeded RNG, e.g. `MersenneTwister(42)`.  The caller
+    controls the seed so that realizations are reproducible.
 
 # Returns
-- `Vector{Float64}` of length `n`: the on-site fields
-  ``h_1, \\ldots, h_n \\sim \\mathcal{U}(\\mathrm{lo}, \\mathrm{hi})``.
+
+  - `Vector{Float64}` of length `n`: the on-site fields
+    ``h_1, \\ldots, h_n \\sim \\mathcal{U}(\\mathrm{lo}, \\mathrm{hi})``.
 
 # Examples
+
 ```jldoctest
 julia> using Random
 
@@ -100,18 +105,18 @@ A complete ground-state workflow for one disorder realization:
 
 ```julia
 using Random
-L    = 8
-W    = 3.5                                          # near the MBL transition
+L = 8
+W = 3.5                                          # near the MBL transition
 seed = 42
-rng  = MersenneTwister(seed)
-h    = disorder_realization(L, Uniform(-W, W), rng) # random fields
-H    = XXZ(Chain(L); J=1.0, Jz=1.0, h=h)           # disordered XXZ Hamiltonian
-res  = solve(H, GroundState(), ExactDiagonalization(:ground))
-res.energy                                          # ground-state energy for this realization
-```
+rng = MersenneTwister(seed)
+h = disorder_realization(L, Uniform(-W, W), rng) # random fields
+H = XXZ(Chain(L); J=1.0, Jz=1.0, h=h)           # disordered XXZ Hamiltonian
+res = solve(H, GroundState(), ExactDiagonalization(:ground))
+res.energy                                          # ground-state energy for this realization   # draw n IID uniform samples from dist; `AbstractRNG` accepts any RNG (MersenneTwister, Xoshiro, etc.) for reproducibility
+```   # `rand(rng, n)` = n IID U[0,1] samples using the given RNG  + lo
 """
-function disorder_realization(n::Int, dist::Uniform, rng::AbstractRNG)
-    rand(rng, n) .* (dist.hi - dist.lo) .+ dist.lo
+function disorder_realization(n::Int, dist::Uniform, rng::AbstractRNG)   # draw n IID uniform samples from dist; `AbstractRNG` accepts any RNG (MersenneTwister, Xoshiro, etc.) for reproducibility
+    rand(rng, n) .* (dist.hi - dist.lo) .+ dist.lo   # `rand(rng, n)` = n IID U[0,1] samples using the given RNG  + lo
 end
 
 """
@@ -126,22 +131,25 @@ Hamiltonian, solves it, and returns any observable; `parameter_sweep` simply
 maps `f` over `params` and returns the collected results.
 
 # Arguments
-- `f`: a callable `f(p) -> result`.  Typically a `do`-block closure that
-  constructs a Hamiltonian from the parameter value and calls [`solve`](@ref).
-- `params`: any iterable of parameter values (e.g. `[0.5, 1.0, 2.0]` for a J
-  sweep or `1:10` for disorder seeds).
+
+  - `f`: a callable `f(p) -> result`.  Typically a `do`-block closure that
+    constructs a Hamiltonian from the parameter value and calls [`solve`](@ref).
+  - `params`: any iterable of parameter values (e.g. `[0.5, 1.0, 2.0]` for a J
+    sweep or `1:10` for disorder seeds).
 
 # Returns
-- `Vector` of the same length as `params`, with element type inferred from `f`.
+
+  - `Vector` of the same length as `params`, with element type inferred from `f`.
 
 # Examples
+
 ```julia
-J_vals  = 0.5:0.5:2.0
-g       = Chain(6)
+J_vals = 0.5:0.5:2.0
+g = Chain(6)
 energies = parameter_sweep(J_vals) do J
     H = Heisenberg(g; J=J)
     solve(H, GroundState(), ExactDiagonalization(:ground)).energy
-end
+end   # `map(f, iter)` applies `f` to every element of `iter` and returns a vector of results 
 ```
 """
-parameter_sweep(f, params) = map(f, params)
+parameter_sweep(f, params) = map(f, params)   # `map(f, iter)` applies `f` to every element of `iter` and returns a vector of results 
