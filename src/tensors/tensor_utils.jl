@@ -19,12 +19,12 @@ julia> _autolabel(())
 :scalar
 ```
 """
-function _autolabel(indices::Tuple{Vararg{AbstractIx}})
-    isempty(indices) ? :scalar : Symbol(join(String.(label.(indices))))
+function _autolabel(indices::Tuple{Vararg{AbstractIx}})   # `Tuple{Vararg{AbstractIx}}` = a Tuple of any number of AbstractIx elements; `Vararg` = variadic
+    isempty(indices) ? :scalar : Symbol(join(String.(label.(indices))))   # ternary: if empty return `:scalar`; else: `label.(indices)` = broadcast `label` to get a tuple of Symbols; `String.(...)` = broadcast `String` to convert each Symbol to a String; `join(...)` = concatenate all strings; `Symbol(...)` = convert the joined string back to a Symbol
 end
 
-MulTIx(indices::Tuple{Vararg{AbstractIx}}) = MulTIx(_autolabel(indices), indices)
-MulTIx(indices::AbstractIx...) = MulTIx(indices)
+MulTIx(indices::Tuple{Vararg{AbstractIx}}) = MulTIx(_autolabel(indices), indices)   # outer constructor: takes a Tuple of indices, auto-generates the label, then calls the full 2-argument struct constructor; Python: `@classmethod` or `__init__` with optional `label` argument
+MulTIx(indices::AbstractIx...) = MulTIx(indices)   # varargs outer constructor: `f(x...)` collects arguments into a Tuple ; delegates to the Tuple form above
 
 # ── QTensor overloads of partition helpers ────────────────────────────────────
 # These accept a QTensor as the second argument so callers don't have to
@@ -40,17 +40,20 @@ in `A.indices`.  Delegates to `complement(p, A.indices)`.
 See also: [`complement(::Partition, indices)`](@ref)
 
 # Examples
+
 ```jldoctest
-julia> vL = upper(:vL, 2);  σ = upper(:σ, 3);  vR = lower(:vR, 4);
+julia> vL = upper(:vL, 2);
+       σ = upper(:σ, 3);
+       vR = lower(:vR, 4);
 
 julia> A = QTensor(rand(2, 3, 4), (vL, σ, vR));
 
 julia> complement(Partition([vL, σ]), A)
 1-element Vector{AbstractIx}:
- TIx{Lower}(:vR, 4)
+ TIx{Lower}(:vR, 4)   # QTensor overload: extracts A.indices and delegates to the generic `complement(p, indices)` method; avoids forcing callers to write `complement(p, A.indices)` manually
 ```
 """
-complement(p::Partition, A::QTensor) = complement(p, A.indices)
+complement(p::Partition, A::QTensor) = complement(p, A.indices)   # QTensor overload: extracts A.indices and delegates to the generic `complement(p, indices)` method; avoids forcing callers to write `complement(p, A.indices)` manually
 
 """
     bipartition(left::Partition, A::QTensor) -> Bipartition
@@ -59,18 +62,21 @@ Construct a [`Bipartition`](@ref) for tensor `A` whose right side is
 `complement(left, A)`.
 
 # Examples
+
 ```jldoctest
-julia> vL = upper(:vL, 2);  σ = upper(:σ, 3);  vR = lower(:vR, 4);
+julia> vL = upper(:vL, 2);
+       σ = upper(:σ, 3);
+       vR = lower(:vR, 4);
 
 julia> A = QTensor(rand(2, 3, 4), (vL, σ, vR));
 
 julia> bp = bipartition(Partition([vL, σ]), A);
 
 julia> bp.right[1] == vR
-true
+true   # QTensor overload: extracts A.indices and delegates to `bipartition(left, indices)` from partition.jl; the right side is automatically the complement
 ```
 """
-bipartition(left::Partition, A::QTensor) = bipartition(left, A.indices)
+bipartition(left::Partition, A::QTensor) = bipartition(left, A.indices)   # QTensor overload: extracts A.indices and delegates to `bipartition(left, indices)` from partition.jl; the right side is automatically the complement
 
 # ========================= Bond label utility =================================
 
@@ -93,4 +99,4 @@ julia> bond_label(:α, 12)
 :α12
 ```
 """
-bond_label(base::Symbol, site::Int) = Symbol(base, site)
+bond_label(base::Symbol, site::Int) = Symbol(base, site)   # `Symbol(base, site)` = concatenate base Symbol with integer site to create e.g. :χ3; Python has no Symbol type but this is analogous to f":χ{site}" as an interned string; used to build unique names for each bond in the MPS chain

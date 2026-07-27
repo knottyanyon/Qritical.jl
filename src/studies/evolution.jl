@@ -24,7 +24,8 @@ function neel_state(g::AbstractLayout; dof::AbstractDoF=SpinHalf())   # keyword 
     L = length(sites(g))   # `sites(g)` returns a range 1:L; `length(...)` counts the sites; for Chain(4) this gives 4
     d = local_dim(dof)   # local Hilbert-space dimension: d=2 for SpinHalf
     # spin-½ basis: index 1 = |↑⟩, index 2 = |↓⟩
-    tensors = Vector{QTensor}(undef, L)   # pre-allocate length-L vector of uninitialized QTensors    # L+1 bond spectra: one per boundary (L bonds → L+1 boundaries)
+    tensors = Vector{QTensor}(undef, L)   # pre-allocate length-L vector of uninitialized QTensors
+    bond_svs = Vector{SingValSpectrum}(undef, L + 1)   # L+1 bond spectra: one per boundary (L bonds → L+1 boundaries)
     bond_svs[1] = SingValSpectrum([1.0], 0.0, true)   # left boundary: trivial χ=1 spectrum; `[1.0]` = length-1 Float64 vector; `true` = normalised; SingValSpectrum stores singular values + truncation error + normalised flag
     bond_svs[L + 1] = SingValSpectrum([1.0], 0.0, true)   # right boundary: same trivial spectrum
 
