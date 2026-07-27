@@ -4,7 +4,16 @@ const SRCDIR = joinpath(pkgdir(Qritical), "src")
 
 @testset "src layout" begin
     # Top-level subdirectories
-    for dir in ("tensors", "min_model_kit", "operators", "states", "algorithms", "studies", "utils")
+    for dir in (
+        "tensors",
+        "min_model_kit",
+        "operators",
+        "states",
+        "algorithms",
+        "studies",
+        "utils",
+        "topograph",
+    )
         @test isdir(joinpath(SRCDIR, dir))
     end
 
@@ -13,31 +22,45 @@ const SRCDIR = joinpath(pkgdir(Qritical), "src")
 
     # Exact file → folder mapping
     expected = [
-        ("tensors",                  "tix.jl"),
-        ("tensors",                  "multix.jl"),
-        ("tensors",                  "partition.jl"),
-        ("tensors",                  "qtensor.jl"),
-        ("tensors",                  "tensor_utils.jl"),
-        ("tensors",                  "bond.jl"),
-        ("tensors",                  "ortho_center.jl"),
-        ("tensors",                  "spectrum.jl"),
-        ("tensors",                  "svd.jl"),
-        ("tensors",                  "storage_format.jl"),
-        ("min_model_kit",            "dof.jl"),
-        ("min_model_kit/lattice",    "geometry.jl"),
-        ("min_model_kit/lattice",    "symmetries.jl"),
-        ("operators",                "operator.jl"),
-        ("operators",                "finite_mpo.jl"),
-        ("operators",                "correlators.jl"),
-        ("states",                   "mps.jl"),
-        ("states",                   "canonicalize.jl"),
-        ("states",                   "vidal.jl"),
-        ("algorithms",               "power_method.jl"),
-        ("algorithms",               "ed.jl"),
-        ("algorithms",               "tebd.jl"),
-        ("algorithms",               "quench.jl"),
-        ("studies",                  "disorder.jl"),
-        ("utils",                    "io.jl"),
+        ("tensors", "tix.jl"),
+        ("tensors", "multix.jl"),
+        ("tensors", "partition.jl"),
+        ("tensors", "qtensor.jl"),
+        ("tensors", "tensor_utils.jl"),
+        ("tensors", "bond.jl"),
+        ("tensors", "ortho_center.jl"),
+        ("tensors", "spectrum.jl"),
+        ("tensors", "svd.jl"),
+        ("tensors", "storage_format.jl"),
+        ("min_model_kit", "dof.jl"),
+        ("min_model_kit/lattice", "geometry.jl"),
+        ("min_model_kit/lattice", "symmetries.jl"),
+        ("operators", "operator.jl"),
+        ("operators", "finite_mpo.jl"),
+        ("operators", "correlators.jl"),
+        ("states", "mps.jl"),
+        ("states", "canonicalize.jl"),
+        ("states", "vidal.jl"),
+        ("algorithms", "power_method.jl"),
+        ("algorithms", "ed.jl"),
+        ("algorithms", "tebd.jl"),
+        ("studies", "study.jl"),
+        ("studies", "evolution.jl"),
+        ("studies", "disorder.jl"),
+        ("utils", "io.jl"),
+        ("utils", "deprecations.jl"),
+        ("topograph", "gengraph.jl"),
+        ("topograph", "ids.jl"),
+        ("topograph", "node.jl"),
+        ("topograph", "wire.jl"),
+        ("topograph", "leg.jl"),
+        ("topograph", "attachment.jl"),
+        ("topograph", "orientation.jl"),
+        ("topograph", "network.jl"),
+        ("topograph", "pin.jl"),
+        ("topograph", "compactify.jl"),
+        ("topograph", "progressive.jl"),
+        ("topograph", "topograph.jl"),
     ]
     for (folder, file) in expected
         @test isfile(joinpath(SRCDIR, folder, file))

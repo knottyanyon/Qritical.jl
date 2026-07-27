@@ -2,7 +2,7 @@ module Qritical
 
 using LinearAlgebra
 using TensorOperations
-import SparseArrays
+using SparseArrays: SparseArrays
 import SparseArrays: sparse
 
 """
@@ -36,6 +36,17 @@ include("tensors/tensor_utils.jl")
 include("tensors/bond.jl")
 include("tensors/ortho_center.jl")
 include("tensors/spectrum.jl")
+include("topograph/gengraph.jl")
+include("topograph/ids.jl")
+include("topograph/node.jl")
+include("topograph/wire.jl")
+include("topograph/leg.jl")
+include("topograph/attachment.jl")
+include("topograph/orientation.jl")
+include("topograph/network.jl")
+include("topograph/pin.jl")
+include("topograph/compactify.jl")
+include("topograph/progressive.jl")
 include("tensors/svd.jl")
 include("utils/io.jl")
 include("states/mps.jl")
@@ -45,9 +56,11 @@ include("operators/correlators.jl")
 include("operators/finite_mpo.jl")
 include("algorithms/power_method.jl")
 include("algorithms/tebd.jl")
-include("algorithms/quench.jl")
+include("studies/study.jl")
+include("studies/evolution.jl")
 include("algorithms/ed.jl")
 include("studies/disorder.jl")
+include("utils/deprecations.jl")
 
 # ==== Index layer =============================================================
 export IxLoc, Upper, Lower
@@ -68,6 +81,22 @@ export Bond, OrthoCenter, BondCenter, SiteCenter
 export AbstractSpectrum, SingValSpectrum, EigValSpectrum, SchmidtSpectrum
 export schmidt_rank, spectral_gap, schmidt_values
 export entanglement_entropy, entanglement_spectrum
+
+# ==== Topograph — generalized topological graph layer =========================
+export AbstractGenTopoGraph
+export GraphTrait, Ungraded, Oriented, Polarised
+export graph_trait, is_oriented, is_polarised
+export WireId, LegId, NodeId
+export Wire, Leg
+export Attachment, Pinned, HalfLoose, Loose, Circle
+export attachment
+export make_leg
+export LegOrientation, Incoming, Outgoing, orientation, leg_orientation
+export TensorNetwork, add_node!, add_wire!, add_leg!
+export nodes, wires, legs, ends, incident, degree
+export attach!, pin!, cut!
+export compactify, boundary, is_ordinary, is_closed
+export is_progressive, has_circuit
 
 # ==== State utilities + I/O ===================================================
 export bipartition_matrix, as_state, load_array
@@ -117,10 +146,10 @@ export bond_hamiltonian
 export apply_gate
 export TrotterSubstep, SuzukiTrotter, trotter_steps, trotter_step
 
-# ==== Quench + solve interface ================================================
+# ==== Evolution + solve interface ============================================
 export neel_state
-export Quench, TEBD, NoTracker, Tracker
-export QuenchResult
+export Evolution, TEBD, NoTracker, Tracker
+export EvolutionResult
 export solve
 
 # ==== ExactDiagonalization ====================================================
@@ -129,6 +158,10 @@ export StatevectorState, as_statevector, EDTimeResult
 
 # ==== Disorder ================================================================
 export Uniform, disorder_realization, parameter_sweep
+
+# ==== Study ================================================================
+
+export StudyType, StaticsStudy, DynamicsStudy
 
 # ==== Visualisation ==========================================================
 # Generic-function stubs; the methods are implemented in `ext/QriticalMakieExt.jl`,
@@ -164,13 +197,14 @@ narrow end points toward the bond they contract onto; the orthogonality centre
 (no such guarantee) stays a general circle.
 
 # Keyword arguments
-- `name` — label inside the tensor node (`QTensor` only)
-- `show_dims::Bool` — annotate bond / leg dimensions (default `true`)
-- `show_arrows::Bool` — draw directed arrowheads (default `true`)
-- `shape`, `rotation` — node shape/orientation (`QTensor` only); see [`node!`](@ref)
-- `show_shapes::Bool` — auto-select isometry wedges by canonical form (`FiniteMPS` only, default `true`)
-- `show_legend::Bool` — show the canonical-form colour legend (`FiniteMPS` only, default `true`)
-- `figure_kw` — named-tuple forwarded to `Makie.Figure`
+
+  - `name` — label inside the tensor node (`QTensor` only)
+  - `show_dims::Bool` — annotate bond / leg dimensions (default `true`)
+  - `show_arrows::Bool` — draw directed arrowheads (default `true`)
+  - `shape`, `rotation` — node shape/orientation (`QTensor` only); see [`node!`](@ref)
+  - `show_shapes::Bool` — auto-select isometry wedges by canonical form (`FiniteMPS` only, default `true`)
+  - `show_legend::Bool` — show the canonical-form colour legend (`FiniteMPS` only, default `true`)
+  - `figure_kw` — named-tuple forwarded to `Makie.Figure`
 
 See also [`schematic`](@ref) for building diagrams by hand.
 """
@@ -190,10 +224,12 @@ coordinates and the view box auto-expands (with margin `pad`) so nothing is
 cropped. `figure_kw` is forwarded to `Makie.Figure`.
 
 # Example
+
 ```julia
 using Qritical, CairoMakie
 s = schematic()
-node!(s, :A, (0, 0)); node!(s, :B, (1, 0))
+node!(s, :A, (0, 0));
+node!(s, :B, (1, 0))
 wire!(s, :A, :B; label="χ")
 region!(s, [:A, :B]; label="block", color=:steelblue)
 s.fig
@@ -214,11 +250,11 @@ to it by that symbol. Returns `s`.
 `shape` selects the node's geometry; the silhouette encodes the operator's index
 structure:
 
-| `shape` | Geometry | Meaning |
-|:--------|:---------|:--------|
-| `:general`  | circle    | a generic tensor with no special structure |
-| `:diagonal` | diamond   | a diagonal matrix (e.g. a singular-value spectrum ``\\Sigma``) |
-| `:unitary`  | D-arch    | ``U`` with ``UU^\\dagger = U^\\dagger U = I`` — a flat base with a domed top, centred on the node |
+| `shape`     | Geometry  | Meaning                                                                                                                                                                                                                                                                                |
+|:----------- |:--------- |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `:general`  | circle    | a generic tensor with no special structure                                                                                                                                                                                                                                             |
+| `:diagonal` | diamond   | a diagonal matrix (e.g. a singular-value spectrum ``\\Sigma``)                                                                                                                                                                                                                         |
+| `:unitary`  | D-arch    | ``U`` with ``UU^\\dagger = U^\\dagger U = I`` — a flat base with a domed top, centred on the node                                                                                                                                                                                      |
 | `:isometry` | trapezoid | ``W`` with ``W^\\dagger W = I`` but ``WW^\\dagger \\neq I`` — the in/out dimensions *differ*, so the wide base carries the larger index and the shape tapers to a narrow top on the *contracted* (smaller) side; stacking two mirrored wedges base-to-base annihilates to the identity |
 
 `rotation` (radians) orients the `:unitary` dome and the `:isometry` narrow top —
@@ -226,6 +262,7 @@ structure:
 symmetric `:general`/`:diagonal` shapes.
 
 # Example
+
 ```julia
 using Qritical, CairoMakie
 s = schematic()

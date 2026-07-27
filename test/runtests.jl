@@ -28,6 +28,7 @@ using Statistics
     include("test_bond.jl")
     include("test_ortho_center.jl")
     include("test_spectrum.jl")
+    include("test_topograph/test_topograph.jl")
     include("test_io_state.jl")
     include("test_mps.jl")
     include("test_convention.jl")
