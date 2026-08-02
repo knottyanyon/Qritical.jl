@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# pre-push: run the full test suite before allowing a push.
+# Skip with: git push --no-verify
+
+echo ""
+echo "  Running test suite before push (skip with --no-verify)..."
+echo ""
+
+julia --project -e 'import Pkg; Pkg.test()' 2>&1
+STATUS=$?
+
+if [ $STATUS -ne 0 ]; then
+    echo ""
+    echo "  Push blocked: tests failed. Fix failing tests or use --no-verify to force."
+    echo ""
+    exit 1
+fi
