@@ -214,7 +214,7 @@ end
 # ----------------------------------------------------------------------------------------
 
 """
-    apply_gate(ψ::FiniteMPS, G::Propagator, bond::Int; trunc) -> FiniteMPS
+    apply_gate(ψ::FiniteMPS, G::Propagator, bond::Int; trunc, center) -> FiniteMPS
 
 Apply a two-site gate `G` at bond `bond` (connecting sites `bond` and `bond+1`).
 
@@ -223,7 +223,22 @@ Steps:
  1. Merge the two MPS tensors: ``\\Theta[\\alpha, \\sigma_1, \\sigma_2, \\beta]``.
  2. Contract with gate ``G[\\sigma_1', \\sigma_2', \\sigma_1, \\sigma_2]``.
  3. Reshape and SVD-split with truncation `trunc`.
- 4. Store left-canonical ``A[\\alpha, \\sigma_1', r]`` and remainder ``B[r, \\sigma_2', \\beta]``.
+ 4. Store the isometric factor on one site and the ``\\Sigma``-carrying factor on the other.
+
+`center` selects which of the two sites keeps the orthogonality centre, i.e. which one
+absorbs ``\\Sigma``:
+
+  - `:right` (default) — ``A_i = U`` is left-canonical, ``A_j = \\Sigma V^\\dagger`` is the
+    centre. Right for a sweep that moves toward larger bond indices.
+  - `:left` — ``A_i = U \\Sigma`` is the centre, ``A_j = V^\\dagger`` is right-canonical.
+    Right for a sweep that moves toward smaller bond indices.
+
+The choice is a pure gauge transformation: both give the same physical state, and both
+truncate against the same singular values. What it buys is the gauge of the state handed
+to the *next* gate. A gate's SVD is only the true Schmidt decomposition of the whole
+chain when everything left of the bond is left-canonical and everything right of it is
+right-canonical, so keeping the centre travelling with the sweep is what makes the
+truncation variationally optimal rather than merely small.
 
 For `RealTime` gates the norm of the MPS is preserved exactly (up to floating-point
 error). For `ImaginaryTime` gates the norm decreases; the caller is responsible for
@@ -233,11 +248,14 @@ function apply_gate(
     ψ::FiniteMPS,
     G::Propagator,
     bond::Int;
-    trunc::AbstractTrunc=NoTrunc(),   # `bond::Int` requires an integer bond index; `;` separates positional from keyword arguments; `trunc::AbstractTrunc=NoTrunc()` is a keyword argument with a default value 
+    trunc::AbstractTrunc=NoTrunc(),   # `bond::Int` requires an integer bond index; `;` separates positional from keyword arguments; `trunc::AbstractTrunc=NoTrunc()` is a keyword argument with a default value
+    center::Symbol=:right,   # which site keeps the orthogonality centre after the split; `:right` reproduces the historical behaviour exactly, so every existing caller is unaffected
 )::FiniteMPS   # `::FiniteMPS` after the closing `)` is a return type annotation — optional in Julia but helps catch bugs and enables compiler optimisation
     L = length(ψ.tensors)   # number of sites; `length(collection)` = Python `len(collection)` but also works on arrays
     i, j = bond, bond + 1   # sites connected by this bond; TEBD always acts on adjacent sites
     (1 ≤ i < L) || throw(ArgumentError("bond $bond out of range [1, $(L-1)]"))   # bounds check: bond must be a valid NN pair; `$(L-1)` evaluates expression in string interpolation
+    (center === :left || center === :right) ||
+        throw(ArgumentError("center must be :left or :right, got $center"))   # `===` is identity comparison, the cheap way to compare Symbols; guard against a typo silently selecting the default branch
 
     A1 = ψ.tensors[i].data   # (χL, d, χM)  # MPS tensor at site i; shape: (left bond dim, phys dim, middle bond dim); `.data` accesses the raw array from the QTensor wrapper
     A2 = ψ.tensors[j].data   # (χM, d, χR)  # MPS tensor at site j; same left bond dim as A1's right bond dim
@@ -262,8 +280,15 @@ function apply_gate(
     r, ε_bond = _truncate_singular_values(S_clean, trunc)   # determine how many singular values to keep given truncation scheme; `r` is the kept bond dimension; `ε_bond` is the 2-norm of the singular values thrown away at this bond; physics: truncation controls bond dimension growth (key to TEBD efficiency), and ε_bond² is the Schmidt weight that growth cost us
     svs = F.S[1:r]   # keep the first r (largest) singular values; `1:r` is a range 1 to r inclusive; Julia is 1-indexed 
 
-    A1_new = reshape(F.U[:, 1:r], χL, d, r)           # left-canonical  # reshape truncated U into new left tensor; `[:, 1:r]` = all rows, first r columns. physics: A1_new satisfies A†A = I (left-canonical form)
-    A2_new = reshape(Diagonal(svs) * F.Vt[1:r, :], r, d, χR)  # absorb Σ  # absorb singular values into right tensor: Σ Vt; `Diagonal(svs)` creates a diagonal matrix (like np.diag); `F.Vt[1:r, :]` = first r rows, all columns. physics: absorbing Σ into the right tensor gives mixed-canonical form
+    # Which side absorbs Σ decides where the orthogonality centre lands. The other side is
+    # an isometry: U is left-canonical (U†U = I), Vt is right-canonical (Vt Vt† = I).
+    if center === :right
+        A1_new = reshape(F.U[:, 1:r], χL, d, r)           # left-canonical  # reshape truncated U into new left tensor; `[:, 1:r]` = all rows, first r columns. physics: A1_new satisfies A†A = I (left-canonical form)
+        A2_new = reshape(Diagonal(svs) * F.Vt[1:r, :], r, d, χR)  # absorb Σ  # absorb singular values into right tensor: Σ Vt; `Diagonal(svs)` creates a diagonal matrix (like np.diag); `F.Vt[1:r, :]` = first r rows, all columns. physics: absorbing Σ into the right tensor gives mixed-canonical form
+    else
+        A1_new = reshape(F.U[:, 1:r] * Diagonal(svs), χL, d, r)   # absorb Σ  # mirror split: the singular values go into the LEFT tensor, so site i becomes the orthogonality centre and the sweep can continue toward smaller bond indices
+        A2_new = reshape(F.Vt[1:r, :], r, d, χR)          # right-canonical  # Vt alone is the isometry: A2_new A2_new† = I over the (σ, vR) legs, i.e. right-canonical form
+    end
 
     # Build new tensor list with the two updated sites
     tensors = copy(ψ.tensors)   # shallow copy of the tensor list; `copy` copies the container but not the elements inside ; we replace only tensors[i] and tensors[j] below
@@ -271,9 +296,20 @@ function apply_gate(
 
     # Outer legs keep their old variance — their partner sites are untouched, so
     # re-tagging them would break the one-up-one-down bond pairing. The fresh inner
-    # bond points toward site j (arrow in = Upper on j), which absorbed Σ.
-    tensors[i] = QTensor(A1_new, (ψ.tensors[i].indices[1], upper(:σ, d), lower(:vR, r)))   # construct a new QTensor at site i with updated data and index metadata; `upper(:σ, d)` creates an Upper-variance physical index (contravariant); `lower(:vR, r)` creates a Lower-variance right-bond index pointing toward j; the left index is preserved from the original tensor
-    tensors[j] = QTensor(A2_new, (upper(:vL, r), upper(:σ, d), ψ.tensors[j].indices[3]))   # new QTensor at site j; `upper(:vL, r)` for left-bond index; the right index of j is preserved unchanged; physics: the new inner bond dimension is r (after truncation)
+    # bond always points TOWARD whichever site absorbed Σ (arrow in = Upper on that
+    # end, Lower on the other), because every bond arrow points at the orthogonality
+    # centre. So the two branches below are mirror images in the variance tags too:
+    #   center = :right — site i left-canonical (vL:inherit, σ:Up, vR:Low),
+    #                     site j the centre     (vL:Up,      σ:Up, vR:inherit)
+    #   center = :left  — site i the centre     (vL:inherit, σ:Up, vR:Up ),
+    #                     site j right-canonical(vL:Low,     σ:Up, vR:inherit)
+    if center === :right
+        tensors[i] = QTensor(A1_new, (ψ.tensors[i].indices[1], upper(:σ, d), lower(:vR, r)))   # construct a new QTensor at site i with updated data and index metadata; `upper(:σ, d)` creates an Upper-variance physical index (contravariant); `lower(:vR, r)` creates a Lower-variance right-bond index pointing toward j; the left index is preserved from the original tensor
+        tensors[j] = QTensor(A2_new, (upper(:vL, r), upper(:σ, d), ψ.tensors[j].indices[3]))   # new QTensor at site j; `upper(:vL, r)` for left-bond index; the right index of j is preserved unchanged; physics: the new inner bond dimension is r (after truncation)
+    else
+        tensors[i] = QTensor(A1_new, (ψ.tensors[i].indices[1], upper(:σ, d), upper(:vR, r)))   # site i is now the orthogonality centre: both of its bond arrows point in, so vR is Upper (all-Upper is the centre signature of the convention)
+        tensors[j] = QTensor(A2_new, (lower(:vL, r), upper(:σ, d), ψ.tensors[j].indices[3]))   # site j is right-canonical: its arrows run R→L, so the left bond points away from j and is tagged Lower
+    end
     normalized = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))   # check if ‖ψ‖² = Σ s_k² ≈ 1; `isapprox(a, b; atol=...)` is Julia's `≈` with explicit tolerance. `sum(abs2, svs)` applies `abs2` (|x|²) to each element then sums ; this determines whether the SingValSpectrum is marked as normalised
     bond_svs[i + 1] = SingValSpectrum(svs, ε_bond, normalized)   # store the new singular value spectrum at bond i+1 (between sites i and j), together with the error this gate's truncation introduced there; this per-bond figure is what the TEBD progress logger reports as `ε_max`
 
@@ -350,6 +386,17 @@ Apply one Trotter step of the evolution ``e^{-i \\Delta t H}`` to `ψ`.
 The step decomposes `H` into bond sub-steps via [`trotter_steps`](@ref), computes
 the gate for each bond, and applies them in sequence via [`apply_gate`](@ref).
 
+# Gauge
+
+Truncation is only variationally optimal when the chain is mixed-canonical at the bond
+being cut, so that the singular values of the two-site block are the true Schmidt values
+of the whole state. `trotter_step` guarantees that for every gate: it canonicalizes once
+on entry, then hands each [`apply_gate`](@ref) a `center` matching the direction the bond
+sequence is moving in, which leaves the orthogonality centre exactly where the next gate
+needs it. The gauge therefore rides along with the sweep at no extra cost, and `ψ.ε`
+comes out equal to the discarded weight ``1 - \\|\\psi\\|^2`` rather than an upper bound
+on it. The input's gauge is irrelevant; any `FiniteMPS` is accepted.
+
 For real-time evolution (`RealTime`) the norm is preserved.  For imaginary-time
 evolution (`ImaginaryTime`) the caller should renormalize after the step.
 """
@@ -362,11 +409,33 @@ function trotter_step(
     axis::TimeAxis=RealTime(),   # keyword argument: which time axis to use; defaults to real time
 )
     substeps = trotter_steps(formula, H, dt)   # get the ordered list of bond substeps for this Trotter formula; dispatches on `formula::SuzukiTrotter{order}` to pick 1st or 2nd order
-    cur = ψ   # `cur` holds the current state (starts as ψ, updated after each gate); Julia convention: `cur` is a local immutable binding (new FiniteMPS is returned by apply_gate, not modified in place)
-    for sub in substeps   # iterate over each TrotterSubstep in the decomposition
+    isempty(substeps) && return ψ   # a geometry with no bonds has nothing to evolve; guard so the gauge setup below can index substeps[1] safely
+
+    # Gauge the state so the FIRST gate sees a genuine Schmidt decomposition. An SVD
+    # truncation only discards the smallest Schmidt coefficients — the variationally
+    # optimal thing to throw away — when the chain is left-canonical left of the active
+    # bond and right-canonical right of it. `BondCanonical(b)` puts the orthogonality
+    # centre on site b, which satisfies both halves of that condition for a gate on the
+    # pair (b, b+1). One O(L) sweep per Trotter step against ~3(L-1) gates; doing it here
+    # rather than trusting the caller means an arbitrarily-gauged input is handled too,
+    # and this failure mode is silent (the run just quietly truncates worse) so a
+    # defensive sweep is worth its cost. NoTrunc: this is a pure re-gauging, it must not
+    # add error of its own.
+    cur = canonicalize(ψ, BondCanonical(substeps[1].bond, NoTrunc()))
+
+    for (k, sub) in enumerate(substeps)   # `enumerate` yields (index, element) pairs; the index is needed to peek at the NEXT substep
+        # Read the sweep direction off the bond sequence rather than hardcoding "order 2
+        # turns around halfway": a substep that moves to a LOWER bond index needs the
+        # centre carried leftward, anything else (including the last substep, which has
+        # no successor) keeps the historical rightward split. Inferring it keeps this
+        # correct for any future `trotter_steps` method with a different bond order.
+        center = (k < length(substeps) && substeps[k + 1].bond < sub.bond) ? :left : :right
+
         h_b = bond_hamiltonian(H, sub.bond)   # extract the local d²×d² bond Hamiltonian for this bond
         G = gate(h_b, sub.dt, axis)   # compute the gate G = exp(-i sub.dt h_b) or exp(-sub.dt h_b) depending on axis; each substep may use a fractional dt (e.g. dt/2 for 2nd order)
-        cur = apply_gate(cur, G, sub.bond; trunc=trunc)   # apply the two-site gate to the MPS; `trunc=trunc` passes the keyword argument through. returns a new FiniteMPS (no mutation)
+        # The direction-aware split leaves the centre exactly where the next gate wants
+        # it, so the gauge is maintained for free — no re-canonicalization between gates.
+        cur = apply_gate(cur, G, sub.bond; trunc=trunc, center=center)   # apply the two-site gate to the MPS; `trunc=trunc` passes the keyword argument through. returns a new FiniteMPS (no mutation)
     end
     return cur   # return the final MPS after all substeps; Julia: last expression is the implicit return value (no `return` needed)
 end

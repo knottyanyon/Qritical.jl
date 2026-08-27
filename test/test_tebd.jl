@@ -232,15 +232,14 @@ end
     #
     # `order` and `gauge_fix` exist because ε is only the true discarded weight when each
     # gate's SVD is a genuine SCHMIDT decomposition, and that needs the chain left-canonical
-    # to the left of the bond and right-canonical to its right. `apply_gate` does not enforce
-    # that gauge itself, so:
-    #   - order=1 with gauge_fix=true is the textbook TEBD sweep — one strictly left-to-right
-    #     pass, re-gauged to right-canonical before each step, so every gate sees the correct
-    #     gauge and ε is exact.
-    #   - order=2 (the palindromic forward-then-backward pass) walks bonds in an order the
-    #     gauge cannot follow, so the local singular values are not Schmidt values and ε
-    #     OVER-estimates. It is still a faithful running total of what was discarded at each
-    #     SVD — it is the SVDs themselves that are measuring the wrong thing.
+    # to the left of the bond and right-canonical to its right.
+    #
+    # `trotter_step` now maintains that gauge itself: it canonicalizes once on entry, and
+    # each `apply_gate` splits with `center` pointing along the sweep, so the orthogonality
+    # centre lands exactly where the next gate needs it. Every gate of every order therefore
+    # sees a true Schmidt decomposition, and ε is the discarded weight rather than an upper
+    # bound on it. `gauge_fix` is kept as an independent cross-check: an explicit re-gauge
+    # between steps must now be a no-op for accuracy, not a repair.
     function tebd_run(
         L::Int, trunc; nsteps::Int=20, dt::Float64=0.05, order::Int=2, gauge_fix::Bool=false
     )
@@ -271,29 +270,92 @@ end
         # Real-time evolution is unitary, so the ONLY way ‖ψ‖ can fall below 1 is truncation:
         # ε² and 1 - ‖ψ‖² are then two independent measurements of the same discarded weight.
         #
-        # This needs the gauge-correct sweep (see `tebd_run`): a strictly left-to-right
-        # order-1 pass, re-gauged each step, so every gate's SVD really is the Schmidt
-        # decomposition at that bond and its discarded singular values really are lost weight.
+        # The textbook sweep: a strictly left-to-right order-1 pass, re-gauged each step,
+        # so every gate's SVD really is the Schmidt decomposition at that bond and its
+        # discarded singular values really are lost weight.
+        #
+        # The tolerance was rtol=0.05 while `trotter_step` let the gauge drift between
+        # steps. With the gauge maintained the two measurements agree to ~1e-8 relative,
+        # i.e. to the accuracy of the SVDs themselves; 1e-6 leaves headroom for the
+        # sensitivity of a chaotic time evolution to LAPACK version differences.
         L = 10
         ψ = tebd_run(L, MaxBondDimTrunc(4); order=1, gauge_fix=true)
         discarded = 1.0 - real(overlap(ψ, ψ))   # ⟨ψ|ψ⟩ = ‖ψ‖²; the norm the truncations cost us
         @test discarded > 0.0                   # the run must actually have thrown something away
-        @test ψ.ε^2 ≈ discarded rtol=0.05
+        @test ψ.ε^2 ≈ discarded rtol=1e-6
     end
 
-    @testitem "ψ.ε over-estimates when the gate sweep runs out of gauge" begin
-        # Documents a real limitation rather than papering over it. `apply_gate` SVDs the
-        # two-site tensor in whatever gauge it happens to find, and the order-2 palindromic
-        # sweep visits bonds in an order that gauge cannot track. The singular values it
-        # discards are then not Schmidt values, and ε comes out several times too large.
+    @testitem "ψ.ε² matches the discarded weight for the order-2 palindrome too" begin
+        # REGRESSION TEST for the gauge bug. This test used to assert the OPPOSITE —
+        # `ψ.ε^2 > discarded` — and documented the gap as a permanent limitation of the
+        # order-2 sweep. It was not: `apply_gate` always split as (U, ΣVᵀ), parking the
+        # orthogonality centre on the RIGHT-hand site, so the forward half of the
+        # palindrome stayed correctly gauged while every gate of the backward half
+        # truncated one site out of gauge, against numbers that were not Schmidt values.
         #
-        # ε is still a faithful record of what each SVD discarded — the accounting is right,
-        # the measurement underneath it is not. Anyone reading ε off an order-2 run should
-        # treat it as a conservative indicator, not the discarded weight.
+        # `trotter_step` now flips the split to (UΣ, Vᵀ) wherever the sweep turns around,
+        # so the centre travels with it and ε is exact for order 2 as well. At L=16,
+        # χ=128 this took ε²/discarded from 140 down to ~1.
         L = 10
-        ψ = tebd_run(L, MaxBondDimTrunc(4); order=2)
+        ψ = tebd_run(L, MaxBondDimTrunc(4); order=2)   # no gauge_fix: trotter_step handles it
         discarded = 1.0 - real(overlap(ψ, ψ))
-        @test ψ.ε^2 > discarded   # over-estimate, never under
+        @test discarded > 0.0
+        @test ψ.ε^2 ≈ discarded rtol=1e-6
+    end
+
+    @testitem "the entry gauge repairs an arbitrarily-gauged input state" begin
+        # `trotter_step` canonicalizes once before its first gate, so it does not have to
+        # trust the caller's gauge. Feed it a state deliberately knocked out of canonical
+        # form by a stray gate applied in the middle of the chain (which leaves
+        # ArbitraryForm and an orthogonality centre nowhere near bond 1) and the ε
+        # identity must still hold — that is only possible if the entry sweep ran.
+        L = 10
+        H = Heisenberg(Chain(L); J=1.0)
+        ψ = neel_mps(L)
+        G = Qritical.gate(Qritical.bond_hamiltonian(H, 5), 0.3, RealTime())
+        ψ = apply_gate(ψ, G, 5)   # centre now sits at site 6; the form tag is ArbitraryForm
+        @test ψ.form isa ArbitraryForm
+
+        formula = SuzukiTrotter(2)
+        for _ in 1:20
+            ψ = trotter_step(ψ, H, 0.05, formula; trunc=MaxBondDimTrunc(4))
+        end
+        discarded = 1.0 - real(overlap(ψ, ψ))
+        @test discarded > 0.0
+        @test ψ.ε^2 ≈ discarded rtol=1e-6
+    end
+
+    @testitem "truncation discards far less weight at the same bond dimension" begin
+        # The substantive claim, stated in the units a user cares about. Before the gauge
+        # fix this exact run (L=12, χ=16, 30 order-2 steps) discarded 2.64e-06 of the
+        # norm; gauging the sweep drops that by four to five orders of magnitude while
+        # the bond dimension is unchanged — the cap is still saturated at 16.
+        #
+        # That last check is what makes the comparison honest: canonicalization is a gauge
+        # transformation and cannot raise the Schmidt rank, so this is strictly a better
+        # choice of which 16 states to keep, not a bigger 16. The bound is deliberately
+        # loose (measured ~4e-11); the point is the order of magnitude, not a value.
+        L = 12
+        ψ = tebd_run(L, MaxBondDimTrunc(16); nsteps=30)
+        discarded = 1.0 - real(overlap(ψ, ψ))
+        @test discarded < 1e-9                          # ≪ the pre-fix 2.64e-06
+        @test maximum(size(t.data, 3) for t in ψ.tensors) == 16   # χ still saturates the cap
+    end
+
+    @testitem "the two `center` splits differ only by a gauge" begin
+        # `center` chooses which site absorbs Σ. That is a gauge choice, so it must leave
+        # the physical state alone: |⟨ψ_left|ψ_right⟩| = 1 to machine precision. If this
+        # ever drifts, one of the two branches has its arithmetic or its index tagging
+        # wrong — and the tagging is easy to get wrong silently, since a mislabelled
+        # variance does not change any number, only the convention the rest of src/ reads.
+        L = 8
+        H = Heisenberg(Chain(L); J=1.0)
+        ψ = neel_mps(L)
+        G = Qritical.gate(Qritical.bond_hamiltonian(H, 4), 0.3, RealTime())
+        ψ_left = apply_gate(ψ, G, 4; center=:left)
+        ψ_right = apply_gate(ψ, G, 4; center=:right)
+        @test abs(overlap(ψ_left, ψ_right)) ≈ 1.0 atol=1e-12
+        @test real(overlap(ψ_left, ψ_left)) ≈ 1.0 atol=1e-12   # each is separately normalised
     end
 
     @testitem "per-bond spectra record their own truncation error" begin
