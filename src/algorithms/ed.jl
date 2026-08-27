@@ -17,10 +17,12 @@ function matrix_repr(H::LatticeOperator, ::SparseFormat)   # Julia multiple disp
     d = local_dim(H.dof)    # per-site Hilbert space dimension from the DoF object (e.g. d=2 for spin-1/2, d=4 for two-orbital models); physics: d is the local state count
     L = H.geom.L             # number of lattice sites; field access with `.` same as Python; `H.geom` is a `Chain` or other geometry struct
     D = d^L                  # total Hilbert space dimension = d^L; grows exponentially (2^10=1024, 2^20≈1M); Julia: `^` is the exponentiation operator
-    D ≤ _ED_MAX_DIM || throw(ArgumentError(   # `||` is lazy OR: right side only executes if left is false; pattern: `condition_ok || throw(...)`; `≤` is typed with \le<Tab>
-        "Hilbert space dimension $D = $(d)^$L exceeds the safety limit $_ED_MAX_DIM. " *   # Julia string interpolation: `$D` embeds variable; `$(expr)` embeds expressions; `*` concatenates strings (Python uses `+` or f-strings)
-        "Use an MPS algorithm for large systems.",   # string literal split across lines by `*` concatenation
-    ))
+    D ≤ _ED_MAX_DIM || throw(
+        ArgumentError(   # `||` is lazy OR: right side only executes if left is false; pattern: `condition_ok || throw(...)`; `≤` is typed with \le<Tab>
+            "Hilbert space dimension $D = $(d)^$L exceeds the safety limit $_ED_MAX_DIM. " *   # Julia string interpolation: `$D` embeds variable; `$(expr)` embeds expressions; `*` concatenates strings (Python uses `+` or f-strings)
+            "Use an MPS algorithm for large systems.",   # string literal split across lines by `*` concatenation
+        ),
+    )
 
     Id = sparse(Matrix{ComplexF64}(I, d, d))   # build d×d identity matrix: `I` is a lazy identity from LinearAlgebra (like np.eye but not materialised yet); `Matrix{ComplexF64}(I, d, d)` materialises it as a dense complex-float matrix; `sparse(...)` converts to CSC (Compressed Sparse Column) sparse format; result is like scipy.sparse.eye(d, format='csc', dtype=complex)
     Sp = SparseArrays.spzeros(ComplexF64, D, D)   # allocate a D×D sparse zero matrix to accumulate the full Hamiltonian; `SparseArrays.` is the module qualifier; `spzeros(T, m, n)` is like scipy.sparse.csr_matrix((m,n), dtype=T) — starts all-zero; physics: we will add each operator term to this matrix
@@ -113,11 +115,17 @@ function solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:ground
     v₀ = normalize(randn(ComplexF64, D))   # random complex unit vector as Krylov starting vector; `randn(ComplexF64, D)` draws D samples from CN(0,1) complex normal + 1j*rng.standard_normal(D)`); `normalize` makes ‖v₀‖=1; physics: must have nonzero overlap with GS — random vector achieves this with probability 1
     # eigsolve returns eigenvalues closest to 0 by default; use `which=:SR` for smallest real
     vals, vecs, _ = KrylovKit.eigsolve(   # returns tuple (eigenvalues, eigenvectors, convergence_info); `_` discards the third element; `KrylovKit.` is module-qualified call
-        M, v₀, 1, :SR; ishermitian=true, tol=1e-12, maxiter=300   # `M` = matrix; `v₀` = start vector; `1` = want 1 eigenvalue; `:SR` = Smallest Real eigenvalue; `;` separates positional from keyword args; `ishermitian=true` triggers the more stable Lanczos algorithm; `tol=1e-12` convergence threshold; `maxiter=300` max Lanczos iterations
+        M,
+        v₀,
+        1,
+        :SR;
+        ishermitian=true,
+        tol=1e-12,
+        maxiter=300,   # `M` = matrix; `v₀` = start vector; `1` = want 1 eigenvalue; `:SR` = Smallest Real eigenvalue; `;` separates positional from keyword args; `ishermitian=true` triggers the more stable Lanczos algorithm; `tol=1e-12` convergence threshold; `maxiter=300` max Lanczos iterations
     )
     E = real(vals[1])   # extract ground-state energy; `real(...)` removes the negligible imaginary part (Hermitian H has real eigenvalues but KrylovKit uses ComplexF64 for generality); `vals[1]` is 1-indexed
     ψ = normalize(vecs[1])   # normalise the returned eigenvector; physics: state |ψ₀⟩ should satisfy ⟨ψ₀|ψ₀⟩=1 for expectation values to work correctly
-    EDResult(E, ψ, Float64[E])   # construct EDResult struct; `Float64[E]` creates a length-1 Float64 vector`); for :ground mode spectrum only stores the GS energy
+    return EDResult(E, ψ, Float64[E])   # construct EDResult struct; `Float64[E]` creates a length-1 Float64 vector`); for :ground mode spectrum only stores the GS energy
 end
 
 """
@@ -133,7 +141,7 @@ function solve(H::LatticeOperator, ::GroundState, ::ExactDiagonalization{:full})
     F = eigen(Hermitian(M))   # full dense diagonalisation via LAPACK dsyevd; `Hermitian(M)` wraps M in a type that tells Julia it's Hermitian, enabling the symmetric solver; `F` is an `Eigen` factorisation object with `.values` (eigenvalues) and `.vectors` (column eigenvectors)
     evs = real.(F.values)   # broadcast `real` over eigenvalue vector: `f.(args)` is Julia's broadcasting notation(F.values)` or just `np.real(F.values)`); Hermitian matrices have real eigenvalues but floating-point gives tiny imaginary parts
     ψ = normalize(F.vectors[:, 1])   # ground-state eigenvector = first column; `[:, 1]` is Julia's "all rows, first column" slice; Julia is 1-indexed
-    EDResult(evs[1], ψ, sort(evs))   # `sort(evs)` returns eigenvalues in ascending order`); physics: full spectrum reveals spectral gap, degeneracies, quantum numbers
+    return EDResult(evs[1], ψ, sort(evs))   # `sort(evs)` returns eigenvalues in ascending order`); physics: full spectrum reveals spectral gap, degeneracies, quantum numbers
 end
 
 # ----------------------------------------------------------------------------------------
@@ -200,9 +208,22 @@ In practice, any vector you obtain from [`EDResult`](@ref) or from
 
 # Examples
 
-```julia
-julia> result = solve(H, sv, ExactDiagonalization(:time), ConstantProtocol{RealTime}(0.1, 20));
-gs = solve(H, GroundState(), ExactDiagonalization(:ground));
+```jldoctest
+julia> using Qritical, LinearAlgebra
+
+julia> H = Heisenberg(Chain(4); J=1.0);
+
+julia> v = zeros(ComplexF64, 2^4);
+       v[7] = 1.0;   # a basis state of the 4-site chain
+
+julia> sv = as_statevector(v);
+
+julia> p = ConstantProtocol(RealTime(), 0.1, 20, H);   # axis, dt, nsteps, Hamiltonian
+
+julia> result = solve(H, sv, ExactDiagonalization(:time), p);
+
+julia> round(norm(result.state); digits=10)   # real-time propagation is unitary
+1.0
 ```
 """
 as_statevector(v::AbstractVector) = StatevectorState(convert(Vector{ComplexF64}, v))   # one-line function (no `function...end` needed for single-expression bodies); `AbstractVector` accepts any 1D array subtype (Vector, SubArray, etc.); `convert(Vector{ComplexF64}, v)` promotes element type to ComplexF64`)
@@ -318,7 +339,10 @@ julia> norm(r.state)   # always 1.0 for real time
 [`ConstantProtocol`](@ref), [`RealTime`](@ref), [`ImaginaryTime`](@ref)
 """
 function solve(
-    H::LatticeOperator, sv::StatevectorState, ::ExactDiagonalization{:time}, p::ConstantProtocol   # multi-line signature: Julia allows splitting across lines; dispatched when arg3 is ExactDiagonalization{:time} and arg4 is any ConstantProtocol; `p::ConstantProtocol` gives `p` a name so we can access p.axis, p.dt, p.nsteps
+    H::LatticeOperator,
+    sv::StatevectorState,
+    ::ExactDiagonalization{:time},
+    p::ConstantProtocol,   # multi-line signature: Julia allows splitting across lines; dispatched when arg3 is ExactDiagonalization{:time} and arg4 is any ConstantProtocol; `p::ConstantProtocol` gives `p` a name so we can access p.axis, p.dt, p.nsteps
 )
     M = matrix_repr(H, DenseFormat())   # build dense Hamiltonian; time propagation needs all eigenvectors for the basis transform, so dense is appropriate here
     F = eigen(Hermitian(M))   # diagonalise H = V Λ V†: `F.values` are eigenvalues λ_k, `F.vectors` columns are eigenvectors φ_k; this O(D^3) cost is paid once and amortises over arbitrary T
@@ -332,5 +356,5 @@ function solve(
 
     coefs = F.vectors' * sv.v          # project initial state onto eigenbasis: c_k = ⟨φ_k|ψ₀⟩ = (V†)_k · v; `F.vectors'` is the conjugate transpose (adjoint operator) of V.T`); `*` is matrix-vector multiply; result is a D-vector of expansion coefficients
     ψ_final = F.vectors * (phases .* coefs)  # back-transform: V · (e^{-iHT} ⊙ c) = Σ_k e^{-iE_k T} c_k |φ_k⟩; `phases .* coefs` elementwise scales each eigenvector coefficient; then `F.vectors *` transforms back to original basis; physics: this is the exact solution of the Schrödinger equation (no Trotter error)
-    EDTimeResult(ψ_final, T)   # wrap results; for real time ‖ψ_final‖=1 exactly (unitary evolution); for imaginary time norm decreases — call normalize() before using the state
+    return EDTimeResult(ψ_final, T)   # wrap results; for real time ‖ψ_final‖=1 exactly (unitary evolution); for imaginary time norm decreases — call normalize() before using the state
 end

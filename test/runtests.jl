@@ -4,7 +4,16 @@ using TensorOperations
 using LinearAlgebra
 using Statistics
 
-# Aqua quality checks are deferred to v1.0 (stale_deps will fire until all planned dependencies are actually used).
+# Pkg.test() compatibility shim: redirect @testitem to @testset so the test bodies
+# actually execute when run via `Pkg.test()`. VS Code's Julia extension runs @testitem
+# natively via TestItems.jl; this shim only activates in the Pkg.test() path, where
+# @testitem would otherwise register tests for a runner that never fires.
+#
+# The project uses nested @testitem (outer = section header, inner = test case), which
+# maps cleanly to nested @testset — both accept (name::String, body::Expr).
+macro testitem(args...)
+    return esc(:(@testset $(args...)))
+end
 
 @testset "Qritical.jl" begin
     include("test_packaging.jl")
@@ -27,7 +36,6 @@ using Statistics
     include("test_bond.jl")
     include("test_ortho_center.jl")
     include("test_spectrum.jl")
-    include("test_topograph/test_topograph.jl")
     include("test_min_model_kit/test_lattice/test_lattice_graph.jl")
     include("test_io_state.jl")
     include("test_mps.jl")

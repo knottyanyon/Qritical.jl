@@ -4,13 +4,12 @@
 
 using Test, LinearAlgebra, Qritical
 # `using` = Python's `from module import *` — brings all exported names into scope.
-# `Test` provides @test, @testset, etc. (like Python's pytest assertions).
+# `Test` provides @test, @testitem, etc. (like Python's pytest assertions).
 # `LinearAlgebra` provides norm, I, svd, etc. (like numpy.linalg).
 # `Qritical` is our own package — brings FiniteMPS, to_mps, etc. into scope.
 
-# ============================================================================
 # Helper function: contract_mps
-# ============================================================================
+
 # Fully contract an MPS by absorbing bonds left-to-right to recover the state.
 # This is the ground-truth reconstruction test.
 function contract_mps(mps::FiniteMPS)
@@ -54,7 +53,9 @@ function contract_mps(mps::FiniteMPS)
         # current_2d is (M, χ_R), A_i_2d is (χ_R, σ*χ'), result is (M, σ*χ').
 
         # Reshape back to tensor with physical leg inserted
-        result_shape = (size(current)[1:(ndims(current)-1)]..., size(A_i, 2), size(A_i, 3))
+        result_shape = (
+            size(current)[1:(ndims(current) - 1)]..., size(A_i, 2), size(A_i, 3)
+        )
         # `size(current)` returns a Tuple of all dimensions: (σ₁, …, σ_{i-1}, χ_R).
         # `[1:(ndims(current)-1)]` slices off the last dimension (χ_R): (σ₁, …, σ_{i-1}).
         # The `...` unpacks the tuple: `(tuple..., a, b)` = `(*tuple, a, b)` in Python.
@@ -68,23 +69,18 @@ function contract_mps(mps::FiniteMPS)
     # Physics: this is the full state tensor A^{σ₁σ₂…σ_L}, reconstructed from the MPS.
 end
 
-
-# ============================================================================
 # Test Suite: FiniteMPS and to_mps
-# ============================================================================
 
-@testset "FiniteMPS and to_mps" begin
-# `@testset "name" begin ... end` = pytest's `class TestFiniteMPS: def test_...(self): ...`
-# In Julia, @testset groups related tests. Nested @testsets give a tree of results.
-# If any @test inside fails, the testset reports a failure with a clear message.
+@testitem "FiniteMPS and to_mps" begin
+    # `@testitem "name" begin ... end` = pytest's `class TestFiniteMPS: def test_...(self): ...`
+    # In Julia, @testitem groups related tests. Nested @testitems give a tree of results.
+    # If any @test inside fails, the testset reports a failure with a clear message.
 
-    # ========================================================================
     # §2.1 FiniteMPS struct — basic construction invariants
-    # ========================================================================
-    @testset "FiniteMPS struct" begin
+    @testitem "FiniteMPS struct" begin
 
         # Test 1: length consistency — Physical invariant: L sites, L+1 bonds
-        @testset "MPS tensor count matches number of sites" begin
+        @testitem "MPS tensor count matches number of sites" begin
             L = 4
             d = 2
             # Create L site tensors with generic dimensions
@@ -129,7 +125,7 @@ end
         end
 
         # Test 2: bond spectrum count — Physical invariant: L+1 bonds on open chain
-        @testset "bond_svs has L+1 spectra for open chain" begin
+        @testitem "bond_svs has L+1 spectra for open chain" begin
             L = 3
             d = 2
             tensors = [
@@ -155,7 +151,7 @@ end
         end
 
         # Test 3: boundary bonds are trivial [1.0] — Open-chain boundary condition
-        @testset "boundary bond spectra are [1.0]" begin
+        @testitem "boundary bond spectra are [1.0]" begin
             L = 2
             d = 2
             tensors = [
@@ -178,12 +174,12 @@ end
             # The single singular value is 1.0 (trivial Schmidt decomposition: ||ψ|| = 1).
 
             # Assertion: Right boundary (index L+1) has spectrum [1.0]
-            @test mps.bond_svs[L+1].values ≈ [1.0]
+            @test mps.bond_svs[L + 1].values ≈ [1.0]
             # Same reasoning: right boundary bond also has χ=1 and single SV=1.0.
         end
 
         # Test 4: each site tensor is order-3 — Tensor network geometry
-        @testset "each site tensor is rank-3 (vL, σ, vR)" begin
+        @testitem "each site tensor is rank-3 (vL, σ, vR)" begin
             L = 3
             d = 2
             tensors = [
@@ -210,7 +206,7 @@ end
         end
 
         # Test 5: form is an AbstractMPSForm — Type safety
-        @testset "form field is an AbstractMPSForm" begin
+        @testitem "form field is an AbstractMPSForm" begin
             L = 2
             d = 2
             tensors = [
@@ -234,13 +230,10 @@ end
         end
     end
 
-
-    # ========================================================================
     # §2.2 to_mps: left-canonical sweep
-    # ========================================================================
-    @testset "to_mps: left-canonical form" begin
+    @testitem "to_mps: left-canonical form" begin
         # Test 6: isometry condition A†A ≈ I (left-canonical) — von Delft §4.2
-        @testset "left-canonical A_i satisfies A_i† A_i ≈ I" begin
+        @testitem "left-canonical A_i satisfies A_i† A_i ≈ I" begin
             # Build a small state vector: 2^4 = 16 elements
             ψ_vec = randn(2^4)
             # `2^4` = 2**4 = 16 in Python. Julia uses `^` for exponentiation (not `**`).
@@ -254,7 +247,7 @@ end
             # `form=:left` = left-canonical sweep. `:left` is a Symbol (Julia's immutable string-like type).
 
             # Check isometry on each site except the last (which holds the norm)
-            for i in 1:(length(mps.tensors)-1)
+            for i in 1:(length(mps.tensors) - 1)
                 # Reshape A_i: (χ_L, σ, χ_R) → (χ_L * σ, χ_R)
                 A_i = mps.tensors[i].data
                 χ_L, d, χ_R = size(A_i)
@@ -281,7 +274,7 @@ end
         end
 
         # Test 7: left-canonical form tag — State representation tracking
-        @testset "form == CanonicalForm(L, L+1) after left sweep" begin
+        @testitem "form == CanonicalForm(L, L+1) after left sweep" begin
             ψ_vec = randn(2^3)
             ψ = as_state(ψ_vec, [2, 2, 2])
 
@@ -295,7 +288,7 @@ end
         end
 
         # Test 8: reconstruction ψ_reconstructed ≈ ψ (no truncation) — Algebraic completeness
-        @testset "full contraction recovers original state (NoTrunc)" begin
+        @testitem "full contraction recovers original state (NoTrunc)" begin
             # Small state vector
             ψ_original = randn(2^4)
             ψ = as_state(ψ_original, [2, 2, 2, 2])
@@ -327,7 +320,7 @@ end
         end
 
         # Test 9: boundary bond dimensions are 1 — Tensor network boundary condition
-        @testset "boundary tensors have dim-1 virtual legs" begin
+        @testitem "boundary tensors have dim-1 virtual legs" begin
             ψ_vec = randn(2^4)
             ψ = as_state(ψ_vec, [2, 2, 2, 2])
 
@@ -351,13 +344,10 @@ end
         end
     end
 
-
-    # ========================================================================
     # §2.2 to_mps: right-canonical sweep
-    # ========================================================================
-    @testset "to_mps: right-canonical form" begin
+    @testitem "to_mps: right-canonical form" begin
         # Test 10: isometry condition B_i B_i† ≈ I (right-canonical) — von Delft §4.2
-        @testset "right-canonical B_i satisfies B_i B_i† ≈ I" begin
+        @testitem "right-canonical B_i satisfies B_i B_i† ≈ I" begin
             ψ_vec = randn(2^4)
             ψ = as_state(ψ_vec, [2, 2, 2, 2])
 
@@ -388,7 +378,7 @@ end
         end
 
         # Test 11: right-canonical form tag — State representation tracking
-        @testset "form == CanonicalForm(0, 1) after right sweep" begin
+        @testitem "form == CanonicalForm(0, 1) after right sweep" begin
             ψ_vec = randn(2^3)
             ψ = as_state(ψ_vec, [2, 2, 2])
 
@@ -401,13 +391,10 @@ end
         end
     end
 
-
-    # ========================================================================
     # §2.2 to_mps: truncation with MaxBondDimTrunc
-    # ========================================================================
-    @testset "to_mps: truncation with MaxBondDimTrunc" begin
+    @testitem "to_mps: truncation with MaxBondDimTrunc" begin
         # Test 12: max bond dimension is enforced — Truncation strategy
-        @testset "MaxBondDimTrunc(D) enforces inner bonds ≤ D" begin
+        @testitem "MaxBondDimTrunc(D) enforces inner bonds ≤ D" begin
             ψ_vec = randn(2^4)
             ψ = as_state(ψ_vec, [2, 2, 2, 2])
 
@@ -420,7 +407,7 @@ end
             L = length(mps.tensors)
 
             # Check that inner bonds (not boundary) have dimension ≤ D_max
-            for i in 1:(L-1)
+            for i in 1:(L - 1)
                 # Right virtual bond of site i
                 vR_dim = dim(mps.tensors[i].indices[3])
                 # `.indices[3]` = the third tensor index (vR). `dim` extracts its dimension.
@@ -430,34 +417,32 @@ end
             end
         end
 
-        # Test 13: accumulated error matches sum of per-bond errors — Error accounting
-        @testset "mps.ε ≈ sum of per-bond truncation errors" begin
+        # Test 13: accumulated error matches quadrature sum of per-bond errors — Error accounting
+        @testitem "mps.ε ≈ quadrature sum of per-bond truncation errors" begin
             ψ_vec = randn(2^4)
             ψ = as_state(ψ_vec, [2, 2, 2, 2])
 
             D_max = 1  # Force truncation: every bond keeps only 1 singular value
             mps = to_mps(ψ, trunc=MaxBondDimTrunc(D_max), form=:left)
 
-            # Sum the per-bond errors (excluding boundaries which have ε=0)
-            per_bond_ε = sum(mps.bond_svs[i].ε for i in 2:(length(mps.bond_svs)-1))
+            # Combine the per-bond errors in quadrature (excluding boundaries which have ε=0)
+            per_bond_ε = sqrt(
+                sum(mps.bond_svs[i].ε^2 for i in 2:(length(mps.bond_svs) - 1))
+            )
             # Generator expression: `sum(expr for i in range)` = Python's `sum(expr for i in range)`.
             # `mps.bond_svs[i].ε` = the truncation error stored at bond i.
             # Boundaries (bond_svs[1] and bond_svs[L+1]) have ε=0.0 (no truncation there).
 
             # Physical invariant: accumulated ε tracks total discarded weight
             @test mps.ε ≈ per_bond_ε atol=1e-14
-            # Physics: the total truncation error is the SUM of per-bond errors.
-            # Each bond's error = ||discarded singular values||² = squared truncation error.
-            # This is the standard MPS error measure (see Vidal 2003, White 1992).
+            # Physics: each bond's ε is the 2-NORM of the singular values it discarded, so
+            # ε² is the discarded weight. Weights are what add across bonds, so the norms
+            # compose in quadrature: ε_total = sqrt(Σ_i ε_i²).
         end
     end
 
-
-    # ========================================================================
-    # ========================================================================
     # §2.1 / §2.2 edge cases: L=1 and L=2
-    # ========================================================================
-    @testset "to_mps: L=1 single-site (no inner bonds)" begin
+    @testitem "to_mps: L=1 single-site (no inner bonds)" begin
         # Physics: a single site has no virtual bonds; both boundary spectra are [1.0].
         ψ_vec = [0.6, 0.8]
         # Array literal `[a, b]` = Python's `[a, b]` or `np.array([a, b])`.
@@ -483,7 +468,7 @@ end
         # Physics: for L=1, the "MPS" is just the state vector itself, stored as [1,:,1].
     end
 
-    @testset "to_mps: L=2 single inner bond" begin
+    @testitem "to_mps: L=2 single inner bond" begin
         # Physics: a 2-site Bell state (|00⟩+|11⟩)/√2 has bond dim 2 and equal SVs 1/√2.
         ψ_vec = [1.0, 0.0, 0.0, 1.0] / sqrt(2)
         # `sqrt(2)` = Python's `math.sqrt(2)` or `np.sqrt(2)`.
@@ -510,21 +495,20 @@ end
         # For a normalized state, ⟨ψ|ψ⟩ = 1.
     end
 
-    # ========================================================================
-    # ========================================================================
     # §4.2 add_mps — superposition and edge cases
-    # ========================================================================
-    @testset "add_mps: superposition of two MPS" begin
+    @testitem "add_mps: superposition of two MPS" begin
         L = 4
-        ψ_vec = randn(2^L); ψ_vec ./= norm(ψ_vec)
+        ψ_vec = randn(2^L)
+        ψ_vec ./= norm(ψ_vec)
         # Semicolons `;` on the same line = Python's newline. Separate two statements.
         # `./=` is in-place elementwise division: like Python's `ψ_vec /= np.linalg.norm(ψ_vec)`.
-        φ_vec = randn(2^L); φ_vec ./= norm(φ_vec)
+        φ_vec = randn(2^L)
+        φ_vec ./= norm(φ_vec)
         ψ_mps = to_mps(as_state(ψ_vec, fill(2, L)); trunc=NoTrunc(), form=:left)
         # `fill(2, L)` = vector of length L with all values 2 = Python's `[2] * L`.
         φ_mps = to_mps(as_state(φ_vec, fill(2, L)); trunc=NoTrunc(), form=:left)
 
-        @testset "add_mps(1,ψ,1,ψ) represents 2|ψ⟩" begin
+        @testitem "add_mps(1,ψ,1,ψ) represents 2|ψ⟩" begin
             sum_mps = add_mps(1, ψ_mps, 1, ψ_mps)
             # add_mps(a, ψ, b, φ) computes a|ψ⟩ + b|φ⟩.
             # Here: 1·|ψ⟩ + 1·|ψ⟩ = 2|ψ⟩.
@@ -534,7 +518,7 @@ end
             # Physics: ⟨2ψ|ψ⟩ = 2⟨ψ|ψ⟩ = 2 for a normalized state.
         end
 
-        @testset "add_mps: coefficients respected (2ψ + 3φ)" begin
+        @testitem "add_mps: coefficients respected (2ψ + 3φ)" begin
             sum_mps = add_mps(2.0, ψ_mps, 3.0, φ_mps)
             # ⟨2ψ+3φ|ψ⟩ = 2⟨ψ|ψ⟩ = 2  (ψ,φ orthogonal only if random states are, not guaranteed)
             # Use the explicit formula: = 2*norm(ψ)² + 3*⟨φ|ψ⟩
@@ -543,30 +527,32 @@ end
             # Physics: linearity of the inner product: ⟨(aψ+bφ)|χ⟩ = a⟨ψ|χ⟩ + b⟨φ|χ⟩.
         end
 
-        @testset "add_mps: a=0 reduces to b*φ" begin
+        @testitem "add_mps: a=0 reduces to b*φ" begin
             sum_mps = add_mps(0, ψ_mps, 1, φ_mps)
             # 0·|ψ⟩ + 1·|φ⟩ = |φ⟩. So ⟨0ψ+φ|φ⟩ = ⟨φ|φ⟩ = 1.
             @test real(overlap(sum_mps, φ_mps)) ≈ 1.0 atol=1e-10
         end
 
-        @testset "add_mps: b=0 reduces to a*ψ" begin
+        @testitem "add_mps: b=0 reduces to a*ψ" begin
             sum_mps = add_mps(1, ψ_mps, 0, φ_mps)
             @test real(overlap(sum_mps, ψ_mps)) ≈ 1.0 atol=1e-10
         end
 
-        @testset "add_mps: adding state to itself with truncation" begin
-            sum_mps = add_mps(1.0/sqrt(2), ψ_mps, 1.0/sqrt(2), ψ_mps; trunc=MaxBondDimTrunc(4))
+        @testitem "add_mps: adding state to itself with truncation" begin
+            sum_mps = add_mps(
+                1.0/sqrt(2), ψ_mps, 1.0/sqrt(2), ψ_mps; trunc=MaxBondDimTrunc(4)
+            )
             # (1/√2)|ψ⟩ + (1/√2)|ψ⟩ = √2|ψ⟩. So ⟨√2ψ|ψ⟩ = √2.
             # The keyword arg `trunc=MaxBondDimTrunc(4)` is passed with `;` before it.
             # In Julia: `f(a, b; kw=val)` — positional first, then keyword args after `;`.
             ov = real(overlap(sum_mps, ψ_mps))
             @test isapprox(ov, sqrt(2); atol=1e-10) ||
-                  isapprox(abs(ov), sqrt(2); atol=1e-10)
+                isapprox(abs(ov), sqrt(2); atol=1e-10)
             # `isapprox(a, b; atol=...)` = np.isclose(a, b, atol=...).
             # The `||` is logical OR — we accept both signs because of global phase freedom.
         end
 
-        @testset "Base.:+ sugar works" begin
+        @testitem "Base.:+ sugar works" begin
             sum_mps = ψ_mps + φ_mps
             # Uses the `Base.:+` extension defined in mps.jl: ψ + φ = add_mps(1, ψ, 1, φ).
             expected = overlap(ψ_mps, ψ_mps) + overlap(φ_mps, ψ_mps)
@@ -575,10 +561,9 @@ end
     end
 
     # §2.2 to_mps: product state special case
-    # ========================================================================
-    @testset "to_mps: product state has bond dim 1" begin
+    @testitem "to_mps: product state has bond dim 1" begin
         # Test 14: separable state |↑↑↑↑⟩ has all bond dims = 1 and zero entanglement
-        @testset "product state (e.g. |↑↑↑↑⟩) has χ=1 everywhere" begin
+        @testitem "product state (e.g. |↑↑↑↑⟩) has χ=1 everywhere" begin
             # Product state: |↑↑↑↑⟩ = [1,0] ⊗ [1,0] ⊗ [1,0] ⊗ [1,0]
             # As a full state vector, only first element is 1
             ψ_product = zeros(2^4)
@@ -595,7 +580,7 @@ end
             L = length(mps.tensors)
 
             # Physical invariant: all bond dimensions = 1 for separable state
-            for i in 1:(L-1)
+            for i in 1:(L - 1)
                 # Right bond of site i
                 vR_dim = dim(mps.tensors[i].indices[3])
                 @test vR_dim == 1
@@ -605,12 +590,11 @@ end
             end
 
             # Physical invariant: all bond spectra are [1.0] (zero entanglement)
-            for i in 1:(L+1)
+            for i in 1:(L + 1)
                 @test mps.bond_svs[i].values ≈ [1.0]
                 # Every bond has a single Schmidt value = 1.0.
                 # This is the minimum entanglement configuration (separable state).
             end
         end
     end
-
 end

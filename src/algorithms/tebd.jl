@@ -109,13 +109,13 @@ function gate(h::AbstractMatrix, dt::Real, axis::RealTime)   # build a real-time
     phase = -im * dt   # the phase exponent: -i*dt; `im` is the imaginary unit combining with eigenvalues gives e^{-i dt λ_k}
     F = eigen(Hermitian(ComplexF64.(h)))   # diagonalise h = V Λ V†; `ComplexF64.(h)` broadcasts element-wise type conversion; `Hermitian(...)` tells LAPACK the matrix is Hermitian (uses more efficient symmetric eigensolver); physics: the gate h must be Hermitian for unitarity of e^{-i dt h}
     data = F.vectors * Diagonal(exp.(phase .* F.values)) * F.vectors'   # compute G = V exp(-i dt Λ) V†; `Diagonal(v)` creates a diagonal matrix from vector v ; `exp.(phase .* F.values)` broadcasts exp over the eigenvalue vector; `*` is matrix multiply; `F.vectors'` is conjugate transpose V†
-    Propagator{RealTime}(data, axis, Float64(dt))   # construct the typed Propagator; `Propagator{RealTime}(...)` explicitly sets the type parameter; `Float64(dt)` converts dt to Float64
+    return Propagator{RealTime}(data, axis, Float64(dt))   # construct the typed Propagator; `Propagator{RealTime}(...)` explicitly sets the type parameter; `Float64(dt)` converts dt to Float64
 end
 
 function gate(h::AbstractMatrix, dt::Real, axis::ImaginaryTime)   # imaginary-time version: G = e^{-dt h}; different sign and no imaginary unit compared to real-time
     F = eigen(Hermitian(ComplexF64.(h)))   # same diagonalisation as real-time; for imaginary time h must be Hermitian for G to be PSD
     data = F.vectors * Diagonal(exp.(-dt .* F.values)) * F.vectors'   # G = V exp(-dt Λ) V†; no `im` here — purely real decay; physics: eigencomponents with high energy λ_k are suppressed faster
-    Propagator{ImaginaryTime}(data, axis, Float64(dt))   # construct imaginary-time Propagator with correct type parameter
+    return Propagator{ImaginaryTime}(data, axis, Float64(dt))   # construct imaginary-time Propagator with correct type parameter
 end
 
 # ----------------------------------------------------------------------------------------
@@ -255,11 +255,11 @@ function apply_gate(
     @tensor Θ_new[α, σ1p, σ2p, β] := G_mat[σ2p, σ1p, σ2, σ1] * Θ[α, σ1, σ2, β]   # apply the gate by contracting physical indices σ1,σ2 → σ1p,σ2p; the `@tensor` macro handles the summation over σ1 and σ2; physics: G|Θ⟩ maps the old physical states σ1,σ2 to new states σ1p,σ2p
 
     # SVD split: reshape to (χL*d, d*χR)
-    M = reshape(permutedims(Θ_new, (1, 2, 3, 4)), χL * d, d * χR)   # reshape Θ_new into a matrix for SVD; `permutedims(A, perm)` reorders dimensions  groups the left indices and right indices together for the bipartition SVD
+    M = reshape(Θ_new, χL * d, d * χR)   # reshape Θ_new into a matrix for SVD; the legs are already in the order (α, σ1p, σ2p, β), so a plain column-major reshape groups the left pair against the right pair for the bipartition SVD — no permutation needed
     F = svd(M)   # thin SVD: M = U Σ Vt; `F.U` is χL*d × r, `F.S` is length-r singular values, `F.Vt` is r × d*χR
     tol = length(F.S) * eps(eltype(F.S)) * (isempty(F.S) ? 1.0 : F.S[1])   # machine-precision-based truncation floor; `eps(T)` returns machine epsilon for type T ; physics: singular values below numerical noise level are meaningless
     S_clean = filter(s -> s > tol, F.S)   # remove numerically zero singular values; `filter(predicate, collection)` returns elements satisfying predicate 
-    r, _ = _truncate_singular_values(S_clean, trunc)   # determine how many singular values to keep given truncation scheme; `r` is the kept bond dimension; `_` discards the truncation error return value; physics: truncation controls bond dimension growth (key to TEBD efficiency)
+    r, ε_bond = _truncate_singular_values(S_clean, trunc)   # determine how many singular values to keep given truncation scheme; `r` is the kept bond dimension; `ε_bond` is the 2-norm of the singular values thrown away at this bond; physics: truncation controls bond dimension growth (key to TEBD efficiency), and ε_bond² is the Schmidt weight that growth cost us
     svs = F.S[1:r]   # keep the first r (largest) singular values; `1:r` is a range 1 to r inclusive; Julia is 1-indexed 
 
     A1_new = reshape(F.U[:, 1:r], χL, d, r)           # left-canonical  # reshape truncated U into new left tensor; `[:, 1:r]` = all rows, first r columns. physics: A1_new satisfies A†A = I (left-canonical form)
@@ -275,9 +275,9 @@ function apply_gate(
     tensors[i] = QTensor(A1_new, (ψ.tensors[i].indices[1], upper(:σ, d), lower(:vR, r)))   # construct a new QTensor at site i with updated data and index metadata; `upper(:σ, d)` creates an Upper-variance physical index (contravariant); `lower(:vR, r)` creates a Lower-variance right-bond index pointing toward j; the left index is preserved from the original tensor
     tensors[j] = QTensor(A2_new, (upper(:vL, r), upper(:σ, d), ψ.tensors[j].indices[3]))   # new QTensor at site j; `upper(:vL, r)` for left-bond index; the right index of j is preserved unchanged; physics: the new inner bond dimension is r (after truncation)
     normalized = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))   # check if ‖ψ‖² = Σ s_k² ≈ 1; `isapprox(a, b; atol=...)` is Julia's `≈` with explicit tolerance. `sum(abs2, svs)` applies `abs2` (|x|²) to each element then sums ; this determines whether the SingValSpectrum is marked as normalised
-    bond_svs[i + 1] = SingValSpectrum(svs, 0.0, normalized)   # store the new singular value spectrum at bond i+1 (between sites i and j); `0.0` is the truncation error (NoTrunc)
+    bond_svs[i + 1] = SingValSpectrum(svs, ε_bond, normalized)   # store the new singular value spectrum at bond i+1 (between sites i and j), together with the error this gate's truncation introduced there; this per-bond figure is what the TEBD progress logger reports as `ε_max`
 
-    FiniteMPS(tensors, bond_svs, ArbitraryForm(), ψ.ε)   # construct new MPS with updated tensors; `ArbitraryForm()` indicates the canonical form is unknown after the gate application; `ψ.ε` carries forward the accumulated truncation error from before this gate
+    return FiniteMPS(tensors, bond_svs, ArbitraryForm(), hypot(ψ.ε, ε_bond))   # construct new MPS with updated tensors; `ArbitraryForm()` indicates the canonical form is unknown after the gate application; `hypot(ψ.ε, ε_bond)` adds this gate's error to the running total in quadrature — ε is a 2-norm, so it is the squares (the discarded weights) that accumulate
 end
 
 # ----------------------------------------------------------------------------------------
@@ -322,7 +322,7 @@ Each `TrotterSubstep` carries a bond index and the sub-step time `dt` to pass to
 """
 function trotter_steps(::SuzukiTrotter{1}, H::LatticeOperator, dt::Real)   # 1st-order Trotter (Lie product formula): sweep through bonds left-to-right once; error = O(dt²) per step due to commutator [h_1, h_2]
     bnd = bonds(H.geom)   # list of bond pairs from the geometry
-    [TrotterSubstep(b, Float64(dt)) for b in 1:length(bnd)]   # list comprehension: one substep per bond with full dt; `length(bnd)` = number of bonds ` converts to Float64 if dt is e.g. Int
+    return [TrotterSubstep(b, Float64(dt)) for b in 1:length(bnd)]   # list comprehension: one substep per bond with full dt; `length(bnd)` = number of bonds ` converts to Float64 if dt is e.g. Int
 end
 
 function trotter_steps(::SuzukiTrotter{2}, H::LatticeOperator, dt::Real)   # 2nd-order Strang splitting: palindrome of half-steps; error = O(dt³) per step; used because e^{(A+B)dt} ≈ e^{A dt/2} e^{B dt} e^{A dt/2} up to O(dt³)
@@ -334,7 +334,7 @@ function trotter_steps(::SuzukiTrotter{2}, H::LatticeOperator, dt::Real)   # 2nd
     bwd = [TrotterSubstep(b, half) for b in n:-1:1]   # backward sweep: bonds n,n-1,...,1 each with dt/2; `n:-1:1` is a decreasing range 
     # True 2nd-order: dt/2 each bond forward, then dt/2 each bond backward
     # (palindrome: same bond sequence in reverse at half dt)
-    vcat(fwd, bwd)   # concatenate forward and backward sweep vectors; `vcat` = vertical concatenate for arrays/vectors ; result is the complete palindrome sequence
+    return vcat(fwd, bwd)   # concatenate forward and backward sweep vectors; `vcat` = vertical concatenate for arrays/vectors ; result is the complete palindrome sequence
 end
 
 # ----------------------------------------------------------------------------------------
@@ -368,5 +368,5 @@ function trotter_step(
         G = gate(h_b, sub.dt, axis)   # compute the gate G = exp(-i sub.dt h_b) or exp(-sub.dt h_b) depending on axis; each substep may use a fractional dt (e.g. dt/2 for 2nd order)
         cur = apply_gate(cur, G, sub.bond; trunc=trunc)   # apply the two-site gate to the MPS; `trunc=trunc` passes the keyword argument through. returns a new FiniteMPS (no mutation)
     end
-    cur   # return the final MPS after all substeps; Julia: last expression is the implicit return value (no `return` needed)
+    return cur   # return the final MPS after all substeps; Julia: last expression is the implicit return value (no `return` needed)
 end

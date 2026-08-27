@@ -2,8 +2,8 @@
 # Physics invariants: unitarity, norm conservation (real time), PSD (imaginary time),
 # Trotter error scaling, and energy conservation.
 
-@testset "§7.1 TimeAxis + Gate exponentiation" begin
-    @testset "RealTime gate is unitary" begin
+@testitem "§7.1 TimeAxis + Gate exponentiation" begin
+    @testitem "RealTime gate is unitary" begin
         ops = algebra_generators(SpinHalf())   # get the spin-1/2 operator matrices as a NamedTuple; `algebra_generators` returns (; Sx, Sy, Sz, Sp, Sm, I)
         # SzSz bond Hamiltonian (2-site, d²=4)
         h = kron(Array(ops.Sz), Array(ops.I)) + kron(Array(ops.I), Array(ops.Sz))   # build a 4×4 two-site Hamiltonian; `kron(A, B)` = Kronecker product
@@ -13,7 +13,7 @@
         @test G.data' * G.data ≈ I(4) atol=1e-10   # also check U†·U ≈ I (both left and right unitarity)
     end
 
-    @testset "ImaginaryTime gate is Hermitian and positive semidefinite" begin
+    @testitem "ImaginaryTime gate is Hermitian and positive semidefinite" begin
         ops = algebra_generators(SpinHalf())
         h = kron(Array(ops.Sz), Array(ops.Sz))  # 4×4, Hermitian  # Ising-type two-site term Sz⊗Sz; this is a real symmetric matrix (purely diagonal in the Sz basis)
         G = gate(h, 0.1, ImaginaryTime())   # imaginary-time gate: G = exp(-Δτ·h) = e^{-0.1·h}; no `im` factor — this is a real positive semi-definite matrix for positive Δτ
@@ -23,7 +23,7 @@
         @test all(ev .≥ -1e-10)                # PSD  # all eigenvalues ≥ 0 (positive semi-definite); `.≥` broadcasts element-wise ≥  for positive τ has non-negative eigenvalues
     end
 
-    @testset "opclass dispatches on time axis type" begin
+    @testitem "opclass dispatches on time axis type" begin
         ops = algebra_generators(SpinHalf())
         h = kron(Array(ops.Sz), Array(ops.Sz))
         G_real = gate(h, 0.05, RealTime())   # real-time gate is unitary
@@ -32,7 +32,7 @@
         @test opclass(G_imag) isa HermitianPSD   # `HermitianPSD` is the tag for Hermitian positive semi-definite gates; physics: tells downstream whether to renormalize after applying
     end
 
-    @testset "gate dt stored in Propagator" begin
+    @testitem "gate dt stored in Propagator" begin
         ops = algebra_generators(SpinHalf())
         h = kron(Array(ops.Sz), Array(ops.Sz))
         dt = 0.137   # arbitrary time step
@@ -40,7 +40,7 @@
         @test G.dt ≈ dt   # check that the stored dt matches the input; `≈` is used instead of `==` because floating-point is involved
     end
 
-    @testset "gate(h, dt, RealTime) matches matrix exponential exp(-im*dt*h)" begin
+    @testitem "gate(h, dt, RealTime) matches matrix exponential exp(-im*dt*h)" begin
         ops = algebra_generators(SpinHalf())
         h4 =
             kron(Array(ops.Sz), Array(ops.Sz)) +
@@ -51,7 +51,7 @@
         @test G.data ≈ G_ref atol=1e-10   # our gate matches the direct matrix exponential
     end
 
-    @testset "gate(h, dt, ImaginaryTime) matches exp(-dt*h)" begin
+    @testitem "gate(h, dt, ImaginaryTime) matches exp(-dt*h)" begin
         ops = algebra_generators(SpinHalf())
         h4 = kron(Array(ops.Sz), Array(ops.Sz))
         dt = 0.3
@@ -60,7 +60,7 @@
         @test G.data ≈ G_ref atol=1e-10
     end
 
-    @testset "ConstantProtocol stores fields" begin
+    @testitem "ConstantProtocol stores fields" begin
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
         p = ConstantProtocol(RealTime(), 0.01, 100, H)   # protocol with dt=0.01, nsteps=100, axis=RealTime
@@ -69,7 +69,7 @@
         @test total_time(p) ≈ 1.0   # `total_time(p) = p.dt * p.nsteps = 0.01 × 100 = 1.0`; total evolution time
     end
 
-    @testset "gate from ConstantProtocol carries axis type" begin
+    @testitem "gate from ConstantProtocol carries axis type" begin
         g = Chain(2)
         H = Heisenberg(g; J=1.0)
         ops = algebra_generators(SpinHalf())
@@ -86,15 +86,15 @@
     end
 end
 
-@testset "§7.1 bond_hamiltonian extraction" begin
-    @testset "bond_hamiltonian has correct size" begin
+@testitem "§7.1 bond_hamiltonian extraction" begin
+    @testitem "bond_hamiltonian has correct size" begin
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
         h_bond = bond_hamiltonian(H, 1)   # bond (1,2)  # extract the 2-site Hamiltonian for bond 1, i.e. h_{12}; shape d²×d² = 4×4 for spin-1/2
         @test size(h_bond) == (4, 4)      # d=2 → d²=4  # `size(M)` returns a tuple (dim1, dim2, ...); `(4, 4)` is a 2-tuple; physics: two-site Hilbert space has dim d² = 4
     end
 
-    @testset "bond_hamiltonian is Hermitian" begin
+    @testitem "bond_hamiltonian is Hermitian" begin
         g = Chain(4)
         H = XXZ(g; J=1.0, Jz=0.5, h=0.1)
         for b in 1:3   # iterate over all 3 bonds of a 4-site chain; `1:3` is the range [1,2,3]
@@ -103,14 +103,14 @@ end
         end
     end
 
-    @testset "sum of bond_hamiltonians matches dense_matrix (OBC)" begin
+    @testitem "sum of bond_hamiltonians matches dense_matrix (OBC)" begin
         g = Chain(3)
         H = Heisenberg(g; J=1.0, h=0.0)
         H_dense = matrix_repr(H)   # 8×8 dense matrix
         # For OBC Heisenberg, H = h_{12} ⊗ I_3 + I_1 ⊗ h_{23}
-        d = 2;
-        L = 3;
-        d2 = d^2;
+        d = 2
+        L = 3
+        d2 = d^2
         D = d^L   # local dimension, chain length, bond space dim, Hilbert space dim
         h12 = bond_hamiltonian(H, 1)   # 4×4 bond Hamiltonian for bond (1,2)
         h23 = bond_hamiltonian(H, 2)   # 4×4 bond Hamiltonian for bond (2,3)
@@ -119,8 +119,8 @@ end
     end
 end
 
-@testset "§7.1 apply_gate! — two-site update" begin
-    @testset "apply_gate! with identity gate leaves MPS unchanged" begin
+@testitem "§7.1 apply_gate! — two-site update" begin
+    @testitem "apply_gate! with identity gate leaves MPS unchanged" begin
         g = Chain(4)
         psi_vec = normalize(randn(ComplexF64, 2^4))   # random unit vector in 2^4=16 dimensional Hilbert space
         ψ = to_mps(as_state(psi_vec, [2, 2, 2, 2]); trunc=NoTrunc(), form=:left)   # convert to left-canonical MPS
@@ -130,7 +130,7 @@ end
         @test abs(overlap(ψ, ψ_new)) ≈ 1.0 atol=1e-8   # `abs(⟨ψ|ψ_new⟩)` = 1 means the two states are identical (up to global phase); physics: identity gate shouldn't change the state
     end
 
-    @testset "apply_gate! preserves norm for RealTime gate" begin
+    @testitem "apply_gate! preserves norm for RealTime gate" begin
         g = Chain(4)
         psi_vec = normalize(randn(ComplexF64, 2^4))
         ψ = to_mps(as_state(psi_vec, [2, 2, 2, 2]); trunc=NoTrunc(), form=:left)
@@ -143,7 +143,7 @@ end
         @test norm_sq_after ≈ norm_sq_before atol=1e-8   # unitary gates preserve norm: ‖U|ψ⟩‖² = ‖|ψ⟩‖²
     end
 
-    @testset "apply_gate! then inverse gate returns original state" begin
+    @testitem "apply_gate! then inverse gate returns original state" begin
         g = Chain(4)
         psi_vec = normalize(randn(ComplexF64, 2^4))
         ψ = to_mps(as_state(psi_vec, [2, 2, 2, 2]); trunc=NoTrunc(), form=:left)
@@ -157,8 +157,8 @@ end
     end
 end
 
-@testset "§7.2 SuzukiTrotter decomposition" begin
-    @testset "SuzukiTrotter(1) has correct number of substeps" begin
+@testitem "§7.2 SuzukiTrotter decomposition" begin
+    @testitem "SuzukiTrotter(1) has correct number of substeps" begin
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
         formula = SuzukiTrotter(1)   # first-order Trotter: one pass through all bonds
@@ -167,7 +167,7 @@ end
         @test length(steps) == length(bonds(g))   # `bonds(g)` returns all NN bonds; `length(...)` counts them; physics: 1st-order Trotter = one sweep through all bonds
     end
 
-    @testset "SuzukiTrotter(2) is symmetric (palindrome) in dt" begin
+    @testitem "SuzukiTrotter(2) is symmetric (palindrome) in dt" begin
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
         formula = SuzukiTrotter(2)   # 2nd-order (Strang splitting): even-odd-even or half-steps-forward-half-steps-back
@@ -179,7 +179,7 @@ end
         @test bonds_list == reverse(bonds_list)   # bond order must also be a palindrome (symmetric about the midpoint)
     end
 
-    @testset "trotter_step! conserves energy for short times" begin
+    @testitem "trotter_step! conserves energy for short times" begin
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
         mpo = MPO(H)   # build MPO for energy measurement
@@ -196,7 +196,7 @@ end
         @test abs(E_new - E_init) < 1e-4   # energy change should be tiny for small dt; physics: real-time unitary evolution conserves energy exactly; the small error comes from Trotter discretization
     end
 
-    @testset "real-time trotter_step! preserves norm" begin
+    @testitem "real-time trotter_step! preserves norm" begin
         g = Chain(4)
         H = Heisenberg(g; J=1.0)
         psi_vec = normalize(randn(ComplexF64, 2^4))
@@ -206,5 +206,113 @@ end
         ψ_new = trotter_step(ψ, H, 0.05, formula; trunc=NoTrunc())   # `NoTrunc()` = keep all singular values exactly
         norm_after = real(overlap(ψ_new, ψ_new))   # ‖ψ_new‖² after evolution
         @test norm_after ≈ norm_before atol=1e-8   # unitary gates preserve norm; small deviation due to floating-point arithmetic only
+    end
+end
+
+@testitem "§7.2 TEBD truncation-error accounting" begin
+    # A truncating real-time TEBD run must REPORT the weight it threw away.
+    # Physics: e^{-i t H} is unitary, so the only way ‖ψ‖ can drop below 1 is
+    # truncation. That makes 1 - ‖ψ‖² an independent ground truth for ε², and
+    # every test below is anchored to it rather than to self-consistency alone.
+
+    # Néel state |↑↓↑↓…⟩ as a flat 2^L coefficient vector.
+    # `as_state(v, dims)` reshapes column-major, so σ₁ is the FASTEST-varying index:
+    # the linear index of a configuration is 1 + Σᵢ (σᵢ-1)·2^(i-1) with σ=1 for ↑, 2 for ↓.
+    # Physics: a product state has χ=1 everywhere, so it costs nothing to represent
+    # and only builds entanglement (hence truncation) as the evolution proceeds.
+    function neel_mps(L::Int)
+        idx = 1 + sum(iseven(i) ? 2^(i - 1) : 0 for i in 1:L)   # even sites carry σ=2 (↓)
+        v = zeros(ComplexF64, 2^L)
+        v[idx] = 1.0
+        return to_mps(as_state(v, fill(2, L)); trunc=NoTrunc(), form=:left)
+    end
+
+    # One short real-time TEBD run under the Heisenberg chain, returning the final state.
+    # `trunc` is the main knob: tight truncation → error, loose → none.
+    #
+    # `order` and `gauge_fix` exist because ε is only the true discarded weight when each
+    # gate's SVD is a genuine SCHMIDT decomposition, and that needs the chain left-canonical
+    # to the left of the bond and right-canonical to its right. `apply_gate` does not enforce
+    # that gauge itself, so:
+    #   - order=1 with gauge_fix=true is the textbook TEBD sweep — one strictly left-to-right
+    #     pass, re-gauged to right-canonical before each step, so every gate sees the correct
+    #     gauge and ε is exact.
+    #   - order=2 (the palindromic forward-then-backward pass) walks bonds in an order the
+    #     gauge cannot follow, so the local singular values are not Schmidt values and ε
+    #     OVER-estimates. It is still a faithful running total of what was discarded at each
+    #     SVD — it is the SVDs themselves that are measuring the wrong thing.
+    function tebd_run(
+        L::Int, trunc; nsteps::Int=20, dt::Float64=0.05, order::Int=2, gauge_fix::Bool=false
+    )
+        H = Heisenberg(Chain(L); J=1.0)
+        formula = SuzukiTrotter(order)
+        ψ = neel_mps(L)
+        for _ in 1:nsteps
+            ψ = trotter_step(ψ, H, dt, formula; trunc=trunc)   # no renormalisation: norm loss IS the diagnostic
+            if gauge_fix
+                ψ = canonicalize(ψ, RightCanonical(NoTrunc()))   # re-gauge only; NoTrunc adds no error
+            end
+        end
+        return ψ
+    end
+
+    @testitem "truncating run reports a nonzero ψ.ε" begin
+        # REGRESSION TEST. `apply_gate` used to discard the per-bond error returned by
+        # `_truncate_singular_values` and pass ψ.ε straight through, so this quantity was
+        # identically 0.0 after any TEBD run — a silent failure that told a user their
+        # approximate run was exact.
+        L = 10
+        ψ = tebd_run(L, MaxBondDimTrunc(4))   # χ=4 ≪ 2^(L/2)=32, so truncation certainly bites
+        @test ψ.ε > 0.0
+    end
+
+    @testitem "ψ.ε² matches the discarded weight 1 - ‖ψ‖²" begin
+        # The physics check, against a quantity the error bookkeeping never touches.
+        # Real-time evolution is unitary, so the ONLY way ‖ψ‖ can fall below 1 is truncation:
+        # ε² and 1 - ‖ψ‖² are then two independent measurements of the same discarded weight.
+        #
+        # This needs the gauge-correct sweep (see `tebd_run`): a strictly left-to-right
+        # order-1 pass, re-gauged each step, so every gate's SVD really is the Schmidt
+        # decomposition at that bond and its discarded singular values really are lost weight.
+        L = 10
+        ψ = tebd_run(L, MaxBondDimTrunc(4); order=1, gauge_fix=true)
+        discarded = 1.0 - real(overlap(ψ, ψ))   # ⟨ψ|ψ⟩ = ‖ψ‖²; the norm the truncations cost us
+        @test discarded > 0.0                   # the run must actually have thrown something away
+        @test ψ.ε^2 ≈ discarded rtol=0.05
+    end
+
+    @testitem "ψ.ε over-estimates when the gate sweep runs out of gauge" begin
+        # Documents a real limitation rather than papering over it. `apply_gate` SVDs the
+        # two-site tensor in whatever gauge it happens to find, and the order-2 palindromic
+        # sweep visits bonds in an order that gauge cannot track. The singular values it
+        # discards are then not Schmidt values, and ε comes out several times too large.
+        #
+        # ε is still a faithful record of what each SVD discarded — the accounting is right,
+        # the measurement underneath it is not. Anyone reading ε off an order-2 run should
+        # treat it as a conservative indicator, not the discarded weight.
+        L = 10
+        ψ = tebd_run(L, MaxBondDimTrunc(4); order=2)
+        discarded = 1.0 - real(overlap(ψ, ψ))
+        @test ψ.ε^2 > discarded   # over-estimate, never under
+    end
+
+    @testitem "per-bond spectra record their own truncation error" begin
+        # REGRESSION TEST for the hardcoded `SingValSpectrum(svs, 0.0, normalized)` in
+        # `apply_gate`. This is also what the `ε_max` line of the TEBD progress logger
+        # in `run(::Evolution, ...)` reads, so a zero here silently blinds that report.
+        L = 10
+        ψ = tebd_run(L, MaxBondDimTrunc(4); nsteps=5)
+        interior = ψ.bond_svs[2:(end - 1)]   # bonds 1 and L+1 are the trivial [1.0] boundaries
+        @test any(bs.ε > 0.0 for bs in interior)
+    end
+
+    @testitem "untruncated run reports no error and keeps its norm" begin
+        # The converse guard: the fix must not manufacture error where none exists.
+        # With NoTrunc() nothing is discarded, so ε stays at zero and the evolution
+        # is exactly unitary up to floating-point noise.
+        L = 8
+        ψ = tebd_run(L, NoTrunc(); nsteps=10)
+        @test ψ.ε ≈ 0.0 atol=1e-10
+        @test real(overlap(ψ, ψ)) ≈ 1.0 atol=1e-8
     end
 end

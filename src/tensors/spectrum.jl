@@ -1,4 +1,4 @@
-# ==== Spectrum hierarchy ======================================================
+# SECTION -  Spectrum hierarchy 
 
 """
     AbstractSpectrum
@@ -30,7 +30,11 @@ produced it.  Use [`SchmidtSpectrum`](@ref) when the cut location matters.
     stored as a `Vector{Float64}` (already noise-cleaned and truncated).
   - `ε :: Float64`         — 2-norm of the **discarded** singular values:
     ``\\varepsilon = \\|\\sigma_{r+1}, \\sigma_{r+2}, \\ldots\\|_2``.
-    Zero for a `FullSVD` (no truncation).
+    Zero for a `FullSVD` (no truncation). Its square ``\\varepsilon^2`` is the **discarded
+    weight** at this cut; for a unit-norm state that is the probability mass the truncation
+    removed, and under real-time evolution the accumulated ``\\varepsilon^2`` across a run
+    equals ``1 - \\|\\psi\\|^2``. See [`FiniteMPS`](@ref) for how these per-bond figures are
+    combined (in quadrature, which is not a rigorous upper bound).
   - `normalized :: Bool`   — `true` when ``\\sum_i \\sigma_i^2 \\approx 1``.
 
 ## The `normalized` flag
@@ -113,7 +117,7 @@ struct SchmidtSpectrum{V<:AbstractVector{<:Real}} <: AbstractSpectrum   # wraps 
     center::BondCenter             # which bond the gauge centre Σ sits on; `.center.bond.left/right` are the exact TIx objects from the SVD Σ factor
 end
 
-# ==== Spectrum verbs ==========================================================
+# SECTION -  Spectrum verbs 
 
 """
     Base.length(s::SingValSpectrum) -> Int

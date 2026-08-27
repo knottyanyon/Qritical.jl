@@ -1,4 +1,4 @@
-# ==== Sweep helpers on existing MPS ==========================================
+# SECTION -  Sweep helpers on existing MPS 
 #
 # Unlike _left_sweep / _right_sweep (which start from a dense d^L tensor),
 # these helpers operate directly on the L valence-3 site tensors of an existing
@@ -28,13 +28,13 @@ function _left_sweep_mps!(
     range::AbstractUnitRange{Int},
     trunc::AbstractTrunc,
 )
-# The `!` at the end of the function name is a Julia CONVENTION (not syntax) meaning
-# "this function MUTATES its arguments in place." Python has no such convention,
-# but it's similar to how numpy functions with `out=` write to existing arrays.
-# Here `tensors` and `bond_svs` are modified directly — no new Vector is returned.
-#
-# `AbstractUnitRange{Int}` is the supertype for ranges like `1:5` or `3:(L-1)`.
-# In Python these would just be `range(1, 6)` objects.
+    # The `!` at the end of the function name is a Julia CONVENTION (not syntax) meaning
+    # "this function MUTATES its arguments in place." Python has no such convention,
+    # but it's similar to how numpy functions with `out=` write to existing arrays.
+    # Here `tensors` and `bond_svs` are modified directly — no new Vector is returned.
+    #
+    # `AbstractUnitRange{Int}` is the supertype for ranges like `1:5` or `3:(L-1)`.
+    # In Python these would just be `range(1, 6)` objects.
 
     ε_total = 0.0
     for i in range
@@ -70,7 +70,10 @@ function _left_sweep_mps!(
         #   ε_bond = L2 norm of discarded values (= truncation error at this bond)
 
         svs = F.S[1:r]      # top-r singular values (Julia: 1-indexed, inclusive range 1..r)
-        ε_total += ε_bond   # accumulate truncation error across all bonds
+        ε_total = hypot(ε_total, ε_bond)
+        # Accumulate in QUADRATURE, not by plain addition. ε is a 2-norm, so ε² is the
+        # weight discarded at this bond; weights add, norms do not. `hypot(a, b)` computes
+        # sqrt(a² + b²) without overflowing on the intermediate squares.
 
         tensors[i] = QTensor(
             reshape(F.U[:, 1:r], χL, d, r), (upper(:vL, χL), upper(:σ, d), lower(:vR, r))
@@ -148,7 +151,7 @@ function _right_sweep_mps!(
         S_clean = filter(s -> s > tol, F.S)
         r, ε_bond = _truncate_singular_values(S_clean, trunc)
         svs = F.S[1:r]
-        ε_total += ε_bond
+        ε_total = hypot(ε_total, ε_bond)   # quadrature, as in the left sweep: discarded WEIGHTS add
 
         tensors[i] = QTensor(
             reshape(F.Vt[1:r, :], r, d, χR), (lower(:vL, r), upper(:σ, d), upper(:vR, χR))
@@ -205,7 +208,7 @@ function _tag_centre!(tensors::Vector{QTensor}, k::Int)
     return nothing
 end
 
-# ==== Canonicalize configs ====================================================
+# SECTION -  Canonicalize configs 
 
 """
     CanonicalizeConfig
@@ -281,7 +284,7 @@ SiteCanonical(k::Int) = SiteCanonical(k, NoTrunc())
 # Physics: similar to BondCanonical but site k is the un-gauged centre tensor (not a diagonal SV matrix).
 # Difference from BondCanonical: site k carries the full non-isometric weight as a rank-3 tensor.
 
-# ==== canonicalize ============================================================
+# SECTION -  canonicalize 
 
 """
     canonicalize(mps::FiniteMPS, config::CanonicalizeConfig) -> FiniteMPS
@@ -333,8 +336,12 @@ function canonicalize(mps::FiniteMPS, config::LeftCanonical)
     # `1:(L-1)` = Python's `range(1, L)` — but 1-indexed and inclusive: [1, 2, …, L-1].
     # The `!` function mutates `tensors` and `bond_svs` in place; ε is the total truncation error.
 
-    return FiniteMPS(tensors, bond_svs, CanonicalForm(L, L + 1), ε)
+    return FiniteMPS(tensors, bond_svs, CanonicalForm(L, L + 1), hypot(mps.ε, ε))
     # Tag: llim=L (sites 1..L-1 are left-canonical), rlim=L+1 (no right-canonical sites).
+    # `hypot(mps.ε, ε)` ACCUMULATES onto whatever the input already carried. canonicalize is
+    # a transformer, not a constructor: re-gauging cannot undo an approximation made earlier,
+    # so the incoming error must survive. (Contrast `to_mps`, which builds a fresh MPS from a
+    # dense state and correctly starts its accounting at zero.)
 end
 
 function canonicalize(mps::FiniteMPS, config::RightCanonical)
@@ -345,7 +352,7 @@ function canonicalize(mps::FiniteMPS, config::RightCanonical)
     ε = _right_sweep_mps!(tensors, bond_svs, 2:L, config.trunc)
     # Sweep sites 2 through L (not site 1 — it becomes the norm carrier).
     # `2:L` = Python's `range(2, L+1)` but reversed by `reverse()` inside the sweep helper.
-    return FiniteMPS(tensors, bond_svs, CanonicalForm(0, 1), ε)
+    return FiniteMPS(tensors, bond_svs, CanonicalForm(0, 1), hypot(mps.ε, ε))   # accumulate onto the input's ε
     # Tag: llim=0 (no left-canonical sites — sentinel), rlim=1 (sites 1..L are right-canonical).
 end
 
@@ -361,14 +368,17 @@ function canonicalize(mps::FiniteMPS, config::BondCanonical)
 
     # Right sweep: make sites k+1..L right-canonical.
     # If k=L there are no right sites to sweep.
-    ε += (k < L) ? _right_sweep_mps!(tensors, bond_svs, (k + 1):L, config.trunc) : 0.0
-    # `+=` is the compound assignment operator: ε = ε + rhs. Same as Python.
+    ε = hypot(
+        ε, (k < L) ? _right_sweep_mps!(tensors, bond_svs, (k + 1):L, config.trunc) : 0.0
+    )
+    # The two sweeps touch disjoint bonds, so their discarded weights add: combine the
+    # 2-norms in quadrature, the same rule used inside each sweep.
 
     _tag_centre!(tensors, k)
     # Relabel site k's index variances so that all legs are Upper (OC convention).
     # This is a pure metadata change — no data is modified.
 
-    return FiniteMPS(tensors, bond_svs, CanonicalForm(k, k + 1), ε)
+    return FiniteMPS(tensors, bond_svs, CanonicalForm(k, k + 1), hypot(mps.ε, ε))   # accumulate onto the input's ε
     # Tag: llim=k (sites 1..k-1 left-canonical), rlim=k+1 (sites k+1..L right-canonical).
     # The OC is at site k, which is in the range [llim, rlim-1] = [k, k] — just site k.
 end
@@ -381,17 +391,19 @@ function canonicalize(mps::FiniteMPS, config::SiteCanonical)
 
     # Same two-sweep structure as BondCanonical — the difference is in the form tag below.
     ε = (k > 1) ? _left_sweep_mps!(tensors, bond_svs, 1:(k - 1), config.trunc) : 0.0
-    ε += (k < L) ? _right_sweep_mps!(tensors, bond_svs, (k + 1):L, config.trunc) : 0.0
+    ε = hypot(
+        ε, (k < L) ? _right_sweep_mps!(tensors, bond_svs, (k + 1):L, config.trunc) : 0.0
+    )
     _tag_centre!(tensors, k)
 
-    return FiniteMPS(tensors, bond_svs, CanonicalForm(k - 1, k + 1), ε)
+    return FiniteMPS(tensors, bond_svs, CanonicalForm(k - 1, k + 1), hypot(mps.ε, ε))   # accumulate onto the input's ε
     # Tag: llim=k-1 (sites 1..k-2 left-canonical), rlim=k+1 (sites k+1..L right-canonical).
     # Site k is the orthogonality centre, EXCLUDED from both isometry ranges.
     # Difference from BondCanonical: CanonicalForm(k-1, k+1) vs CanonicalForm(k, k+1).
     # The extra site k is the un-factored centre tensor, not a diagonal SV matrix.
 end
 
-# ==== canonical_error / is_canonical ==========================================
+# SECTION -  canonical_error / is_canonical 
 
 """
     canonical_error(A::AbstractArray{<:Number,3}) -> Float64

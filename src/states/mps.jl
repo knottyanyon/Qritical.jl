@@ -82,8 +82,30 @@ Matrix-product state for a finite open chain with ``L`` sites.
 - `bond_svs::Vector{SingValSpectrum}`: ``L+1`` bond spectra; boundaries carry the
   trivial spectrum ``[1.0]``
 - `form::AbstractMPSForm`: canonical-form tag
-- `ε::Float64`: accumulated truncation error — sum of per-bond discarded singular-value
-  2-norms (zero for `NoTrunc`)
+- `ε::Float64`: accumulated truncation error — the per-bond discarded singular-value 2-norms
+  combined **in quadrature**, ``\\varepsilon = \\sqrt{\\sum_k \\varepsilon_k^2}`` (zero for
+  `NoTrunc`)
+
+# What `ε` means
+
+``\\varepsilon^2`` is the total **discarded weight**: the Schmidt weight thrown away by every
+truncation the state has been through. For real-time evolution this has a directly measurable
+counterpart — the evolution is unitary, so the only way the state can lose norm is truncation,
+and therefore
+
+```math
+\\varepsilon^2 = 1 - \\lVert\\psi\\rVert^2
+```
+
+for a state that started unit-norm and was never renormalized. That identity is the practical
+way to sanity-check a run.
+
+!!! warning "Not a rigorous upper bound"
+    Quadrature accumulation is exact when successive truncations discard *independent*
+    directions, and can **under**-estimate when they are correlated. Plain summation of the
+    per-bond ``\\varepsilon_k`` would be a rigorous bound by the triangle inequality, but over a
+    long run it drifts to O(1) regardless of the true error and stops being a usable
+    diagnostic. Quadrature trades the guarantee for a number that tracks reality.
 
 # Index convention (MasterPlan §13/§23; von Delft covariant notation)
 
@@ -117,7 +139,7 @@ struct FiniteMPS
     ε::Float64                         # accumulated truncation error (0.0 if no truncation)
 end
 
-# ==== Internal helpers ========================================================
+# SECTION -  Internal helpers 
 # These two functions (_left_sweep, _right_sweep) do the heavy lifting of
 # converting a DENSE state tensor ψ (shape d^L) into an MPS via iterated SVD.
 # They are "internal" (prefixed with _) — callers use to_mps() below.
@@ -134,22 +156,22 @@ function _left_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
     # Pre-allocate output arrays. `Vector{QTensor}(undef, L)` creates a length-L array of
     # QTensor objects WITHOUT initializing the entries — like numpy's np.empty(L, dtype=object).
     # `undef` is Julia's sentinel for "uninitialized" — accessing before writing would be an error.
-    tensors  = Vector{QTensor}(undef, L)
+    tensors = Vector{QTensor}(undef, L)
     bond_svs = Vector{SingValSpectrum}(undef, L + 1)  # L+1 bonds for L sites (open chain)
-    ε_total  = 0.0  # running sum of truncation errors across all bonds
+    ε_total = 0.0  # running sum of truncation errors across all bonds
 
     # Set up trivial boundary spectra. For an open chain, the left boundary is
     # a virtual index of dimension 1 with a single singular value of 1.0.
     # `SingValSpectrum([1.0], 0.0, true)` = spectrum with values=[1.0], error=0.0, normalized=true.
-    bond_svs[1]   = SingValSpectrum([1.0], 0.0, true)   # left boundary: trivial χ=1
-    bond_svs[L+1] = SingValSpectrum([1.0], 0.0, true)   # right boundary: trivial χ=1
+    bond_svs[1] = SingValSpectrum([1.0], 0.0, true)   # left boundary: trivial χ=1
+    bond_svs[L + 1] = SingValSpectrum([1.0], 0.0, true)   # right boundary: trivial χ=1
 
     # The "carry" is the part of the state tensor we haven't yet decomposed.
     # Initially it is the FULL state tensor reshaped to (1, d₁, d₂, …, d_L).
     # `reshape(ψ.data, 1, d...)` uses the `d...` "splat" operator — like Python's `*d`.
     # The leading 1 is the dummy left virtual index (boundary condition: χ_left=1).
     # Physics: we think of the full state as a 1×d^L matrix with a trivial left index.
-    carry  = reshape(ψ.data, 1, d...)  # shape: (1, d₁, d₂, …, d_L)
+    carry = reshape(ψ.data, 1, d...)  # shape: (1, d₁, d₂, …, d_L)
     χ_left = 1                         # current left bond dimension (starts trivial)
 
     # Loop from site 1 to L-1 (the last site is handled separately after the loop).
@@ -170,7 +192,7 @@ function _left_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
         # Compute the full SVD: M = U × Diagonal(S) × Vt
         # `F` is a struct with fields F.U, F.S, F.Vt (note: Vt = V†, the conjugate transpose).
         # In numpy: U, S, Vt = np.linalg.svd(M, full_matrices=False)
-        F   = svd(M)
+        F = svd(M)
 
         # Noise-cleaning threshold (Golub–Van Loan criterion):
         # Tiny floating-point artifacts in F.S at level ε_machine × σ_max × n
@@ -182,7 +204,7 @@ function _left_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
         # `isempty(F.S)` = Python's `len(F.S) == 0` — guard against empty singular value list
         # `F.S[1]` = the largest singular value (Julia indexing: 1-based, not 0-based!)
 
-        S_clean   = filter(s -> s > tol, F.S)
+        S_clean = filter(s -> s > tol, F.S)
         # `filter(predicate, collection)` = Python's `[s for s in F.S if s > tol]`
         # `s -> s > tol` is an anonymous function (lambda): like Python's `lambda s: s > tol`
 
@@ -193,13 +215,18 @@ function _left_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
         # Julia allows multiple return values as a tuple — like Python's `r, eps = func(...)`.
 
         svs = F.S[1:r]   # keep only the top r singular values; F.S[1:r] = Python's F.S[:r]
-        ε_total += ε_bond # accumulate total truncation error
+        ε_total = hypot(ε_total, ε_bond)
+        # Accumulate in QUADRATURE: ε is a 2-norm, so ε² is the weight discarded at this
+        # bond. The WEIGHTS are what add across bonds, so the norms combine as sqrt(a²+b²).
+        # `hypot` computes that without overflowing on the intermediate squares.
 
         # Build the left-canonical site tensor A_i from U's first r columns:
         # U has shape (χ_left×d[i], r); reshape to (χ_left, d[i], r) for site tensor.
         # Physics: U has orthonormal columns → A_i†A_i = I (left-isometry condition).
-        tensors[i]    = QTensor(reshape(F.U[:, 1:r], χ_left, d[i], r),
-                                (upper(:vL, χ_left), upper(:σ, d[i]), lower(:vR, r)))
+        tensors[i] = QTensor(
+            reshape(F.U[:, 1:r], χ_left, d[i], r),
+            (upper(:vL, χ_left), upper(:σ, d[i]), lower(:vR, r)),
+        )
         # `upper(:vL, χ_left)` creates an Upper-variance tensor index named :vL with dimension χ_left.
         # `:vL` is a Julia Symbol (like Python's string "vL" but used as an identifier).
         # `lower(:vR, r)` is a Lower-variance index (arrow pointing OUT from left-canonical tensor).
@@ -207,18 +234,18 @@ function _left_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
 
         # Check if the kept singular values are normalized (||svs||² ≈ 1).
         # This is TRUE when the input MPS was normalized AND no significant truncation occurred.
-        normalized    = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
+        normalized = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
         # `isapprox(a, b; atol=...)` = Python's `np.isclose(a, b, atol=...)` but returns Bool
         # `sum(abs2, svs)` = sum of squares of singular values = Python's `np.sum(svs**2)`
         # `abs2(x)` = |x|² (slightly faster than `abs(x)^2` since it avoids a sqrt)
 
-        bond_svs[i+1] = SingValSpectrum(svs, ε_bond, normalized)
+        bond_svs[i + 1] = SingValSpectrum(svs, ε_bond, normalized)
         # Store the Schmidt spectrum at bond i|i+1.
 
         # Form the new carry: Σ·V† absorbed into the next site's data.
         # Physics: the carry is the RIGHT factor (Σ·V†), which flows rightward.
         # After the last site this carry becomes the norm carrier (un-normalized final tensor).
-        carry  = reshape(Diagonal(svs) * F.Vt[1:r, :], r, d[(i + 1):end]...)
+        carry = reshape(Diagonal(svs) * F.Vt[1:r, :], r, d[(i + 1):end]...)
         # `Diagonal(svs)` creates an r×r diagonal matrix from the vector svs — like np.diag(svs).
         # `F.Vt[1:r, :]` = first r rows of V† (shape: r × right_dim)
         # `Diagonal(svs) * F.Vt[1:r, :]` is a matrix product: (r×r)×(r×right_dim) → (r×right_dim)
@@ -230,8 +257,10 @@ function _left_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
     # Last site: the loop ended at i=L-1, so carry now has shape (χ_left, d_L).
     # The last site tensor is just this carry reshaped to (χ_left, d_L, 1) — the trailing 1
     # is the trivial right boundary bond (χ_R=1 on an open chain).
-    tensors[L] = QTensor(reshape(carry, χ_left, d[L], 1),
-                         (upper(:vL, χ_left), upper(:σ, d[L]), lower(:vR, 1)))
+    tensors[L] = QTensor(
+        reshape(carry, χ_left, d[L], 1),
+        (upper(:vL, χ_left), upper(:σ, d[L]), lower(:vR, 1)),
+    )
     # Physics: the last site is NOT constrained to be left-isometric — it holds the full norm.
     # Both vL and σ are Upper; vR is Lower (direction convention for left-canonical tensors).
 
@@ -245,16 +274,16 @@ function _right_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
     # Mirror of _left_sweep: sweeps right→left, making each site right-canonical (BB†=I).
     # Physics: the norm accumulates at the LEFTMOST site (site 1) instead of the rightmost.
     L = length(d)
-    tensors  = Vector{QTensor}(undef, L)
+    tensors = Vector{QTensor}(undef, L)
     bond_svs = Vector{SingValSpectrum}(undef, L + 1)
-    ε_total  = 0.0
+    ε_total = 0.0
 
-    bond_svs[1]   = SingValSpectrum([1.0], 0.0, true)
-    bond_svs[L+1] = SingValSpectrum([1.0], 0.0, true)
+    bond_svs[1] = SingValSpectrum([1.0], 0.0, true)
+    bond_svs[L + 1] = SingValSpectrum([1.0], 0.0, true)
 
     # Initial carry has the full state tensor with a trailing trivial dimension 1 (right boundary).
     # Compare to _left_sweep which prepended the 1; here we APPEND it.
-    carry   = reshape(ψ.data, d..., 1)  # shape: (d₁, …, d_L, 1)
+    carry = reshape(ψ.data, d..., 1)  # shape: (d₁, …, d_L, 1)
     χ_right = 1                          # current right bond dimension (starts trivial)
 
     # Loop from site L down to site 2 (site 1 is handled after the loop).
@@ -268,31 +297,33 @@ function _right_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
         # In numpy: M = carry.reshape(left_dim, d[i] * χ_right)
         # Matrix: rows = left_dim, columns = (d_i × χ_right)
 
-        F   = svd(M)
+        F = svd(M)
         # Same noise-cleaning threshold as the left sweep.
         tol = length(F.S) * eps(eltype(F.S)) * (isempty(F.S) ? 1.0 : F.S[1])
-        S_clean   = filter(s -> s > tol, F.S)
+        S_clean = filter(s -> s > tol, F.S)
         r, ε_bond = _truncate_singular_values(S_clean, trunc)
 
         svs = F.S[1:r]
-        ε_total += ε_bond
+        ε_total = hypot(ε_total, ε_bond)   # quadrature: discarded WEIGHTS add, so the 2-norms combine as sqrt(a²+b²)
 
         # Build the right-canonical site tensor B_i from V†'s first r rows:
         # Vt has shape (r, d[i]×χ_right); reshape to (r, d[i], χ_right).
         # Physics: V† has orthonormal rows → B_i·B_i† = I (right-isometry condition).
-        tensors[i]  = QTensor(reshape(F.Vt[1:r, :], r, d[i], χ_right),
-                              (lower(:vL, r), upper(:σ, d[i]), upper(:vR, χ_right)))
+        tensors[i] = QTensor(
+            reshape(F.Vt[1:r, :], r, d[i], χ_right),
+            (lower(:vL, r), upper(:σ, d[i]), upper(:vR, χ_right)),
+        )
         # For right-canonical tensors: vL is Lower (arrow points LEFT, away from OC),
         # σ is always Upper (contravariant physical leg), vR is Upper (toward OC on the right).
 
-        normalized  = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
+        normalized = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
         bond_svs[i] = SingValSpectrum(svs, ε_bond, normalized)
         # Note: for the right sweep, bond_svs[i] corresponds to the bond to the LEFT of site i
         # (between sites i-1 and i). This is indexed differently from the left sweep's bond_svs[i+1].
 
         # Form the new carry: U·Σ, which flows LEFTWARD to be absorbed into site i-1.
         # Physics: U·Σ is the left factor, carrying the gauge weight leftward.
-        carry   = reshape(F.U[:, 1:r] * Diagonal(svs), d[1:(i - 1)]..., r)
+        carry = reshape(F.U[:, 1:r] * Diagonal(svs), d[1:(i - 1)]..., r)
         # `F.U[:, 1:r]` = first r columns of U (shape: left_dim × r)
         # `F.U[:, 1:r] * Diagonal(svs)` = (left_dim×r) × (r×r) → (left_dim×r)
         # Then reshape to (d_1, …, d_{i-1}, r) — expanding the left_dim product back into individual dims.
@@ -301,8 +332,10 @@ function _right_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
     end
 
     # Site 1: carry has shape (d₁, χ_right). Prepend a trivial left dim 1 (boundary condition).
-    tensors[1] = QTensor(reshape(carry, 1, d[1], χ_right),
-                         (lower(:vL, 1), upper(:σ, d[1]), upper(:vR, χ_right)))
+    tensors[1] = QTensor(
+        reshape(carry, 1, d[1], χ_right),
+        (lower(:vL, 1), upper(:σ, d[1]), upper(:vR, χ_right)),
+    )
     # Physics: site 1 is the norm carrier in right-canonical form. vL is Lower (pointing left),
     # which is the convention for right-canonical tensors — arrow points away from the OC.
 
@@ -310,7 +343,7 @@ function _right_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
     return FiniteMPS(tensors, bond_svs, CanonicalForm(0, 1), ε_total)
 end
 
-# ==== Public API ==============================================================
+# SECTION -  Public API 
 
 """
     to_mps(ψ::QTensor; trunc::AbstractTrunc = NoTrunc(), form::Symbol = :left) -> FiniteMPS
@@ -319,21 +352,25 @@ Decompose a full quantum state tensor into a canonical matrix-product state via
 iterated SVD.
 
 # Arguments
-- `ψ::QTensor`: full coefficient tensor ``A^{\\sigma_1 \\ldots \\sigma_L}`` with
-  ``L`` physical legs, all of type `Upper` (contravariant ket-expansion indices)
-- `trunc::AbstractTrunc`: truncation strategy (default: `NoTrunc()`)
-- `form::Symbol`: `:left` for left-canonical sweep or `:right` for right-canonical sweep
+
+  - `ψ::QTensor`: full coefficient tensor ``A^{\\sigma_1 \\ldots \\sigma_L}`` with
+    ``L`` physical legs, all of type `Upper` (contravariant ket-expansion indices)
+  - `trunc::AbstractTrunc`: truncation strategy (default: `NoTrunc()`)
+  - `form::Symbol`: `:left` for left-canonical sweep or `:right` for right-canonical sweep
 
 # Physical invariants
-| Property | Left | Right |
-|----------|------|-------|
-| Isometry | ``A_i^\\dagger A_i = I`` (sites 1..L-1) | ``B_i B_i^\\dagger = I`` (sites 2..L) |
-| Form tag | `CanonicalForm(L, L+1)` | `CanonicalForm(0, 1)` |
-| Norm carrier | last site | first site |
 
-- **Reconstruction**: contracting all tensors recovers ``\\psi`` within `mps.ε`
-- **Error accounting**: `mps.ε = \\sum_i \\texttt{bond\\_svs}[i].\\varepsilon`
-- **Boundary spectra**: `bond_svs[1] = bond_svs[L+1] = [1.0]`
+| Property     | Left                                    | Right                                 |
+|:------------ |:--------------------------------------- |:------------------------------------- |
+| Isometry     | ``A_i^\\dagger A_i = I`` (sites 1..L-1) | ``B_i B_i^\\dagger = I`` (sites 2..L) |
+| Form tag     | `CanonicalForm(L, L+1)`                 | `CanonicalForm(0, 1)`                 |
+| Norm carrier | last site                               | first site                            |
+
+  - **Reconstruction**: contracting all tensors recovers ``\\psi`` within `mps.ε`
+  - **Error accounting**: `mps.ε = \\sqrt{\\sum_i \\texttt{bond\\_svs}[i].\\varepsilon^2}` — the
+    per-bond errors are 2-norms of discarded singular values, so it is their *squares* (the
+    discarded weights) that add. Note this is not a rigorous upper bound; see [`FiniteMPS`](@ref).
+  - **Boundary spectra**: `bond_svs[1] = bond_svs[L+1] = [1.0]`
 
 # Algorithm: carry-propagation via iterated SVD
 
@@ -389,7 +426,7 @@ function to_mps(ψ::QTensor; trunc::AbstractTrunc=NoTrunc(), form::Symbol=:left)
     end
 end
 
-# ==== MPS addition ============================================================
+# SECTION -  MPS addition 
 
 """
     add_mps(a, ψ::FiniteMPS, b, φ::FiniteMPS; trunc=NoTrunc()) -> FiniteMPS
@@ -407,14 +444,17 @@ with `trunc` is applied to compress the bond dimension and produce a
 `CanonicalForm(L, L+1)` result.
 
 # Arguments
-- `a`, `b` — scalar coefficients (zero coefficient → zero contribution)
-- `ψ`, `φ`  — input MPS (must have the same length and physical dimensions)
-- `trunc`   — truncation strategy applied during the recompression sweep
+
+  - `a`, `b` — scalar coefficients (zero coefficient → zero contribution)
+  - `ψ`, `φ`  — input MPS (must have the same length and physical dimensions)
+  - `trunc`   — truncation strategy applied during the recompression sweep
 
 # Returns
+
 A left-canonical `FiniteMPS` representing ``a|\\psi\\rangle + b|\\varphi\\rangle``.
 
 # See also
+
 `Base.:+(ψ, φ)` — unit-coefficient shorthand.
 """
 function add_mps(
@@ -425,24 +465,23 @@ function add_mps(
 
     L = length(ψ.tensors)   # number of sites in ψ (and φ must match)
     L == length(φ.tensors) || throw(
-        ArgumentError("add_mps: MPS lengths must match, got $L and $(length(φ.tensors))")
+        ArgumentError("add_mps: MPS lengths must match, got $L and $(length(φ.tensors))"),
     )
     # `a || throw(...)` is Julia's short-circuit "or" guard — if `a` is false, throw.
     # Equivalent to Python's `assert a, "..."` but raises ArgumentError not AssertionError.
     # `$(length(φ.tensors))` interpolates a function call result into the string.
 
-    all(
-        size(ψ.tensors[i].data, 2) == size(φ.tensors[i].data, 2) for i in 1:L
-    ) || throw(
-        ArgumentError("add_mps: physical dimensions must match at every site")
-    )
+    all(size(ψ.tensors[i].data, 2) == size(φ.tensors[i].data, 2) for i in 1:L) ||
+        throw(ArgumentError("add_mps: physical dimensions must match at every site"))
     # `all(condition for i in range)` = Python's `all(cond(i) for i in range(1, L+1))`.
     # `size(A, 2)` = Python's `A.shape[1]` (2nd dimension, 0-indexed in Python but 1-indexed here).
     # Dimension 2 of the site tensor is the physical leg σ (convention: vL=1, σ=2, vR=3).
 
     # `promote_type(T1, T2, ...)` finds the common numeric type that can hold values of all given types.
     # Like Python's implicit numeric promotion: int + float → float. Here we make everything agree.
-    T = promote_type(typeof(a), typeof(b), eltype(ψ.tensors[1].data), eltype(φ.tensors[1].data))
+    T = promote_type(
+        typeof(a), typeof(b), eltype(ψ.tensors[1].data), eltype(φ.tensors[1].data)
+    )
     # `typeof(x)` = type(x) in Python. `eltype(A)` = A.dtype for arrays.
 
     # Build direct-sum site tensors (block-diagonal construction)
@@ -477,31 +516,31 @@ function add_mps(
             # Physics: |ψ⟩ and |φ⟩ live in different "channels" of the virtual index.
             blk = zeros(T, 1, d, χR_new)
             # `zeros(T, 1, d, χR_new)` = np.zeros((1, d, χR_new), dtype=T) — all zeros array
-            blk[1, :, 1:χRψ]         = Aψ[1, :, :]   # fill ψ-block (columns 1..χRψ)
-            blk[1, :, (χRψ+1):end]   = Aφ[1, :, :]   # fill φ-block (columns χRψ+1..end)
-            # `1:χRψ` = Python's `slice(0, χRψ)` = `[:χRψ]`. Julia is 1-indexed, inclusive on both ends.
+            blk[1, :, 1:χRψ] = Aψ[1, :, :]   # fill ψ-block (columns 1..χRψ)
+            blk[1, :, (χRψ + 1):end] = Aφ[1, :, :]   # fill φ-block (columns χRψ+1..end)
+        # `1:χRψ` = Python's `slice(0, χRψ)` = `[:χRψ]`. Julia is 1-indexed, inclusive on both ends.
 
         elseif i == L
             # Right boundary site: both have χR=1, so the right dim is 1.
             # Direct sum happens in the LEFT (vL) direction: stack Aψ and Aφ top-to-bottom.
             blk = zeros(T, χL_new, d, 1)
-            blk[1:χLψ, :, 1]         = Aψ[:, :, 1]   # fill ψ-block (rows 1..χLψ)
-            blk[(χLψ+1):end, :, 1]   = Aφ[:, :, 1]   # fill φ-block (rows χLψ+1..end)
+            blk[1:χLψ, :, 1] = Aψ[:, :, 1]   # fill ψ-block (rows 1..χLψ)
+            blk[(χLψ + 1):end, :, 1] = Aφ[:, :, 1]   # fill φ-block (rows χLψ+1..end)
 
         else
             # Interior site: the block-diagonal structure is in (vL, vR).
             # Physics: the ψ-channel occupies the top-left block, φ-channel the bottom-right.
             # The off-diagonal blocks are zero (the two states don't mix).
             blk = zeros(T, χL_new, d, χR_new)
-            blk[1:χLψ, :, 1:χRψ]               = Aψ         # top-left block
-            blk[(χLψ+1):end, :, (χRψ+1):end]   = Aφ         # bottom-right block
+            blk[1:χLψ, :, 1:χRψ] = Aψ         # top-left block
+            blk[(χLψ + 1):end, :, (χRψ + 1):end] = Aφ         # bottom-right block
             # The off-diagonal blocks remain zero — this is the "direct sum" structure.
         end
 
         # transient ArbitraryForm tensors: σ is Upper on every state tensor; the
         # bond tags are provisional until _recompress_left assigns the canonical ones
         new_indices = (upper(:vL, χL_new), upper(:σ, d), lower(:vR, χR_new))
-        tensors[i]  = QTensor(blk, new_indices)
+        tensors[i] = QTensor(blk, new_indices)
     end
 
     # Build trivial boundary spectra — the block-diagonal MPS is in ArbitraryForm
@@ -528,50 +567,53 @@ tensor as the initial carry.
 """
 function _recompress_left(mps::FiniteMPS, trunc::AbstractTrunc)::FiniteMPS
     L = length(mps.tensors)
-    tensors  = Vector{QTensor}(undef, L)
+    tensors = Vector{QTensor}(undef, L)
     bond_svs = Vector{SingValSpectrum}(undef, L + 1)
-    ε_total  = 0.0
+    ε_total = 0.0
 
-    bond_svs[1]   = SingValSpectrum([1.0], 0.0, true)
-    bond_svs[L+1] = SingValSpectrum([1.0], 0.0, true)
+    bond_svs[1] = SingValSpectrum([1.0], 0.0, true)
+    bond_svs[L + 1] = SingValSpectrum([1.0], 0.0, true)
 
     # carry starts as the first site tensor, reshape to matrix (d, χR)
     carry = mps.tensors[1].data  # (1, d, χR)  — same shape as any left site tensor
     χL = size(carry, 1)          # `size(A, dim)` = Python's `A.shape[dim-1]` (1-indexed!)
 
     for i in 1:(L - 1)
-        d   = size(carry, 2)     # physical dimension of current site
-        χR  = size(carry, 3)     # right bond dimension of current site
-        M   = reshape(carry, χL * d, χR)   # flatten to matrix for SVD
+        d = size(carry, 2)     # physical dimension of current site
+        χR = size(carry, 3)     # right bond dimension of current site
+        M = reshape(carry, χL * d, χR)   # flatten to matrix for SVD
 
-        F   = svd(M)
+        F = svd(M)
         tol = length(F.S) * eps(eltype(F.S)) * (isempty(F.S) ? 1.0 : F.S[1])
-        S_clean   = filter(s -> s > tol, F.S)
+        S_clean = filter(s -> s > tol, F.S)
         r, ε_bond = _truncate_singular_values(S_clean, trunc)
 
         svs = F.S[1:r]
-        ε_total += ε_bond
+        ε_total = hypot(ε_total, ε_bond)   # quadrature: discarded WEIGHTS add, so the 2-norms combine as sqrt(a²+b²)
 
-        tensors[i]    = QTensor(reshape(F.U[:, 1:r], χL, d, r),
-                                (upper(:vL, χL), upper(:σ, d), lower(:vR, r)))
-        normalized    = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
-        bond_svs[i+1] = SingValSpectrum(svs, ε_bond, normalized)
+        tensors[i] = QTensor(
+            reshape(F.U[:, 1:r], χL, d, r), (upper(:vL, χL), upper(:σ, d), lower(:vR, r))
+        )
+        normalized = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
+        bond_svs[i + 1] = SingValSpectrum(svs, ε_bond, normalized)
 
         # Next carry: Σ·Vt contracted with the next site tensor
         # This is the key difference from _left_sweep: instead of reshaping a global tensor,
         # we CONTRACT the carry with the next MPS site tensor.
         SV = Diagonal(svs) * F.Vt[1:r, :]   # (r, χR) — the "transfer" factor
         next = mps.tensors[i + 1].data       # (χR_old, d_next, χR_next) — next site's raw data
-        d_next  = size(next, 2)
+        d_next = size(next, 2)
         χR_next = size(next, 3)
         # Contract SV (r×χR) with next reshaped to (χR, d_next×χR_next) → (r, d_next×χR_next)
         # Then reshape back to (r, d_next, χR_next) for the next iteration.
-        carry   = reshape(SV * reshape(next, χR, d_next * χR_next), r, d_next, χR_next)
-        χL      = r
+        carry = reshape(SV * reshape(next, χR, d_next * χR_next), r, d_next, χR_next)
+        χL = r
     end
 
     # Last site: carry is already the final tensor, just wrap it as a QTensor.
-    tensors[L] = QTensor(carry, (upper(:vL, χL), upper(:σ, size(carry, 2)), lower(:vR, size(carry, 3))))
+    tensors[L] = QTensor(
+        carry, (upper(:vL, χL), upper(:σ, size(carry, 2)), lower(:vR, size(carry, 3)))
+    )
     # `size(carry, 2)` = d_L (physical dim of last site), `size(carry, 3)` = 1 (right boundary).
 
     return FiniteMPS(tensors, bond_svs, CanonicalForm(L, L + 1), ε_total)
