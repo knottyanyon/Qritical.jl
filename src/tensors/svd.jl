@@ -1,6 +1,6 @@
 using LinearAlgebra   # provides `svd`, `Diagonal`, `norm`, `svdvals`, `qr` etc. 
 
-# ==== SVD result types ========================================================
+# SECTION -  SVD result types 
 
 """
     FullSVD
@@ -32,9 +32,13 @@ The factors U and ``V^\\dagger`` satisfy:
 # See also
 
 [`ReducedSVD`](@ref), [`do_svd`](@ref)
-   # result type for `do_svd` with `NoTrunc()`; immutable (default Julia struct); no truncation error field because ε = 0 exactly
+
+# result type for `do_svd` with `NoTrunc()`; immutable (default Julia struct); no truncation error field because ε = 0 exactly
+
 # TODO(v0.11): wire `.center` into the MPS canonical-form tracker once          # left isometry factor U; legs: `(original left legs..., λL::Lower)` where λL points from U toward Σ
+
           # diagonal factor; legs: `(λL::Upper, λR::Upper)` — both Upper because Σ is the OC and arrows point into it
+
 # `canonicalize.jl` is routed through `do_svd` for the symmetric-tensor path.         # right isometry factor V†; legs: `(λR::Lower, original right legs...)` where λR points from Vd toward Σ
 """
 struct FullSVD   # result type for `do_svd` with `NoTrunc()`; immutable (default Julia struct); no truncation error field because ε = 0 exactly
@@ -79,9 +83,13 @@ because columns were removed.
 # See also
 
 [`FullSVD`](@ref), [`do_svd`](@ref)
-   # result type for `do_svd` with any truncating strategy (MaxBondDimTrunc or ValCutoffTrunc); immutable
+
+# result type for `do_svd` with any truncating strategy (MaxBondDimTrunc or ValCutoffTrunc); immutable
+
 # TODO(v0.11): same as FullSVD — wire `.center` into the MPS canonical-form tracker            # truncated left isometry U_r (m × r); legs same as FullSVD.U
+
             # truncated diagonal Σ_r (r × r); both legs Upper
+
 # once `canonicalize.jl` is routed through `do_svd`.           # truncated right isometry V_r† (r × n); legs same as FullSVD.Vd
 """
 struct ReducedSVD   # result type for `do_svd` with any truncating strategy (MaxBondDimTrunc or ValCutoffTrunc); immutable
@@ -94,7 +102,7 @@ struct ReducedSVD   # result type for `do_svd` with any truncating strategy (Max
     center::BondCenter          # same as FullSVD; the bond Σ_r sits on
 end
 
-# ==== Truncation strategies ===================================================
+# SECTION -  Truncation strategies 
 
 """
     AbstractTrunc
@@ -161,6 +169,7 @@ are kept (the bound is a cap, not a target).
 F = do_svd(A, bp, MaxBondDimTrunc(32))   # keep at most 32 singular values
 F.ε                                        # approximation error
 ```   # truncation by bond dimension cap; concrete subtype of AbstractTrunc; carries data (unlike NoTrunc)
+```
 """
 struct MaxBondDimTrunc <: AbstractTrunc   # truncation by bond dimension cap; concrete subtype of AbstractTrunc; carries data (unlike NoTrunc)
     max_χ::Int   # maximum number of singular values to keep; physics: χ = bond dimension = number of Schmidt values; `::Int` type annotation enforces integer input
@@ -185,12 +194,13 @@ state and can be safely dropped.
 ```julia
 F = do_svd(A, bp, ValCutoffTrunc(1e-10))   # discard σ ≤ 1e-10
 ```   # truncation by value threshold; concrete subtype; discards any σ ≤ minval
+```
 """
 struct ValCutoffTrunc <: AbstractTrunc   # truncation by value threshold; concrete subtype; discards any σ ≤ minval
     minval::Float64   # absolute threshold; singular values ≤ minval are discarded; physics: corresponds to a precision cutoff on the Schmidt coefficients; `::Float64` = 64-bit floating-point 
 end
 
-# ==== Internal: decide how many values to keep ================================
+# SECTION -  Internal: decide how many values to keep 
 
 """
     _truncate_singular_values(Σ, trunc) -> (r, ε)
@@ -236,7 +246,40 @@ function _truncate_singular_values(Σ::AbstractVector{<:Real}, trunc::ValCutoffT
     return r, norm(@view Σ[(r + 1):end])   # same tail-norm formula; `@view` avoids a copy of the discarded slice
 end
 
-# ==== Internal: shared SVD computation ========================================
+# SECTION -  Internal: shared SVD computation
+
+"""
+    _robust_svd(M::AbstractMatrix) -> SVD
+
+Thin SVD of `M`, retrying with a slower but more reliable LAPACK driver if the fast one fails
+to converge.
+
+Julia's `svd` calls LAPACK's **divide-and-conquer** driver `gesdd`, which is the right default:
+it is substantially faster than the alternative on typical inputs.  It is also documented to
+occasionally fail to converge, raising `LAPACKException`, and the inputs that trigger it are
+precisely the ones tensor networks generate — matrices whose singular values are tightly
+clustered, as happens at a bond of a near-critical MPS whose Schmidt spectrum has a long flat
+shoulder.
+
+Observed in practice: an XXZ domain-wall quench at the isotropic (gapless) point ``\\Delta = 1``
+aborts partway through with `LAPACKException(1)` once the bond dimension approaches its cap,
+while the same run at ``\\Delta = 0``, ``0.5``, ``1.43`` or ``2`` completes normally.
+
+The fallback is `gesvd` (QR iteration), which is slower but far more robust.  Because the retry
+fires only on the rare bond that actually fails, the cost is negligible: the alternative is
+losing the entire evolution to one non-converged SVD.
+
+See also: [`_compute_svd_factors`](@ref)
+"""
+function _robust_svd(M::AbstractMatrix)   # `AbstractMatrix` = any 2D array type (dense, view, etc.)
+    try
+        return svd(M)   # fast path: LAPACK gesdd (divide and conquer)
+    catch e
+        e isa LinearAlgebra.LAPACKException || rethrow()   # only intercept convergence failures; anything else (dimension errors, NaNs) is a real bug and must propagate
+        @debug "gesdd failed to converge; retrying with gesvd" size(M)
+        return svd(M; alg=LinearAlgebra.QRIteration())   # slow path: LAPACK gesvd (QR iteration); `alg=` selects the driver
+    end
+end
 
 """
     _golub_van_loan_threshold(S::AbstractVector{<:Real}) -> Float64
@@ -291,7 +334,7 @@ attached in [`_assemble_qtensors`](@ref), keeping the two concerns separate.
 """
 function _compute_svd_factors(A::QTensor, bp::Bipartition, trunc::AbstractTrunc)   # internal: run the full SVD pipeline and return raw arrays; `AbstractTrunc` = accepts any truncation strategy
     M = group_legs(A, bp)   # reshape A into a matrix by fusing legs according to bp; `M` is a rank-2 QTensor
-    decomp = svd(M.data)           # thin SVD: U (m×k), S (k,), Vt (k×n), k = min(m,n); `svd` from LinearAlgebra; `decomp.U`, `decomp.S`, `decomp.Vt` are the three factor matrices ; `M.data` accesses the raw Array backing the QTensor
+    decomp = _robust_svd(M.data)           # thin SVD: U (m×k), S (k,), Vt (k×n), k = min(m,n); `svd` from LinearAlgebra; `decomp.U`, `decomp.S`, `decomp.Vt` are the three factor matrices ; `M.data` accesses the raw Array backing the QTensor
 
     tol = _golub_van_loan_threshold(decomp.S)   # compute the Golub–Van Loan noise threshold τ = k·ε_machine·σ₁
     S_cleaned = filter(σ -> σ > tol, decomp.S)   # `filter(pred, iter)` = keep only elements satisfying pred. strips floating-point noise BEFORE the truncation strategy sees the values
@@ -305,7 +348,7 @@ function _compute_svd_factors(A::QTensor, bp::Bipartition, trunc::AbstractTrunc)
     return U_mat, svs, Vd_mat, r, ε   # return 5 values as a Tuple 
 end
 
-# ==== Internal: attach leg metadata ===========================================
+# SECTION -  Internal: attach leg metadata 
 
 """
     _assemble_qtensors(U_mat, svs, Vd_mat, r, bp) -> (U_qt, Σ_qt, Vd_qt)
@@ -350,7 +393,7 @@ function _assemble_qtensors(U_mat, svs, Vd_mat, r, bp::Bipartition)   # internal
     return U_qt, Σ_qt, Vd_qt   # return 3 QTensors as a Tuple
 end
 
-# ==== Internal: build spectrum + center from assembled factors ================
+# SECTION -  Internal: build spectrum + center from assembled factors 
 
 """
     _build_spectrum_and_center(svs, ε, Σ_qt) -> (SingValSpectrum, BondCenter)
@@ -396,7 +439,7 @@ function _build_spectrum_and_center(svs::AbstractVector{<:Real}, ε::Float64, Σ
     return spectrum, center   # return both analysis objects as a 2-Tuple
 end
 
-# ==== Public API ==============================================================
+# SECTION -  Public API
 
 """
     do_svd(A, bp, trunc) -> FullSVD | ReducedSVD
@@ -442,7 +485,9 @@ G.spectrum.normalized                  # false — truncation lost weight
 ```
 
 # See also   # method specialised for NoTrunc; `::NoTrunc` = dispatch tag (value not needed); returns FullSVD (exact factorisation)
-   # `_` = throwaway variable for ε (which is 0.0 for NoTrunc); `NoTrunc()` = construct the singleton tag
+
+# `_` = throwaway variable for ε (which is 0.0 for NoTrunc); `NoTrunc()` = construct the singleton tag
+
 [`FullSVD`](@ref), [`ReducedSVD`](@ref), [`Bipartition`](@ref),   # wrap raw arrays in QTensor with correct leg metadata
 [`SingValSpectrum`](@ref)   # `0.0` for ε because no truncation error
 """

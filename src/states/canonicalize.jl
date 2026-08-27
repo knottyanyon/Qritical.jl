@@ -50,7 +50,7 @@ function _left_sweep_mps!(
         # Physics: this is the "bipartition" of the chain at bond i|i+1.
         # In numpy: M = A.reshape(χL * d, χR)
 
-        F = svd(M)
+        F = _robust_svd(M)
         # Full SVD: F.U (left unitary), F.S (singular values), F.Vt (right unitary conjugate-transposed).
         # Physics: this SVD gives us the Schmidt decomposition at bond i|i+1.
         # The singular values in F.S ARE the Schmidt values (up to noise).
@@ -146,7 +146,7 @@ function _right_sweep_mps!(
         # Physics: this bipartitions the chain at bond (i-1)|i.
         # The SVD of M gives right-canonical V† (orthonormal rows → BB†=I).
 
-        F = svd(M)
+        F = _robust_svd(M)
         tol = length(F.S) * eps(eltype(F.S)) * (isempty(F.S) ? 1.0 : F.S[1])
         S_clean = filter(s -> s > tol, F.S)
         r, ε_bond = _truncate_singular_values(S_clean, trunc)

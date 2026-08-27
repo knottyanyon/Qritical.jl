@@ -192,7 +192,7 @@ function _left_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
         # Compute the full SVD: M = U × Diagonal(S) × Vt
         # `F` is a struct with fields F.U, F.S, F.Vt (note: Vt = V†, the conjugate transpose).
         # In numpy: U, S, Vt = np.linalg.svd(M, full_matrices=False)
-        F = svd(M)
+        F = _robust_svd(M)
 
         # Noise-cleaning threshold (Golub–Van Loan criterion):
         # Tiny floating-point artifacts in F.S at level ε_machine × σ_max × n
@@ -297,7 +297,7 @@ function _right_sweep(ψ::QTensor, d::Vector{Int}, trunc::AbstractTrunc)
         # In numpy: M = carry.reshape(left_dim, d[i] * χ_right)
         # Matrix: rows = left_dim, columns = (d_i × χ_right)
 
-        F = svd(M)
+        F = _robust_svd(M)
         # Same noise-cleaning threshold as the left sweep.
         tol = length(F.S) * eps(eltype(F.S)) * (isempty(F.S) ? 1.0 : F.S[1])
         S_clean = filter(s -> s > tol, F.S)
@@ -583,7 +583,7 @@ function _recompress_left(mps::FiniteMPS, trunc::AbstractTrunc)::FiniteMPS
         χR = size(carry, 3)     # right bond dimension of current site
         M = reshape(carry, χL * d, χR)   # flatten to matrix for SVD
 
-        F = svd(M)
+        F = _robust_svd(M)
         tol = length(F.S) * eps(eltype(F.S)) * (isempty(F.S) ? 1.0 : F.S[1])
         S_clean = filter(s -> s > tol, F.S)
         r, ε_bond = _truncate_singular_values(S_clean, trunc)

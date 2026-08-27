@@ -199,9 +199,9 @@ function MPO(H::LatticeOperator)   # construct a FiniteMPO from a LatticeOperato
         # closing site and produce spurious contributions.  Fixes #78.
         for (k, (Ak, Bk)) in enumerate(btypes)   # iterate over all K channel types; `enumerate(collection)` returns (index, value) pairs — same as Python enumerate; `(Ak, Bk)` unpacks the operator pair tuple
             in_flight = any(H.bond) do bt   # `any(collection) do element ... end` is Julia's block-form of `any(predicate, collection)`; the `do bt` creates an anonymous function over `bt`; `any(H.bond) do bt...` checks if any bond of type k is "in flight" at site i
-                bt.i < i < bt.j &&   # `a < b < c` is chained comparison (same as Python!); true only if i is strictly between bt.i and bt.j
-                    _ops_eq(ComplexF64.(bt.op_i), Ak) &&   # check the left operator matches channel k
-                    _ops_eq(ComplexF64.(bt.op_j), Bk)   # and the right operator matches; all three conditions must hold
+                return bt.i < i < bt.j &&   # `a < b < c` is chained comparison (same as Python!); true only if i is strictly between bt.i and bt.j
+                       _ops_eq(ComplexF64.(bt.op_i), Ak) &&   # check the left operator matches channel k
+                       _ops_eq(ComplexF64.(bt.op_j), Bk)   # and the right operator matches; all three conditions must hold
             end
             in_flight && (W[k + 1, :, :, k + 1] = Id)   # `condition && expr` evaluates `expr` only if condition is true (short-circuit AND used as one-line conditional); set channel carry: W[channel_in, :, :, channel_out] = I only when channel k is in-flight between two non-adjacent sites
         end
@@ -240,7 +240,7 @@ function MPO(H::LatticeOperator)   # construct a FiniteMPO from a LatticeOperato
     tensors[1] = tensors[1][(K + 2):(K + 2), :, :, :]   # (1, d, d, χ)  # slice only the "start" row: at the left boundary the FSM always starts in state K+2; `(K+2):(K+2)` is a range of length 1 that keeps the dimension (unlike `K+2` scalar indexing which would drop it); result shape: (1, d, d, χ)
     tensors[L] = tensors[L][:, :, :, 1:1]        # (χ, d, d, 1)  # slice only the "done" column: at the right boundary only "done" results contribute; `1:1` range keeps the dimension; result shape: (χ, d, d, 1)
 
-    FiniteMPO(tensors, d, L)   # construct and return the FiniteMPO
+    return FiniteMPO(tensors, d, L)   # construct and return the FiniteMPO
 end
 
 # ----------------------------------------------------------------------------------------
@@ -361,7 +361,7 @@ function apply_mpo(O::FiniteMPO, ψ::FiniteMPS; trunc::AbstractTrunc=NoTrunc()) 
     end
 
     # Compress via left-canonical SVD sweep (reuse MPS machinery directly)
-    _compress_thick_mps(thick, d, L, trunc)   # compress the thick MPS back to target bond dimension using SVD; delegates to the internal helper below
+    return _compress_thick_mps(thick, d, L, trunc)   # compress the thick MPS back to target bond dimension using SVD; delegates to the internal helper below
 end
 
 # Left-canonical SVD sweep on thick MPS tensors (mirrors _left_sweep_mps! in canonicalize.jl).
@@ -383,7 +383,7 @@ function _compress_thick_mps(   # internal function (name starts with `_` by con
     for i in 1:(L - 1)   # SVD sweep: process all but the last site
         M = reshape(carry, χ_left * d, size(carry, 3))   # reshape carry from (χ_left, d, χ_right) to (χ_left*d, χ_right) for SVD; this groups the left bond + physical indices for the left factor of the SVD
 
-        F = svd(M)   # thin SVD: M = U Σ Vt; `F.U` = left singular vectors, `F.S` = singular values, `F.Vt` = right singular vectors (V-transpose)
+        F = _robust_svd(M)   # thin SVD: M = U Σ Vt; `F.U` = left singular vectors, `F.S` = singular values, `F.Vt` = right singular vectors (V-transpose)
         tol = length(F.S) * eps(eltype(F.S)) * (isempty(F.S) ? 1.0 : F.S[1])   # numerical noise floor for singular values; `eps(eltype(F.S))` = machine epsilon for the element type; `F.S[1]` = largest singular value (SVD sorts descending); `isempty(F.S) ? 1.0 : F.S[1]` safely handles the empty case
         S_clean = filter(s -> s > tol, F.S)   # remove numerically zero singular values; `filter(pred, iter)` = Python `list(filter(pred, iter))`
         r, ε_bond = _truncate_singular_values(S_clean, trunc)   # choose how many to keep: `r` = kept count, `ε_bond` = truncation error for this bond; multiple return values unpacked via Julia tuple assignment
@@ -411,5 +411,5 @@ function _compress_thick_mps(   # internal function (name starts with `_` by con
     result[L] = QTensor(carry, (upper(:vL, χ_left), upper(:σ, d), lower(:vR, χ_R)))   # store the last tensor (no SVD needed — it absorbs all remaining norm)
     bond_svs[L + 1] = SingValSpectrum([1.0], 0.0, true)   # right boundary singular value spectrum
 
-    FiniteMPS(result, bond_svs, CanonicalForm(L, L + 1), ε_total)   # construct the compressed FiniteMPS in left-canonical form; `CanonicalForm(L, L+1)` marks it as left-canonical (orthogonality centre at or past the last site)
+    return FiniteMPS(result, bond_svs, CanonicalForm(L, L + 1), ε_total)   # construct the compressed FiniteMPS in left-canonical form; `CanonicalForm(L, L+1)` marks it as left-canonical (orthogonality centre at or past the last site)
 end

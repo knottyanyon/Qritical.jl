@@ -256,7 +256,7 @@ function apply_gate(
 
     # SVD split: reshape to (χL*d, d*χR)
     M = reshape(Θ_new, χL * d, d * χR)   # reshape Θ_new into a matrix for SVD; the legs are already in the order (α, σ1p, σ2p, β), so a plain column-major reshape groups the left pair against the right pair for the bipartition SVD — no permutation needed
-    F = svd(M)   # thin SVD: M = U Σ Vt; `F.U` is χL*d × r, `F.S` is length-r singular values, `F.Vt` is r × d*χR
+    F = _robust_svd(M)   # thin SVD: M = U Σ Vt; `F.U` is χL*d × r, `F.S` is length-r singular values, `F.Vt` is r × d*χR
     tol = length(F.S) * eps(eltype(F.S)) * (isempty(F.S) ? 1.0 : F.S[1])   # machine-precision-based truncation floor; `eps(T)` returns machine epsilon for type T ; physics: singular values below numerical noise level are meaningless
     S_clean = filter(s -> s > tol, F.S)   # remove numerically zero singular values; `filter(predicate, collection)` returns elements satisfying predicate 
     r, ε_bond = _truncate_singular_values(S_clean, trunc)   # determine how many singular values to keep given truncation scheme; `r` is the kept bond dimension; `ε_bond` is the 2-norm of the singular values thrown away at this bond; physics: truncation controls bond dimension growth (key to TEBD efficiency), and ε_bond² is the Schmidt weight that growth cost us
