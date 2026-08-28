@@ -29,7 +29,6 @@ end
     include("test_disorder.jl")
     include("test_svd.jl")
     include("core/test_core.jl")
-    include("test_multix.jl")
     include("test_partition.jl")
     include("test_tensor_utils.jl")
     include("test_qtensor.jl")

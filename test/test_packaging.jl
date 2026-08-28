@@ -26,7 +26,7 @@ const SRCDIR = joinpath(pkgdir(Qritical), "src")
     # Exact file → folder mapping
     expected = [
         ("core", "tix.jl"),
-        ("tensors", "multix.jl"),
+        ("core", "multix.jl"),
         ("tensors", "partition.jl"),
         ("tensors", "qtensor.jl"),
         ("tensors", "tensor_utils.jl"),

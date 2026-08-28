@@ -11,8 +11,7 @@ include("experimental/min_model_kit/lattice/symmetries.jl")
 include("tensors/storage_format.jl")
 include("operators/operator.jl")
 include("core/core.jl")
-import .Core: AbstractIx, TIx, dim, label, ixs, ixs_range
-include("tensors/multix.jl")
+import .Core: AbstractIx, TIx, MulTIx, dim, label, ixs, ixs_range
 include("tensors/partition.jl")
 include("tensors/qtensor.jl")
 include("tensors/tensor_utils.jl")

@@ -14,7 +14,8 @@ credits:
 module Core
 
 include("tix.jl")
+include("multix.jl")
 
-export AbstractIx, TIx, dim, label, ixs, ixs_range
+export AbstractIx, TIx, MulTIx, dim, label, ixs, ixs_range
 
 end
