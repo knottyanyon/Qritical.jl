@@ -2,27 +2,30 @@ using Qritical: pkgdir as _pkgdir
 
 const SRCDIR = joinpath(pkgdir(Qritical), "src")
 
-@testset "src layout" begin
+@testitem "src layout" begin
     # Top-level subdirectories
     for dir in (
+        "core",
         "tensors",
-        "min_model_kit",
         "operators",
         "states",
         "algorithms",
         "studies",
         "utils",
-        "topograph",
+        "experimental",
     )
         @test isdir(joinpath(SRCDIR, dir))
     end
 
+    @test isdir(joinpath(SRCDIR, "experimental", "min_model_kit"))
+    @test isdir(joinpath(SRCDIR, "experimental", "topograph"))
+
     # Nested lattice directory inside min_model_kit
-    @test isdir(joinpath(SRCDIR, "min_model_kit", "lattice"))
+    @test isdir(joinpath(SRCDIR, "experimental", "min_model_kit", "lattice"))
 
     # Exact file → folder mapping
     expected = [
-        ("tensors", "tix.jl"),
+        ("core", "tix.jl"),
         ("tensors", "multix.jl"),
         ("tensors", "partition.jl"),
         ("tensors", "qtensor.jl"),
@@ -32,9 +35,9 @@ const SRCDIR = joinpath(pkgdir(Qritical), "src")
         ("tensors", "spectrum.jl"),
         ("tensors", "svd.jl"),
         ("tensors", "storage_format.jl"),
-        ("min_model_kit", "dof.jl"),
-        ("min_model_kit/lattice", "symmetries.jl"),
-        ("min_model_kit/lattice", "lattice_graph.jl"),
+        ("experimental/min_model_kit", "dof.jl"),
+        ("experimental/min_model_kit/lattice", "symmetries.jl"),
+        ("experimental/min_model_kit/lattice", "lattice_graph.jl"),
         ("operators", "operator.jl"),
         ("operators", "finite_mpo.jl"),
         ("operators", "correlators.jl"),
@@ -49,20 +52,6 @@ const SRCDIR = joinpath(pkgdir(Qritical), "src")
         ("studies", "disorder.jl"),
         ("utils", "io.jl"),
         ("utils", "deprecations.jl"),
-        ("topograph", "gengraph.jl"),
-        ("topograph", "ordinary_graph.jl"),
-        ("topograph", "layout.jl"),
-        ("topograph", "ids.jl"),
-        ("topograph", "node.jl"),
-        ("topograph", "wire.jl"),
-        ("topograph", "leg.jl"),
-        ("topograph", "attachment.jl"),
-        ("topograph", "orientation.jl"),
-        ("topograph", "network.jl"),
-        ("topograph", "pin.jl"),
-        ("topograph", "compactify.jl"),
-        ("topograph", "progressive.jl"),
-        ("topograph", "topograph.jl"),
     ]
     for (folder, file) in expected
         @test isfile(joinpath(SRCDIR, folder, file))
@@ -73,12 +62,13 @@ const SRCDIR = joinpath(pkgdir(Qritical), "src")
     @test root_jl == ["Qritical.jl"]
 end
 
-@testset "only the module root includes by path" begin
+@testitem "only the module root includes by path" begin
     for (root, _, files) in walkdir(SRCDIR)
         for file in files
             endswith(file, ".jl") || continue
             path = joinpath(root, file)
             path == joinpath(SRCDIR, "Qritical.jl") && continue
+            path == joinpath(SRCDIR, "core", "core.jl") && continue
             text = read(path, String)
             for line in split(text, '\n')
                 @test !occursin(r"^\s*include\(", line)

@@ -5,12 +5,13 @@ using TensorOperations
 using SparseArrays: SparseArrays
 import SparseArrays: sparse
 
-include("topograph/layout.jl")
-include("min_model_kit/dof.jl")
-include("min_model_kit/lattice/symmetries.jl")
+include("experimental/topograph/layout.jl")
+include("experimental/min_model_kit/dof.jl")
+include("experimental/min_model_kit/lattice/symmetries.jl")
 include("tensors/storage_format.jl")
 include("operators/operator.jl")
-include("tensors/tix.jl")
+include("core/core.jl")
+import .Core: AbstractIx, TIx, dim, label, ixs, ixs_range
 include("tensors/multix.jl")
 include("tensors/partition.jl")
 include("tensors/qtensor.jl")
@@ -18,20 +19,25 @@ include("tensors/tensor_utils.jl")
 include("tensors/bond.jl")
 include("tensors/ortho_center.jl")
 include("tensors/spectrum.jl")
-include("topograph/gengraph.jl")
-include("topograph/ordinary_graph.jl")
-include("topograph/ids.jl")
-include("topograph/node.jl")
-include("topograph/wire.jl")
-include("topograph/leg.jl")
-include("topograph/attachment.jl")
-include("topograph/orientation.jl")
-include("topograph/network.jl")
-include("topograph/pin.jl")
-include("topograph/compactify.jl")
-include("topograph/progressive.jl")
-include("min_model_kit/lattice/lattice_graph.jl")
-include("topograph/convention.jl")
+include("experimental/topograph/gengraph.jl")
+include("experimental/topograph/ordinary_graph.jl")
+include("experimental/topograph/ids.jl")
+include("experimental/topograph/node.jl")
+# wire.jl, leg.jl, attachment.jl, orientation.jl, network.jl, pin.jl, compactify.jl,
+# convention.jl still use the old variance-tagged TIx{Upper}/TIx{Lower}/IxLoc index API
+# (M12, a separate milestone). Temporarily disabled while the TensorKit TensorMap migration
+# is in progress so the rest of the package can load and be verified; restore once M12 is
+# migrated to the flat TIx design in its own session.
+# include("experimental/topograph/wire.jl")
+# include("experimental/topograph/leg.jl")
+# include("experimental/topograph/attachment.jl")
+# include("experimental/topograph/orientation.jl")
+# include("experimental/topograph/network.jl")
+# include("experimental/topograph/pin.jl")
+# include("experimental/topograph/compactify.jl")
+# include("experimental/topograph/progressive.jl")
+# include("experimental/min_model_kit/lattice/lattice_graph.jl")
+# include("experimental/topograph/convention.jl")
 include("tensors/svd.jl")
 include("utils/io.jl")
 include("states/mps.jl")
@@ -47,14 +53,13 @@ include("algorithms/ed.jl")
 include("studies/disorder.jl")
 include("utils/deprecations.jl")
 
-# SECTION -  Index layer 
-export IxLoc, Upper, Lower
+# SECTION -  Index layer
 export AbstractIx, TIx, MulTIx
-export dim, label, which_space, flip
-export upper, lower, uppers, lowers, uppers_range, lowers_range, bond_label
+export dim, label
+export ixs, ixs_range, bond_label
 
-# SECTION -  QTensor + partitions 
-export QTensor, dagger
+# SECTION -  QTensor + partitions
+export QTensor, QTensor_state, QTensor_operator, dagger, to_array
 export Partition, Bipartition, complement, bipartition, group_legs
 
 # SECTION -  SVD + truncation 
