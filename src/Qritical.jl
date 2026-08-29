@@ -5,6 +5,7 @@ using TensorOperations
 using SparseArrays: SparseArrays
 import SparseArrays: sparse
 
+include("utils/glossary/_core.jl")
 include("experimental/topograph/layout.jl")
 include("experimental/min_model_kit/dof.jl")
 include("experimental/min_model_kit/lattice/symmetries.jl")
