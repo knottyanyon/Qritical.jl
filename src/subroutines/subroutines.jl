@@ -17,7 +17,7 @@ using TensorKit
 using Glossaries
 Glossaries.@Glossary()   # own glossary namespace, separate from Qritical's/Core's/Processes'/SimStudy's (see Core's pattern)
 
-import ..Core: AbstractIx, TIx, dim, space, LegRole, PhysicalLeg, VirtualLeg
+import ..Core: AbstractIx, TIx, dim, space, LegRole, PhysicalLeg, VirtualLeg, PenroseLabel
 import ..Processes:
     AbstractProcess,
     QProcess,
@@ -49,6 +49,7 @@ include("decompositions.jl")
 include("gauge.jl")
 include("canonical_decompositions.jl")
 include("mpoperator.jl")
+include("automaton.jl")
 include("../utils/glossary/trotterization.jl")   # terms must be defined before trotterization.jl's docstrings interpolate them
 include("trotterization.jl")
 
@@ -70,6 +71,8 @@ export TensorTrain, MPState, MPOperator, is_gauge_fixed
 export CanonicalizeConfig, LeftCanonicalize, RightCanonicalize, SiteCanonicalize
 export to_mps, canonicalize, to_vidal, is_canonical
 export to_mpo, to_choi, to_operator
+
+export AutomatonTerm, HamiltonianAutomaton, build_automaton, materialize
 
 export ApproximateDecomposition
 export ProductFormula, LieTrotter, SuzukiTrotter, Suzuki4th

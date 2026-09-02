@@ -123,6 +123,10 @@ import .Subroutines:
     to_mpo,
     to_choi,
     to_operator,
+    AutomatonTerm,
+    HamiltonianAutomaton,
+    build_automaton,
+    materialize,
     ApproximateDecomposition,
     ProductFormula,
     LieTrotter,
@@ -189,6 +193,7 @@ export TensorTrain, MPState, MPOperator, is_gauge_fixed
 export CanonicalizeConfig, LeftCanonicalize, RightCanonicalize, SiteCanonicalize
 export to_mps, canonicalize, to_vidal, is_canonical
 export to_mpo, to_choi, to_operator
+export AutomatonTerm, HamiltonianAutomaton, build_automaton, materialize
 export ApproximateDecomposition
 export ProductFormula, LieTrotter, SuzukiTrotter, Suzuki4th
 export Trotterization, OperatorSplitting

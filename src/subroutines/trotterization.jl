@@ -11,7 +11,8 @@ refs:
 credits: mpskit-validation (internal validation package) - decompositions.jl
 =#
 
-using ..SimStudy: SimStudy, RecordingTrait, Active, record!, finalize!, AbstractErrorAccumulator
+using ..SimStudy:
+    SimStudy, RecordingTrait, Active, record!, finalize!, AbstractErrorAccumulator
 
 # The type-tag shape (ProductFormula{Order}/Trotterization{PF}/OperatorSplitting{F}) mirrors
 # mpskit-validation/decompositions.jl's bare stub declarations, but everything below them -
@@ -104,7 +105,8 @@ that exponential or inspecting `term` itself - `terms` stays fully opaque throug
 $(Glossaries.Argument{@__MODULE__}()([:pf_terms, :pf_dt]))
 
 Repeating the returned recipe `num_steps` times, for a full time evolution, is left to the caller
-- `sequence` always returns a single step's recipe, never `num_steps` copies of it.
+
+  - `sequence` always returns a single step's recipe, never `num_steps` copies of it.
 """
 function sequence(::LieTrotter, terms::AbstractVector, dt)
     return [(term, 1.0) for term in terms]
@@ -118,14 +120,15 @@ function sequence(::SuzukiTrotter, terms::AbstractVector, dt)
     return vcat(forward, [last_step], backward)
 end
 
-_rescale_coefficients(sub_sequence, factor) = [(term, c * factor) for (term, c) in sub_sequence]
+function _rescale_coefficients(sub_sequence, factor)
+    return [(term, c * factor) for (term, c) in sub_sequence]
+end
 
 """
     sequence(::Suzuki4th, terms, dt) -> Vector{Tuple{Any,Float64}}
 
 Recursive construction: `SuzukiTrotter`'s own dimensionless splitting weights (`0.5`/`1.0`/`0.5`)
-never depend on the numeric value of its `dt` argument, so composing `S2(s*dt) S2(s*dt)
-S2((1-4s)*dt) S2(s*dt) S2(s*dt)` is done here by calling `sequence(SuzukiTrotter(), terms, dt)`
+never depend on the numeric value of its `dt` argument, so composing `S2(s*dt) S2(s*dt) S2((1-4s)*dt) S2(s*dt) S2(s*dt)` is done here by calling `sequence(SuzukiTrotter(), terms, dt)`
 once per sub-formula and rescaling *its returned coefficients* by `s`/`(1-4s)` afterwards, rather
 than by passing a rescaled timestep into each nested call (which, since those coefficients don't
 read `dt` at all, would have no effect on what's returned). This keeps every returned tuple's

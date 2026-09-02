@@ -75,8 +75,7 @@ end
 """
     ExpectationValueSnapshot{K,V}
 
-One step's worth of computed expectation values, keyed identically to the `observables::Dict{K,
-<:Observable}` argument [`evaluate_expectation_values`](@ref) was called with. Plain payload
+One step's worth of computed expectation values, keyed identically to the `observables::Dict{K, <:Observable}` argument [`evaluate_expectation_values`](@ref) was called with. Plain payload
 struct, playing the same role for a batch of expectation values that `SingValSpectrum`
 (`src/subroutines/spectrum.jl`) plays for one bond's singular-value data during a canonicalization
 sweep: built once per step, handed to an `AbstractCollector` via `step!`, and never itself decides
@@ -106,7 +105,9 @@ dataframe/dimensional-data-style table of tracked observables across time steps.
 function evaluate_expectation_values(
     observables::Dict{K,<:Observable}, state; collector::AbstractCollector=NoOpCollector()
 ) where {K}
-    results = Dict{K,Any}(k => evaluate_expectation_value(obs, state) for (k, obs) in observables)
+    results = Dict{K,Any}(
+        k => evaluate_expectation_value(obs, state) for (k, obs) in observables
+    )
     if RecordingTrait(collector) isa Active
         step!(collector, (; snapshot=ExpectationValueSnapshot(results)))
     end

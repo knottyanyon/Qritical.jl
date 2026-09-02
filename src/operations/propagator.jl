@@ -49,24 +49,31 @@ struct Propagator{T<:Time} <: AbstractProcess
     dt::Float64
 end
 
-tensor(::Propagator) = error(
-    "tensor(::Propagator) is not yet implemented - Propagator has no tensor representation yet"
-)
-outputs(::Propagator) = error(
-    "outputs(::Propagator) is not yet implemented - Propagator has no tensor representation yet"
-)
-inputs(::Propagator) = error(
-    "inputs(::Propagator) is not yet implemented - Propagator has no tensor representation yet"
-)
+function tensor(::Propagator)
+    return error(
+        "tensor(::Propagator) is not yet implemented - Propagator has no tensor representation yet",
+    )
+end
+function outputs(::Propagator)
+    return error(
+        "outputs(::Propagator) is not yet implemented - Propagator has no tensor representation yet",
+    )
+end
+function inputs(::Propagator)
+    return error(
+        "inputs(::Propagator) is not yet implemented - Propagator has no tensor representation yet",
+    )
+end
 
 """
     trotterize(propagator::Propagator, pf::ProductFormula)
 
 Apply the product-formula splitting tagged by `pf` to `propagator`'s Hamiltonian, producing the
 ordered `(term, coefficient)` gate-block recipe for one Trotter step (via `Subroutines.sequence`)
-- the TEBD gate sequence a [`Propagator`](@ref) reduces to under Trotterization. **Not yet
-implemented** - depends on [`Hamiltonian`](@ref) exposing a term decomposition, which doesn't
-exist yet.
+
+  - the TEBD gate sequence a [`Propagator`](@ref) reduces to under Trotterization. **Not yet
+    implemented** - depends on [`Hamiltonian`](@ref) exposing a term decomposition, which doesn't
+    exist yet.
 """
 function trotterize(propagator::Propagator, pf::ProductFormula)
     return error(

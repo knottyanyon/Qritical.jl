@@ -28,12 +28,18 @@ subtype gets a clear "not yet implemented" error for free until it has real fiel
 """
 abstract type Observable <: AbstractProcess end
 
-tensor(::Observable) = error(
-    "tensor(::Observable) is not yet implemented - Observable has no tensor representation yet"
-)
-outputs(::Observable) = error(
-    "outputs(::Observable) is not yet implemented - Observable has no tensor representation yet"
-)
-inputs(::Observable) = error(
-    "inputs(::Observable) is not yet implemented - Observable has no tensor representation yet"
-)
+function tensor(::Observable)
+    return error(
+        "tensor(::Observable) is not yet implemented - Observable has no tensor representation yet",
+    )
+end
+function outputs(::Observable)
+    return error(
+        "outputs(::Observable) is not yet implemented - Observable has no tensor representation yet",
+    )
+end
+function inputs(::Observable)
+    return error(
+        "inputs(::Observable) is not yet implemented - Observable has no tensor representation yet",
+    )
+end
