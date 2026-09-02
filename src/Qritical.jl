@@ -130,6 +130,10 @@ import .Subroutines:
     AutomatonTopology,
     build_topology,
     fill_topology,
+    SplitStrategy,
+    EvenOddSplit,
+    GraphColoring,
+    split_commuting_groups,
     ApproximateDecomposition,
     ProductFormula,
     LieTrotter,
@@ -146,10 +150,12 @@ import .Operations:
     Observable,
     Hamiltonian,
     Correlator,
+    symmetry_group,
     Time,
     RealTime,
     ImaginaryTime,
     Propagator,
+    propagator,
     trotterize,
     evaluate_expectation_value,
     ExpectationValueSnapshot,
@@ -198,6 +204,7 @@ export to_mps, canonicalize, to_vidal, is_canonical
 export to_mpo, to_choi, to_operator
 export AutomatonTerm, HamiltonianAutomaton, build_automaton, materialize
 export AutomatonTopology, build_topology, fill_topology
+export SplitStrategy, EvenOddSplit, GraphColoring, split_commuting_groups
 export ApproximateDecomposition
 export ProductFormula, LieTrotter, SuzukiTrotter, Suzuki4th
 export Trotterization, OperatorSplitting
@@ -205,8 +212,9 @@ export sequence, local_error_bound, TrotterErrorAccumulator, accumulate_trotter_
 
 # SECTION -  Operations layer
 export Observable, Hamiltonian, Correlator
+export symmetry_group
 export Time, RealTime, ImaginaryTime, Propagator
-export trotterize
+export propagator, trotterize
 export evaluate_expectation_value
 export ExpectationValueSnapshot, evaluate_expectation_values
 

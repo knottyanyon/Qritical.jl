@@ -40,7 +40,8 @@ end
     site = QProcess(u; output_roles=(VirtualLeg(), PhysicalLeg()), input_roles=VirtualLeg())
     vidal_chain = MPState([site, site], VidalGauge(), 0, 0, nothing, 0.0)
 
-    for observable in (Hamiltonian(), Correlator())
+    H = Hamiltonian(AutomatonTerm[], L, V)
+    for observable in (H, Correlator())
         for chain in (left_chain, right_chain, mixed_chain, vidal_chain)
             @test_throws ErrorException evaluate_expectation_value(observable, chain)
         end
@@ -58,7 +59,7 @@ end
     ψ = State(ψtensor)
     chain = to_mps(ψ; form=:left)
 
-    observables = Dict(:mag => Correlator(), :energy => Hamiltonian())
+    observables = Dict(:mag => Correlator(), :energy => Hamiltonian(AutomatonTerm[], L, V))
 
     # the batch function's own dict/collector plumbing runs; the still-stubbed
     # evaluate_expectation_value call underneath is what actually throws.

@@ -74,6 +74,7 @@ export to_mpo, to_choi, to_operator
 
 export AutomatonTerm, HamiltonianAutomaton, build_automaton, materialize
 export AutomatonTopology, build_topology, fill_topology
+export SplitStrategy, EvenOddSplit, GraphColoring, split_commuting_groups
 
 export ApproximateDecomposition
 export ProductFormula, LieTrotter, SuzukiTrotter, Suzuki4th

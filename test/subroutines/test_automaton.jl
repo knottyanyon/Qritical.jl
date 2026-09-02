@@ -323,3 +323,43 @@ end
     mismatched = [AutomatonTerm(1.0, [1 => sz, 2 => sz]), AutomatonTerm(0.5, [3 => sz])]
     @test_throws ArgumentError fill_topology(topology, mismatched, V)
 end
+
+@testitem "split_commuting_groups: EvenOddSplit on a pure NN-bond chain" begin
+    using TensorKit
+
+    V = ComplexSpace(2)
+    sz = QProcess(
+        TensorMap(ComplexF64[1 0; 0 -1], V ← V);
+        output_roles=PhysicalLeg(),
+        input_roles=PhysicalLeg(),
+    )
+    L = 5
+    terms = [AutomatonTerm(1.0, [i => sz, i + 1 => sz]) for i in 1:(L - 1)]
+
+    groups = split_commuting_groups(terms)
+    @test length(groups) == 2
+    @test sum(length, groups) == length(terms)
+
+    for group in groups
+        site_sets = [Set(first.(t.ops)) for t in group]
+        for a in eachindex(site_sets), b in (a + 1):length(site_sets)
+            @test isempty(intersect(site_sets[a], site_sets[b]))
+        end
+    end
+
+    # default argument matches explicit EvenOddSplit()
+    @test split_commuting_groups(terms) == split_commuting_groups(terms, EvenOddSplit())
+end
+
+@testitem "split_commuting_groups: GraphColoring is stubbed" begin
+    using TensorKit
+
+    V = ComplexSpace(2)
+    sz = QProcess(
+        TensorMap(ComplexF64[1 0; 0 -1], V ← V);
+        output_roles=PhysicalLeg(),
+        input_roles=PhysicalLeg(),
+    )
+    terms = [AutomatonTerm(1.0, [1 => sz, 2 => sz])]
+    @test_throws ErrorException split_commuting_groups(terms, GraphColoring())
+end

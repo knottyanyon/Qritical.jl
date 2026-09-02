@@ -1,6 +1,10 @@
 @testitem "Propagator construction, type-parameter dispatch, and stub accessors" begin
-    p_real = Propagator{RealTime}(Hamiltonian(), 0.1)
-    p_imag = Propagator{ImaginaryTime}(Hamiltonian(), 0.1)
+    using TensorKit
+
+    V = ComplexSpace(2)
+    H = Hamiltonian(AutomatonTerm[], 3, V)
+    p_real = Propagator{RealTime}(H, 0.1)
+    p_imag = Propagator{ImaginaryTime}(H, 0.1)
 
     @test p_real isa AbstractProcess
     @test p_real.hamiltonian isa Hamiltonian
@@ -13,7 +17,27 @@
     @test_throws ErrorException inputs(p_real)
 end
 
+@testitem "propagator(H, dt; kind) constructs the right Propagator{T}" begin
+    using TensorKit
+
+    V = ComplexSpace(2)
+    H = Hamiltonian(AutomatonTerm[], 3, V)
+
+    p_default = propagator(H, 0.1)
+    @test p_default isa Propagator{RealTime}
+    @test p_default.hamiltonian === H
+    @test p_default.dt == 0.1
+
+    p_imag = propagator(H, 0.2; kind=ImaginaryTime)
+    @test p_imag isa Propagator{ImaginaryTime}
+    @test p_imag.dt == 0.2
+end
+
 @testitem "trotterize is stubbed" begin
-    p = Propagator{RealTime}(Hamiltonian(), 0.1)
+    using TensorKit
+
+    V = ComplexSpace(2)
+    H = Hamiltonian(AutomatonTerm[], 3, V)
+    p = Propagator{RealTime}(H, 0.1)
     @test_throws ErrorException trotterize(p, SuzukiTrotter())
 end

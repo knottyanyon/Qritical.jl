@@ -13,6 +13,7 @@ credits: N/A
 
 module Operations
 
+using TensorKit
 using Glossaries
 Glossaries.@Glossary()   # own glossary namespace, separate from every other submodule's
 
@@ -38,7 +39,10 @@ import ..Subroutines:
     VidalGauge,
     BoundarySupport,
     TensorTrain,
-    MPState
+    MPState,
+    AutomatonTerm,
+    build_automaton,
+    materialize
 import ..SimStudy:
     SimStudy,
     RecordingTrait,
@@ -56,8 +60,9 @@ include("propagator.jl")
 include("expectation_values.jl")
 
 export Observable, Hamiltonian, Correlator
+export symmetry_group
 export Time, RealTime, ImaginaryTime, Propagator
-export trotterize
+export propagator, trotterize
 export evaluate_expectation_value
 export ExpectationValueSnapshot, evaluate_expectation_values
 

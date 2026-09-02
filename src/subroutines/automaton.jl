@@ -326,3 +326,71 @@ function materialize(automaton::HamiltonianAutomaton)
 
     return MPOperator{UnknownGauge,FiniteSupport}(sites, 0, 0, nothing, 0.0)
 end
+
+# SECTION -  split_commuting_groups - partition terms for Trotterization
+
+# Design history: a general site-overlap-conflict-graph-coloring approach was worked through and
+# found to have a real correctness subtlety worth recording, not just an implementation detail.
+# Mixing nearest-neighbor bond terms with separate on-site field terms (e.g. TFIM) creates a
+# genuine 3-clique in the conflict graph: a field term at site i shares a site with BOTH of its
+# neighboring bond terms, and those two bond terms also share a site with each other. Since
+# [Ŝˣᵢ, Ŝᶻᵢ⊗Ŝᶻᵢ₊₁] ≠ 0 in general, this isn't a modeling artifact - 3 colors are mathematically
+# required whenever bond and field terms are kept as separate AutomatonTerms, unfixable by
+# reordering. Real TEBD implementations avoid this by folding on-site terms into a neighboring
+# bond term's operator sum BEFORE splitting - a distinct, upstream term-merging concern, not
+# something this function does. Per explicit decision: defer the general graph-coloring solution
+# (and the merging question) entirely; ship only the simple even/odd default now, via a strategy
+# tag so the deferred path has a clearly-marked place to slot in later.
+
+"""
+    SplitStrategy
+
+Abstract root of the term-splitting strategy tags for [`split_commuting_groups`](@ref). Concrete
+subtypes: [`EvenOddSplit`](@ref) (default), [`GraphColoring`](@ref) (not yet implemented).
+"""
+abstract type SplitStrategy end
+
+"""
+2 groups by parity of each term's first touched site - the standard odd/even-bond split. Only
+rigorously guarantees mutual commutativity within each group for a pure nearest-neighbor-bond
+Hamiltonian (no on-site field terms mixed in, no long-range terms) - not validated for the general
+case; see [`GraphColoring`](@ref). See [`SplitStrategy`](@ref).
+"""
+struct EvenOddSplit <: SplitStrategy end
+
+"""
+General site-overlap-conflict-graph-coloring strategy, correctly handling mixed bond/field-term
+Hamiltonians and long-range terms. **Not yet implemented** - deferred. See [`SplitStrategy`](@ref).
+"""
+struct GraphColoring <: SplitStrategy end
+
+"""
+    split_commuting_groups(terms::Vector{AutomatonTerm}, strategy::SplitStrategy=EvenOddSplit())
+        -> Vector{Vector{AutomatonTerm}}
+
+Partition `terms` into groups of mutually commuting terms, for use as [`Trotterization`](@ref)'s
+[`sequence`](@ref) input (e.g. `LieTrotter`/`SuzukiTrotter` applied to `[odd_group, even_group]`).
+Dispatches on `strategy` - see [`EvenOddSplit`](@ref)/[`GraphColoring`](@ref) for what each one
+actually guarantees.
+"""
+function split_commuting_groups(
+    terms::Vector{AutomatonTerm}, strategy::SplitStrategy=EvenOddSplit()
+)
+    return split_commuting_groups(strategy, terms)
+end
+
+function split_commuting_groups(::EvenOddSplit, terms::Vector{AutomatonTerm})
+    n = length(terms)
+    n == 0 && return Vector{AutomatonTerm}[]
+
+    groups = [AutomatonTerm[], AutomatonTerm[]]
+    for t in terms
+        first_site = minimum(first.(t.ops))
+        push!(groups[isodd(first_site) ? 1 : 2], t)
+    end
+    return groups
+end
+
+function split_commuting_groups(::GraphColoring, terms::Vector{AutomatonTerm})
+    return error("GraphColoring strategy is not yet implemented - use EvenOddSplit for now")
+end

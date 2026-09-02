@@ -66,6 +66,20 @@ function inputs(::Propagator)
 end
 
 """
+    propagator(H::Hamiltonian, dt; kind::Type{<:Time}=RealTime) -> Propagator{kind}
+
+The propagator `H` generates at timestep `dt` - named after what it produces (matching
+[`identity_process`](@ref)/`to_mps`'s naming convention in this codebase), not a verb like
+"generate" or "evolve" that would overclaim: `H` is the generator of time translations in the
+infinitesimal sense (Stone's theorem), `exp(-iHt)`/`exp(-Ht)` is the actual propagator, and this
+function still only produces the *lazy* [`Propagator`](@ref) wrapper - no exponentiation happens
+here.
+"""
+function propagator(H::Hamiltonian, dt; kind::Type{<:Time}=RealTime)
+    return Propagator{kind}(H, dt)
+end
+
+"""
     trotterize(propagator::Propagator, pf::ProductFormula)
 
 Apply the product-formula splitting tagged by `pf` to `propagator`'s Hamiltonian, producing the
