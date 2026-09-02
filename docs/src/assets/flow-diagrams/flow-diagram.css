@@ -1,0 +1,154 @@
+/* Matches Documenter.jl's default theme (assets/html/scss/documenter/_variables.scss):
+   'Lato Medium' for body text — so diagrams embedded in a Documenter.jl page pick
+   up the exact font it already loads, not just a same-named fallback — JuliaMono
+   for anything monospace, and $body-size: 16px for the base text size. */
+/* Shape/edge colors below are the Excalidraw palette (packages/common/src/colors.ts,
+   github.com/excalidraw/excalidraw, MIT License) — Open Color-derived shades. Excalidraw's
+   own color picker renders every hue at a single active shade index (0-4) at once — its
+   default is [1], but any index is an equally "stock" Excalidraw color, just a bolder point
+   along the same 5-shade row. Each shape's hue/shade below is a deliberate per-shape pick
+   (mostly index [1] or [2]), not a single uniform rule across every fill. */
+:root {
+  --diagram-font-sans: 'Lato Medium', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --diagram-font-mono: 'JuliaMono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --diagram-color-outline: #1e1e1e;   /* black */
+  --diagram-color-muted: #868e96;     /* gray[3] — dashed collapse-group anchor edge */
+  --diagram-color-border: #e9ecef;    /* gray[1] — wrapper border */
+  --diagram-color-link: #1971c2;      /* blue[4] — detail-card link */
+
+  --diagram-fill-process: #eaddd7;    /* bronze[1] — process/terminator/predefined-process/site */
+  --diagram-fill-decision: #ffd43b;   /* yellow[2] — diamond/decision */
+  --diagram-fill-circle: #e9ecef;     /* gray[1] — circle/connector/grid-site (kept neutral) */
+  --diagram-fill-io: #9775fa;         /* violet[2] — input-output (parallelogram) */
+  --diagram-fill-preparation: #f783ac;/* pink[2] — preparation (hexagon) */
+  --diagram-fill-document: #4dabf7;   /* blue[2] — document */
+  --diagram-fill-offpage: #3bc9db;    /* cyan[2] — offpage-connector (pentagon) */
+  --diagram-fill-group: #f8f9fa;      /* gray[0] — group header default (kept neutral) */
+  --diagram-fill-start: #69db7c;      /* green[2] — start terminator (ties to "yes") */
+  --diagram-fill-end: #ff8787;        /* red[2] — end terminator (ties to "no") */
+  --diagram-fill-gate: #f783ac;       /* pink[2] — tensor gate */
+
+  --diagram-fill-tab-explanation: #66d9e8; /* teal[2] — explanation file-tab */
+  --diagram-fill-tab-code: #ffa94d;   /* orange[2] — code-link file-tab */
+  /* Expandable file-tab reuses --diagram-fill-group — ties it to the same
+     subprocess/group concept its click controls. */
+
+  --diagram-stroke-yes: #2f9e44;      /* green[4] — decision "yes" branch */
+  --diagram-stroke-no: #e03131;       /* red[4] — decision "no" branch */
+}
+/* Auto-generates a dark variant of everything the SVG draws (rough.js shapes,
+   labels, icons) with no separate dark palette to maintain — this is the exact
+   transform Excalidraw's own dark-mode export re-implements in JS
+   (colors.ts's applyDarkModeFilter = invert(93%) + hue-rotate(180deg)); here it
+   runs as the literal CSS filter since the diagram stays live SVG in the page
+   rather than being baked into exported pixels. Toggle by setting
+   data-theme="dark" on the wrapper. */
+/* Applied to the whole wrapper (background, border, and svg content together)
+   rather than just the svg — inverting only the svg left its background
+   (fixed #fff below) and any surrounding chrome un-inverted, producing a
+   washed-out mismatch (dark ambient text color inherited into the diagram's
+   HTML labels, sitting on a still-white box) instead of a clean dark card. */
+.flow-diagram-wrapper[data-theme="dark"],
+.tensor-diagram-wrapper[data-theme="dark"] {
+  filter: invert(93%) hue-rotate(180deg);
+}
+.flow-diagram-wrapper,
+.tensor-diagram-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--diagram-color-border);
+  border-radius: 8px;
+  background: #fff;
+  /* Fill the host page's content column (e.g. Documenter.jl's article width)
+     instead of shrinking to the diagram's own intrinsic size, which left it
+     stuck flush-left with empty space beside it. */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+}
+.flow-diagram-wrapper svg,
+.tensor-diagram-wrapper svg {
+  min-width: max-content;
+  display: block;
+  /* Never let the flex container shrink a diagram narrower than its own
+     content — that's what overflow-x: auto above is for. */
+  flex-shrink: 0;
+}
+.math-node-label {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--diagram-font-sans);
+  font-style: italic;
+  font-size: 16px; /* Documenter.jl's $body-size */
+  text-align: center;
+  pointer-events: none;
+  /* Fixed, not inherited: this is real HTML inside a foreignObject, so
+     without an explicit color it picks up the host page's ambient text
+     color — already light in a Documenter.jl dark theme. The wrapper's
+     dark-mode filter (invert(93%) hue-rotate(180deg), see
+     .flow-diagram-wrapper[data-theme="dark"] above) then inverts that
+     already-light color right back to dark, same as it correctly does for
+     every other hardcoded palette color the SVG shapes use — leaving label
+     text washed out against its own (also correctly inverted) box. Pinning
+     this to the same static outline color as the shapes' strokes makes text
+     go through that single inversion exactly once, like everything else. */
+  color: var(--diagram-color-outline);
+}
+/* Documenter.jl itself applies no compensating scale to KaTeX relative to
+   body text (see _theme_overrides.scss) — math simply inherits the 16px
+   body size like any other inline content, so we don't override it either. */
+/* A mixed label ("Sparse $LU$ factorize $J$") splits into alternating text
+   nodes and .katex spans (see renderMixedLabel in math-render.js) inside a
+   flex container — flexbox treats each as its own item and collapses the
+   plain whitespace between them, so "LU" and "factorize" end up touching
+   with no source-string space to fall back on. Explicit margins guarantee
+   the gap instead of relying on whitespace that flex won't preserve. */
+.math-node-label .katex {
+  margin: 0 0.2em;
+}
+.diagram-node--interactive {
+  transition: filter 0.12s ease;
+}
+.diagram-node--interactive:hover {
+  filter: brightness(0.93) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
+}
+/* Durations here must match RELAYOUT_MS in shared/render-flow.js. */
+.flow-node {
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+.flow-edges-layer {
+  transition: opacity 0.2s ease;
+}
+.flow-collapse-indicator {
+  pointer-events: none;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.flow-detail-card {
+  position: fixed;
+  max-width: 320px;
+  background: #fff;
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 10px 14px;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15);
+  font-family: var(--diagram-font-sans);
+  font-size: 13px;
+  z-index: 1000;
+}
+.flow-detail-card .diagram-link {
+  display: inline-block;
+  color: var(--diagram-color-link);
+  font-weight: 600;
+  text-decoration: none;
+}
+.flow-detail-card .diagram-link:hover {
+  text-decoration: underline;
+}

@@ -1,7 +1,19 @@
-using Serialization   # Julia's built-in serialization library; `Serialization.serialize/deserialize` = exact binary round-trips for Julia objects 
-using DelimitedFiles  # Julia standard library for reading/writing delimited text files 
+using Serialization   # Julia's built-in serialization library; `Serialization.serialize/deserialize` = exact binary round-trips for Julia objects
+using DelimitedFiles  # Julia standard library for reading/writing delimited text files
+using Artifacts       # Julia standard library resolving `Artifacts.toml`-bound data at ~/.julia/artifacts/
 
-# ==== Array I/O ===============================================================
+# SECTION -  Artifact data
+
+"""
+    tutorial_data_dir() -> String
+
+Path to the local, on-disk copy of the `tutorial_data` artifact (tutorial/demo fixtures
+distributed outside the git tree via `Artifacts.toml`). `Pkg.instantiate` downloads and
+unpacks the artifact on first use; subsequent calls resolve to the same cached directory.
+"""
+tutorial_data_dir() = artifact"tutorial_data"   # `@artifact_str` macro resolves the name against the nearest Artifacts.toml and returns the local unpacked directory path
+
+# SECTION -  Array I/O
 
 """
     load_array(path::String) -> AbstractArray
@@ -19,8 +31,8 @@ An unsupported extension throws an `ArgumentError`.
 
 ```julia
 using Serialization
-serialize("data.jls", rand(4, 4))
-A = load_array("data.jls")   # round-trips exactly
+serialize(\"data.jls\", rand(4, 4))
+A = load_array(\"data.jls\")   # round-trips exactly
 ```
 
 # See also

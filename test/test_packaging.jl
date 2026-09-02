@@ -5,28 +5,16 @@ const SRCDIR = joinpath(pkgdir(Qritical), "src")
 @testitem "src layout" begin
     # Top-level subdirectories
     for dir in (
-        "core",
-        "tensors",
-        "operators",
-        "states",
-        "algorithms",
-        "studies",
-        "utils",
-        "experimental",
+        "core", "tensors", "operators", "states", "algorithms", "studies", "utils", "models"
     )
         @test isdir(joinpath(SRCDIR, dir))
     end
 
-    @test isdir(joinpath(SRCDIR, "experimental", "min_model_kit"))
-    @test isdir(joinpath(SRCDIR, "experimental", "topograph"))
-
-    # Nested lattice directory inside min_model_kit
-    @test isdir(joinpath(SRCDIR, "experimental", "min_model_kit", "lattice"))
+    @test !isdir(joinpath(SRCDIR, "experimental"))
 
     # Exact file → folder mapping
     expected = [
         ("core", "tix.jl"),
-        ("core", "multix.jl"),
         ("tensors", "partition.jl"),
         ("tensors", "qtensor.jl"),
         ("tensors", "tensor_utils.jl"),
@@ -35,9 +23,6 @@ const SRCDIR = joinpath(pkgdir(Qritical), "src")
         ("tensors", "spectrum.jl"),
         ("tensors", "svd.jl"),
         ("tensors", "storage_format.jl"),
-        ("experimental/min_model_kit", "dof.jl"),
-        ("experimental/min_model_kit/lattice", "symmetries.jl"),
-        ("experimental/min_model_kit/lattice", "lattice_graph.jl"),
         ("operators", "operator.jl"),
         ("operators", "finite_mpo.jl"),
         ("operators", "correlators.jl"),
@@ -52,6 +37,10 @@ const SRCDIR = joinpath(pkgdir(Qritical), "src")
         ("studies", "disorder.jl"),
         ("utils", "io.jl"),
         ("utils", "deprecations.jl"),
+        ("models", "models.jl"),
+        ("models", "spacetime_dim.jl"),
+        ("models", "algebra_tags.jl"),
+        ("models", "dof.jl"),
     ]
     for (folder, file) in expected
         @test isfile(joinpath(SRCDIR, folder, file))
@@ -69,6 +58,7 @@ end
             path = joinpath(root, file)
             path == joinpath(SRCDIR, "Qritical.jl") && continue
             path == joinpath(SRCDIR, "core", "core.jl") && continue
+            path == joinpath(SRCDIR, "models", "models.jl") && continue
             text = read(path, String)
             for line in split(text, '\n')
                 @test !occursin(r"^\s*include\(", line)

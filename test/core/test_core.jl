@@ -1,3 +1,3 @@
 # Aggregates the `core` submodule's test files (mirrors src/core/core.jl).
 include("test_tix.jl")
-include("test_multix.jl")
+include("test_leg.jl")

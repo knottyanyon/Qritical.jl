@@ -5,156 +5,213 @@ using TensorOperations
 using SparseArrays: SparseArrays
 import SparseArrays: sparse
 
-include("utils/glossary/_core.jl")
-include("experimental/topograph/layout.jl")
-include("experimental/min_model_kit/dof.jl")
-include("experimental/min_model_kit/lattice/symmetries.jl")
-include("tensors/storage_format.jl")
-include("operators/operator.jl")
+# include("utils/glossary/_core.jl") # commented out: reducing Qritical.jl to core-only for now
 include("core/core.jl")
-import .Core: AbstractIx, TIx, MulTIx, dim, label, ixs, ixs_range
-include("tensors/partition.jl")
-include("tensors/qtensor.jl")
-include("tensors/tensor_utils.jl")
-include("tensors/bond.jl")
-include("tensors/ortho_center.jl")
-include("tensors/spectrum.jl")
-include("experimental/topograph/gengraph.jl")
-include("experimental/topograph/ordinary_graph.jl")
-include("experimental/topograph/ids.jl")
-include("experimental/topograph/node.jl")
-# wire.jl, leg.jl, attachment.jl, orientation.jl, network.jl, pin.jl, compactify.jl,
-# convention.jl still use the old variance-tagged TIx{Upper}/TIx{Lower}/IxLoc index API
-# (M12, a separate milestone). Temporarily disabled while the TensorKit TensorMap migration
-# is in progress so the rest of the package can load and be verified; restore once M12 is
-# migrated to the flat TIx design in its own session.
-# include("experimental/topograph/wire.jl")
-# include("experimental/topograph/leg.jl")
-# include("experimental/topograph/attachment.jl")
-# include("experimental/topograph/orientation.jl")
-# include("experimental/topograph/network.jl")
-# include("experimental/topograph/pin.jl")
-# include("experimental/topograph/compactify.jl")
-# include("experimental/topograph/progressive.jl")
-# include("experimental/min_model_kit/lattice/lattice_graph.jl")
-# include("experimental/topograph/convention.jl")
-include("tensors/svd.jl")
-include("utils/io.jl")
-include("states/mps.jl")
-include("states/canonicalize.jl")
-include("states/vidal.jl")
-include("operators/correlators.jl")
-include("operators/finite_mpo.jl")
-include("algorithms/power_method.jl")
-include("algorithms/tebd.jl")
-include("studies/study.jl")
-include("studies/evolution.jl")
-include("algorithms/ed.jl")
-include("studies/disorder.jl")
-include("utils/deprecations.jl")
+import .Core:
+    AbstractIx,
+    TIx,
+    MulTIx,
+    dim,
+    label,
+    space,
+    LegRole,
+    PhysicalLeg,
+    VirtualLeg,
+    StructureInfo,
+    SymmetryStructure,
+    CarriesSymmetryInfo,
+    NoSymmetryInfo,
+    EntanglementStructure,
+    CarriesEntanglementInfo,
+    NoEntanglementInfo,
+    symmetry_structure,
+    entanglement_structure,
+    carries_symmetry_info,
+    carries_entanglement_info,
+    PenroseOrientation,
+    Normal,
+    Dual,
+    PenroseLabel,
+    orientation_dual,
+    Leg
+include("processes/processes.jl")
+import .Processes:
+    AbstractProcess,
+    QProcess,
+    State,
+    Effect,
+    Scalar,
+    codomain_legs,
+    domain_legs,
+    is_state,
+    is_effect,
+    equal_up_to_scalar,
+    value,
+    tensor,
+    outputs,
+    inputs,
+    dagger,
+    identity_process,
+    is_isometry,
+    is_unitary
+include("simstudy/simstudy.jl")
+import .SimStudy:
+    RecordingTrait,
+    Active,
+    Inactive,
+    AbstractCollector,
+    NoOpCollector,
+    step!,
+    finalize!,
+    AbstractErrorAccumulator,
+    NoOpErrorAccumulator,
+    record!,
+    QuadratureTruncationErrorAccumulator
+include("subroutines/subroutines.jl")
+import .Subroutines:
+    SingValSpectrum,
+    schmidt_rank,
+    spectral_gap,
+    entanglement_entropy,
+    entanglement_spectrum,
+    local_truncation_error,
+    global_truncation_error,
+    MatrixFactorization,
+    SVDBased,
+    QRBased,
+    LQBased,
+    ExactDecomposition,
+    SVDFACTORIZER,
+    QRFACTORIZER,
+    LQFACTORIZER,
+    factorize_tensor,
+    factorize_tensor!,
+    AccessEntanglementSpectrumData,
+    HasEntanglementSpectrum,
+    NoEntanglementSpectrum,
+    SweepDirection,
+    LeftRight,
+    RightLeft,
+    reabsorb,
+    advance_bond!,
+    orthogonalize,
+    orthonormalize,
+    GaugeForm,
+    LeftCanonical,
+    RightCanonical,
+    MixedCanonical,
+    VidalGauge,
+    UnknownGauge,
+    GaugeFreedom,
+    Fixed,
+    Free,
+    BoundaryCondition,
+    Finite,
+    Infinite,
+    MPState,
+    is_gauge_fixed,
+    CanonicalizeConfig,
+    LeftCanonicalize,
+    RightCanonicalize,
+    SiteCanonicalize,
+    to_mps,
+    canonicalize,
+    to_vidal,
+    is_canonical
+# include("utils/io.jl") # commented out: reducing Qritical.jl to core-only for now
+# include("utils/deprecations.jl") # commented out: reducing Qritical.jl to core-only for now
 
 # SECTION -  Index layer
 export AbstractIx, TIx, MulTIx
-export dim, label
-export ixs, ixs_range, bond_label
+export dim, label, space
+export LegRole, PhysicalLeg, VirtualLeg
+export StructureInfo, SymmetryStructure, CarriesSymmetryInfo, NoSymmetryInfo
+export EntanglementStructure, CarriesEntanglementInfo, NoEntanglementInfo
+export symmetry_structure, entanglement_structure
+export carries_symmetry_info, carries_entanglement_info
+export PenroseOrientation, Normal, Dual, PenroseLabel, orientation_dual, Leg
 
-# SECTION -  QTensor + partitions
-export QTensor, QTensor_state, QTensor_operator, dagger, to_array
-export Partition, Bipartition, complement, bipartition, group_legs
+# SECTION -  Process layer
+export AbstractProcess, QProcess, State, Effect, Scalar
+export codomain_legs, domain_legs, is_state, is_effect, equal_up_to_scalar
+export value, tensor, outputs, inputs
+export dagger, identity_process, is_isometry, is_unitary
 
-# SECTION -  SVD + truncation 
-export AbstractTrunc, NoTrunc, MaxBondDimTrunc, ValCutoffTrunc
-export FullSVD, ReducedSVD, do_svd
+# SECTION -  SimStudy layer
+export RecordingTrait, Active, Inactive
+export AbstractCollector, NoOpCollector, step!, finalize!
+export AbstractErrorAccumulator,
+    NoOpErrorAccumulator, record!, QuadratureTruncationErrorAccumulator
 
-# SECTION -  Spectrum + orthogonality centre 
-export Bond, OrthoCenter, BondCenter, SiteCenter
-export AbstractSpectrum, SingValSpectrum, EigValSpectrum, SchmidtSpectrum
-export schmidt_rank, spectral_gap, schmidt_values
-export entanglement_entropy, entanglement_spectrum
+# SECTION -  Subroutines layer
+export SingValSpectrum
+export schmidt_rank, spectral_gap, entanglement_entropy, entanglement_spectrum
+export local_truncation_error, global_truncation_error
+export MatrixFactorization, SVDBased, QRBased, LQBased
+export ExactDecomposition, SVDFACTORIZER, QRFACTORIZER, LQFACTORIZER
+export factorize_tensor, factorize_tensor!
+export AccessEntanglementSpectrumData, HasEntanglementSpectrum, NoEntanglementSpectrum
+export SweepDirection, LeftRight, RightLeft
+export reabsorb, advance_bond!, orthogonalize, orthonormalize
+export GaugeForm, LeftCanonical, RightCanonical, MixedCanonical, VidalGauge, UnknownGauge
+export GaugeFreedom, Fixed, Free
+export BoundaryCondition, Finite, Infinite
+export MPState, is_gauge_fixed
+export CanonicalizeConfig, LeftCanonicalize, RightCanonicalize, SiteCanonicalize
+export to_mps, canonicalize, to_vidal, is_canonical
 
-# SECTION -  Topograph — generalized topological graph layer 
-export AbstractGenTopoGraph
-export GraphTrait, Ungraded, Oriented, Polarised
-export graph_trait, is_oriented, is_polarised
-export WireId, LegId, NodeId
-export Wire, Leg
-export Attachment, Pinned, HalfLoose, Loose, Circle
-export attachment
-export make_leg
-export LegOrientation, Incoming, Outgoing, orientation, leg_orientation
-export TensorNetwork, add_node!, add_wire!, add_leg!
-export nodes, wires, legs, ends, incident, degree
-export attach!, pin!, cut!
-export compactify, boundary, is_ordinary, is_closed
-export is_progressive, has_circuit
-export OrdinaryGraphNetwork, UndirectedGraph
-export LinkId, LatticeGraph
-export links
-export qdir_string
+# Everything below is commented out: reducing Qritical.jl to core-only for now, pending the DoF
+# API migration. These export non-core symbols whose defining includes are also commented out
+# above.
 
-# SECTION -  State utilities + I/O 
-export bipartition_matrix, as_state, load_array
-
-# SECTION -  MPS & canonical forms 
-export AbstractMPSForm, CanonicalForm, VidalForm, ArbitraryForm
-export FiniteMPS, to_mps, add_mps
-export CanonicalizeConfig, LeftCanonical, RightCanonical, BondCanonical, SiteCanonical
-export canonicalize, canonical_error, is_canonical, overlap, local_expectation, two_site_op
-export to_vidal, to_canonical
-
-# SECTION -  Geometry 
-export AbstractLayout, Chain, sites, bonds
-
-# SECTION -  DoF layer 
-export AbstractDoF
-export Spin, SpinHalf, SpinOne
-export SpinlessFermion, Electron, MajoranaFermion, HardCoreBoson
-export CanonicalRelation, CCR, CAR
-export local_dim, canonical_relation, algebra_generators
-# SECTION -  Symmetry tags 
-export NoSymmetry, physical_space
-
-# SECTION -  LatticeOperator / Hamiltonian 
-export uniform_coupling
-export OneSiteTerm, TwoSiteTerm, LatticeOperator, Hamiltonian
-export XXZ, Heisenberg, Ising
-export total_magnetization, staggered_magnetization, op_at_site, two_site_op
-export identity_operator
-# SECTION -  Storage format tags 
-export StorageFormat, DenseFormat, SparseFormat
-export matrix_repr
-
-# SECTION -  MPO + expect 
-export FiniteMPO, MPO
-export expect, apply_mpo
-
-# SECTION -  Power Method 
-export PowerMethodResult, power_method
-
-# SECTION -  TEBD + time evolution 
-export TimeAxis, RealTime, ImaginaryTime
-export Unitary, HermitianPSD
-export Propagator, opclass, gate
-export ConstantProtocol, total_time
-export bond_hamiltonian
-export apply_gate
-export TrotterSubstep, SuzukiTrotter, trotter_steps, trotter_step
-
-# SECTION -  Evolution + solve interface 
-export neel_state
-export Evolution, TEBD, NoTracker, Tracker
-export EvolutionResult
-export solve
-
-# SECTION -  ExactDiagonalization 
-export GroundState, ExactDiagonalization, EDResult
-export StatevectorState, as_statevector, EDTimeResult
-
-# SECTION -  Disorder 
-export Uniform, disorder_realization, parameter_sweep
-
-# SECTION -  Study 
-
-export StudyType, StaticsStudy, DynamicsStudy
+# # SECTION -  QTensor + partitions
+# export bond_label
+# export QTensor, QTensor_state, QTensor_operator, dagger, to_array
+# export Partition, Bipartition, complement, bipartition, group_legs
+#
+# # SECTION -  SVD + truncation
+# export AbstractTrunc, NoTrunc, MaxBondDimTrunc, ValCutoffTrunc
+# export FullSVD, ReducedSVD, do_svd
+#
+# # SECTION -  Spectrum + orthogonality centre
+# export Bond, OrthoCenter, BondCenter, SiteCenter
+# export AbstractSpectrum, SingValSpectrum, EigValSpectrum, SchmidtSpectrum
+# export schmidt_rank, spectral_gap, schmidt_values
+# export entanglement_entropy, entanglement_spectrum
+#
+# # SECTION -  State utilities + I/O
+# export bipartition_matrix, as_state, load_array
+#
+# # SECTION -  Geometry
+# export AbstractLayout, Chain, sites, bonds
+#
+# # SECTION -  DoF layer
+# export AbstractDoF
+# export Spin, SpinHalf, SpinOne
+# export SpinlessFermion, Electron, MajoranaFermion, HardCoreBoson
+# export CanonicalRelation, CCR, CAR
+# export local_dim, canonical_relation, algebra_generators
+# # SECTION -  Symmetry tags
+# export NoSymmetry, physical_space
+#
+# # SECTION -  LatticeOperator / Hamiltonian
+# export uniform_coupling
+# export OneSiteTerm, TwoSiteTerm, LatticeOperator, Hamiltonian
+# export XXZ, Heisenberg, Ising
+# export total_magnetization, staggered_magnetization, op_at_site, two_site_op
+# export identity_operator
+# # SECTION -  Storage format tags
+# export StorageFormat, DenseFormat, SparseFormat
+# export matrix_repr
+#
+# # SECTION -  ExactDiagonalization
+# export GroundState, ExactDiagonalization, EDResult
+# export StatevectorState, as_statevector, EDTimeResult
+#
+# # SECTION -  Disorder
+# export Uniform, disorder_realization, parameter_sweep
+#
+# # SECTION -  Study
+# export StudyType, StaticsStudy, DynamicsStudy
 
 end

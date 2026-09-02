@@ -2,7 +2,6 @@ using Qritical
 using Documenter
 using Documenter: Remotes
 using DocumenterCitations
-using DocumenterMermaid
 using Literate
 using JSON, Markdown
 using SHA
@@ -12,6 +11,7 @@ using Base64
 include(joinpath(@__DIR__, "symbol_docstring_injector.jl"))
 include(joinpath(@__DIR__, "glossary_linker.jl"))
 include(joinpath(@__DIR__, "page_meta_preprocessor.jl"))
+include(joinpath(@__DIR__, "flowdiagram_preprocessor.jl"))
 
 # Build interactive HTML widgets (one file per exercise, output to assets/interactives/)
 include(joinpath(@__DIR__, "interactives", "_runner.jl"))
@@ -125,7 +125,8 @@ end
 # ---------------------------------------------------------------------------
 # Literate: tutorials
 # ---------------------------------------------------------------------------
-const EXECUTABLE_EXERCISES = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"]
+const EXECUTABLE_EXERCISES = ["01", "02", "03", "04", "05", "06", "07", "08", "10"]
+# const EXECUTABLE_EXERCISES = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"]
 const tutorials_dir = joinpath(@__DIR__, "src", "tutorials")
 
 if !DOCS_FAST
@@ -165,26 +166,26 @@ end
 # ---------------------------------------------------------------------------
 const GS_DIR = joinpath(@__DIR__, "src", "getting_started")
 
-if !DOCS_FAST
-    for gs_file in (
-        "gs1_tensors_and_indices.jl",
-        "gs2_svd_and_truncation.jl",
-        "gs3_drawing_tensor_networks.jl",
-    )
-        input_path = joinpath(GS_DIR, gs_file)
-        _source_changed(input_path) || continue
-        Literate.markdown(
-            input_path,
-            GS_DIR;
-            documenter=true,
-            flavor=Literate.DocumenterFlavor(),
-            execute=true,
-        )
-        md_out = joinpath(GS_DIR, replace(gs_file, ".jl" => ".md"))
-        isfile(md_out) && _debase64_images!(md_out)
-        _write_stamp(input_path)
-    end
-end
+# if !DOCS_FAST
+#     for gs_file in (
+#     # "gs1_tensors_and_indices.jl",
+#     # "gs2_svd_and_truncation.jl",
+#     # "gs3_drawing_tensor_networks.jl",
+#     )
+#         input_path = joinpath(GS_DIR, gs_file)
+#         _source_changed(input_path) || continue
+#         Literate.markdown(
+#             input_path,
+#             GS_DIR;
+#             documenter=true,
+#             flavor=Literate.DocumenterFlavor(),
+#             execute=true,
+#         )
+#         md_out = joinpath(GS_DIR, replace(gs_file, ".jl" => ".md"))
+#         isfile(md_out) && _debase64_images!(md_out)
+#         _write_stamp(input_path)
+#     end
+# end
 
 # Scan tutorial notebooks and inject "Used in tutorials" links into API docstrings.
 # Skipped in DOCS_FAST mode — API pages still build, just without the tutorial cross-links.
@@ -218,6 +219,7 @@ end
 src_dir = normpath(joinpath(@__DIR__, "src"))
 preprocess_glossary_links(src_dir)
 preprocess_page_meta(src_dir)
+preprocess_flowdiagrams(src_dir)
 
 makedocs(;
     modules=[Qritical],
@@ -259,70 +261,79 @@ makedocs(;
         !isnothing,
         [
             "Home" => "index.md",
-            "Getting Started" => [
-                "Overview" => "getting_started/index.md",
-                "Installation" => "getting_started/installation.md",
-                "Introduction: Legs & Indices" => "getting_started/introduction.md",
-                "Indices and QTensor" => "getting_started/indexed_tensor.md",
-                "GS-1: Tensors & Indices" => "getting_started/gs1_tensors_and_indices.md",
-                "GS-2: SVD & Truncation" => "getting_started/gs2_svd_and_truncation.md",
-                "GS-3: Drawing Tensor Networks" => "getting_started/gs3_drawing_tensor_networks.md",
-            ],
-            if DOCS_FAST
-                nothing
-            else
-                (
-                    "Tutorials" => [
-                        "Overview" => "tutorials/index.md",
-                        "Part 1 – Fundamentals" => [
-                            "Overview" => "tutorials/fundamentals/index.md",
-                            "Tutorial 01" => "tutorials/fundamentals/01/ex_01.md",
-                            "Tutorial 02" => "tutorials/fundamentals/02/ex_02.md",
-                            "Tutorial 03" => "tutorials/fundamentals/03/ex_03.md",
-                        ],
-                        "Part 2 – Tensor Trains" => [
-                            "Overview" => "tutorials/tensor_trains/index.md",
-                            "Tutorial 04" => "tutorials/tensor_trains/04/ex_04.md",
-                            "Tutorial 05" => "tutorials/tensor_trains/05/ex_05.md",
-                        ],
-                        "Part 3 – Dynamics" => [
-                            "Overview" => "tutorials/dynamics/index.md",
-                            "Tutorial 06" => "tutorials/dynamics/06/ex_06.md",
-                            "Tutorial 07" => "tutorials/dynamics/07/ex_07.md",
-                            "Tutorial 08" => "tutorials/dynamics/08/ex_08.md",
-                            "Tutorial 09" => "tutorials/dynamics/09/ex_09.md",
-                        ],
-                        "Part 4 – Misc" => [
-                            "Overview" => "tutorials/misc/index.md",
-                            "Tutorial 10" => "tutorials/misc/10/ex_10.md",
-                            "Tutorial 11" => "tutorials/misc/11/ex_11.md",
-                        ],
-                    ]
-                )
-            end,
-            "API Reference" => [
-                "Index Layer" => "api/index_layer.md",
-                "QTensor" => "api/qtensor.md",
-                "SVD & Truncation" => "api/svd.md",
-                "Spectra & Entanglement" => "api/spectrum.md",
-                "State Utilities & I/O" => "api/io.md",
-                "MPS & Canonical Forms" => "api/mps.md",
-                "Geometry" => "api/geometry.md",
-                "Degrees of Freedom" => "api/dof.md",
-                "Operators & Hamiltonians" => "api/operator.md",
-                "MPO & Expectation Values" => "api/mpo.md",
-                "Power Method" => "api/power_method.md",
-                "TEBD" => "api/tebd.md",
-                "Quench & TEBD Solve" => "api/quench.md",
-                "Storage Formats" => "api/storage_format.md",
-                "ExactDiagonalization" => "api/ed.md",
-                "ED Time Propagation" => "api/ed_time.md",
-                "Disorder" => "api/disorder.md",
-            ],
-            "References" => ["Glossary" => "references/glossary.md"],
-            "Changelog" => "changelog.md",
+            # Everything below except the Kitchen Sink is commented out: these pages (Getting
+            # Started, Tutorials, most of the API Reference, Glossary, Changelog, Flow Diagrams)
+            # are stale post-TensorKit-migration content unrelated to the current Core/Processes
+            # (TIx/Leg/PenroseLabel/QProcess) work, and their jldoctest blocks reference symbols
+            # (QTensor_state, bipartition, do_svd, ...) that no longer exist. Restore once these
+            # pages are rewritten against the current API.
+            # "Getting Started" => [
+            #     "Overview" => "getting_started/index.md",
+            #     "Installation" => "getting_started/installation.md",
+            #     "Introduction: Legs & Indices" => "getting_started/introduction.md",
+            #     "Indices and QTensor" => "getting_started/indexed_tensor.md",
+            #     # "GS-1: Tensors & Indices" => "getting_started/gs1_tensors_and_indices.md",
+            #     # "GS-2: SVD & Truncation" => "getting_started/gs2_svd_and_truncation.md",
+            #     # "GS-3: Drawing Tensor Networks" => "getting_started/gs3_drawing_tensor_networks.md",
+            # ],
+            # if DOCS_FAST
+            #     nothing
+            # else
+            #     (
+            #         "Tutorials" => [
+            #             "Overview" => "tutorials/index.md",
+            #             "Part 1 – Fundamentals" => [
+            #                 "Overview" => "tutorials/fundamentals/index.md",
+            #                 "Tutorial 01" => "tutorials/fundamentals/01/ex_01.md",
+            #                 "Tutorial 02" => "tutorials/fundamentals/02/ex_02.md",
+            #                 "Tutorial 03" => "tutorials/fundamentals/03/ex_03.md",
+            #             ],
+            #             "Part 2 – Tensor Trains" => [
+            #                 "Overview" => "tutorials/tensor_trains/index.md",
+            #                 "Tutorial 04" => "tutorials/tensor_trains/04/ex_04.md",
+            #                 "Tutorial 05" => "tutorials/tensor_trains/05/ex_05.md",
+            #             ],
+            #             "Part 3 – Dynamics" => [
+            #                 "Overview" => "tutorials/dynamics/index.md",
+            #                 "Tutorial 06" => "tutorials/dynamics/06/ex_06.md",
+            #                 "Tutorial 07" => "tutorials/dynamics/07/ex_07.md",
+            #                 "Tutorial 08" => "tutorials/dynamics/08/ex_08.md",
+            #                 # "Tutorial 09" => "tutorials/dynamics/09/ex_09.md",
+            #             ],
+            #             "Part 4 – Misc" => [
+            #                 "Overview" => "tutorials/misc/index.md",
+            #                 "Tutorial 10" => "tutorials/misc/10/ex_10.md",
+            #                 "Tutorial 11" => "tutorials/misc/11/ex_11.md",
+            #             ],
+            #         ]
+            #     )
+            # end,
+            # "API Reference" => [
+            #     "Index Layer" => "api/index_layer.md",
+            #     "QTensor" => "api/qtensor.md",
+            #     "SVD & Truncation" => "api/svd.md",
+            #     "Spectra & Entanglement" => "api/spectrum.md",
+            #     "State Utilities & I/O" => "api/io.md",
+            #     "MPS & Canonical Forms" => "api/mps.md",
+            #     "Geometry" => "api/geometry.md",
+            #     "Degrees of Freedom" => "api/dof.md",
+            #     "Operators & Hamiltonians" => "api/operator.md",
+            #     "MPO & Expectation Values" => "api/mpo.md",
+            #     "Power Method" => "api/power_method.md",
+            #     "TEBD" => "api/tebd.md",
+            #     "Quench & TEBD Solve" => "api/quench.md",
+            #     "Storage Formats" => "api/storage_format.md",
+            #     "ExactDiagonalization" => "api/ed.md",
+            #     "ED Time Propagation" => "api/ed_time.md",
+            #     "Disorder" => "api/disorder.md",
+            # ],
+            # "References" => ["Glossary" => "references/glossary.md"],
+            # "Changelog" => "changelog.md",
             # "Bibliography" => "references.md",
-            "Developer" => ["Kitchen Sink" => "dev/kitchen_sink.md"],
+            "Developer" => [
+                "Kitchen Sink" => "dev/kitchen_sink.md",
+                # "Flow Diagrams" => "dev/flow_diagrams.md",
+            ],
         ],
     ),
 )

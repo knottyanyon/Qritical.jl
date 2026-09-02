@@ -1,90 +1,109 @@
-@testitem "TIx: tensor index" begin   # `@testitem "name" begin ... end` = Python `class TestTIx(unittest.TestCase):`; Julia groups tests hierarchically; failures are reported per-testset
+@testitem "TIx: tensor index" begin
+    import TensorKit: TensorKit, GradedSpace, Z2Irrep   # narrow import: TensorKit also exports
+    # `dim`/`space`, which would collide with Qritical's own bindings under a blanket
+    # `using TensorKit` in this scope; `TensorKit: TensorKit, ...` still brings in the module
+    # name itself for qualified access (`TensorKit.ComplexSpace`, `TensorKit.fuse`, ...)
+
     @testitem "local dimensions" begin
         @testitem "dim" begin
             # for a typical spin-1/2 site
-            @test dim(TIx(:σ_up, 2)) == 2   # `TIx(:σ_up, 2)` = construct a TIx with label :σ_up, dim 2; spin-1/2 has 2-dimensional local Hilbert space; `dim(...)` = extract stored dimension
-            @test dim(TIx(:σ_down, 2)) == 2   # same shape, different label
+            @test dim(TIx(2)) == 2                       # trivial (ComplexSpace) leg, dim=2
+            @test dim(TIx(1)) == 1                        # dim=1: trivial boundary case, χ=1
 
-            # index of a leg at the first/last site with a single value
-            @test dim(TIx(:σ_end, 1)) == 1   # dim=1 is the trivial (boundary) case; used for OBC boundary bonds where χ=1
+            g = TIx(GradedSpace(Z2Irrep(0) => 2, Z2Irrep(1) => 3))
+            @test dim(g) == 5                              # symmetric leg: total dim sums across sectors
         end
         @testitem "dim is a positive integer d>0" begin
-            @test_throws ArgumentError TIx(:α, 0)    # `@test_throws ExceptionType expr` = verify that constructing with dim=0 throws ArgumentError; Julia: raise, Python: `pytest.raises`
-            @test_throws ArgumentError TIx(:α, -1)   # negative dim also invalid; inner constructor checks `dim > 0`
-            # @TODO: dim must be an integer
+            @test_throws ArgumentError TIx(0)              # trivial-sector convenience constructor still validates d > 0
+            @test_throws ArgumentError TIx(-1)
         end
     end
 
-    @testitem "label" begin
-        @test label(TIx(:α_up, 2)) == :α_up     # `label(ix)` returns a Symbol; `:α_up` is a Symbol literal
-        @test label(TIx(:σ, 2)) isa Symbol       # `isa Symbol` = isinstance check ; confirms the return type
+    @testitem "space" begin
+        @test space(TIx(4)) == TensorKit.ComplexSpace(4)   # `space(ix)` returns the wrapped TensorKit.ElementarySpace directly
+        @test space(TIx(4)) isa TensorKit.ElementarySpace
     end
 
-    @testitem "equality is label and dim" begin
-        α_1 = TIx(:α, 4)
-        α_2 = TIx(:α, 4)   # same as α_1 - should compare equal
-        α_3 = TIx(:β, 4)   # different label
-        α_4 = TIx(:α, 2)   # same label, different dim
+    @testitem "label is deliberately unimplemented for TIx" begin
+        # TensorKit itself has no concept of a named leg, so TIx matches that model: calling
+        # label on a TIx is an intentional error (via AbstractIx's interface stub), not an
+        # oversight - it documents that a TIx has no name.
+        @test_throws ErrorException label(TIx(4))
+    end
 
-        @test α_1 == α_2   # `==` uses `Base.:(==)` which we extended; two TIx with same label/dim are equal
-        @test α_1 != α_3   # different label -> never equal
-        @test α_1 != α_4   # different dim -> never equal
+    @testitem "equality is space equality" begin
+        α_1 = TIx(4)
+        α_2 = TIx(4)   # same underlying space as α_1 - should compare equal
+        α_3 = TIx(2)   # different dimension -> different space
+
+        @test α_1 == α_2
+        @test α_1 != α_3
+
+        g_1 = TIx(GradedSpace(Z2Irrep(0) => 1, Z2Irrep(1) => 1))
+        g_2 = TIx(GradedSpace(Z2Irrep(0) => 1, Z2Irrep(1) => 1))
+        g_3 = TIx(GradedSpace(Z2Irrep(0) => 2, Z2Irrep(1) => 1))
+        @test g_1 == g_2   # same sector structure
+        @test g_1 != g_3   # different multiplicities -> different space
+        @test g_1 != α_1   # a graded space is never equal to a trivial ComplexSpace of the same total dim
     end
 end
 
-@testitem "Quick constructor functions" begin
-    @testitem "ixs: no arguments yields empty tuple" begin
-        # important for uses like ixs(filter(...)...) where the filter might return nothing
-        @test ixs() === ()   # `===` = identity check (same object); `()` = empty Tuple; `ixs()` with no arguments returns the empty Tuple; Python: `ixs() is ()` (though Python tuple identity varies)
+@testitem "MulTIx: a grouped collection of TIx" begin
+    import TensorKit: TensorKit, GradedSpace, Z2Irrep   # narrow import: TensorKit also exports
+    # `dim`/`space`, which would collide with Qritical's own bindings under a blanket
+    # `using TensorKit` in this scope; `TensorKit: TensorKit, ...` still brings in the module
+    # name itself for qualified access (`TensorKit.ComplexSpace`, `TensorKit.fuse`, ...)
+
+    @testitem "MulTIx: empty constituents yields the trivial 1-dim space" begin
+        g = MulTIx(:empty, ())
+        @test dim(g) == 1                              # TensorKit.fuse has no zero-arg method; the trivial space is the sensible default
+        @test space(g) == TensorKit.ComplexSpace(1)
     end
 
-    @testitem "ixs: duplicate labels are allowed" begin
-        a, b = ixs(:α => 2, :α => 3)   # `a, b = ixs(...)` = destructure the returned Tuple into two variables
-        @test a.label == :α && dim(a) == 2   # `&&` = AND. field access `.label` returns Symbol; check both label and dim
-        @test b.label == :α && dim(b) == 3   # same label but different dim -> distinct indices
+    @testitem "Order of indices in MulTIx should matter" begin
+        idx_α = TIx(2)
+        idx_β = TIx(3)
+        @test MulTIx(:αβ, (idx_α, idx_β)) != MulTIx(:αβ, (idx_β, idx_α))   # order matters: swapping changes the fused leg's layout
     end
 
-    @testitem "dim is a positive integer d>0" begin
-        @test_throws ArgumentError first(ixs(:σ => 0))    # `ixs` delegates to `TIx` inner constructor which checks dim > 0
-        @test_throws ArgumentError first(ixs(:β => -3))   # negative dim also invalid
-        # @TODO: dim must be an integer
+    @testitem "dim is TensorKit.dim of the fused space" begin
+        @testitem "single constituent: dim passes through" begin
+            idx = TIx(5)
+            g = MulTIx(:α, (idx,))
+            @test dim(g) == dim(idx)   # fusing a single leg is the identity on dim
+        end
+        @testitem "two trivial constituents: dim is the familiar product" begin
+            idx_α = TIx(2)
+            idx_β = TIx(3)
+            g = MulTIx(:αβ, (idx_α, idx_β))
+            @test dim(g) == dim(idx_α) * dim(idx_β)   # trivial-sector fusion reduces to the dimension product
+            @test dim(g) == 6
+        end
+        @testitem "three trivial constituents" begin
+            idx_a = TIx(2)
+            idx_b = TIx(3)
+            idx_c = TIx(4)
+            g = MulTIx(:abc, (idx_a, idx_b, idx_c))
+            @test dim(g) == 24
+        end
     end
 
-    @testitem "ixs_range: default start=1" begin
-        indices = ixs_range(:α, 2, 3)   # `ixs_range(base, dim, last)` creates indices :α_1, :α_2, :α_3 all with dim=2
-        @test length(indices) == 3   # should generate 3 indices (from 1 to 3 inclusive)
-        @test indices[1].label == Symbol(:α, :_, 1)   # `Symbol(:α, :_, 1)` = :α_1 (symbol concatenation); `indices[1]` = first element (1-indexed)
-        @test indices[2].label == Symbol(:α, :_, 2)   # :α_2
-        @test indices[3].label == Symbol(:α, :_, 3)   # :α_3
-        @test all(dim.(indices) .== 2)   # `dim.(indices)` = broadcast dim over all indices; `.==` = element-wise equality; `all(...)` = all true
-
-        indices = ixs_range(:β, 3, 2)   # creates indices :β_1, :β_2 both with dim=3
-        @test length(indices) == 2
-        @test indices[1].label == Symbol(:β, :_, 1)
-        @test indices[2].label == Symbol(:β, :_, 2)
-        @test all(dim.(indices) .== 3)
+    @testitem "space is real TensorKit fusion, not a flat dimension product" begin
+        # Z2 fusion (charge conservation): (0,0)/(1,1) -> sector 0, (0,1)/(1,0) -> sector 1.
+        # A naive dimension product would give one undifferentiated 4-dim block; real fusion
+        # splits it into two 2-dim sectors.
+        a = TIx(GradedSpace(Z2Irrep(0) => 1, Z2Irrep(1) => 1))
+        b = TIx(GradedSpace(Z2Irrep(0) => 1, Z2Irrep(1) => 1))
+        g = MulTIx(:ab, (a, b))
+        expected = TensorKit.fuse(space(a), space(b))
+        @test space(g) == expected
+        @test space(g) == GradedSpace(Z2Irrep(0) => 2, Z2Irrep(1) => 2)
+        @test dim(g) == 4
     end
 
-    @testitem "ixs_range: custom start" begin
-        indices = ixs_range(:γ, 4, 5, 2)   # 4th arg = start=2; creates :γ_2, :γ_3, :γ_4, :γ_5 with dim=4
-        @test length(indices) == 4
-        @test indices[1].label == Symbol(:γ, :_, 2)   # starts at 2
-        @test indices[2].label == Symbol(:γ, :_, 3)
-        @test indices[3].label == Symbol(:γ, :_, 4)
-        @test indices[4].label == Symbol(:γ, :_, 5)
-        @test all(dim.(indices) .== 4)
-
-        indices = ixs_range(:δ, 2, 7, 4)   # start=4, end=7; creates :δ_4, :δ_5, :δ_6, :δ_7 with dim=2
-        @test length(indices) == 4
-        @test indices[1].label == Symbol(:δ, :_, 4)
-        @test indices[2].label == Symbol(:δ, :_, 5)
-        @test indices[3].label == Symbol(:δ, :_, 6)
-        @test indices[4].label == Symbol(:δ, :_, 7)
-        @test all(dim.(indices) .== 2)
-    end
-
-    @testitem "ixs_range: element type is TIx" begin
-        indices = ixs_range(:α, 2, 3)   # all 3 indices should be TIx
-        @test all(typeof(ix) <: TIx for ix in indices)   # `for ix in indices` = generator expression; `<: TIx` = subtype check ; all must be TIx
+    @testitem "label" begin
+        g = MulTIx(:ασ, (TIx(3), TIx(2)))
+        @test label(g) == :ασ
+        @test label(g) isa Symbol
     end
 end
