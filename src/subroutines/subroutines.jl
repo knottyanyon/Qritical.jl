@@ -49,6 +49,8 @@ include("decompositions.jl")
 include("gauge.jl")
 include("canonical_decompositions.jl")
 include("mpoperator.jl")
+include("../utils/glossary/trotterization.jl")   # terms must be defined before trotterization.jl's docstrings interpolate them
+include("trotterization.jl")
 
 export SingValSpectrum
 export schmidt_rank, spectral_gap, entanglement_entropy, entanglement_spectrum
@@ -68,5 +70,10 @@ export TensorTrain, MPState, MPOperator, is_gauge_fixed
 export CanonicalizeConfig, LeftCanonicalize, RightCanonicalize, SiteCanonicalize
 export to_mps, canonicalize, to_vidal, is_canonical
 export to_mpo, to_choi, to_operator
+
+export ApproximateDecomposition
+export ProductFormula, LieTrotter, SuzukiTrotter, Suzuki4th
+export Trotterization, OperatorSplitting
+export sequence, local_error_bound, TrotterErrorAccumulator, accumulate_trotter_error!
 
 end

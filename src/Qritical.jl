@@ -122,7 +122,31 @@ import .Subroutines:
     is_canonical,
     to_mpo,
     to_choi,
-    to_operator
+    to_operator,
+    ApproximateDecomposition,
+    ProductFormula,
+    LieTrotter,
+    SuzukiTrotter,
+    Suzuki4th,
+    Trotterization,
+    OperatorSplitting,
+    sequence,
+    local_error_bound,
+    TrotterErrorAccumulator,
+    accumulate_trotter_error!
+include("operations/operations.jl")
+import .Operations:
+    Observable,
+    Hamiltonian,
+    Correlator,
+    Time,
+    RealTime,
+    ImaginaryTime,
+    Propagator,
+    trotterize,
+    evaluate_expectation_value,
+    ExpectationValueSnapshot,
+    evaluate_expectation_values
 # include("utils/io.jl") # commented out: reducing Qritical.jl to core-only for now
 # include("utils/deprecations.jl") # commented out: reducing Qritical.jl to core-only for now
 
@@ -165,6 +189,17 @@ export TensorTrain, MPState, MPOperator, is_gauge_fixed
 export CanonicalizeConfig, LeftCanonicalize, RightCanonicalize, SiteCanonicalize
 export to_mps, canonicalize, to_vidal, is_canonical
 export to_mpo, to_choi, to_operator
+export ApproximateDecomposition
+export ProductFormula, LieTrotter, SuzukiTrotter, Suzuki4th
+export Trotterization, OperatorSplitting
+export sequence, local_error_bound, TrotterErrorAccumulator, accumulate_trotter_error!
+
+# SECTION -  Operations layer
+export Observable, Hamiltonian, Correlator
+export Time, RealTime, ImaginaryTime, Propagator
+export trotterize
+export evaluate_expectation_value
+export ExpectationValueSnapshot, evaluate_expectation_values
 
 # Everything below is commented out: reducing Qritical.jl to core-only for now, pending the DoF
 # API migration. These export non-core symbols whose defining includes are also commented out

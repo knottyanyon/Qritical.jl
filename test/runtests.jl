@@ -25,4 +25,5 @@ end
     include("processes/test_processes.jl")
     include("simstudy/test_simstudy.jl")
     include("subroutines/test_subroutines.jl")
+    include("operations/test_operations.jl")
 end
