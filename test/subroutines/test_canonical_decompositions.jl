@@ -11,14 +11,14 @@
 
     chain = to_mps(ψ; form=:left)
     @test length(chain.sites) == L
-    @test chain isa MPState{LeftCanonical,Finite}
+    @test chain isa MPState{LeftCanonical,FiniteSupport}
     @test (chain.llim, chain.rlim) == (L, L + 1)
     @test chain.orthogonality_center == L
     @test is_canonical(chain)
     @test is_gauge_fixed(chain)
 
     rchain = to_mps(ψ; form=:right)
-    @test rchain isa MPState{RightCanonical,Finite}
+    @test rchain isa MPState{RightCanonical,FiniteSupport}
     @test (rchain.llim, rchain.rlim) == (0, 1)
     @test rchain.orthogonality_center == 1
     @test is_canonical(rchain)
@@ -47,7 +47,7 @@ end
 
     for k in 1:L
         mchain = canonicalize(chain, SiteCanonicalize(k))
-        @test mchain isa MPState{MixedCanonical,Finite}
+        @test mchain isa MPState{MixedCanonical,FiniteSupport}
         @test is_canonical(mchain)
         @test mchain.orthogonality_center == k
     end

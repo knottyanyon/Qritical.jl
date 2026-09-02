@@ -12,12 +12,14 @@ credits: N/A
 =#
 
 # This file is deliberately independent of `MPState`/`QProcess`: it defines the gauge-form and
-# boundary-condition *vocabulary* only (singleton types + the coarse GaugeFreedom trait), in the
+# boundary-support *vocabulary* only (singleton types + the coarse GaugeFreedom trait), in the
 # same spirit `LinearAlgebra.Symmetric`/`Hermitian`/`UpperTriangular` are used as type-level tags
-# for dispatch. A future `MPO` reuses these exact same tags as its own type parameter(s) and
-# registers its own `is_canonical(::LeftCanonical, mpo::MPO)`-style methods elsewhere (in whichever
-# file defines `MPO`) - nothing here needs to know `MPO` exists. `MPState`'s own `is_canonical`
-# methods live in `canonical_decompositions.jl`, next to `MPState` itself, for the same reason.
+# for dispatch. `MPOperator` reuses these exact same tags as its own type parameter(s) and
+# registers its own `is_canonical(::LeftCanonical, mpo::MPOperator)`-style methods elsewhere (in
+# `canonical_decompositions.jl`, next to `TensorTrain`) - nothing here needs to know `MPOperator`
+# exists. Named `BoundarySupport` (not `BoundaryCondition`) because `BoundaryCondition` is
+# reserved elsewhere in this project for physical open/closed/periodic conditions - this vocabulary
+# is purely about finite vs. infinite chain extent.
 
 # SECTION -  GaugeForm: the singleton gauge-shape tags
 
@@ -90,28 +92,31 @@ GaugeFreedom(::Type{<:GaugeForm}) = Fixed()
 GaugeFreedom(::Type{UnknownGauge}) = Free()
 GaugeFreedom(::G) where {G<:GaugeForm} = GaugeFreedom(G)
 
-# SECTION -  BoundaryCondition: Finite / Infinite
+# SECTION -  BoundarySupport: FiniteSupport / InfiniteSupport
 
 """
-    BoundaryCondition
+    BoundarySupport
 
-Abstract root of the finite/infinite boundary-condition singleton tags - a second, independent
+Abstract root of the finite/infinite boundary-support singleton tags - a second, independent
 type parameter alongside [`GaugeForm`](@ref) for matrix-product objects, so methods (canonicalization,
-`is_canonical`, eventually transfer-matrix/iMPS-specific routines) can be registered per boundary
-condition the same way they're registered per gauge shape.
+`is_canonical`, eventually transfer-matrix/iMPS-specific routines) can be registered per support
+the same way they're registered per gauge shape. Named `Support` (as in a function's compact vs.
+unbounded support) rather than `BoundaryCondition` to avoid clashing with this project's use of
+"boundary condition" for physical open/closed/periodic conditions.
 
-Concrete subtypes: [`Finite`](@ref), [`Infinite`](@ref). Only `Finite` has real utility functions
-today (`to_mps`/`canonicalize`/`to_vidal` all produce/require it); `Infinite` exists purely as a
-plug-in point for future infinite-MPS/MPO work, with no behavior implemented yet.
+Concrete subtypes: [`FiniteSupport`](@ref), [`InfiniteSupport`](@ref). Only `FiniteSupport` has
+real utility functions today (`to_mps`/`canonicalize`/`to_vidal` all produce/require it);
+`InfiniteSupport` exists purely as a plug-in point for future infinite-MPS/MPO work, with no
+behavior implemented yet.
 """
-abstract type BoundaryCondition end
-
-"""
-A finite chain of `L` sites with two open boundaries. See [`BoundaryCondition`](@ref).
-"""
-struct Finite <: BoundaryCondition end
+abstract type BoundarySupport end
 
 """
-An infinite, translation-invariant chain (no utility functions implemented yet - a future extension point). See [`BoundaryCondition`](@ref).
+A finite chain of `L` sites with two open boundaries. See [`BoundarySupport`](@ref).
 """
-struct Infinite <: BoundaryCondition end
+struct FiniteSupport <: BoundarySupport end
+
+"""
+An infinite, translation-invariant chain (no utility functions implemented yet - a future extension point). See [`BoundarySupport`](@ref).
+"""
+struct InfiniteSupport <: BoundarySupport end

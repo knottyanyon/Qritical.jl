@@ -57,7 +57,8 @@ end
     )
 
     @test_throws ArgumentError MPState([site], LeftCanonical(), 1, 2, 5, 0.0)   # center out of range
-    @test MPState([site], LeftCanonical(), 1, 2, 1, 0.0) isa MPState{LeftCanonical,Finite}
-    @test MPState([site], LeftCanonical(), Infinite(), 1, 2, 1, 0.0) isa
-        MPState{LeftCanonical,Infinite}
+    @test MPState([site], LeftCanonical(), 1, 2, 1, 0.0) isa
+        MPState{LeftCanonical,FiniteSupport}
+    @test MPState([site], LeftCanonical(), InfiniteSupport(), 1, 2, 1, 0.0) isa
+        MPState{LeftCanonical,InfiniteSupport}
 end

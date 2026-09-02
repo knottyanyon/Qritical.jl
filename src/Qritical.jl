@@ -105,10 +105,12 @@ import .Subroutines:
     GaugeFreedom,
     Fixed,
     Free,
-    BoundaryCondition,
-    Finite,
-    Infinite,
+    BoundarySupport,
+    FiniteSupport,
+    InfiniteSupport,
+    TensorTrain,
     MPState,
+    MPOperator,
     is_gauge_fixed,
     CanonicalizeConfig,
     LeftCanonicalize,
@@ -117,7 +119,10 @@ import .Subroutines:
     to_mps,
     canonicalize,
     to_vidal,
-    is_canonical
+    is_canonical,
+    to_mpo,
+    to_choi,
+    to_operator
 # include("utils/io.jl") # commented out: reducing Qritical.jl to core-only for now
 # include("utils/deprecations.jl") # commented out: reducing Qritical.jl to core-only for now
 
@@ -155,10 +160,11 @@ export SweepDirection, LeftRight, RightLeft
 export reabsorb, advance_bond!, orthogonalize, orthonormalize
 export GaugeForm, LeftCanonical, RightCanonical, MixedCanonical, VidalGauge, UnknownGauge
 export GaugeFreedom, Fixed, Free
-export BoundaryCondition, Finite, Infinite
-export MPState, is_gauge_fixed
+export BoundarySupport, FiniteSupport, InfiniteSupport
+export TensorTrain, MPState, MPOperator, is_gauge_fixed
 export CanonicalizeConfig, LeftCanonicalize, RightCanonicalize, SiteCanonicalize
 export to_mps, canonicalize, to_vidal, is_canonical
+export to_mpo, to_choi, to_operator
 
 # Everything below is commented out: reducing Qritical.jl to core-only for now, pending the DoF
 # API migration. These export non-core symbols whose defining includes are also commented out

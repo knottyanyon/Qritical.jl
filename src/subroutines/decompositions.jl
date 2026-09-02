@@ -209,6 +209,67 @@ function reabsorb(::RightLeft, (U, S, Vd, ε)::Tuple{Any,Any,Any,Any})
     return (TensorKit.permute(Vd, ((1, 2), (3,))), U * S)
 end
 
+# SECTION -  step / reabsorb, Val(P)-dispatched - per-site cuts for TensorTrain's canonicalize
+
+"""
+    step(direction::SweepDirection, ::Val{P}, T; access=HasEntanglementSpectrum(), bond_cutoff=nothing)
+
+Per-site-cut sibling of [`step`](@ref)'s direction-only methods, for re-gauging an *already
+separated* [`TensorTrain`](@ref) site tensor (`P` physical legs) rather than peeling one leg off
+a flat multi-site dense tensor. The direction-only `step` methods always slice a **contiguous**
+prefix/suffix of `T`'s legs by a fixed count - correct for peeling a single already-vectorized leg
+(what [`_sweep`](@ref)/[`orthonormalize`](@ref) do), but wrong here once `P>1`: the bond leg that
+must be isolated and handed to the neighbouring site (`vR` for a [`LeftRight`](@ref) cut) sits at
+position 3, with any extra physical leg (`σ_bra`, for `P=2`) at position 4 right after it -
+isolating `vR` alone needs the **non-contiguous** permutation `(1,2,4) | (3,)`, not a slice.
+[`RightLeft`](@ref) needs no `P`-specific case: isolating `vL` alone (`(1,) | (rest)`) is already
+arity-agnostic.
+"""
+function step(
+    ::LeftRight,
+    ::Val{1},
+    T;
+    access::AccessEntanglementSpectrumData=HasEntanglementSpectrum(),
+    bond_cutoff::Union{Int,Nothing}=nothing,
+)
+    T = TensorKit.permute(T, ((1, 2), (3,)))
+    return factorize_tensor(T, access; bond_cutoff)
+end
+function step(
+    ::LeftRight,
+    ::Val{2},
+    T;
+    access::AccessEntanglementSpectrumData=HasEntanglementSpectrum(),
+    bond_cutoff::Union{Int,Nothing}=nothing,
+)
+    T = TensorKit.permute(T, ((1, 2, 4), (3,)))
+    return factorize_tensor(T, access; bond_cutoff)
+end
+function step(
+    ::RightLeft,
+    ::Val{P},
+    T;
+    access::AccessEntanglementSpectrumData=HasEntanglementSpectrum(),
+    bond_cutoff::Union{Int,Nothing}=nothing,
+) where {P}
+    T = TensorKit.permute(T, ((1,), Tuple(2:(P + 2))))
+    return factorize_tensor(T, access; bond_cutoff)
+end
+
+"""
+    reabsorb(direction::SweepDirection, ::Val{P}, raw_pieces) -> (site_tensor, remainder)
+
+`Val(P)`-dispatched sibling of [`reabsorb`](@ref), pairing with the `Val(P)`-dispatched
+[`step`](@ref) methods above.
+"""
+reabsorb(::LeftRight, ::Val{1}, (U, S, Vd, ε)::Tuple{Any,Any,Any,Any}) = (U, S * Vd)
+function reabsorb(::LeftRight, ::Val{2}, (U, S, Vd, ε)::Tuple{Any,Any,Any,Any})
+    return (TensorKit.permute(U, ((1, 2), (4, 3))), S * Vd)
+end
+function reabsorb(::RightLeft, ::Val{P}, (U, S, Vd, ε)::Tuple{Any,Any,Any,Any}) where {P}
+    return (TensorKit.permute(Vd, ((1, 2), Tuple(3:(P + 2)))), U * S)
+end
+
 """
     advance_bond!(direction, T, bond; access=HasEntanglementSpectrum(), bond_cutoff=nothing,
                   collector=SimStudy.NoOpCollector(), accumulator=SimStudy.NoOpErrorAccumulator())
@@ -252,6 +313,39 @@ function advance_bond!(
         end
     end
     return reabsorb(direction, raw)
+end
+
+"""
+    advance_bond!(direction::SweepDirection, ::Val{P}, T, bond::Int; bond_cutoff=nothing,
+                  collector=SimStudy.NoOpCollector(), accumulator=SimStudy.NoOpErrorAccumulator())
+        -> (site_tensor, remainder)
+
+`Val(P)`-dispatched sibling of [`advance_bond!`](@ref), for cutting an *already separated*
+[`TensorTrain`](@ref) site tensor with `P` physical legs (used by `canonicalize`), rather than
+peeling one leg off a flat multi-site dense tensor. Same factorize -> record!/step! -> reabsorb
+funnel, calling the `Val(P)`-dispatched [`step`](@ref)/[`reabsorb`](@ref) above. Always uses
+[`HasEntanglementSpectrum`](@ref) (a per-site canonicalization cut is always an SVD cut).
+"""
+function advance_bond!(
+    direction::SweepDirection,
+    ::Val{P},
+    T,
+    bond::Int;
+    bond_cutoff::Union{Int,Nothing}=nothing,
+    collector::AbstractCollector=NoOpCollector(),
+    accumulator::AbstractErrorAccumulator=NoOpErrorAccumulator(),
+) where {P}
+    raw = step(direction, Val(P), T; access=HasEntanglementSpectrum(), bond_cutoff)
+    _, S, _, ε = raw
+    record!(accumulator, (; direction, bond, ε))
+    if RecordingTrait(collector) isa Active
+        svals = S.data
+        normalized = isapprox(sum(abs2, svals), 1.0; atol=sqrt(eps(real(eltype(svals)))))
+        step!(
+            collector, (; direction, bond, spectrum=SingValSpectrum(svals, ε, normalized))
+        )
+    end
+    return reabsorb(direction, Val(P), raw)
 end
 
 # SECTION -  orthogonalize / orthonormalize - full-sweep entry points

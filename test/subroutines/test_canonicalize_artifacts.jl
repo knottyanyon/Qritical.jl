@@ -24,7 +24,7 @@
         # left-canonical round trip
         chain = to_mps(ψ; form=:left)
         @test length(chain.sites) == L
-        @test chain isa MPState{LeftCanonical,Finite}
+        @test chain isa MPState{LeftCanonical,FiniteSupport}
         @test is_canonical(chain)
         @test is_gauge_fixed(chain)
 
@@ -42,13 +42,13 @@
 
         # right-canonical round trip
         rchain = to_mps(ψ; form=:right)
-        @test rchain isa MPState{RightCanonical,Finite}
+        @test rchain isa MPState{RightCanonical,FiniteSupport}
         @test is_canonical(rchain)
 
         # mixed-canonical re-gauging at an interior site
         k = L ÷ 2
         mchain = canonicalize(chain, SiteCanonicalize(k))
-        @test mchain isa MPState{MixedCanonical,Finite}
+        @test mchain isa MPState{MixedCanonical,FiniteSupport}
         @test is_canonical(mchain)
         @test mchain.orthogonality_center == k
 

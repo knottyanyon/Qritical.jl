@@ -48,6 +48,7 @@ include("spectrum.jl")
 include("decompositions.jl")
 include("gauge.jl")
 include("canonical_decompositions.jl")
+include("mpoperator.jl")
 
 export SingValSpectrum
 export schmidt_rank, spectral_gap, entanglement_entropy, entanglement_spectrum
@@ -62,9 +63,10 @@ export reabsorb, advance_bond!, orthogonalize, orthonormalize   # `step` (Base.s
 
 export GaugeForm, LeftCanonical, RightCanonical, MixedCanonical, VidalGauge, UnknownGauge
 export GaugeFreedom, Fixed, Free
-export BoundaryCondition, Finite, Infinite
-export MPState, is_gauge_fixed
+export BoundarySupport, FiniteSupport, InfiniteSupport
+export TensorTrain, MPState, MPOperator, is_gauge_fixed
 export CanonicalizeConfig, LeftCanonicalize, RightCanonicalize, SiteCanonicalize
 export to_mps, canonicalize, to_vidal, is_canonical
+export to_mpo, to_choi, to_operator
 
 end
