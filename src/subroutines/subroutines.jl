@@ -73,6 +73,7 @@ export to_mps, canonicalize, to_vidal, is_canonical
 export to_mpo, to_choi, to_operator
 
 export AutomatonTerm, HamiltonianAutomaton, build_automaton, materialize
+export AutomatonTopology, build_topology, fill_topology
 
 export ApproximateDecomposition
 export ProductFormula, LieTrotter, SuzukiTrotter, Suzuki4th

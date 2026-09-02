@@ -18,6 +18,16 @@ credits: N/A
 # additional intermediate state per unit of interaction range per term" rule falls directly out of
 # the state-liveness rule below. Deliberately standalone from `Hamiltonian` (`src/operations/`),
 # which stays field-less for now - this file only ever sees an explicit `Vector{AutomatonTerm}`.
+#
+# TODO(perf, deferred): `build_topology`/`fill_topology` always use the fully general
+# `Dict{Tuple{PenroseLabel,PenroseLabel},...}`-keyed construction below, even when every term in
+# `terms` is nearest-neighbor/k-local for small k. An `InteractionRange` trait (`FiniteRange`,
+# `NearestNeighbor`/`NextNearestNeighbor`/`KLocal{K}`) computed once from `terms` could dispatch a
+# specialized `Vector`/integer-indexed fast path that skips `PenroseLabel` allocation and `Dict`
+# lookups entirely for the common bounded-range case - deliberately not built yet (no profiling
+# data shows the general path is actually a bottleneck; see
+# docs/superpowers/specs/2026-09-02-hamiltonian-automaton-mpo-design.md sec. 5 for the full
+# design). Add only once a real performance need is measured, not speculatively.
 
 # SECTION -  AutomatonTerm - one term of a sum-of-multipartite-operators Hamiltonian
 
@@ -69,7 +79,71 @@ struct HamiltonianAutomaton
     terms::Vector{AutomatonTerm}
 end
 
-# SECTION -  build_automaton - pure combinatorics, no TensorMap work
+# SECTION -  AutomatonTopology - reusable structure, independent of coefficient/operator content
+
+"""
+    AutomatonTopology
+
+The combinatorial *structure* of a [`HamiltonianAutomaton`](@ref) - which states exist per bond,
+which `(state_in, state_out)` transition slots exist at all - kept separate from the numeric
+`(coefficient, operator)` content that fills those slots. This structure depends only on `terms`'
+**site pattern** (which sites each term touches), never on coefficient values or the operator
+content itself, so it's exactly the part worth reusing across many coefficient realizations of the
+same coupling pattern (disorder averaging, parameter sweeps): build it once via
+[`build_topology`](@ref), then re-attach content per realization via [`fill_topology`](@ref)
+instead of redoing the state-liveness combinatorics every time.
+
+# Fields
+
+  - `states     :: Vector{Vector{PenroseLabel}}` - same shape as
+    [`HamiltonianAutomaton`](@ref)'s `states`.
+  - `spans      :: Vector{Tuple{Int,Int}}` - per-term `(first_site, last_site)`.
+  - `term_state :: Vector{PenroseLabel}` - per-term in-flight state identity.
+"""
+struct AutomatonTopology
+    states::Vector{Vector{PenroseLabel}}
+    spans::Vector{Tuple{Int,Int}}
+    term_state::Vector{PenroseLabel}
+end
+
+"""
+    build_topology(terms::Vector{AutomatonTerm}, L::Int) -> AutomatonTopology
+
+Determine the state/transition *structure* only (per Schollwoeck sec. 6.1, see
+[`build_automaton`](@ref) for the full construction this is half of) - no operator content, no
+`TensorMap` work. Every bond always carries a `start` state and an `accept` state, plus one
+dedicated in-flight state per term `j` at every bond strictly between its first and last touched
+site - bond dimension at bond `b` is `2 + |{terms straddling b}|`.
+"""
+function build_topology(terms::Vector{AutomatonTerm}, L::Int)
+    # TODO(perf, deferred): this is the dispatch point an InteractionRange fast path would hook
+    # into - classify `terms` (e.g. max span <= k) and branch to a Vector/integer-indexed
+    # construction for FiniteRange instead of the general PenroseLabel/Dict one below. See the
+    # TODO at the top of this file for why it's not built yet.
+    start = PenroseLabel(:start)
+    accept = PenroseLabel(:accept)
+    term_state = [PenroseLabel(:term, j) for j in eachindex(terms)]
+
+    spans = Vector{Tuple{Int,Int}}(undef, length(terms))
+    for (j, t) in enumerate(terms)
+        sites_j = sort(unique(first.(t.ops)))
+        spans[j] = (first(sites_j), last(sites_j))
+    end
+
+    states = Vector{Vector{PenroseLabel}}(undef, L + 1)
+    for b in 0:L
+        live = PenroseLabel[start, accept]
+        for j in eachindex(terms)
+            f, l = spans[j]
+            f <= b < l && push!(live, term_state[j])
+        end
+        states[b + 1] = live
+    end
+
+    return AutomatonTopology(states, spans, term_state)
+end
+
+# SECTION -  fill_topology / build_automaton - attach numeric content
 
 function _add_transition!(table, key, coefficient, op::QProcess)
     if haskey(table, key)
@@ -84,56 +158,50 @@ function _add_transition!(table, key, coefficient, op::QProcess)
 end
 
 """
-    build_automaton(terms::Vector{AutomatonTerm}, L::Int, physical_spaces) -> HamiltonianAutomaton
+    fill_topology(topology::AutomatonTopology, terms::Vector{AutomatonTerm}, physical_spaces)
+        -> HamiltonianAutomaton
 
-Build the finite-state-automaton state/transition structure for a Hamiltonian `H = Σⱼ cⱼ · Oⱼ`
-on an `L`-site chain, per Schollwoeck sec. 6.1: every bond always carries a `start` state ("no
-term has started yet here") and an `accept` state ("every term touching earlier sites has already
-completed"), plus one dedicated in-flight state per term `j` at every bond strictly between its
-first and last touched site. Bond dimension at bond `b` is therefore `2 + |{terms straddling b}|`
+Re-attach numeric `(coefficient, operator)` content to `topology`'s already-determined
+state/transition structure, producing a full [`HamiltonianAutomaton`](@ref) without redoing the
+state-liveness combinatorics [`build_topology`](@ref) already did.
 
-  - the range-dependent cost this construction is built around, not a nearest-neighbor convention.
+**Caller contract**: `terms` must have the same site *pattern* (same spans, same term count) as
+whatever was passed to [`build_topology`](@ref) to build `topology` - only coefficients and
+operator content may differ. Checked cheaply (term count only, not a full span re-derivation -
+re-checking spans would redo exactly the work this function exists to avoid); passing `terms` with
+a genuinely different site pattern than `topology` was built from produces a silently wrong
+automaton, not an error.
 
-`physical_spaces` is either a single `TensorKit.ElementarySpace` (broadcast to every site, the
-common uniform-chain case) or a `Vector` of `L` spaces (one per site) - needed to build the
-identity pass-through operator at sites a term doesn't touch, and for the two permanent
-`start->start`/`accept->accept` identity self-loops present at every site regardless of `terms`.
-
-Pure combinatorics only - no `TensorMap` allocation happens here; see [`materialize`](@ref) for
-turning the result into an actual `MPOperator`.
+`physical_spaces` is either a single `TensorKit.ElementarySpace` (broadcast to every site) or a
+`Vector` of `L` spaces (one per site) - see [`build_automaton`](@ref).
 """
-function build_automaton(
+function fill_topology(
+    topology::AutomatonTopology,
     terms::Vector{AutomatonTerm},
-    L::Int,
     physical_spaces::Union{
         TensorKit.ElementarySpace,AbstractVector{<:TensorKit.ElementarySpace}
     },
 )
+    length(terms) == length(topology.spans) || throw(
+        ArgumentError(
+            "fill_topology: terms has $(length(terms)) term(s), topology was built for " *
+            "$(length(topology.spans)) - fill_topology only re-attaches numeric content for " *
+            "the same term site-pattern build_topology saw; build a fresh topology if the " *
+            "pattern itself changed.",
+        ),
+    )
+
+    L = length(topology.states) - 1
     spaces = physical_spaces isa AbstractVector ? physical_spaces : fill(physical_spaces, L)
     length(spaces) == L ||
         throw(ArgumentError("physical_spaces must have length L=$L, got $(length(spaces))"))
 
     start = PenroseLabel(:start)
     accept = PenroseLabel(:accept)
-    term_state = [PenroseLabel(:term, j) for j in eachindex(terms)]
 
     term_ops = Vector{Dict{Int,QProcess}}(undef, length(terms))
-    spans = Vector{Tuple{Int,Int}}(undef, length(terms))
     for (j, t) in enumerate(terms)
-        d = Dict(site => op for (site, op) in t.ops)
-        term_ops[j] = d
-        sites_j = sort(collect(keys(d)))
-        spans[j] = (first(sites_j), last(sites_j))
-    end
-
-    states = Vector{Vector{PenroseLabel}}(undef, L + 1)
-    for b in 0:L
-        live = PenroseLabel[start, accept]
-        for j in eachindex(terms)
-            f, l = spans[j]
-            f <= b < l && push!(live, term_state[j])
-        end
-        states[b + 1] = live
+        term_ops[j] = Dict(site => op for (site, op) in t.ops)
     end
 
     transitions = [
@@ -146,7 +214,7 @@ function build_automaton(
         _add_transition!(transitions[i], (accept, accept), 1, identity_at(i))
 
         for j in eachindex(terms)
-            f, l = spans[j]
+            f, l = topology.spans[j]
             (i < f || i > l) && continue
             if f == l
                 if i == f
@@ -162,21 +230,50 @@ function build_automaton(
             if i == f
                 _add_transition!(
                     transitions[i],
-                    (start, term_state[j]),
+                    (start, topology.term_state[j]),
                     terms[j].coefficient,
                     term_ops[j][i],
                 )
             elseif i == l
-                _add_transition!(transitions[i], (term_state[j], accept), 1, term_ops[j][i])
+                _add_transition!(
+                    transitions[i], (topology.term_state[j], accept), 1, term_ops[j][i]
+                )
             else
                 op = get(term_ops[j], i, nothing)
                 op = isnothing(op) ? identity_at(i) : op
-                _add_transition!(transitions[i], (term_state[j], term_state[j]), 1, op)
+                _add_transition!(
+                    transitions[i], (topology.term_state[j], topology.term_state[j]), 1, op
+                )
             end
         end
     end
 
-    return HamiltonianAutomaton(states, transitions, terms)
+    return HamiltonianAutomaton(topology.states, transitions, terms)
+end
+
+"""
+    build_automaton(terms::Vector{AutomatonTerm}, L::Int, physical_spaces) -> HamiltonianAutomaton
+
+Build the finite-state-automaton state/transition structure for a Hamiltonian `H = Σⱼ cⱼ · Oⱼ`
+on an `L`-site chain, per Schollwoeck sec. 6.1 - `build_topology(terms, L)` followed by
+[`fill_topology`](@ref). Prefer calling [`build_topology`](@ref)/[`fill_topology`](@ref)
+separately when re-materializing many coefficient realizations of the same term site-pattern
+(disorder averaging, parameter sweeps): this convenience wrapper always redoes the structure
+determination from scratch.
+
+`physical_spaces` is either a single `TensorKit.ElementarySpace` (broadcast to every site, the
+common uniform-chain case) or a `Vector` of `L` spaces (one per site) - needed to build the
+identity pass-through operator at sites a term doesn't touch, and for the two permanent
+`start->start`/`accept->accept` identity self-loops present at every site regardless of `terms`.
+"""
+function build_automaton(
+    terms::Vector{AutomatonTerm},
+    L::Int,
+    physical_spaces::Union{
+        TensorKit.ElementarySpace,AbstractVector{<:TensorKit.ElementarySpace}
+    },
+)
+    return fill_topology(build_topology(terms, L), terms, physical_spaces)
 end
 
 # SECTION -  materialize - block-assembly into an actual MPOperator
