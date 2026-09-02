@@ -447,15 +447,15 @@ function to_vidal(chain::MPState)
         t = tensor(chain.sites[i])
         Xleft = if i == 1
             TensorKit.isomorphism(
-            TensorKit.storagetype(t), TensorKit.space(t, 1), TensorKit.space(t, 1)
-        )
+                TensorKit.storagetype(t), TensorKit.space(t, 1), TensorKit.space(t, 1)
+            )
         else
             Xs[i - 1]
         end
         Xright = if i == L
             TensorKit.isomorphism(
-            TensorKit.storagetype(t), TensorKit.space(t, 3)', TensorKit.space(t, 3)'
-        )
+                TensorKit.storagetype(t), TensorKit.space(t, 3)', TensorKit.space(t, 3)'
+            )
         else
             Xs[i]
         end

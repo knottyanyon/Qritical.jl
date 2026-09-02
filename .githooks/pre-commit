@@ -1,5 +1,35 @@
 #!/usr/bin/env bash
-# pre-commit: format staged Julia files with JuliaFormatter before committing.
+# pre-commit: insert the #=META provenance header into newly-added src/ files that
+# don't have one yet, then format staged Julia files with JuliaFormatter.
+
+# Newly-added (not modified) .jl files under src/ that don't already start with #=META.
+NEW_SRC_JL=$(git diff --cached --name-only --diff-filter=A | grep '^src/.*\.jl$')
+
+for f in $NEW_SRC_JL; do
+    [ -f "$f" ] || continue
+    head -1 "$f" | grep -q '^#=META$' && continue
+
+    TMP=$(mktemp)
+    cat > "$TMP" <<'HEADER'
+#=META
+source:
+  author: Bavithra
+  coauthor:
+  reviewer:
+docstrings:
+  author: Bavithra
+  coauthor:
+  reviewer:
+refs:
+credits:
+=#
+
+HEADER
+    cat "$f" >> "$TMP"
+    mv "$TMP" "$f"
+    git add "$f"
+    echo "  inserted provenance header: $f"
+done
 
 if ! command -v julia >/dev/null 2>&1; then
     echo ""
