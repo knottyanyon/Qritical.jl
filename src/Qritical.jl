@@ -115,11 +115,18 @@ import .Subroutines:
     CanonicalizeConfig,
     LeftCanonicalize,
     RightCanonicalize,
-    SiteCanonicalize,
+    MixedCanonicalize,
     to_mps,
     canonicalize,
     to_vidal,
     is_canonical,
+    apply,
+    apply_gate,
+    overlap,
+    local_expectation_value,
+    ApplyStrategy,
+    ExactApply,
+    CompressedApply,
     to_mpo,
     to_choi,
     to_operator,
@@ -127,6 +134,7 @@ import .Subroutines:
     HamiltonianAutomaton,
     build_automaton,
     materialize,
+    close_transducer_boundary,
     AutomatonTopology,
     build_topology,
     fill_topology,
@@ -149,7 +157,7 @@ include("operations/operations.jl")
 import .Operations:
     Observable,
     Hamiltonian,
-    Correlator,
+    LocalObservable,
     symmetry_group,
     Time,
     RealTime,
@@ -157,9 +165,17 @@ import .Operations:
     Propagator,
     propagator,
     trotterize,
+    TrotterGateBlock,
+    TrotterStep,
+    trotter_error,
+    record_trotter_error!,
     evaluate_expectation_value,
     ExpectationValueSnapshot,
     evaluate_expectation_values
+include("algorithms/algorithms.jl")
+import .Algorithms: TEBDAlgorithm, evolve!, TEBDStepSnapshot
+include("models/models.jl")
+import .Models: xxz_hamiltonian, neel_state, domain_wall_state
 # include("utils/io.jl") # commented out: reducing Qritical.jl to core-only for now
 # include("utils/deprecations.jl") # commented out: reducing Qritical.jl to core-only for now
 
@@ -199,10 +215,13 @@ export GaugeForm, LeftCanonical, RightCanonical, MixedCanonical, VidalGauge, Unk
 export GaugeFreedom, Fixed, Free
 export BoundarySupport, FiniteSupport, InfiniteSupport
 export TensorTrain, MPState, MPOperator, is_gauge_fixed
-export CanonicalizeConfig, LeftCanonicalize, RightCanonicalize, SiteCanonicalize
+export CanonicalizeConfig, LeftCanonicalize, RightCanonicalize, MixedCanonicalize
 export to_mps, canonicalize, to_vidal, is_canonical
+export apply, apply_gate, overlap, local_expectation_value
+export ApplyStrategy, ExactApply, CompressedApply
 export to_mpo, to_choi, to_operator
 export AutomatonTerm, HamiltonianAutomaton, build_automaton, materialize
+export close_transducer_boundary
 export AutomatonTopology, build_topology, fill_topology
 export SplitStrategy, EvenOddSplit, GraphColoring, split_commuting_groups
 export ApproximateDecomposition
@@ -211,12 +230,19 @@ export Trotterization, OperatorSplitting
 export sequence, local_error_bound, TrotterErrorAccumulator, accumulate_trotter_error!
 
 # SECTION -  Operations layer
-export Observable, Hamiltonian, Correlator
+export Observable, Hamiltonian, LocalObservable
 export symmetry_group
 export Time, RealTime, ImaginaryTime, Propagator
 export propagator, trotterize
+export TrotterGateBlock, TrotterStep, trotter_error, record_trotter_error!
 export evaluate_expectation_value
 export ExpectationValueSnapshot, evaluate_expectation_values
+
+# SECTION -  Algorithms layer
+export TEBDAlgorithm, evolve!, TEBDStepSnapshot
+
+# SECTION -  Models layer
+export xxz_hamiltonian, neel_state, domain_wall_state
 
 # Everything below is commented out: reducing Qritical.jl to core-only for now, pending the DoF
 # API migration. These export non-core symbols whose defining includes are also commented out

@@ -1,7 +1,6 @@
 #=META
 source:
   author: Bavithra
-  coauthor: Claude Opus 5
   reviewer:
 docstrings:
   author: N/A

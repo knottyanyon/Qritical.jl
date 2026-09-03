@@ -33,11 +33,14 @@ end
     @test p_imag.dt == 0.2
 end
 
-@testitem "trotterize is stubbed" begin
+@testitem "trotterize on an empty Hamiltonian produces an empty TrotterStep" begin
     using TensorKit
 
     V = ComplexSpace(2)
     H = Hamiltonian(AutomatonTerm[], 3, V)
     p = Propagator{RealTime}(H, 0.1)
-    @test_throws ErrorException trotterize(p, SuzukiTrotter())
+    step = trotterize(p, SuzukiTrotter())
+    @test isempty(step.block.gates)
+    @test step.dt == 0.1
+    @test step.num_steps == 1
 end

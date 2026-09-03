@@ -46,7 +46,7 @@ end
     @test lchain.orthogonality_center == L
 
     for k in 1:L
-        mchain = canonicalize(chain, SiteCanonicalize(k))
+        mchain = canonicalize(chain, MixedCanonicalize(k))
         @test mchain isa MPState{MixedCanonical,FiniteSupport}
         @test is_canonical(mchain)
         @test mchain.orthogonality_center == k
@@ -65,7 +65,9 @@ end
     ψ = State(ψtensor)
     chain = to_mps(ψ; form=:left)
 
-    Γs, λs = to_vidal(chain)
+    vidal_chain = to_vidal(chain)
+    @test vidal_chain isa MPState{VidalGauge,FiniteSupport}
+    Γs, λs = vidal_chain.sites, vidal_chain.λs
     @test length(Γs) == L
     @test length(λs) == L - 1
 
@@ -115,4 +117,21 @@ end
         chain.ε,
     )
     @test !is_canonical(bad_chain)
+end
+
+@testitem "_validate_lambda: λs only meaningful for VidalGauge, length checked" begin
+    using TensorKit
+
+    V = TensorKit.ComplexSpace(2)
+    u, S, _ = svd_compact(randn(ComplexF64, (V ⊗ V) ← V))
+    site = QProcess(u; output_roles=(VirtualLeg(), PhysicalLeg()), input_roles=VirtualLeg())
+
+    @test_throws ArgumentError MPState([site, site], LeftCanonical(), 2, 3, 1, 0.0, [S])
+
+    @test MPState([site, site], VidalGauge(), 0, 0, nothing, 0.0, [S]) isa
+        MPState{VidalGauge,FiniteSupport}
+
+    @test_throws ArgumentError MPState(
+        [site, site], VidalGauge(), 0, 0, nothing, 0.0, [S, S]
+    )
 end

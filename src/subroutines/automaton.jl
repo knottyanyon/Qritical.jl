@@ -1,11 +1,10 @@
 #=META
 source:
   author: Bavithra
-  coauthor: Claude Opus 5
   reviewer:
 docstrings:
-  author: Bavithra
-  coauthor: Claude Opus 5
+  author: Claude Sonnet 5
+  coauthor: 
   reviewer:
 refs: schollwoeck_2011
 credits: N/A
@@ -393,4 +392,56 @@ end
 
 function split_commuting_groups(::GraphColoring, terms::Vector{AutomatonTerm})
     return error("GraphColoring strategy is not yet implemented - use EvenOddSplit for now")
+end
+
+# SECTION -  close_transducer_boundary - close the raw weighted transducer into a genuine operator
+
+"""
+    close_transducer_boundary(automaton::HamiltonianAutomaton, mpo::MPOperator) -> MPOperator
+
+`materialize`'s raw output is a weighted **transducer**, not a closed operator: its boundary bonds
+carry the full `states` dimension (`start`, `accept`, and any straddling term states at bond 0/`L`),
+with a permanent `(start,start)`/`(accept,accept)` identity self-loop at every site alongside the
+real term content. A literal tensor-network contraction of the raw output therefore computes
+`identity + H + identity`-like sums over every start→⋯→⋯ path, not `H` alone - only reading the
+transducer *from* `start` *to* `accept` (Schollwoeck's convention, matching the one-hot boundary
+selection `test_automaton.jl`'s own `_dense_reconstruct` already does by hand for verification)
+recovers the genuine operator.
+
+This closes that gap generically: contracts one-hot `start`/`accept` selector tensors into the
+first/last site's `vL`/`vR` legs, collapsing each from the full states-dimension down to a genuine
+trivial dim-1 leg - the standard MPO boundary convention every consumer (`apply`, and so
+`evaluate_expectation_value`, and eventually TEBD) actually needs. `materialize`/`build_automaton`
+themselves are unchanged; this is composed *after* them (see [`to_mpo`](@ref), which calls this
+automatically).
+"""
+function close_transducer_boundary(automaton::HamiltonianAutomaton, mpo::MPOperator)
+    L = length(mpo.sites)
+    start_idx = findfirst(==(PenroseLabel(:start)), automaton.states[1])
+    accept_idx = findfirst(==(PenroseLabel(:accept)), automaton.states[end])
+
+    t1 = tensor(mpo.sites[1])
+    Vl = TensorKit.space(t1, 1)
+    Pl_data = zeros(ComplexF64, 1, TensorKit.dim(Vl))
+    Pl_data[1, start_idx] = 1
+    Pl = TensorKit.TensorMap(Pl_data, TensorKit.oneunit(Vl) ← Vl)
+    new_site1 = _regroup_bulk_site(Pl * _regroup_first_out(t1))
+
+    # L==1: the same site carries both boundaries - close the right side of the already
+    # left-closed tensor, not of the original t1 again (which would lose the left closure).
+    tL = L == 1 ? new_site1 : tensor(mpo.sites[L])
+    Vr = TensorKit.domain(tL)[1]
+    Pr_data = zeros(ComplexF64, TensorKit.dim(Vr), 1)
+    Pr_data[accept_idx, 1] = 1
+    Pr = TensorKit.TensorMap(Pr_data, Vr ← TensorKit.oneunit(Vr))
+    new_siteL = _restore_site_shape(Val(2), _isolate_bond_in(Val(2), tL) * Pr)
+
+    sites = collect(mpo.sites)
+    if L == 1
+        sites[1] = _finalize_site(Val(2), new_siteL)
+    else
+        sites[1] = _finalize_site(Val(2), new_site1)
+        sites[L] = _finalize_site(Val(2), new_siteL)
+    end
+    return TensorTrain{UnknownGauge,FiniteSupport,2}(sites, 0, 0, nothing, 0.0)
 end

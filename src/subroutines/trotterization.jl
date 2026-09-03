@@ -1,11 +1,10 @@
 #=META
 source:
   author: Bavithra
-  coauthor: Claude Opus 5
   reviewer:
 docstrings:
-  author: Bavithra
-  coauthor: Claude Opus 5
+  author: Claude Sonnet 5
+  coauthor: 
   reviewer:
 refs:
 credits: mpskit-validation (internal validation package) - decompositions.jl

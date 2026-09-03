@@ -330,6 +330,7 @@ makedocs(;
             # "References" => ["Glossary" => "references/glossary.md"],
             # "Changelog" => "changelog.md",
             # "Bibliography" => "references.md",
+            "API Reference" => "api.md",
             "Developer" => [
                 "Kitchen Sink" => "dev/kitchen_sink.md",
                 # "Flow Diagrams" => "dev/flow_diagrams.md",

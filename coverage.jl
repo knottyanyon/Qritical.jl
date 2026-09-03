@@ -6,15 +6,15 @@
 # 3. Writes lcov.info — consumed by the VS Code "Coverage Gutters" extension.
 # 4. Cleans up .cov files.
 
-import Pkg
+using Pkg: Pkg
 Pkg.activate(@__DIR__)
 
 using Coverage
 using Printf
 
-const ROOT    = @__DIR__
-const SRC     = joinpath(ROOT, "src")
-const LCOV    = joinpath(ROOT, "lcov.info")
+const ROOT = @__DIR__
+const SRC = joinpath(ROOT, "src")
+const LCOV = joinpath(ROOT, "lcov.info")
 const RUNTESTS = joinpath(ROOT, "test", "runtests.jl")
 
 # ── 1. Run tests with coverage instrumentation ────────────────────────────────
@@ -32,7 +32,13 @@ for f in sort(fc; by=x -> x.filename)
     tracked = count(c -> c !== nothing, f.coverage)
     tracked == 0 && continue
     pct = 100 * covered / tracked
-    bar = pct >= 90 ? "✓" : pct >= 70 ? "~" : "✗"
+    bar = if pct >= 90
+        "✓"
+    elseif pct >= 70
+        "~"
+    else
+        "✗"
+    end
     rel = relpath(f.filename, ROOT)
     @printf("  %s %5.1f%%  %s  (%d/%d)\n", bar, pct, rel, covered, tracked)
 end
@@ -42,7 +48,9 @@ println("───────────────────────�
 
 # ── 4. Write lcov.info ────────────────────────────────────────────────────────
 Coverage.LCOV.writefile(LCOV, fc)
-println("\nlcov.info written — install 'Coverage Gutters' in VS Code to see inline highlights.")
+println(
+    "\nlcov.info written — install 'Coverage Gutters' in VS Code to see inline highlights."
+)
 
 # ── 5. Clean up .cov sidecar files ───────────────────────────────────────────
 clean_folder(SRC)

@@ -47,13 +47,14 @@
 
         # mixed-canonical re-gauging at an interior site
         k = L ÷ 2
-        mchain = canonicalize(chain, SiteCanonicalize(k))
+        mchain = canonicalize(chain, MixedCanonicalize(k))
         @test mchain isa MPState{MixedCanonical,FiniteSupport}
         @test is_canonical(mchain)
         @test mchain.orthogonality_center == k
 
         # Vidal-form round trip
-        Γs, λs = to_vidal(chain)
+        vidal_chain = to_vidal(chain)
+        Γs, λs = vidal_chain.sites, vidal_chain.λs
         gfull = tensor(Γs[1])
         for i in 1:(L - 1)
             n = TensorKit.numind(gfull)

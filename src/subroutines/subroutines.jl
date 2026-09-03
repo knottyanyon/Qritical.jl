@@ -1,7 +1,6 @@
 #=META
 source:
   author: Bavithra
-  coauthor: Claude Opus 5
   reviewer:
 docstrings:
   author: N/A
@@ -24,6 +23,7 @@ import ..Processes:
     State,
     Effect,
     Scalar,
+    value,
     tensor,
     outputs,
     inputs,
@@ -48,6 +48,7 @@ include("spectrum.jl")
 include("decompositions.jl")
 include("gauge.jl")
 include("canonical_decompositions.jl")
+include("contractions.jl")
 include("mpoperator.jl")
 include("automaton.jl")
 include("../utils/glossary/trotterization.jl")   # terms must be defined before trotterization.jl's docstrings interpolate them
@@ -68,11 +69,15 @@ export GaugeForm, LeftCanonical, RightCanonical, MixedCanonical, VidalGauge, Unk
 export GaugeFreedom, Fixed, Free
 export BoundarySupport, FiniteSupport, InfiniteSupport
 export TensorTrain, MPState, MPOperator, is_gauge_fixed
-export CanonicalizeConfig, LeftCanonicalize, RightCanonicalize, SiteCanonicalize
+export CanonicalizeConfig, LeftCanonicalize, RightCanonicalize, MixedCanonicalize
 export to_mps, canonicalize, to_vidal, is_canonical
+export apply, apply_gate, overlap, local_expectation_value
+export ApplyStrategy, ExactApply, CompressedApply
+# `norm` is deliberately not exported - see the module note in contractions.jl
 export to_mpo, to_choi, to_operator
 
 export AutomatonTerm, HamiltonianAutomaton, build_automaton, materialize
+export close_transducer_boundary
 export AutomatonTopology, build_topology, fill_topology
 export SplitStrategy, EvenOddSplit, GraphColoring, split_commuting_groups
 

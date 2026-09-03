@@ -2,7 +2,7 @@
 
 julia_version = "1.12.7"
 manifest_format = "2.0"
-project_hash = "a5e8c736528419c3e4f2e78afac7e4f2e1db1c8e"
+project_hash = "eafa11e7164345d8e84f4d1690a18481e58312d1"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "0a81a018463de6c3f4f2c9360121c562e5add9e4"
@@ -2306,7 +2306,7 @@ uuid = "4b34888f-f399-49d4-9bb3-47ed5cae4e65"
 version = "1.0.2"
 
 [[deps.Qritical]]
-deps = ["Artifacts", "DelimitedFiles", "GeometryBasics", "Glossaries", "HalfIntegers", "JuliaFormatter", "KrylovKit", "LinearAlgebra", "Logging", "LoggingExtras", "ModelingToolkit", "Pluto", "Preferences", "Random", "SUNRepresentations", "ScopedValues", "Serialization", "SparseArrays", "Statistics", "Symbolics", "TensorKit", "TensorKitSectors", "TensorKitTensors", "TensorOperations", "TestItems", "Unitful", "VectorInterface"]
+deps = ["Artifacts", "DelimitedFiles", "GeometryBasics", "Glossaries", "HalfIntegers", "JuliaFormatter", "KrylovKit", "LinearAlgebra", "Logging", "LoggingExtras", "ModelingToolkit", "Pluto", "PrecompileTools", "Preferences", "Random", "SUNRepresentations", "ScopedValues", "Serialization", "SparseArrays", "Statistics", "Symbolics", "TensorKit", "TensorKitSectors", "TensorKitTensors", "TensorOperations", "TestItems", "Unitful", "VectorInterface"]
 path = "."
 uuid = "4d77d595-865b-4fe8-9046-dbce8046f658"
 version = "0.7.0"

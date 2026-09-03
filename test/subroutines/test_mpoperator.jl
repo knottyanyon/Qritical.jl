@@ -57,7 +57,7 @@ end
         MPOperator{LeftCanonical,InfiniteSupport}
 end
 
-@testitem "canonicalize: MPOperator SiteCanonicalize round-trip" begin
+@testitem "canonicalize: MPOperator MixedCanonicalize round-trip" begin
     using TensorKit
 
     L = 3
@@ -81,7 +81,7 @@ end
     chain = MPOperator(raw, UnknownGauge(), 0, 0, nothing, 0.0)
 
     for k in 1:L
-        mchain = canonicalize(chain, SiteCanonicalize(k))
+        mchain = canonicalize(chain, MixedCanonicalize(k))
         @test mchain isa MPOperator{MixedCanonical,FiniteSupport}
         @test is_canonical(mchain)
         @test mchain.orthogonality_center == k

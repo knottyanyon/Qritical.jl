@@ -1,11 +1,10 @@
 #=META
 source:
   author: Bavithra
-  coauthor: Claude Opus 5
   reviewer:
 docstrings:
-  author: Bavithra
-  coauthor: Claude Opus 5
+  author: Claude Sonnet 5
+  coauthor: 
   reviewer:
 refs: coecke_kissinger_2016a
 credits: mpskit-validation (internal validation package) - canonicalize_utils.jl
@@ -77,6 +76,7 @@ struct TensorTrain{G<:GaugeForm,S<:BoundarySupport,P}
     rlim::Int
     orthogonality_center::Union{Int,Nothing}
     ε::Float64
+    λs::Union{Nothing,Vector{<:TensorKit.AbstractTensorMap}}
 
     function TensorTrain{G,S,P}(
         sites::AbstractVector{<:QProcess},
@@ -84,9 +84,11 @@ struct TensorTrain{G<:GaugeForm,S<:BoundarySupport,P}
         rlim::Int,
         orthogonality_center::Union{Int,Nothing},
         ε::Float64,
+        λs::Union{Nothing,Vector{<:TensorKit.AbstractTensorMap}}=nothing,
     ) where {G<:GaugeForm,S<:BoundarySupport,P}
         _validate_boundary(S(), sites, llim, rlim, orthogonality_center)
-        return new{G,S,P}(sites, llim, rlim, orthogonality_center, ε)
+        _validate_lambda(G(), sites, λs)
+        return new{G,S,P}(sites, llim, rlim, orthogonality_center, ε, λs)
     end
 end
 
@@ -125,6 +127,33 @@ function _validate_boundary(::FiniteSupport, sites, llim, rlim, orthogonality_ce
 end
 _validate_boundary(::InfiniteSupport, sites, llim, rlim, orthogonality_center) = nothing
 
+"""
+    _validate_lambda(g::GaugeForm, sites, λs)
+
+Gauge-form-dispatched validation hook for [`TensorTrain`](@ref)'s `λs` field, mirroring
+[`_validate_boundary`](@ref)'s `S`-dispatched idiom exactly. Only [`VidalGauge`](@ref) chains may
+carry `λs`; every other gauge form rejects a non-`nothing` `λs` outright (a real invariant - those
+forms never had Schmidt values to carry). A `VidalGauge` chain may still omit `λs` (`nothing`,
+e.g. a stub/fixture chain with no real λ data), but if supplied its length must match the number
+of internal bonds (`length(sites) - 1`).
+"""
+function _validate_lambda(::GaugeForm, sites, λs)
+    return isnothing(λs) || throw(
+        ArgumentError(
+            "λs is only meaningful for a VidalGauge chain, got λs for a non-Vidal gauge form.",
+        ),
+    )
+end
+function _validate_lambda(::VidalGauge, sites, λs)
+    isnothing(λs) && return nothing
+    length(λs) == length(sites) - 1 || throw(
+        ArgumentError(
+            "λs must have length(sites)-1 entries (one per internal bond), got $(length(λs)).",
+        ),
+    )
+    return nothing
+end
+
 function MPState(
     sites::AbstractVector{<:QProcess},
     ::G,
@@ -132,8 +161,9 @@ function MPState(
     rlim::Int,
     center::Union{Int,Nothing},
     ε::Float64,
+    λs::Union{Nothing,Vector{<:TensorKit.AbstractTensorMap}}=nothing,
 ) where {G<:GaugeForm}
-    return MPState{G,FiniteSupport}(sites, llim, rlim, center, ε)
+    return MPState{G,FiniteSupport}(sites, llim, rlim, center, ε, λs)
 end
 function MPState(
     sites::AbstractVector{<:QProcess},
@@ -143,8 +173,9 @@ function MPState(
     rlim::Int,
     center::Union{Int,Nothing},
     ε::Float64,
+    λs::Union{Nothing,Vector{<:TensorKit.AbstractTensorMap}}=nothing,
 ) where {G<:GaugeForm,S<:BoundarySupport}
-    return MPState{G,S}(sites, llim, rlim, center, ε)
+    return MPState{G,S}(sites, llim, rlim, center, ε, λs)
 end
 
 function MPOperator(
@@ -204,7 +235,7 @@ end
     _restore_site_shape(::Val{P}, t) -> AbstractTensorMap
 
 Per-`P` regroup pair used by [`canonicalize`](@ref)'s [`RightCanonicalize`](@ref)/
-[`SiteCanonicalize`](@ref) loops to fold a bond-cut `remainder` into the *previous* (already
+[`MixedCanonicalize`](@ref) loops to fold a bond-cut `remainder` into the *previous* (already
 separated) site tensor. `_isolate_bond_in` regroups a legit bulk site tensor so its bond-in leg
 `vR` is isolated alone as domain (pushing any extra domain leg, `σ_bra` for `P=2`, over to
 codomain) - the same non-contiguous grouping `step(::LeftRight, ::Val{2}, ...)` uses internally,
@@ -296,14 +327,14 @@ end
 
 Supertype for canonicalization configurations passed to [`canonicalize`](@ref) - "what to do",
 distinct from the [`GaugeForm`](@ref) tags in `gauge.jl` ("what state the result is in"; the two
-vocabularies are related but not 1:1, see [`SiteCanonicalize`](@ref)). Concrete subtypes:
-[`LeftCanonicalize`](@ref), [`RightCanonicalize`](@ref), [`SiteCanonicalize`](@ref).
+vocabularies are related but not 1:1, see [`MixedCanonicalize`](@ref)). Concrete subtypes:
+[`LeftCanonicalize`](@ref), [`RightCanonicalize`](@ref), [`MixedCanonicalize`](@ref).
 
 !!! note "No separate bond-canonical config"
 
     Unlike the legacy `mps.jl`, there is no distinct "bond canonical" config storing the
     orthogonality centre as a separate diagonal singular-value tensor - only
-    [`SiteCanonicalize`](@ref) (the centre held as a full-rank site tensor `AC`), which is
+    [`MixedCanonicalize`](@ref) (the centre held as a full-rank site tensor `AC`), which is
     strictly more informative and can always be further split by the caller if the diagonal form
     is wanted.
 """
@@ -326,18 +357,19 @@ end
 RightCanonicalize() = RightCanonicalize(nothing)
 
 """
-    SiteCanonicalize(k, bond_cutoff=nothing)
+    MixedCanonicalize(k, bond_cutoff=nothing)
 
 Config: mixed canonical with orthogonality centre at site `k`, producing gauge form
-[`MixedCanonical`](@ref) (`(llim,rlim)=(k-1,k+1)`). "Site-canonicalize to site `k`" is the action;
-[`MixedCanonical`](@ref) is the resulting shape - the two names need not (and here don't) match
-1:1 with `LeftCanonicalize`/`LeftCanonical`'s naming.
+[`MixedCanonical`](@ref) (`(llim,rlim)=(k-1,k+1)`) - the centre held as a full-rank site tensor
+`AC`, not a separate diagonal bond tensor (see the "No separate bond-canonical config" note on
+[`CanonicalizeConfig`](@ref) - "bond canonical" is a genuinely different form, the centre held as
+a diagonal singular-value tensor on a *bond* rather than a full site tensor, not implemented here).
 """
-struct SiteCanonicalize <: CanonicalizeConfig
+struct MixedCanonicalize <: CanonicalizeConfig
     k::Int
     bond_cutoff::Union{Int,Nothing}
 end
-SiteCanonicalize(k::Int) = SiteCanonicalize(k, nothing)
+MixedCanonicalize(k::Int) = MixedCanonicalize(k, nothing)
 
 """
     canonicalize(chain::TensorTrain, config::CanonicalizeConfig) -> TensorTrain
@@ -388,7 +420,7 @@ function canonicalize(chain::TensorTrain{G,S,P}, config::RightCanonicalize) wher
     )
 end
 
-function canonicalize(chain::TensorTrain{G,S,P}, config::SiteCanonicalize) where {G,S,P}
+function canonicalize(chain::TensorTrain{G,S,P}, config::MixedCanonicalize) where {G,S,P}
     L = length(chain.sites)
     k = config.k
     accumulator = QuadratureTruncationErrorAccumulator()
@@ -580,7 +612,7 @@ is_gauge_fixed(::TensorTrain{G}) where {G<:GaugeForm} = GaugeFreedom(G) isa Fixe
 # SECTION -  to_vidal: canonical MPState -> Vidal (Gamma, lambda) form
 
 """
-    to_vidal(chain::MPState) -> (Γs, λs)
+    to_vidal(chain::MPState) -> MPState{VidalGauge,FiniteSupport}
 
 Convert a fully left-canonical `chain` (gauge form [`LeftCanonical`](@ref) with `chain.llim == length(chain.sites)`) into Vidal form. An additional right-to-left sweep over the
 already-left-canonical tensors extracts, at each bond, the gauge-transform tensor
@@ -632,8 +664,36 @@ function to_vidal(chain::MPState)
         end
         Am = _regroup_first_out(t)
         AL_tilde = _regroup_bulk_site(Xleft' * Am) * Xright
-        Γt = i < L ? AL_tilde * inv(λs[i]) : AL_tilde
+        # A plain `inv` blows up on an exactly-zero Schmidt value (e.g. converting an exact
+        # product state, like a Néel state, whose bonds are exactly rank-1) - `_safe_inv_diag`
+        # (src/subroutines/contractions.jl) is the regularized pseudo-inverse `apply_gate`'s own
+        # Vidal-form stripping step already uses for the same reason.
+        Γt = i < L ? AL_tilde * _safe_inv_diag(λs[i]) : AL_tilde
         Γs[i] = _finalize_site(chain, Γt)
     end
-    return Γs, λs
+    return MPState{VidalGauge,FiniteSupport}(Γs, 0, 0, nothing, chain.ε, λs)
+end
+
+"""
+    _reconstruct_left_canonical(state::MPState{VidalGauge,S}) -> MPState{LeftCanonical,S}
+
+Reconstruct the genuine [`LeftCanonical`](@ref) chain [`to_vidal`](@ref) originally converted from,
+reusing `state.λs`: for `i < L`, `tensor(state.sites[i]) * state.λs[i]` is exactly the original
+left-isometric site tensor rotated into the Schmidt eigenbasis by a unitary that preserves
+left-isometry (`(X'AY)†(X'AY) = Y'A'AY = Y'Y = 1` for unitary `X,Y` and left-isometric `A`), so
+this is a real gauge transform back, not an approximation. Requires `state.λs !== nothing`.
+"""
+function _reconstruct_left_canonical(state::MPState{VidalGauge,S}) where {S}
+    state.λs === nothing && throw(
+        ArgumentError(
+            "_reconstruct_left_canonical requires a VidalGauge chain with a populated λs field.",
+        ),
+    )
+    L = length(state.sites)
+    sites = Vector{QProcess}(undef, L)
+    for i in 1:L
+        t = tensor(state.sites[i])
+        sites[i] = i < L ? _finalize_site(state, t * state.λs[i]) : _finalize_site(state, t)
+    end
+    return MPState{LeftCanonical,S}(sites, L, L + 1, L, state.ε)
 end

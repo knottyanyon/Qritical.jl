@@ -11,7 +11,7 @@
     @test_throws ErrorException inputs(h)
 end
 
-@testitem "to_mpo(::Hamiltonian) materializes via build_automaton/materialize" begin
+@testitem "to_mpo(::Hamiltonian) materializes and closes the transducer boundary" begin
     using TensorKit
 
     V = ComplexSpace(2)
@@ -25,7 +25,8 @@ end
     H = Hamiltonian(terms, L, V)
 
     mpo_via_H = to_mpo(H)
-    mpo_direct = materialize(build_automaton(terms, L, V))
+    automaton = build_automaton(terms, L, V)
+    mpo_direct = close_transducer_boundary(automaton, materialize(automaton))
 
     @test mpo_via_H isa MPOperator{UnknownGauge,FiniteSupport}
     @test length(mpo_via_H.sites) == length(mpo_direct.sites)
@@ -33,6 +34,9 @@ end
         tensor(mpo_via_H.sites[i]) ≈ tensor(mpo_direct.sites[i]) for
         i in 1:length(mpo_direct.sites)
     )
+    # boundary bonds are now genuinely trivial, not the full states-dimension
+    @test TensorKit.dim(TensorKit.space(tensor(mpo_via_H.sites[1]), 1)) == 1
+    @test TensorKit.dim(TensorKit.space(tensor(mpo_via_H.sites[L]), 3)) == 1
 end
 
 @testitem "symmetry_group reads sectortype off physical_spaces" begin

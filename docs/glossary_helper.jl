@@ -6,16 +6,19 @@
 Create a markdown link to a glossary term with optional hover tooltip.
 
 # Arguments
-- `term`: The glossary term to link (e.g., "MPS", "Entanglement Entropy")
-- `brief`: Brief definition to show on hover (optional)
+
+  - `term`: The glossary term to link (e.g., "MPS", "Entanglement Entropy")
+  - `brief`: Brief definition to show on hover (optional)
 
 # Example
+
 ```julia
-glossary_term("MPS", brief="Matrix Product State")
-glossary_term("Schmidt Rank")
+glossary_term(\"MPS\"; brief=\"Matrix Product State\")
+glossary_term(\"Schmidt Rank\")
 ```
 
 # Returns
+
 Markdown string with link to glossary and HTML title attribute for hover tooltip.
 """
 function glossary_term(term::String; brief::String="")
@@ -36,6 +39,7 @@ Generate HTML for a glossary term with hover tooltip and link.
 Useful when you need direct HTML control in markdown documents.
 
 # Example
+
 ```html
 \$(glossary_html("MPS", "Matrix Product State"))
 ```
@@ -57,13 +61,14 @@ Macro for quickly referencing a glossary term.
 Translates to a link with hover tooltip if a brief definition is known.
 
 # Example
+
 ```julia
-@gref "MPS"
-@gref "Entanglement Entropy"
+@gref \"MPS\"
+@gref \"Entanglement Entropy\"
 ```
 """
 macro gref(term)
-    esc(glossary_term(term))
+    return esc(glossary_term(term))
 end
 
 # Map of common glossary terms to brief definitions for hover tooltips
@@ -98,9 +103,10 @@ const GLOSSARY_BRIEFS = Dict(
 Create a glossary link with automatically-filled brief definition from GLOSSARY_BRIEFS.
 
 # Example
+
 ```julia
-glossary_term_with_brief("MPS")  # Link with "Matrix Product State..." as hover text
-glossary_term_with_brief("TEBD")  # Link with "Time-Evolving Block Decimation..." tooltip
+glossary_term_with_brief(\"MPS\")  # Link with \"Matrix Product State...\" as hover text
+glossary_term_with_brief(\"TEBD\")  # Link with \"Time-Evolving Block Decimation...\" tooltip
 ```
 """
 function glossary_term_with_brief(term::String)::String

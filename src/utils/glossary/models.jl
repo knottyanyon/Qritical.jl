@@ -54,3 +54,15 @@ Glossaries.@define!(
     :description,
     "maps each of `reference_operator`'s `TensorKitSectors.blocksectors` to the equivalent sector of this `dof`'s own `compile_site_space`"
 )
+
+# Terms below are reused by `xxz.jl`'s docstrings only.
+
+Glossaries.@define!(:xxz_L, :name, "L")
+Glossaries.@define!(:xxz_L, :type, "Int")
+Glossaries.@define!(:xxz_L, :description, "chain length")
+
+Glossaries.@define!(:xxz_V, :name, "V")
+Glossaries.@define!(:xxz_V, :type, "TensorKit.ElementarySpace")
+Glossaries.@define!(
+    :xxz_V, :description, "the (uniform) physical space, broadcast to every site"
+)

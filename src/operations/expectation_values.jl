@@ -1,11 +1,10 @@
 #=META
 source:
   author: Bavithra
-  coauthor: Claude Opus 5
   reviewer:
 docstrings:
-  author: Bavithra
-  coauthor: Claude Opus 5
+  author: Claude Sonnet 5
+  coauthor: 
   reviewer:
 refs:
 credits: N/A
@@ -24,50 +23,70 @@ first ([`Hamiltonian`](@ref)), or can it be contracted directly at the relevant 
 which contraction direction is cheap for this canonical form (e.g. a zipper contraction sweeping
 the direction a `LeftCanonical`/`RightCanonical` state is already isometric in)?
 
-Every concrete `(observable type, GaugeForm)` combination is its own method below - **not yet
-implemented** for any of them, pending real fields on [`Hamiltonian`](@ref)/[`Correlator`](@ref)
-and the actual contraction logic. A future single-site-operator `Observable` subtype (e.g. `S_z`
-at one site) would add its own row to this matrix the same way.
+Every concrete `(observable type, GaugeForm)` combination is its own method below.
+`Hamiltonian`×{[`LeftCanonical`](@ref),[`RightCanonical`](@ref),[`MixedCanonical`](@ref)} are
+implemented via [`_expectation_value_generic`](@ref); `Hamiltonian`×[`VidalGauge`](@ref) and every
+`Correlator` combination remain stubs (see their own docstrings for why). A future single-site-
+operator `Observable` subtype (e.g. `S_z` at one site) would add its own row to this matrix the
+same way.
 """
-function evaluate_expectation_value(::Hamiltonian, ::MPState{LeftCanonical,S}) where {S}
-    return error(
-        "evaluate_expectation_value(::Hamiltonian, ::MPState{LeftCanonical}) is not yet implemented",
-    )
+function evaluate_expectation_value end
+
+"""
+    _expectation_value_generic(H::Hamiltonian, state::MPState) -> Scalar
+
+`overlap(state, apply(to_mpo(H), state))` - `⟨state|H|state⟩` via the `apply`/`overlap` primitives
+in `src/subroutines/contractions.jl`. Shared by the `LeftCanonical`/`RightCanonical`/
+`MixedCanonical` methods below: nothing in `apply`/`overlap` reads `state`'s gauge tag, so all
+three gauge forms genuinely share this one body (the "cheapest contraction direction per canonical
+form" this file's own docstring anticipates is a real future optimization, not required for
+correctness here - `apply` always touches every site regardless of gauge).
+"""
+function _expectation_value_generic(H::Hamiltonian, state::MPState)
+    return overlap(state, apply(to_mpo(H), state))
 end
-function evaluate_expectation_value(::Hamiltonian, ::MPState{RightCanonical,S}) where {S}
-    return error(
-        "evaluate_expectation_value(::Hamiltonian, ::MPState{RightCanonical}) is not yet implemented",
-    )
+
+function evaluate_expectation_value(
+    H::Hamiltonian, state::MPState{LeftCanonical,S}
+) where {S}
+    return _expectation_value_generic(H, state)
 end
-function evaluate_expectation_value(::Hamiltonian, ::MPState{MixedCanonical,S}) where {S}
-    return error(
-        "evaluate_expectation_value(::Hamiltonian, ::MPState{MixedCanonical}) is not yet implemented",
-    )
+function evaluate_expectation_value(
+    H::Hamiltonian, state::MPState{RightCanonical,S}
+) where {S}
+    return _expectation_value_generic(H, state)
 end
-function evaluate_expectation_value(::Hamiltonian, ::MPState{VidalGauge,S}) where {S}
-    return error(
-        "evaluate_expectation_value(::Hamiltonian, ::MPState{VidalGauge}) is not yet implemented",
-    )
+function evaluate_expectation_value(
+    H::Hamiltonian, state::MPState{MixedCanonical,S}
+) where {S}
+    return _expectation_value_generic(H, state)
 end
-function evaluate_expectation_value(::Correlator, ::MPState{LeftCanonical,S}) where {S}
-    return error(
-        "evaluate_expectation_value(::Correlator, ::MPState{LeftCanonical}) is not yet implemented",
-    )
+function evaluate_expectation_value(H::Hamiltonian, state::MPState{VidalGauge,S}) where {S}
+    return _expectation_value_generic(H, _reconstruct_left_canonical(state))
 end
-function evaluate_expectation_value(::Correlator, ::MPState{RightCanonical,S}) where {S}
-    return error(
-        "evaluate_expectation_value(::Correlator, ::MPState{RightCanonical}) is not yet implemented",
-    )
+function _expectation_value_generic(obs::LocalObservable, state::MPState)
+    return local_expectation_value(state, obs.ops)
 end
-function evaluate_expectation_value(::Correlator, ::MPState{MixedCanonical,S}) where {S}
-    return error(
-        "evaluate_expectation_value(::Correlator, ::MPState{MixedCanonical}) is not yet implemented",
-    )
+
+function evaluate_expectation_value(
+    obs::LocalObservable, state::MPState{LeftCanonical,S}
+) where {S}
+    return _expectation_value_generic(obs, state)
 end
-function evaluate_expectation_value(::Correlator, ::MPState{VidalGauge,S}) where {S}
-    return error(
-        "evaluate_expectation_value(::Correlator, ::MPState{VidalGauge}) is not yet implemented",
-    )
+function evaluate_expectation_value(
+    obs::LocalObservable, state::MPState{RightCanonical,S}
+) where {S}
+    return _expectation_value_generic(obs, state)
+end
+function evaluate_expectation_value(
+    obs::LocalObservable, state::MPState{MixedCanonical,S}
+) where {S}
+    return _expectation_value_generic(obs, state)
+end
+function evaluate_expectation_value(
+    obs::LocalObservable, state::MPState{VidalGauge,S}
+) where {S}
+    return _expectation_value_generic(obs, _reconstruct_left_canonical(state))
 end
 
 # SECTION -  evaluate_expectation_values - batch evaluation with collector plug-in

@@ -1,11 +1,10 @@
 #=META
 source:
   author: Bavithra
-  coauthor: Claude Opus 5
   reviewer:
 docstrings:
-  author: Bavithra
-  coauthor: Claude Opus 5
+  author: Claude Sonnet 5
+  coauthor: 
   reviewer:
 refs:
 credits: mpskit-validation (internal validation package) - decompositions.jl
@@ -44,7 +43,7 @@ const LQFACTORIZER = ExactDecomposition{LQBased}
 # SECTION -  factorize_tensor / factorize_tensor! - trait-dispatched matrix factorization
 
 """
-    factorize_tensor(A, ::SVDFACTORIZER; bond_cutoff=nothing, kwargs...) -> U, S, Vd, ε
+    factorize_tensor(A, ::SVDFACTORIZER; bond_cutoff=nothing, trunc_tol=nothing, kwargs...) -> U, S, Vd, ε
     factorize_tensor(A, ::QRFACTORIZER; kwargs...) -> Q, R
     factorize_tensor(A, ::LQFACTORIZER; kwargs...) -> L, Q
 
@@ -57,6 +56,15 @@ For [`SVDFACTORIZER`](@ref), this calls `MatrixAlgebraKit.svd_trunc`.
 
 $(Glossaries.Keyword{@__MODULE__}()([:bond_cutoff]))
 
+  - `trunc_tol` - an absolute singular-value cutoff (`TensorKit.trunctol(; atol=trunc_tol)`),
+    composed with `bond_cutoff`'s rank cutoff (`TensorKit.truncrank`) via `MatrixAlgebraKit`'s
+    `TruncationStrategy` combinator `&` when both are given - a bond is truncated at whichever cap
+    (rank or tolerance) is tighter. `nothing` (the default) omits the tolerance cutoff entirely.
+    This is the standard Vidal/iTEBD-form treatment of a negligible Schmidt value (Schollwöck 2011):
+    a singular value below `trunc_tol` is dropped from the kept bond dimension, not merely
+    protected against later division by it - a `bond_cutoff` alone doesn't guarantee this, since a
+    padded/near-zero singular value can persist within an otherwise-untruncated rank.
+
 For [`QRFACTORIZER`](@ref), this calls `MatrixAlgebraKit.qr_compact` (`A = Q*R`, `Q` isometric on
 columns - the left-canonicalization shape). For [`LQFACTORIZER`](@ref), this calls
 `MatrixAlgebraKit.lq_compact` (`A = L*Q`, `Q` isometric on rows - the right-canonicalization
@@ -68,16 +76,38 @@ all generic `MatrixAlgebraKit` functions with methods for `AbstractTensorMap`.
 Named `factorize_tensor`, not `factorize`, to avoid colliding with `LinearAlgebra.factorize`.
 """
 function factorize_tensor(
-    A, ::SVDFACTORIZER; bond_cutoff::Union{Int,Nothing}=nothing, kwargs...
+    A,
+    ::SVDFACTORIZER;
+    bond_cutoff::Union{Int,Nothing}=nothing,
+    trunc_tol::Union{Real,Nothing}=nothing,
+    kwargs...,
 )
-    trunc = isnothing(bond_cutoff) ? nothing : TensorKit.truncrank(bond_cutoff)
+    trunc = _svd_truncation_strategy(bond_cutoff, trunc_tol)
     return TensorKit.svd_trunc(A; trunc, kwargs...)
 end
 factorize_tensor(A, ::QRFACTORIZER; kwargs...) = TensorKit.qr_compact(A; kwargs...)
 factorize_tensor(A, ::LQFACTORIZER; kwargs...) = TensorKit.lq_compact(A; kwargs...)
 
+# Composes a rank cutoff (`bond_cutoff`) and/or an absolute tolerance cutoff (`trunc_tol`) into
+# the single `TruncationStrategy` `svd_trunc`/`svd_trunc!` expect, via `MatrixAlgebraKit`'s `&`
+# combinator (a bond is truncated at whichever cap is tighter) - shared by `factorize_tensor` and
+# `factorize_tensor!`'s `SVDFACTORIZER` methods.
+function _svd_truncation_strategy(
+    bond_cutoff::Union{Int,Nothing}, trunc_tol::Union{Real,Nothing}
+)
+    rank = isnothing(bond_cutoff) ? nothing : TensorKit.truncrank(bond_cutoff)
+    tol = isnothing(trunc_tol) ? nothing : TensorKit.trunctol(; atol=trunc_tol)
+    if rank === nothing
+        return tol
+    elseif tol === nothing
+        return rank
+    else
+        return rank & tol
+    end
+end
+
 """
-    factorize_tensor!(A, ::SVDFACTORIZER; bond_cutoff=nothing, kwargs...) -> U, S, Vd, ε
+    factorize_tensor!(A, ::SVDFACTORIZER; bond_cutoff=nothing, trunc_tol=nothing, kwargs...) -> U, S, Vd, ε
     factorize_tensor!(A, ::QRFACTORIZER; kwargs...) -> Q, R
     factorize_tensor!(A, ::LQFACTORIZER; kwargs...) -> L, Q
 
@@ -86,9 +116,13 @@ Mutating counterpart of [`factorize_tensor`](@ref), following `MatrixAlgebraKit`
 factors, not `A` itself, afterwards.
 """
 function factorize_tensor!(
-    A, ::SVDFACTORIZER; bond_cutoff::Union{Int,Nothing}=nothing, kwargs...
+    A,
+    ::SVDFACTORIZER;
+    bond_cutoff::Union{Int,Nothing}=nothing,
+    trunc_tol::Union{Real,Nothing}=nothing,
+    kwargs...,
 )
-    trunc = isnothing(bond_cutoff) ? nothing : TensorKit.truncrank(bond_cutoff)
+    trunc = _svd_truncation_strategy(bond_cutoff, trunc_tol)
     return TensorKit.svd_trunc!(A; trunc, kwargs...)
 end
 factorize_tensor!(A, ::QRFACTORIZER; kwargs...) = TensorKit.qr_compact!(A; kwargs...)

@@ -26,4 +26,6 @@ end
     include("simstudy/test_simstudy.jl")
     include("subroutines/test_subroutines.jl")
     include("operations/test_operations.jl")
+    include("algorithms/test_algorithms.jl")
+    include("models/test_models.jl")
 end

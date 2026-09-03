@@ -1,11 +1,10 @@
 #=META
 source:
   author: Bavithra
-  coauthor: Claude Opus 5
   reviewer:
 docstrings:
-  author: Bavithra
-  coauthor: Claude Opus 5
+  author: Claude Sonnet 5
+  coauthor: 
   reviewer:
 refs:
 credits: N/A
@@ -77,21 +76,4 @@ here.
 """
 function propagator(H::Hamiltonian, dt; kind::Type{<:Time}=RealTime)
     return Propagator{kind}(H, dt)
-end
-
-"""
-    trotterize(propagator::Propagator, pf::ProductFormula)
-
-Apply the product-formula splitting tagged by `pf` to `propagator`'s Hamiltonian, producing the
-ordered `(term, coefficient)` gate-block recipe for one Trotter step (via `Subroutines.sequence`)
-
-  - the TEBD gate sequence a [`Propagator`](@ref) reduces to under Trotterization. **Not yet
-    implemented** - depends on [`Hamiltonian`](@ref) exposing a term decomposition, which doesn't
-    exist yet.
-"""
-function trotterize(propagator::Propagator, pf::ProductFormula)
-    return error(
-        "trotterize is not yet implemented - depends on Hamiltonian exposing a term " *
-        "decomposition, which doesn't exist yet",
-    )
 end

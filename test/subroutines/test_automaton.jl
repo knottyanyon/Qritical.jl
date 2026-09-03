@@ -363,3 +363,36 @@ end
     terms = [AutomatonTerm(1.0, [1 => sz, 2 => sz])]
     @test_throws ErrorException split_commuting_groups(terms, GraphColoring())
 end
+
+@testitem "close_transducer_boundary: trivial boundary bonds, dense matches -Z⊗Z" begin
+    using TensorKit
+
+    V = ComplexSpace(2)
+    sz = QProcess(
+        TensorMap(ComplexF64[1 0; 0 -1], V ← V);
+        output_roles=PhysicalLeg(),
+        input_roles=PhysicalLeg(),
+    )
+    L = 2
+    terms = [AutomatonTerm(-1.0, [1 => sz, 2 => sz])]
+    automaton = build_automaton(terms, L, V)
+    mpo = materialize(automaton)
+    closed = close_transducer_boundary(automaton, mpo)
+
+    @test TensorKit.dim(TensorKit.space(tensor(closed.sites[1]), 1)) == 1
+    @test TensorKit.dim(TensorKit.space(tensor(closed.sites[L]), 3)) == 1
+
+    A1 = convert(Array, tensor(closed.sites[1]))
+    A2 = convert(Array, tensor(closed.sites[2]))
+    D = size(A1, 3)
+    d = size(A1, 2)
+    Hmat = zeros(ComplexF64, d^2, d^2)
+    for s1k in 1:d, s2k in 1:d, s1b in 1:d, s2b in 1:d
+        ki = s1k + (s2k - 1) * d
+        qi = s1b + (s2b - 1) * d
+        Hmat[ki, qi] = sum(A1[1, s1k, b, s1b] * A2[b, s2k, 1, s2b] for b in 1:D)
+    end
+
+    expected = _dense_reconstruct(mpo, automaton)
+    @test Hmat ≈ expected
+end

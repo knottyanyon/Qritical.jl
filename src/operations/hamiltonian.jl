@@ -1,11 +1,10 @@
 #=META
 source:
   author: Bavithra
-  coauthor: Claude Opus 5
   reviewer:
 docstrings:
-  author: Bavithra
-  coauthor: Claude Opus 5
+  author: Claude Sonnet 5
+  coauthor: 
   reviewer:
 refs:
 credits: N/A
@@ -40,14 +39,21 @@ end
 """
     to_mpo(H::Hamiltonian) -> MPOperator
 
-Materialize `H` into an `MPOperator` via `Subroutines.build_automaton`/`materialize` - a new
-method on the existing generic `to_mpo` (dispatched specifically on `::Hamiltonian`, not the
-abstract [`Observable`](@ref): a `Hamiltonian` must always become an MPO to build the
-[`Propagator`](@ref) it generates, unlike [`Correlator`](@ref), whose typical two-point
-measurements don't need this path at all - no `to_mpo(::Correlator)` method exists).
+Materialize `H` into a genuinely closed `MPOperator` via `Subroutines.build_automaton`/
+`materialize`/`close_transducer_boundary` - a new method on the existing generic `to_mpo`
+(dispatched specifically on `::Hamiltonian`, not the abstract [`Observable`](@ref): a `Hamiltonian`
+must always become an MPO to build the [`Propagator`](@ref) it generates, unlike [`Correlator`](@ref),
+whose typical two-point measurements don't need this path at all - no `to_mpo(::Correlator)` method
+exists).
+
+`materialize`'s raw output is a weighted transducer with non-trivial boundary bonds (see
+`close_transducer_boundary`'s docstring); `to_mpo` always closes it down to a genuine operator with
+trivial dim-1 boundary bonds, since every consumer of `to_mpo(H)` (`apply`, `evaluate_expectation_value`,
+...) needs a closed operator, not the raw automaton.
 """
 function to_mpo(H::Hamiltonian)
-    return materialize(build_automaton(H.terms, H.L, H.physical_spaces))
+    automaton = build_automaton(H.terms, H.L, H.physical_spaces)
+    return close_transducer_boundary(automaton, materialize(automaton))
 end
 
 """
