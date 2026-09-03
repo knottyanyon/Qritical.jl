@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# pre-commit: insert the #=META provenance header into newly-added src/ files that
+# don't have one yet, then format staged Julia files with JuliaFormatter.
+
+# Newly-added (not modified) .jl files under src/ that don't already start with #=META.
+NEW_SRC_JL=$(git diff --cached --name-only --diff-filter=A | grep '^src/.*\.jl$')
+
+for f in $NEW_SRC_JL; do
+    [ -f "$f" ] || continue
+    head -1 "$f" | grep -q '^#=META$' && continue
+
+    TMP=$(mktemp)
+    cat > "$TMP" <<'HEADER'
+#=META
+source:
+  author: Bavithra
+  coauthor:
+  reviewer:
+docstrings:
+  author: Bavithra
+  coauthor:
+  reviewer:
+refs:
+credits:
+=#
+
+HEADER
+    cat "$f" >> "$TMP"
+    mv "$TMP" "$f"
+    git add "$f"
+    echo "  inserted provenance header: $f"
+done
+
+if ! command -v julia >/dev/null 2>&1; then
+    echo ""
+    echo "  Commit blocked: julia is not installed. JuliaFormatter is required."
+    echo "  Install Julia from https://julialang.org/downloads/ then re-try."
+    echo ""
+    exit 1
+fi
+
+STAGED_JL=$(git diff --cached --name-only --diff-filter=ACM | grep '\.jl$')
+
+[ -z "$STAGED_JL" ] && exit 0
+
+echo ""
+echo "  Checking Julia formatting on staged files..."
+
+# Batch all staged files into one Julia call to avoid paying startup cost per file.
+FILES_JULIA=$(printf '"%s",' $STAGED_JL | sed 's/,$//')
+
+julia --project -e "
+using JuliaFormatter
+files = [$FILES_JULIA]
+bad = filter(f -> !format(f, check_only=true), files)
+if !isempty(bad)
+    println.(\"  unformatted: \" .* bad)
+    exit(1)
+end
+" 2>&1
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "  Commit blocked: run 'using JuliaFormatter; format(\".\")' then re-stage."
+    echo ""
+    exit 1
+fi

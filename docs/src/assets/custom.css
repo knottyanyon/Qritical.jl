@@ -58,6 +58,24 @@
     color: #1a1a2e;
 }
 
+/* Custom admonition: design note box (amber). Used for editorial asides on why a type or
+   function was shaped the way it was, distinct from a "note" (a fact about current behaviour)
+   or a "tip" (a usage suggestion). Body text is italicised to read as commentary. */
+.admonition.is-category-design-note {
+    border-color: #C9A227;
+}
+
+.admonition.is-category-design-note>.admonition-header {
+    background-color: #C9A227;
+    color: #1a1a2e;
+}
+
+.admonition.is-category-design-note>.admonition-body {
+    background-color: #fbf6e6;
+    color: #1a1a2e;
+    font-style: italic;
+}
+
 /* Prevent Bulma from shrinking SVG diagrams inside table cells */
 .content table td img {
     max-width: none;

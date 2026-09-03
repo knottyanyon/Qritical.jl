@@ -193,6 +193,57 @@ entanglement — exactly when MPS methods are efficient.
 
 ---
 
+## Using Code Glossaries
+
+[`Glossaries.jl`](https://github.com/JuliaManifolds/Glossaries.jl) manages recurring
+function-argument, keyword-argument, and struct-field descriptions in one place, so the same
+`bond_dim` / `tol` / `site` explanation isn't retyped (and doesn't drift) across every
+docstring that uses it. This is a *code-level* glossary — do not confuse it with the
+*theoretical* glossary at [Glossary](../references/glossary.md), which covers physics
+concepts like "MPS" for readers of the prose docs.
+
+**Where terms live.** Split by `src/` theme directory under `src/utils/glossary/`:
+`_core.jl` (installs the current glossary once via `Glossaries.@Glossary()`), then one file
+per theme — `tensors.jl`, `states.jl`, `operators.jl`, etc. — each calling
+`Glossaries.@define!(...)` for the terms that theme's functions reuse. A term lives in
+whichever theme first needed it; it isn't duplicated if a later theme also uses it.
+
+**Defining a term:**
+
+```julia
+Glossaries.@define!(:bond_dim, :name, "bond_dim")
+Glossaries.@define!(:bond_dim, :type, "Int")
+Glossaries.@define!(:bond_dim, :description, "the bond dimension \$\\chi\$ truncating the Schmidt spectrum")
+```
+
+**Using it in a docstring** — interpolate the formatted block instead of hand-writing it:
+
+```julia
+"""
+    my_new_func(mps, bond_dim; tol=1e-10)
+
+One-line description.
+
+# Arguments
+\$(Glossaries.Argument{@__MODULE__}()([:mps, :bond_dim]))
+
+# Keywords
+\$(Glossaries.Keyword{@__MODULE__}()([:tol]))
+"""
+function my_new_func(mps, bond_dim; tol=1e-10) ... end
+```
+
+Note the type parameter `{@__MODULE__}` on `Argument`/`Keyword` — without it, the formatter
+resolves `current_glossary()` against `Main`, not `Qritical`, and every lookup will warn
+"Key ... not found". `@__MODULE__` always evaluates to `Qritical` inside `src/`, which is why
+it's the form to copy rather than spelling out `Qritical` by hand.
+
+**Scope.** Existing docstrings are not being migrated — only newly written files adopt this
+pattern. If a term you're defining happens to also describe an existing function's argument,
+leave that existing docstring as-is rather than refactoring it in as a side effect.
+
+---
+
 ## References
 
 ```@bibliography

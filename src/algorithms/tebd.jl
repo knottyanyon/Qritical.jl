@@ -1,369 +1,292 @@
-# §7.1–7.2  TEBD: time-evolution by block exponentiation + Trotter decomposition.
-#
-# A TEBD step applies a sequence of two-site gates drawn from the Suzuki-Trotter
-# decomposition of e^{-iΔtH} (real time) or e^{-ΔτH} (imaginary time).
-# For a nearest-neighbour chain the even/odd bond groups commute within each group,
-# so each single-bond exponential is exact; only inter-group commutators contribute
-# Trotter error.
+#=META
+source:
+  author: Bavithra
+  reviewer:
+docstrings:
+  author: Claude Sonnet 5
+  coauthor: 
+  reviewer:
+refs: schollwoeck_2011
+credits: N/A
+=#
 
-# ----------------------------------------------------------------------------------------
-# Time axis types
-# ----------------------------------------------------------------------------------------
+# The TEBD sweep loop: closes the last gap between `trotterize`'s gate sequence and an actual
+# time-evolved `MPState` - walking the orthogonality center to each gate's site range, applying it
+# via `apply_gate`, renormalizing, and reporting per-step diagnostics through one unified collector.
 
-"""
-    TimeAxis
-
-Abstract supertype for the axis of time evolution.
-
-Two concrete singletons:
-
-  - [`RealTime`](@ref)       — unitary evolution ``e^{-i \\Delta t H}``.
-  - [`ImaginaryTime`](@ref)  — non-unitary, PSD evolution ``e^{-\\Delta\\tau H}``;
-    requires explicit renormalization after each step.
-"""
-abstract type TimeAxis end
+# SECTION -  TEBDAlgorithm - the run configuration
 
 """
-    RealTime <: TimeAxis
+    TEBDAlgorithm{PF<:ProductFormula}
 
-Selects unitary evolution ``e^{-i \\Delta t H}``.  A gate built with this axis
-satisfies ``G^\\dagger G = I`` and preserves the MPS norm exactly.
+Bundles everything a full TEBD run needs beyond the `Hamiltonian`/initial state themselves.
+
+# Fields
+
+  - `pf             :: PF`                - product formula (`LieTrotter`/`SuzukiTrotter`/`Suzuki4th`).
+  - `bond_cutoff    :: Union{Int,Nothing}` - SVD truncation rank, forwarded to every `apply_gate` call.
+  - `num_steps      :: Int`                - total number of outer Trotter steps.
+  - `snapshot_every :: Int`                - cadence (in outer steps) at which `observables` get
+    evaluated; `1` = every step, `0` = never. Independent of `TEBDStepSnapshot`'s cheap fields
+    (`entanglement_entropy`/`truncation_error`), which are always computed.
+  - `renormalize    :: Bool`               - whether to renormalize the state after each step
+    (default `true` - standard TEBD convention, see [`evolve!`](@ref)).
 """
-struct RealTime <: TimeAxis end
-
-"""
-    ImaginaryTime <: TimeAxis
-
-Selects imaginary-time evolution ``e^{-\\Delta\\tau H}``.  A gate built with this
-axis is Hermitian and positive semidefinite but not unitary; the evolved state
-must be renormalized at each step to keep it normalized.
-"""
-struct ImaginaryTime <: TimeAxis end
-
-# ----------------------------------------------------------------------------------------
-# LatticeOperator class tags
-# ----------------------------------------------------------------------------------------
-
-"""
-    Unitary
-
-Tag returned by `opclass` for a real-time `Propagator`.  Indicates ``G^\\dagger G = I``.
-"""
-struct Unitary end
-
-"""
-    HermitianPSD
-
-Tag returned by `opclass` for an imaginary-time `Propagator`.
-Indicates the gate is Hermitian and positive semidefinite.
-"""
-struct HermitianPSD end
-
-# ----------------------------------------------------------------------------------------
-# Propagator — the gate tensor plus metadata
-# ----------------------------------------------------------------------------------------
-
-"""
-    Propagator{A<:TimeAxis}
-
-A two-site evolution gate carrying its time axis `A` and time step `dt`.
-
-Fields:
-
-  - `data::Matrix{ComplexF64}` — the ``d^2 \\times d^2`` gate matrix.
-  - `axis::A`                  — `RealTime()` or `ImaginaryTime()`.
-  - `dt::Float64`              — the time step used to build the gate.
-
-Construct via [`gate`](@ref).  Query the physical class via [`opclass`](@ref).
-"""
-struct Propagator{A<:TimeAxis}
-    data::Matrix{ComplexF64}
-    axis::A
-    dt::Float64
+struct TEBDAlgorithm{PF<:ProductFormula}
+    pf::PF
+    bond_cutoff::Union{Int,Nothing}
+    num_steps::Int
+    snapshot_every::Int
+    renormalize::Bool
+end
+function TEBDAlgorithm(
+    pf::PF, bond_cutoff, num_steps::Int; snapshot_every::Int=1, renormalize::Bool=true
+) where {PF<:ProductFormula}
+    return TEBDAlgorithm{PF}(pf, bond_cutoff, num_steps, snapshot_every, renormalize)
 end
 
-"""
-    opclass(G::Propagator{RealTime})    -> Unitary()
-    opclass(G::Propagator{ImaginaryTime}) -> HermitianPSD()
-
-Return the algebraic class of the gate, derived purely from the time axis type.
-"""
-opclass(::Propagator{RealTime}) = Unitary()
-opclass(::Propagator{ImaginaryTime}) = HermitianPSD()
-
-# ----------------------------------------------------------------------------------------
-# Gate construction from a bond Hamiltonian
-# ----------------------------------------------------------------------------------------
+# SECTION -  TEBDStepSnapshot - unified per-step collector payload
 
 """
-    gate(h::AbstractMatrix, dt::Real, ::RealTime)    -> Propagator{RealTime}
-    gate(h::AbstractMatrix, dt::Real, ::ImaginaryTime) -> Propagator{ImaginaryTime}
+    TEBDStepSnapshot{K,V}
 
-Exponentiate a bond Hamiltonian `h` to produce a two-site gate.
+One outer Trotter step's worth of tracked data, pushed to a `collector` via `step!` - the TEBD
+analogue of `ExpectationValueSnapshot`/`SingValSpectrum`, bundling everything a step produces
+rather than requiring a caller to wire up separate collectors/accumulators for each kind of data.
 
-For real time the gate is ``G = e^{-i \\Delta t h}``; for imaginary time
-``G = e^{-\\Delta\\tau h}``.  The matrix exponential is evaluated by diagonalising
-`h` (which must be Hermitian) and applying the scalar exponential to eigenvalues.
+# Fields
+
+  - `step                 :: Int`                      - outer step index (1-based).
+  - `observables          :: Union{Dict{K,V},Nothing}` - from `evaluate_expectation_values`, or
+    `nothing` if `observables` wasn't supplied to [`evolve!`](@ref) or this step isn't a
+    `snapshot_every`-th step.
+  - `entanglement_entropy  :: Float64`                  - at the post-step orthogonality center.
+  - `truncation_error      :: Float64`                  - this step's local SVD truncation `ε`,
+    summed across the step's `apply_gate` calls.
+  - `trotter_error_bound   :: Union{Float64,Nothing}`   - this step's a priori Trotter bound, or
+    `nothing` if no `trotter_norm` callback was supplied to [`evolve!`](@ref).
 """
-function gate(h::AbstractMatrix, dt::Real, axis::RealTime)
-    phase = -im * dt
-    F = eigen(Hermitian(ComplexF64.(h)))
-    data = F.vectors * Diagonal(exp.(phase .* F.values)) * F.vectors'
-    Propagator{RealTime}(data, axis, Float64(dt))
+struct TEBDStepSnapshot{K,V}
+    step::Int
+    observables::Union{Dict{K,V},Nothing}
+    entanglement_entropy::Float64
+    truncation_error::Float64
+    trotter_error_bound::Union{Float64,Nothing}
 end
 
-function gate(h::AbstractMatrix, dt::Real, axis::ImaginaryTime)
-    F = eigen(Hermitian(ComplexF64.(h)))
-    data = F.vectors * Diagonal(exp.(-dt .* F.values)) * F.vectors'
-    Propagator{ImaginaryTime}(data, axis, Float64(dt))
+# Julia's auto-generated inner constructor's `Union{Dict{K,V},Nothing}` field type can't infer
+# K,V from a bare `nothing` argument - resolve explicitly rather than adding an ambiguous outer
+# method.
+_snapshot_kv(::Dict{K,V}) where {K,V} = (K, V)
+_snapshot_kv(::Nothing) = (Any, Any)
+function _make_snapshot(step::Int, observables, entropy, ε, bound)
+    K, V = _snapshot_kv(observables)
+    return TEBDStepSnapshot{K,V}(step, observables, entropy, ε, bound)
 end
 
-# ----------------------------------------------------------------------------------------
-# ConstantProtocol — a fixed-Hamiltonian evolution schedule
-# ----------------------------------------------------------------------------------------
+# SECTION -  internal helpers
 
-"""
-    ConstantProtocol{A<:TimeAxis}
-
-An evolution protocol with a constant Hamiltonian, fixed time step, and fixed number
-of steps.
-
-Fields:
-
-  - `axis::A`         — `RealTime()` or `ImaginaryTime()`.
-  - `dt::Float64`     — time step per Trotter step.
-  - `nsteps::Int`     — total number of Trotter steps.
-  - `hamiltonian`     — the `LatticeOperator` driving the evolution.
-"""
-struct ConstantProtocol{A<:TimeAxis}
-    axis::A
-    dt::Float64
-    nsteps::Int
-    hamiltonian::Any   # LatticeOperator — typed as Any to avoid circular dependency
+# Entanglement entropy at state's own orthogonality center - an SVD isolating vL alone, then the
+# same SingValSpectrum/entanglement_entropy primitives to_vidal's own bond-by-bond sweep uses.
+function _center_entanglement_entropy(state::MPState)
+    center = state.sites[state.orthogonality_center]
+    t = tensor(center)
+    iso = TensorKit.permute(t, ((1,), (2, 3)))   # vL ← (σ,vR)
+    _, S, _, ε = factorize_tensor(iso, HasEntanglementSpectrum())
+    svals = S.data
+    normalized = isapprox(sum(abs2, svals), 1.0; atol=sqrt(eps(real(eltype(svals)))))
+    return entanglement_entropy(SingValSpectrum(svals, ε, normalized))
 end
 
-"""
-    total_time(p::ConstantProtocol) -> Float64
+# Divide the orthogonality-center site's tensor by a plain scalar - only the center site needs
+# touching, mirroring `norm`'s own O(1) design.
+function _rescale_center(state::MPState{G,S}, factor::Number) where {G,S}
+    sites = copy(state.sites)
+    c = state.orthogonality_center
+    site = sites[c]
+    sites[c] = QProcess(tensor(site) / factor, outputs(site), inputs(site))
+    return TensorTrain{G,S,1}(sites, state.llim, state.rlim, c, state.ε)
+end
 
-Return the total evolution time ``\\Delta t \\times n_{\\text{steps}}``.
-"""
-total_time(p::ConstantProtocol) = p.dt * p.nsteps
-
-"""
-    gate(h::AbstractMatrix, p::ConstantProtocol{A}) -> Propagator{A}
-
-Build a gate from bond Hamiltonian `h` and the protocol's time step and axis.
-The gate axis matches the protocol axis, so the axis type is **never lost**.
-"""
-gate(h::AbstractMatrix, p::ConstantProtocol{A}) where {A} = gate(h, p.dt, p.axis)
-
-# ----------------------------------------------------------------------------------------
-# Bond Hamiltonian extraction from an LatticeOperator
-# ----------------------------------------------------------------------------------------
-
-"""
-    bond_hamiltonian(H::LatticeOperator, b::Int) -> Matrix{ComplexF64}
-
-Extract the ``d^2 \\times d^2`` two-site Hamiltonian for the ``b``-th bond of `H`.
-
-The bond Hamiltonian is the sum of all bond terms acting on that bond pair
-plus the **on-site fields split evenly** across its two endpoints:
-
-```math
-h_{ij} = \\sum_{\\text{BondTerms on }(i,j)} J_{ij}\\, O_i \\otimes O_j
-        - \\frac{1}{2} h_i\\, S^z_i \\otimes I_j
-        - \\frac{1}{2} h_j\\, I_i \\otimes S^z_j
-```
-
-Boundary sites appear in only one bond, so their full on-site contribution is
-assigned to that bond (split-half accounting restores the correct total).
-"""
-function bond_hamiltonian(H::LatticeOperator, b::Int)
-    d = local_dim(H.dof)
-    Id = Matrix{ComplexF64}(I, d, d)
-    bnd = bonds(H.geom)
-    i, j = bnd[b]
-    L = H.geom.L
-
-    h = zeros(ComplexF64, d^2, d^2)
-
-    # Bond operator contributions
-    for bt in H.bond
-        (bt.i == i && bt.j == j) || continue
-        h .+= bt.coupling .* kron(ComplexF64.(bt.op_i), ComplexF64.(bt.op_j))
+# Walk the orthogonality center to (or adjacent to, for a 2-site gate) site_range, only
+# re-canonicalizing when actually necessary.
+function _walk_center(state::MPState, site_range::UnitRange{Int})
+    target = first(site_range)
+    already_there = if length(site_range) == 1
+        state.orthogonality_center == target
+    else
+        state.orthogonality_center in (target, last(site_range))
     end
+    return already_there ? state : canonicalize(state, MixedCanonicalize(target))
+end
 
-    # On-site contributions: split each site's weight between its neighbouring bonds
-    for lt in H.onsite
-        # Count how many bonds site lt.site participates in
-        n_bonds = count(bnd_pair -> lt.site ∈ bnd_pair, bnd)
-        # Weight = 1/n_bonds for each bond
-        weight = lt.coupling / n_bonds
-        if lt.site == i
-            h .+= weight .* kron(ComplexF64.(lt.op), Id)
-        elseif lt.site == j
-            h .+= weight .* kron(Id, ComplexF64.(lt.op))
+# SECTION -  evolve! - the TEBD sweep driver
+
+"""
+    evolve!(algorithm::TEBDAlgorithm, hamiltonian::Hamiltonian, state::MPState, dt::Float64;
+            kind::Type{<:Time}=RealTime, observables::Union{Dict,Nothing}=nothing,
+            trotter_norm::Union{Function,Nothing}=nothing,
+            collector::AbstractCollector=NoOpCollector()) -> MPState
+
+Evolve `state` under `hamiltonian` for `algorithm.num_steps` outer Trotter steps of size `dt`,
+per `algorithm.pf`. Builds one [`TrotterStep`](@ref) up front (gates don't change step-to-step)
+and, for each outer step, walks the orthogonality center to each gate's site range in order,
+applies it via `apply_gate` (`bond_cutoff` forwarded), optionally renormalizes
+(`algorithm.renormalize`, matching the standard TEBD convention that the discarded singular-value
+weight is only a meaningful local error estimate when the state stays unit-norm between
+truncations), and pushes one [`TEBDStepSnapshot`](@ref) per step into `collector` -
+`entanglement_entropy`/`truncation_error` are always computed (cheap); `observables` are only
+evaluated on `snapshot_every`-th steps (potentially expensive); `trotter_error_bound` is only
+computed when `trotter_norm` (a `group -> Real` callback, per `trotter_error`'s own contract) is
+supplied.
+
+# Arguments
+
+$(Glossaries.Argument{@__MODULE__}()([:tebd_hamiltonian, :tebd_state, :tebd_dt]))
+"""
+function evolve!(
+    algorithm::TEBDAlgorithm{PF},
+    hamiltonian::Hamiltonian,
+    state::MPState,
+    dt::Float64;
+    kind::Type{<:Time}=RealTime,
+    observables::Union{Dict,Nothing}=nothing,
+    trotter_norm::Union{Function,Nothing}=nothing,
+    collector::AbstractCollector=NoOpCollector(),
+) where {PF}
+    prop = propagator(hamiltonian, dt; kind=kind)
+    step = trotterize(prop, algorithm.pf)
+
+    state = canonicalize(state, MixedCanonicalize(1))
+
+    for n in 1:algorithm.num_steps
+        truncation_accumulator = QuadratureTruncationErrorAccumulator()
+
+        for (site_range, gate) in step.block.gates
+            state = _walk_center(state, site_range)
+            state = apply_gate(
+                state,
+                gate,
+                site_range;
+                bond_cutoff=algorithm.bond_cutoff,
+                accumulator=truncation_accumulator,
+            )
         end
+
+        if algorithm.renormalize
+            state = _rescale_center(state, value(norm(state)))
+        end
+
+        step_ε = something(finalize!(truncation_accumulator), 0.0)
+        state = MPState(
+            state.sites,
+            MixedCanonical(),
+            state.llim,
+            state.rlim,
+            state.orthogonality_center,
+            hypot(state.ε, step_ε),
+        )
+
+        entropy = _center_entanglement_entropy(state)
+        trotter_bound = if trotter_norm === nothing
+            nothing
+        else
+            trotter_error(step, hamiltonian, trotter_norm)
+        end
+        obs =
+            if observables !== nothing &&
+                algorithm.snapshot_every > 0 &&
+                n % algorithm.snapshot_every == 0
+                evaluate_expectation_values(observables, state)
+            else
+                nothing
+            end
+
+        step!(
+            collector, (; snapshot=_make_snapshot(n, obs, entropy, step_ε, trotter_bound))
+        )
     end
 
-    return h
+    return state
 end
 
-# ----------------------------------------------------------------------------------------
-# Two-site gate application
-# ----------------------------------------------------------------------------------------
+# SECTION -  evolve! - the Vidal-native (iTEBD-style) sweep driver, no center-walking needed
 
-"""
-    apply_gate(ψ::FiniteMPS, G::Propagator, bond::Int; trunc) -> FiniteMPS
-
-Apply a two-site gate `G` at bond `bond` (connecting sites `bond` and `bond+1`).
-
-Steps:
-
- 1. Merge the two MPS tensors: ``\\Theta[\\alpha, \\sigma_1, \\sigma_2, \\beta]``.
- 2. Contract with gate ``G[\\sigma_1', \\sigma_2', \\sigma_1, \\sigma_2]``.
- 3. Reshape and SVD-split with truncation `trunc`.
- 4. Store left-canonical ``A[\\alpha, \\sigma_1', r]`` and remainder ``B[r, \\sigma_2', \\beta]``.
-
-For `RealTime` gates the norm of the MPS is preserved exactly (up to floating-point
-error). For `ImaginaryTime` gates the norm decreases; the caller is responsible for
-renormalization.
-"""
-function apply_gate(
-    ψ::FiniteMPS, G::Propagator, bond::Int; trunc::AbstractTrunc=NoTrunc()
-)::FiniteMPS
-    L = length(ψ.tensors)
-    i, j = bond, bond + 1
-    (1 ≤ i < L) || throw(ArgumentError("bond $bond out of range [1, $(L-1)]"))
-
-    A1 = ψ.tensors[i].data   # (χL, d, χM)
-    A2 = ψ.tensors[j].data   # (χM, d, χR)
-    χL, d, χM = size(A1)
-    _, _, χR = size(A2)
-
-    # Merge: Θ[χL, d, d, χR]
-    @tensor Θ[α, σ1, σ2, β] := A1[α, σ1, m] * A2[m, σ2, β]
-
-    # Apply gate: G.data is a (d²,d²) matrix in kron ordering where
-    # G.data[(σ1'-1)*d+σ2', (σ1-1)*d+σ2] = ⟨σ1',σ2'|G|σ1,σ2⟩.
-    # Julia column-major reshape(G.data, d,d,d,d) gives
-    # G_mat[a,b,c,d_] = G.data[a+(b-1)*d, c+(d_-1)*d], i.e. G_mat[σ2',σ1',σ2,σ1].
-    G_mat = reshape(G.data, d, d, d, d)   # column-major: [σ2', σ1', σ2, σ1]
-    @tensor Θ_new[α, σ1p, σ2p, β] := G_mat[σ2p, σ1p, σ2, σ1] * Θ[α, σ1, σ2, β]
-
-    # SVD split: reshape to (χL*d, d*χR)
-    M = reshape(permutedims(Θ_new, (1, 2, 3, 4)), χL * d, d * χR)
-    F = svd(M)
-    tol = length(F.S) * eps(eltype(F.S)) * (isempty(F.S) ? 1.0 : F.S[1])
-    S_clean = filter(s -> s > tol, F.S)
-    r, _ = _truncate_singular_values(S_clean, trunc)
-    svs = F.S[1:r]
-
-    A1_new = reshape(F.U[:, 1:r], χL, d, r)           # left-canonical
-    A2_new = reshape(Diagonal(svs) * F.Vt[1:r, :], r, d, χR)  # absorb Σ
-
-    # Build new tensor list with the two updated sites
-    tensors = copy(ψ.tensors)
-    bond_svs = copy(ψ.bond_svs)
-
-    # Outer legs keep their old variance — their partner sites are untouched, so
-    # re-tagging them would break the one-up-one-down bond pairing. The fresh inner
-    # bond points toward site j (arrow in = Upper on j), which absorbed Σ.
-    tensors[i] = QTensor(A1_new, (ψ.tensors[i].indices[1], upper(:σ, d), lower(:vR, r)))
-    tensors[j] = QTensor(A2_new, (upper(:vL, r), upper(:σ, d), ψ.tensors[j].indices[3]))
-    normalized = isapprox(sum(abs2, svs), 1.0; atol=sqrt(eps(eltype(svs))))
-    bond_svs[i + 1] = SingValSpectrum(svs, 0.0, normalized)
-
-    FiniteMPS(tensors, bond_svs, ArbitraryForm(), ψ.ε)
-end
-
-# ----------------------------------------------------------------------------------------
-# Suzuki-Trotter decomposition
-# ----------------------------------------------------------------------------------------
-
-"""
-    TrotterSubstep
-
-One substep in a Suzuki-Trotter decomposition: the index of the bond and the
-time step to apply.
-"""
-struct TrotterSubstep
-    bond::Int
-    dt::Float64
+# Entanglement entropy directly off state.λs at `bond`, with no SVD - the whole point of Vidal
+# gauge: every bond already carries its own Schmidt weights.
+function _vidal_bond_entropy(state::MPState{VidalGauge,S}, bond::Int) where {S}
+    state.λs === nothing && return 0.0
+    svals = state.λs[bond].data
+    normalized = isapprox(sum(abs2, svals), 1.0; atol=sqrt(eps(real(eltype(svals)))))
+    return entanglement_entropy(SingValSpectrum(svals, 0.0, normalized))
 end
 
 """
-    SuzukiTrotter{order}
+    evolve!(algorithm::TEBDAlgorithm, hamiltonian::Hamiltonian, state::MPState{VidalGauge,S}, dt::Float64;
+            kind::Type{<:Time}=RealTime, observables::Union{Dict,Nothing}=nothing,
+            trotter_norm::Union{Function,Nothing}=nothing,
+            collector::AbstractCollector=NoOpCollector()) -> MPState{VidalGauge,S}
 
-Suzuki-Trotter product formula of the given `order`.
-
-  - `SuzukiTrotter(1)` — first-order (Lie-Trotter): one sequential sweep through all bonds.
-    Error ``O(\\Delta t^2)`` per step.
-  - `SuzukiTrotter(2)` — second-order (Strang / symmetric): symmetric palindrome.
-    Error ``O(\\Delta t^3)`` per step.
-
-The higher-order schemes achieve better accuracy at the same ``\\Delta t`` by choosing
-carefully fractional sub-steps that cancel leading commutator error terms.
+The classical Vidal (2003)/iTEBD sweep: same outer structure as the [`MixedCanonical`](@ref)
+[`evolve!`](@ref) method, simplified since every bond already carries its own Schmidt weights -
+gates apply directly in any order (no `MixedCanonicalize` center-walking), and there is no global
+per-step renormalization (each 2-site [`apply_gate`](@ref) call already renormalizes its own
+`λ_mid` locally, which is what keeps the whole Vidal-canonical chain normalized). `TEBDStepSnapshot`
+reports `entanglement_entropy` at the bond the last 2-site gate in the step touched, read directly
+off `state.λs` with no SVD at all.
 """
-struct SuzukiTrotter{order} end
-SuzukiTrotter(order::Int) = SuzukiTrotter{order}()
+function evolve!(
+    algorithm::TEBDAlgorithm{PF},
+    hamiltonian::Hamiltonian,
+    state::MPState{VidalGauge,S},
+    dt::Float64;
+    kind::Type{<:Time}=RealTime,
+    observables::Union{Dict,Nothing}=nothing,
+    trotter_norm::Union{Function,Nothing}=nothing,
+    collector::AbstractCollector=NoOpCollector(),
+) where {PF,S}
+    prop = propagator(hamiltonian, dt; kind=kind)
+    step = trotterize(prop, algorithm.pf)
 
-"""
-    trotter_steps(formula::SuzukiTrotter, H::LatticeOperator, dt::Real) -> Vector{TrotterSubstep}
+    for n in 1:algorithm.num_steps
+        truncation_accumulator = QuadratureTruncationErrorAccumulator()
+        last_bond = 1
 
-Return the ordered list of single-bond gate applications for one Trotter step.
+        for (site_range, gate) in step.block.gates
+            state = apply_gate(
+                state,
+                gate,
+                site_range;
+                bond_cutoff=algorithm.bond_cutoff,
+                accumulator=truncation_accumulator,
+            )
+            length(site_range) == 2 && (last_bond = first(site_range))
+        end
 
-Each `TrotterSubstep` carries a bond index and the sub-step time `dt` to pass to
-[`gate`](@ref).  The returned sequence, applied left-to-right, approximates
-``e^{-i \\Delta t H}`` to the order of the formula.
-"""
-function trotter_steps(::SuzukiTrotter{1}, H::LatticeOperator, dt::Real)
-    bnd = bonds(H.geom)
-    [TrotterSubstep(b, Float64(dt)) for b in 1:length(bnd)]
-end
+        step_ε = something(finalize!(truncation_accumulator), 0.0)
+        state = MPState{VidalGauge,S}(
+            state.sites, 0, 0, nothing, hypot(state.ε, step_ε), state.λs
+        )
 
-function trotter_steps(::SuzukiTrotter{2}, H::LatticeOperator, dt::Real)
-    bnd = bonds(H.geom)
-    n = length(bnd)
-    half = Float64(dt) / 2
-    # Forward half-step for all but last bond, full step for last, then reverse
-    fwd = [TrotterSubstep(b, half) for b in 1:n]
-    bwd = [TrotterSubstep(b, half) for b in n:-1:1]
-    # True 2nd-order: dt/2 each bond forward, then dt/2 each bond backward
-    # (palindrome: same bond sequence in reverse at half dt)
-    vcat(fwd, bwd)
-end
+        entropy = _vidal_bond_entropy(state, last_bond)
+        trotter_bound = if trotter_norm === nothing
+            nothing
+        else
+            trotter_error(step, hamiltonian, trotter_norm)
+        end
+        obs =
+            if observables !== nothing &&
+                algorithm.snapshot_every > 0 &&
+                n % algorithm.snapshot_every == 0
+                evaluate_expectation_values(observables, state)
+            else
+                nothing
+            end
 
-# ----------------------------------------------------------------------------------------
-# Single Trotter step
-# ----------------------------------------------------------------------------------------
-
-"""
-    trotter_step(ψ::FiniteMPS, H::LatticeOperator, dt::Real,
-                 formula::SuzukiTrotter; trunc) -> FiniteMPS
-
-Apply one Trotter step of the evolution ``e^{-i \\Delta t H}`` to `ψ`.
-
-The step decomposes `H` into bond sub-steps via [`trotter_steps`](@ref), computes
-the gate for each bond, and applies them in sequence via [`apply_gate`](@ref).
-
-For real-time evolution (`RealTime`) the norm is preserved.  For imaginary-time
-evolution (`ImaginaryTime`) the caller should renormalize after the step.
-"""
-function trotter_step(
-    ψ::FiniteMPS,
-    H::LatticeOperator,
-    dt::Real,
-    formula::SuzukiTrotter;
-    trunc::AbstractTrunc=NoTrunc(),
-    axis::TimeAxis=RealTime(),
-)
-    substeps = trotter_steps(formula, H, dt)
-    cur = ψ
-    for sub in substeps
-        h_b = bond_hamiltonian(H, sub.bond)
-        G = gate(h_b, sub.dt, axis)
-        cur = apply_gate(cur, G, sub.bond; trunc=trunc)
+        step!(
+            collector, (; snapshot=_make_snapshot(n, obs, entropy, step_ε, trotter_bound))
+        )
     end
-    cur
+
+    return state
 end

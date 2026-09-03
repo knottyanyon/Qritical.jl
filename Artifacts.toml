@@ -1,0 +1,6 @@
+[tutorial_data]
+git-tree-sha1 = "a5d3a2f080cf6140cb37cc075b043106b0f98969"
+
+    [[tutorial_data.download]]
+    sha256 = "fa8f124353a604513a644f9c8fdb214392485e79f94bbf39e1c9c050f2687bb7"
+    url = "https://github.com/knottyanyon/Qritical.jl/releases/download/tutorial_data-v1/tutorial_data.tar.gz"

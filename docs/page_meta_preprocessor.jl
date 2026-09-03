@@ -24,12 +24,12 @@
 const PAGE_INFO_PATTERN = r"\{page-info\n(.*?)\n\}"s
 
 const _STATUS_LABELS = Dict(
-    "draft"              => "draft",
-    "needs-rewrite"      => "needs rewrite",
+    "draft" => "draft",
+    "needs-rewrite" => "needs rewrite",
     "needs-proofreading" => "needs proofreading",
-    "needs-touchups"     => "needs touch-ups",
-    "needs-theory"       => "needs theory",
-    "proofread"          => "proofread",
+    "needs-touchups" => "needs touch-ups",
+    "needs-theory" => "needs theory",
+    "proofread" => "proofread",
 )
 
 function _parse_page_meta(block::AbstractString)::Dict{String,String}
@@ -53,18 +53,25 @@ function _meta_to_html(meta::Dict{String,String})::String
     status_row = ""
     if haskey(meta, "status")
         slugs = filter!(!isempty, strip.(split(meta["status"], ',')))
-        pills      = _status_pill.(slugs)
+        pills = _status_pill.(slugs)
         pills_html = join(pills, "\n        ")
-        status_row = "\n      <tr><td class=\"pi-key\">status</td>" *
-                     "<td class=\"pi-val\">" * join(pills, " ") * "</td></tr>"
+        status_row =
+            "\n      <tr><td class=\"pi-key\">status</td>" *
+            "<td class=\"pi-val\">" *
+            join(pills, " ") *
+            "</td></tr>"
     end
 
     # Optional ordered metadata rows
     rows = String[status_row]
-    for (key, display) in (("updated", "last updated"), ("written", "written by"), ("edited", "edited by"))
+    for (key, display) in
+        (("updated", "last updated"), ("written", "written by"), ("edited", "edited by"))
         haskey(meta, key) || continue
-        push!(rows, "\n      <tr><td class=\"pi-key\">$(display)</td>" *
-                    "<td class=\"pi-val\">$(meta[key])</td></tr>")
+        push!(
+            rows,
+            "\n      <tr><td class=\"pi-key\">$(display)</td>" *
+            "<td class=\"pi-val\">$(meta[key])</td></tr>",
+        )
     end
     body_rows = join(filter(!isempty, rows))
 
@@ -91,7 +98,7 @@ Replace every `{page-info\\n...\\n}` block in `content` with its rendered
 `@raw html` drawer equivalent.
 """
 function page_meta_preprocessor(content::AbstractString)::String
-    return replace(content, PAGE_INFO_PATTERN => function(m)
+    return replace(content, PAGE_INFO_PATTERN => function (m)
         cap = match(PAGE_INFO_PATTERN, m)
         cap === nothing && return m
         meta = _parse_page_meta(cap[1])
@@ -109,7 +116,7 @@ function preprocess_page_meta(src_dir::AbstractString)
     for (root, _, files) in walkdir(src_dir)
         for file in files
             endswith(file, ".md") || continue
-            fpath   = joinpath(root, file)
+            fpath = joinpath(root, file)
             content = read(fpath, String)
             updated = page_meta_preprocessor(content)
             updated != content && write(fpath, updated)

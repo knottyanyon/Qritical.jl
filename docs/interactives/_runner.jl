@@ -20,11 +20,12 @@ const _DATA_ROOT = joinpath(@__DIR__, "..", "src", "tutorials", "data")
 function _interactive_changed(src::String, out::String)::Bool
     stamp = out * ".sha256"
     isfile(stamp) || return true
-    isfile(out)   || return true
-    read(stamp, String) == bytes2hex(sha256(read(src))) ? false : true
+    isfile(out) || return true
+    return read(stamp, String) == bytes2hex(sha256(read(src))) ? false : true
 end
-_write_interactive_stamp(src::String, out::String) =
-    write(out * ".sha256", bytes2hex(sha256(read(src))))
+function _write_interactive_stamp(src::String, out::String)
+    return write(out * ".sha256", bytes2hex(sha256(read(src))))
+end
 
 # ── SVD image compression (Tutorial 01) ──────────────────────────────────────
 include(joinpath(@__DIR__, "svd_compression.jl"))
@@ -38,7 +39,9 @@ let src = joinpath(@__DIR__, "svd_compression.jl"),
         _write_interactive_stamp(src, out)
         @info "Interactive built" file = relpath(out, joinpath(@__DIR__, ".."))
     else
-        @info "Interactive up-to-date (skipped)" file = relpath(out, joinpath(@__DIR__, ".."))
+        @info "Interactive up-to-date (skipped)" file = relpath(
+            out, joinpath(@__DIR__, "..")
+        )
     end
 end
 
@@ -54,6 +57,8 @@ let src = joinpath(@__DIR__, "tebd_explorer.jl"),
         _write_interactive_stamp(src, out)
         @info "Interactive built" file = relpath(out, joinpath(@__DIR__, ".."))
     else
-        @info "Interactive up-to-date (skipped)" file = relpath(out, joinpath(@__DIR__, ".."))
+        @info "Interactive up-to-date (skipped)" file = relpath(
+            out, joinpath(@__DIR__, "..")
+        )
     end
 end

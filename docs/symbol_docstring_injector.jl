@@ -5,10 +5,17 @@
 # Maps a tutorial number ("01".."11") to the topic Part slug that its
 # directory now lives under: docs/src/tutorials/<slug>/<NN>/ex_<NN>.*
 const TUTORIAL_PART_SLUG = Dict(
-    "01" => "fundamentals",  "02" => "fundamentals",  "03" => "fundamentals",
-    "04" => "tensor_trains", "05" => "tensor_trains",
-    "06" => "dynamics", "07" => "dynamics", "08" => "dynamics", "09" => "dynamics",
-    "10" => "misc", "11" => "misc",
+    "01" => "fundamentals",
+    "02" => "fundamentals",
+    "03" => "fundamentals",
+    "04" => "tensor_trains",
+    "05" => "tensor_trains",
+    "06" => "dynamics",
+    "07" => "dynamics",
+    "08" => "dynamics",
+    "09" => "dynamics",
+    "10" => "misc",
+    "11" => "misc",
 )
 
 """
@@ -18,7 +25,7 @@ Scan Jupyter notebooks and return a mapping of symbol -> list of tutorial names.
 Returns an empty dict if JSON is unavailable (symbol discovery is optional).
 """
 function find_notebook_symbol_usage(notebooks_dir::String)
-    usage = Dict{Symbol, Vector{String}}()
+    usage = Dict{Symbol,Vector{String}}()
 
     # Check if JSON is available in the current scope
     if !isdefined(Main, :JSON)
@@ -43,7 +50,7 @@ function find_notebook_symbol_usage(notebooks_dir::String)
                 relative = relpath(notebook_path, notebooks_dir)
                 parts = split(relative, "/")
                 if length(parts) >= 2 && startswith(parts[end], "ex_")
-                    exercise_num = parts[end-1]
+                    exercise_num = parts[end - 1]
                     exercise_name = "Tutorial $exercise_num"
 
                     try
@@ -83,7 +90,7 @@ function find_notebook_symbol_usage(notebooks_dir::String)
         end
     end
 
-    usage
+    return usage
 end
 
 """
@@ -97,40 +104,114 @@ function extract_qritical_symbols(code::String)
     # List of known Qritical exports to look for
     known_exports = Set([
         # Index layer
-        "IxLoc", "Upper", "Lower", "TIx", "MulTIx", "AbstractIx",
-        "dim", "label", "which_space", "upper", "lower", "uppers", "lowers",
-        "flip", "uppers_range", "lowers_range",
+        "IxLoc",
+        "Upper",
+        "Lower",
+        "TIx",
+        "MulTIx",
+        "AbstractIx",
+        "dim",
+        "label",
+        "which_space",
+        "upper",
+        "lower",
+        "uppers",
+        "lowers",
+        "flip",
+        "uppers_range",
+        "lowers_range",
         # Partitions
-        "Partition", "Bipartition", "complement", "bipartition", "group_legs",
+        "Partition",
+        "Bipartition",
+        "complement",
+        "bipartition",
+        "group_legs",
         "bond_label",
         # QTensor
-        "QTensor", "dagger",
+        "QTensor",
+        "dagger",
         # SVD
-        "do_svd", "AbstractTrunc", "NoTrunc", "MaxBondDimTrunc", "ValCutoffTrunc",
+        "do_svd",
+        "AbstractTrunc",
+        "NoTrunc",
+        "MaxBondDimTrunc",
+        "ValCutoffTrunc",
         # Spectrum
-        "SingValSpectrum", "EigValSpectrum", "schmidt_rank", "entanglement_entropy",
+        "SingValSpectrum",
+        "EigValSpectrum",
+        "schmidt_rank",
+        "entanglement_entropy",
         # MPS
-        "FiniteMPS", "to_mps", "add_mps", "overlap", "local_expectation", "two_site_op",
-        "CanonicalizeConfig", "LeftCanonical", "RightCanonical", "BondCanonical",
-        "canonicalize", "canonical_error", "is_canonical", "to_vidal", "to_canonical",
+        "FiniteMPS",
+        "to_mps",
+        "add_mps",
+        "overlap",
+        "local_expectation",
+        "two_site_op",
+        "CanonicalizeConfig",
+        "LeftCanonical",
+        "RightCanonical",
+        "BondCanonical",
+        "canonicalize",
+        "canonical_error",
+        "is_canonical",
+        "to_vidal",
+        "to_canonical",
         # Geometry
-        "Chain", "sites", "bonds",
+        "Chain",
+        "sites",
+        "bonds",
         # DoF
-        "Spin", "SpinHalf", "SpinOne", "SpinlessFermion", "Electron", "MajoranaFermion",
-        "HardCoreBoson", "local_dim", "algebra_generators",
+        "Spin",
+        "SpinHalf",
+        "SpinOne",
+        "SpinlessFermion",
+        "Electron",
+        "MajoranaFermion",
+        "HardCoreBoson",
+        "local_dim",
+        "algebra_generators",
         # Operators
-        "LatticeOperator", "Hamiltonian", "XXZ", "Heisenberg", "Ising",
-        "uniform_coupling", "OneSiteTerm", "TwoSiteTerm", "op_at_site",
-        "total_magnetization", "staggered_magnetization", "identity_operator",
-        "matrix_repr", "DenseFormat", "SparseFormat",
+        "LatticeOperator",
+        "Hamiltonian",
+        "XXZ",
+        "Heisenberg",
+        "Ising",
+        "uniform_coupling",
+        "OneSiteTerm",
+        "TwoSiteTerm",
+        "op_at_site",
+        "total_magnetization",
+        "staggered_magnetization",
+        "identity_operator",
+        "matrix_repr",
+        "DenseFormat",
+        "SparseFormat",
         # MPO
-        "FiniteMPO", "MPO", "expect", "apply_mpo",
+        "FiniteMPO",
+        "MPO",
+        "expect",
+        "apply_mpo",
         # TEBD
-        "neel_state", "Quench", "TEBD", "Tracker", "NoTracker", "solve",
-        "TimeAxis", "RealTime", "ImaginaryTime", "Propagator", "gate",
-        "ConstantProtocol", "bond_hamiltonian", "apply_gate",
+        "neel_state",
+        "Quench",
+        "TEBD",
+        "Tracker",
+        "NoTracker",
+        "solve",
+        "TimeAxis",
+        "RealTime",
+        "ImaginaryTime",
+        "Propagator",
+        "gate",
+        "ConstantProtocol",
+        "bond_hamiltonian",
+        "apply_gate",
         # ED
-        "ExactDiagonalization", "GroundState", "power_method", "PowerMethodResult",
+        "ExactDiagonalization",
+        "GroundState",
+        "power_method",
+        "PowerMethodResult",
         # Storage formats
         "StorageFormat",
     ])
@@ -144,7 +225,7 @@ function extract_qritical_symbols(code::String)
         end
     end
 
-    symbols
+    return symbols
 end
 
 """
@@ -153,7 +234,7 @@ end
 Create a mapping from tutorial names (e.g., "Tutorial 01") to their doc page paths.
 """
 function create_exercise_page_mapping(tutorials_dir::String)
-    pages = Dict{String, String}()
+    pages = Dict{String,String}()
 
     for i in 1:11
         exercise_num = lpad(i, 2, '0')
@@ -163,7 +244,7 @@ function create_exercise_page_mapping(tutorials_dir::String)
         pages[exercise_name] = page_path
     end
 
-    pages
+    return pages
 end
 
 """
@@ -172,8 +253,9 @@ end
 
 Inject "Used in tutorials" sections with links into the docstrings of all exported symbols.
 """
-function inject_usage_into_module_docstrings!(mod::Module, usage::Dict{Symbol, Vector{String}},
-                                             exercise_pages::Dict{String, String})
+function inject_usage_into_module_docstrings!(
+    mod::Module, usage::Dict{Symbol,Vector{String}}, exercise_pages::Dict{String,String}
+)
     # Get all exported symbols from the module
     exports = names(mod; all=false)  # only exported names
 

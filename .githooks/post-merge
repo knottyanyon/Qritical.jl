@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# post-merge: re-instantiate packages if Manifest.toml changed in the merge.
+
+git diff HEAD@{1} --name-only 2>/dev/null | grep -q "Manifest.toml" || exit 0
+
+echo ""
+echo "  Manifest.toml changed - running Pkg.instantiate to sync dependencies..."
+julia --project -e 'import Pkg; Pkg.instantiate()' 2>&1
+echo ""

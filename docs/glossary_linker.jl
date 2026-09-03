@@ -10,17 +10,20 @@ Supports both simple terms and multi-word terms.
 # Syntax
 
 Use `{glossary:term name}` in markdown to create a glossary link:
-- `{glossary:MPS}` → [`MPS`](../references/glossary.md#mps)
-- `{glossary:Bond Dimension}` → [`Bond Dimension`](../references/glossary.md#bond-dimension)
+
+  - `{glossary:MPS}` → [`MPS`](../references/glossary.md#mps)
+  - `{glossary:Bond Dimension}` → [`Bond Dimension`](../references/glossary.md#bond-dimension)
 
 The anchor is auto-generated from term name:
-- Lowercase
-- Spaces → hyphens
-- Special chars removed
+
+  - Lowercase
+  - Spaces → hyphens
+  - Special chars removed
 
 # Example
 
 In markdown:
+
 ```
 An {glossary:MPS} is a compressed state representation.
 The {glossary:Schmidt Rank} measures entanglement.

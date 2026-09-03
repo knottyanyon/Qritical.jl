@@ -4,6 +4,7 @@ using LinearAlgebra, Qritical, JSON
 Build a self-contained HTML widget for the TEBD Néel-quench explorer.
 
 Pre-computes — for every combination of bond dimension D and time step dt:
+
   - S(t): entanglement entropy at the central bond
   - ⟨S_i^z⟩(t): site-resolved magnetisation profile at every time step
 
@@ -13,23 +14,20 @@ immediately when the D or dt sliders change.  No Julia runtime is needed after
 the docs build.
 """
 function build_tebd_explorer(;
-    L         = 10,
-    T_max     = 4.8,
-    D_values  = [4, 8, 16, 32, 64],
-    dt_values = [0.05, 0.1, 0.2, 0.4],
+    L=10, T_max=4.8, D_values=[4, 8, 16, 32, 64], dt_values=[0.05, 0.1, 0.2, 0.4]
 )
     dof = SpinHalf()
-    g   = Chain(L)
-    H   = XXZ(g; J=1.0, Jz=1.0, h=0.0)
+    g = Chain(L)
+    H = XXZ(g; J=1.0, Jz=1.0, h=0.0)
     ops = algebra_generators(dof)
-    Sz  = ops.Sz
+    Sz = ops.Sz
 
     all_times = Vector{Vector{Float64}}()
-    all_data  = Vector{Vector{Dict{String,Any}}}()
+    all_data = Vector{Vector{Dict{String,Any}}}()
 
     for dt in dt_values
         nsteps = round(Int, T_max / dt)
-        times  = collect(dt .* (0:nsteps))
+        times = collect(dt .* (0:nsteps))
         push!(all_times, round.(times; digits=6))
 
         dt_row = Vector{Dict{String,Any}}()
@@ -44,15 +42,15 @@ function build_tebd_explorer(;
             S_vec = [0.0]
 
             for step in 1:nsteps
-                ψ   = trotter_step(ψ, H, dt, SuzukiTrotter(2); trunc=MaxBondDimTrunc(D))
+                ψ = trotter_step(ψ, H, dt, SuzukiTrotter(2); trunc=MaxBondDimTrunc(D))
                 ψ_c = canonicalize(ψ, BondCanonical(L÷2))
 
                 for i in 1:L
                     sz_mat[i, step + 1] = real(local_expectation(ψ_c, Sz, i))
                 end
 
-                sv = ψ_c.bond_svs[L÷2 + 1].values
-                p  = sv.^2 ./ sum(sv.^2)
+                sv = ψ_c.bond_svs[L ÷ 2 + 1].values
+                p = sv .^ 2 ./ sum(sv .^ 2)
                 push!(S_vec, -sum(pᵢ -> pᵢ > 0 ? pᵢ * log2(pᵢ) : 0.0, p))
                 ψ = ψ_c
             end
@@ -60,24 +58,27 @@ function build_tebd_explorer(;
             # Row-major (time-outer): sz_flat[t*L + i] = Sz at step t, site i (0-indexed)
             sz_flat = round.(vec(transpose(sz_mat)); digits=5)
 
-            push!(dt_row, Dict(
-                "S"       => round.(S_vec; digits=5),
-                "Sz_flat" => sz_flat,
-                "nSteps"  => nsteps,
-            ))
+            push!(
+                dt_row,
+                Dict(
+                    "S" => round.(S_vec; digits=5), "Sz_flat" => sz_flat, "nSteps" => nsteps
+                ),
+            )
             @info "Built TEBD slice" L D dt nsteps
         end
         push!(all_data, dt_row)
     end
 
-    dataset_json = JSON.json(Dict(
-        "L"         => L,
-        "T_MAX"     => T_max,
-        "D_VALUES"  => D_values,
-        "DT_VALUES" => dt_values,
-        "TIMES"     => all_times,
-        "DATA"      => all_data,
-    ))
+    dataset_json = JSON.json(
+        Dict(
+            "L" => L,
+            "T_MAX" => T_max,
+            "D_VALUES" => D_values,
+            "DT_VALUES" => dt_values,
+            "TIMES" => all_times,
+            "DATA" => all_data,
+        ),
+    )
 
     return _tebd_html(; L, T_max, D_values, dt_values, dataset_json)
 end
@@ -85,17 +86,16 @@ end
 # ─────────────────────────────────────────────────────────────────────────────
 
 function _tebd_html(; L, T_max, D_values, dt_values, dataset_json)
-
-    S_YMAX      = log2(min(last(D_values), 2^(L÷2))) + 0.4
+    S_YMAX = log2(min(last(D_values), 2^(L÷2))) + 0.4
     S_YTICKS_JS = "[" * join(collect(0:floor(Int, S_YMAX)), ",") * "]"
-    T_TICKS_JS  = "[" * join(collect(0:round(Int, T_max)), ",") * "]"
+    T_TICKS_JS = "[" * join(collect(0:round(Int, T_max)), ",") * "]"
 
-    D_LABELS    = join(["<span>$(v)</span>" for v in D_values], "")
-    DT_LABELS   = join(["<span>$(v)</span>" for v in dt_values], "")
+    D_LABELS = join(["<span>$(v)</span>" for v in D_values], "")
+    DT_LABELS = join(["<span>$(v)</span>" for v in dt_values], "")
 
-    D_MAX_IDX   = length(D_values) - 1
+    D_MAX_IDX = length(D_values) - 1
     DT_INIT_IDX = 1
-    D_INIT_VAL  = last(D_values)
+    D_INIT_VAL = last(D_values)
     DT_INIT_VAL = dt_values[2]
 
     return """<!DOCTYPE html>

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# commit-msg: reject commits that don't follow Conventional Commits format.
+
+MSG=$(cat "$1")
+
+# Strip comment lines (lines starting with #) before checking
+STRIPPED=$(echo "$MSG" | grep -v '^#' | head -1)
+
+PATTERN='^(feat|fix|test|docs|refactor|chore|ci)(\([a-z0-9_/-]+\))?: .{1,65}[^.]$'
+
+if ! echo "$STRIPPED" | grep -qE "$PATTERN"; then
+    echo ""
+    echo "  Commit rejected: message must follow Conventional Commits."
+    echo "  Format:  type: short description  (no trailing period, max 72 chars)"
+    echo "  Types:   feat  fix  test  docs  refactor  chore  ci"
+    echo "  Got:     $STRIPPED"
+    echo ""
+    exit 1
+fi

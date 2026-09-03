@@ -12,24 +12,20 @@ The widget renders two fixed-size canvases side-by-side (original vs. compressed
 with a rank slider.  All computation after build time runs in the browser — no
 server or Julia runtime needed at read time.
 """
-function build_svd_compression(
-    image_path::String;
-    target_size::Int = 210,
-    max_rank::Int    = 80,
-)
-    img    = load(image_path)
+function build_svd_compression(image_path::String; target_size::Int=210, max_rank::Int=80)
+    img = load(image_path)
     m0, n0 = size(img)
 
     # Center-crop to square so a portrait image doesn't inflate widget height.
     crop = min(m0, n0)
-    r0   = (m0 - crop) ÷ 2 + 1
-    c0   = (n0 - crop) ÷ 2 + 1
-    img  = img[r0:r0+crop-1, c0:c0+crop-1]
+    r0 = (m0 - crop) ÷ 2 + 1
+    c0 = (n0 - crop) ÷ 2 + 1
+    img = img[r0:(r0 + crop - 1), c0:(c0 + crop - 1)]
 
-    step  = max(1, crop ÷ target_size)
+    step = max(1, crop ÷ target_size)
     img_s = img[1:step:end, 1:step:end]
-    m, n  = size(img_s)           # should be roughly square
-    r     = min(max_rank, min(m, n))
+    m, n = size(img_s)           # should be roughly square
+    r = min(max_rank, min(m, n))
 
     R = Float32.(red.(img_s))
     G = Float32.(green.(img_s))
@@ -37,37 +33,45 @@ function build_svd_compression(
 
     function channel_svd(M)
         F = svd(M)
-        U      = Float32.(F.U[:, 1:r])
-        S      = Float32.(F.S[1:r])
-        Vt     = Float32.(F.Vt[1:r, :])
+        U = Float32.(F.U[:, 1:r])
+        S = Float32.(F.S[1:r])
+        Vt = Float32.(F.Vt[1:r, :])
         S_full = Float32.(F.S)
-        (; U, S, Vt, S_full)
+        return (; U, S, Vt, S_full)
     end
 
     cr, cg, cb = channel_svd(R), channel_svd(G), channel_svd(B)
 
     # Precompute relative Frobenius errors and storage ratios (red channel representative).
-    σ      = cr.S_full
-    total  = sum(abs2, σ)
-    cum    = cumsum(σ .^ 2)
-    errors  = [sqrt(max(0f0, total - get(cum, k, total))) / sqrt(total) for k in 1:r]
+    σ = cr.S_full
+    total = sum(abs2, σ)
+    cum = cumsum(σ .^ 2)
+    errors = [sqrt(max(0.0f0, total - get(cum, k, total))) / sqrt(total) for k in 1:r]
     storage = [k * (m + n + 1) / (m * n) for k in 1:r]
 
     enc(A) = base64encode(reinterpret(UInt8, vec(A)))
 
     return _widget_html(;
-        m, n, r,
-        U_R = enc(cr.U), S_R = enc(cr.S), Vt_R = enc(cr.Vt),
-        U_G = enc(cg.U), S_G = enc(cg.S), Vt_G = enc(cg.Vt),
-        U_B = enc(cb.U), S_B = enc(cb.S), Vt_B = enc(cb.Vt),
-        errors_js  = "[" * join(round.(errors,  digits=5), ",") * "]",
-        storage_js = "[" * join(round.(storage, digits=5), ",") * "]",
+        m,
+        n,
+        r,
+        U_R=enc(cr.U),
+        S_R=enc(cr.S),
+        Vt_R=enc(cr.Vt),
+        U_G=enc(cg.U),
+        S_G=enc(cg.S),
+        Vt_G=enc(cg.Vt),
+        U_B=enc(cb.U),
+        S_B=enc(cb.S),
+        Vt_B=enc(cb.Vt),
+        errors_js="[" * join(round.(errors; digits=5), ",") * "]",
+        storage_js="[" * join(round.(storage; digits=5), ",") * "]",
     )
 end
 
-function _widget_html(; m, n, r,
-    U_R, S_R, Vt_R, U_G, S_G, Vt_G, U_B, S_B, Vt_B,
-    errors_js, storage_js)
+function _widget_html(;
+    m, n, r, U_R, S_R, Vt_R, U_G, S_G, Vt_G, U_B, S_B, Vt_B, errors_js, storage_js
+)
 
     # canvas display size — fixed so layout is predictable regardless of img dimensions.
     # The canvas pixel data is m×n; we display it at DISP×DISP via CSS.
