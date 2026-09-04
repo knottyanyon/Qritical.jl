@@ -1,7 +1,5 @@
 <p align="center">
-  <img src="docs/src/assets/logo.svg" alt="Qritical.jl logo" width="250"/>
-  <br/>
-  <h1 align="center">Qritical.jl</h1>
+  <img src="docs/src/assets/banner.svg" alt="Qritical.jl" width="600"/>
 </p>
 
 <p align="center">
