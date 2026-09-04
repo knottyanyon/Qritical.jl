@@ -1,0 +1,16 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=tensor] (5) at (2, 2.25) {};
+		\node [style=tensor] (6) at (-0.5, 3.25) {};
+		\node [style=tensor] (7) at (4.25, -0.5) {};
+		\node [style=tensor] (8) at (4.25, -0.5) {$\psi$};
+		\node [style=tensor] (12) at (-1.75, 1) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw (5) to (8);
+		\draw [in=135, out=45, loop] (8) to ();
+		\draw [in=135, out=45, loop] (6) to ();
+		\draw [in=135, out=45, loop] (8) to ();
+		\draw [in=135, out=45, loop] (5) to ();
+	\end{pgfonlayer}
+\end{tikzpicture}
