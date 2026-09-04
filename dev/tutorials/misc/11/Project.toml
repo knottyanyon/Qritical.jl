@@ -1,6 +1,0 @@
-[deps]
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
-LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
-QuanticsGrids = "634c7f73-3e90-4749-a1bd-001b8efc642d"
-QuanticsTCI = "b11687fd-3a1c-4c41-97d0-998ab401d50e"
-TensorCrossInterpolation = "b261b2ec-6378-4871-b32e-9173bb050604"
