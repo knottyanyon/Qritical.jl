@@ -11,7 +11,7 @@ using SHA
 const _INTERACTIVES_OUT = joinpath(@__DIR__, "..", "src", "assets", "interactives")
 mkpath(_INTERACTIVES_OUT)
 
-const _DATA_ROOT = joinpath(@__DIR__, "..", "src", "tutorials", "data")
+const _DATA_ROOT = joinpath(@__DIR__, "..", "..", "artifacts_data", "tutorial_data")
 
 # SHA-256 stamp helpers — same pattern used by the Literate build in make.jl.
 # Each builder script gets a sidecar .sha256 file next to the output HTML.
