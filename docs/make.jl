@@ -14,7 +14,10 @@ include(joinpath(@__DIR__, "page_meta_preprocessor.jl"))
 include(joinpath(@__DIR__, "flowdiagram_preprocessor.jl"))
 
 # Build interactive HTML widgets (one file per exercise, output to assets/interactives/)
-include(joinpath(@__DIR__, "interactives", "_runner.jl"))
+# Skipped while the Tutorials nav section is disabled below - these widgets are only
+# embedded in tutorial pages, so building them here just risks breaking the docs build
+# for output nothing links to.
+# include(joinpath(@__DIR__, "interactives", "_runner.jl"))
 
 # ── Custom citation style: author-year with square brackets ─────────────────
 # DocumenterCitations' :authoryear renders "(Author, Year)".
@@ -129,7 +132,7 @@ const EXECUTABLE_EXERCISES = ["01", "02", "03", "04", "05", "06", "07", "08", "1
 # const EXECUTABLE_EXERCISES = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"]
 const tutorials_dir = joinpath(@__DIR__, "src", "tutorials")
 
-if !DOCS_FAST
+if !DOCS_FAST && isdir(tutorials_dir)
     for (root, dirs, files) in walkdir(tutorials_dir)
         for file in files
             startswith(file, "ex_") && endswith(file, ".jl") || continue
@@ -188,8 +191,9 @@ const GS_DIR = joinpath(@__DIR__, "src", "getting_started")
 # end
 
 # Scan tutorial notebooks and inject "Used in tutorials" links into API docstrings.
-# Skipped in DOCS_FAST mode — API pages still build, just without the tutorial cross-links.
-if !DOCS_FAST
+# Skipped in DOCS_FAST mode, or when the (gitignored) tutorials tree isn't present -
+# API pages still build, just without the tutorial cross-links.
+if !DOCS_FAST && isdir(tutorials_dir)
     exercise_usage = find_notebook_symbol_usage(tutorials_dir)
     exercise_pages = create_exercise_page_mapping(tutorials_dir)
     @info "Found $(length(exercise_usage)) symbols used in $(length(exercise_pages)) tutorials"
