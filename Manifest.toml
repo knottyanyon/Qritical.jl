@@ -749,8 +749,8 @@ uuid = "d2b931d4-abbd-456c-a907-c3513416760c"
 version = "0.1.0"
 
 [[deps.DocumenterProofound]]
-deps = ["DocumenterGlossip"]
-git-tree-sha1 = "318df598537ec8f6f188c1b9ec823b3d06b98e01"
+deps = ["Documenter", "DocumenterGlossip"]
+git-tree-sha1 = "b771b6468a6905f220dae94fe1a1d547d2a4d081"
 repo-rev = "main"
 repo-url = "https://github.com/knottyanyon/DocumenterProofound.jl"
 uuid = "4c694f12-a91f-464a-9e7e-b63c4e97dd98"

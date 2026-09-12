@@ -221,16 +221,7 @@ makedocs(;
     format=Documenter.HTML(;
         canonical="https://knottyanyon.github.io/Qritical.jl",
         edit_link="main",
-        mathengine=MathJax3(
-            Dict(
-                :loader => Dict("load" => ["[tex]/physics"]),
-                :tex => Dict(
-                    "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
-                    "tags" => "ams",
-                    "packages" => ["base", "ams", "autoload", "physics"],
-                ),
-            ),
-        ),
+        mathengine=DocumenterProofound.mathengine(),
         assets=[
             asset("assets/favicon.svg"; class=:ico, islocal=true),
             joinpath.("assets/proofound", DocumenterProofound.assets())...,
