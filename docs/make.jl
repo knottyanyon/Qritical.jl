@@ -2,6 +2,7 @@ using Qritical
 using Documenter
 using Documenter: Remotes
 using DocumenterCitations
+using DocumenterProofound
 using Literate
 using JSON, Markdown
 using SHA
@@ -9,9 +10,15 @@ using Base64
 
 # Load custom documentation hooks
 include(joinpath(@__DIR__, "symbol_docstring_injector.jl"))
-include(joinpath(@__DIR__, "glossary_linker.jl"))
-include(joinpath(@__DIR__, "page_meta_preprocessor.jl"))
-include(joinpath(@__DIR__, "flowdiagram_preprocessor.jl"))
+
+# Vendor DocumenterProofound's compiled theme CSS, JS, and flow-diagram engine into
+# docs/src/assets/proofound/ - Documenter only serves files under docs/src/assets/.
+let assets_src = DocumenterProofound.assets_dir(),
+    assets_dst = joinpath(@__DIR__, "src", "assets", "proofound")
+
+    isdir(assets_dst) && rm(assets_dst; recursive=true)
+    cp(assets_src, assets_dst)
+end
 
 # Build interactive HTML widgets (one file per exercise, output to assets/interactives/)
 # Skipped while the Tutorials nav section is disabled below - these widgets are only
@@ -200,30 +207,10 @@ if !DOCS_FAST && isdir(tutorials_dir)
     inject_usage_into_module_docstrings!(Qritical, exercise_usage, exercise_pages)
 end
 
-# Preprocess markdown files to convert glossary references {glossary:term} → markdown links
-# Only writes files whose content actually changes, so once all {glossary:term}
-# references have been converted, reruns under `servedocs()` are no-ops and don't
-# re-trigger the file watcher.
-function preprocess_glossary_links(src_dir)
-    for (root, dirs, files) in walkdir(src_dir)
-        for file in files
-            if endswith(file, ".md")
-                filepath = joinpath(root, file)
-                content = read(filepath, String)
-                modified = glossary_link_preprocessor(content)
-                if modified != content
-                    write(filepath, modified)
-                    @debug "Processed glossary links in $filepath"
-                end
-            end
-        end
-    end
-end
-
 src_dir = normpath(joinpath(@__DIR__, "src"))
-preprocess_glossary_links(src_dir)
-preprocess_page_meta(src_dir)
-preprocess_flowdiagrams(src_dir)
+# Rewrites {glossary:term} links, {page-info} drawers, and {{flowdiagram:...}} embeds;
+# only touches files whose content actually changes, so reruns under `servedocs()` are no-ops.
+DocumenterProofound.setup(src_dir)
 
 makedocs(;
     modules=[Qritical],
@@ -246,11 +233,7 @@ makedocs(;
         ),
         assets=[
             asset("assets/favicon.svg"; class=:ico, islocal=true),
-            "assets/custom.css",
-            "assets/output-fold.js",
-            "assets/page-toc.js",
-            "assets/math-env.js",
-            "assets/tn-repr.js",
+            joinpath.("assets/proofound", DocumenterProofound.assets())...,
         ],
         size_threshold=30 * 2^20,   # 30 MiB — tutorial pages embed figures
         size_threshold_warn=5 * 2^20,

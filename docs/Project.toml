@@ -4,6 +4,7 @@ CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ColorTypes = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterProofound = "4c694f12-a91f-464a-9e7e-b63c4e97dd98"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 FixedPointNumbers = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
@@ -21,6 +22,13 @@ Qritical = "4d77d595-865b-4fe8-9046-dbce8046f658"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 TensorKit = "07d1fe3e-3e46-537d-9eac-e9e13d0d4cec"
 TensorOperations = "6aa20fa7-93e2-5fca-9bc0-fbd0db3c71a2"
+
+[extras]
+DocumenterGlossip = "d2b931d4-abbd-456c-a907-c3513416760c"
+
+[sources]
+DocumenterProofound = {url = "https://github.com/knottyanyon/DocumenterProofound.jl", rev = "main"}
+DocumenterGlossip = {url = "https://github.com/knottyanyon/DocumenterGlossip.jl", rev = "main"}
 
 [compat]
 Documenter = "1.17.0"

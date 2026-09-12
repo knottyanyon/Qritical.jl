@@ -740,6 +740,22 @@ git-tree-sha1 = "c9953a03a0049333bec89ac254ea28e86fa7a1a9"
 uuid = "daee34ce-89f3-4625-b898-19384cb65244"
 version = "1.4.1"
 
+[[deps.DocumenterGlossip]]
+deps = ["Glossaries"]
+git-tree-sha1 = "828929c096ae56f8b0bed7070340cf9482041cf2"
+repo-rev = "main"
+repo-url = "https://github.com/knottyanyon/DocumenterGlossip.jl"
+uuid = "d2b931d4-abbd-456c-a907-c3513416760c"
+version = "0.1.0"
+
+[[deps.DocumenterProofound]]
+deps = ["DocumenterGlossip"]
+git-tree-sha1 = "318df598537ec8f6f188c1b9ec823b3d06b98e01"
+repo-rev = "main"
+repo-url = "https://github.com/knottyanyon/DocumenterProofound.jl"
+uuid = "4c694f12-a91f-464a-9e7e-b63c4e97dd98"
+version = "0.1.0"
+
 [[deps.DomainSets]]
 deps = ["CompositeTypes", "FunctionMaps", "IntervalSets", "LinearAlgebra", "StaticArrays"]
 git-tree-sha1 = "c0f576ae49bd2d1bc904b9946f4783db8f0ef530"
