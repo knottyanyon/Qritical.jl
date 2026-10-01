@@ -2,7 +2,7 @@
 
 julia_version = "1.12.7"
 manifest_format = "2.0"
-project_hash = "eafa11e7164345d8e84f4d1690a18481e58312d1"
+project_hash = "6b3ca3fc77115a63a5498ae8bdd00423c7f94b3d"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "0a81a018463de6c3f4f2c9360121c562e5add9e4"
@@ -1044,9 +1044,9 @@ version = "1.1.0"
 
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "LinearAlgebra", "PrecompileTools", "Random", "StaticArrays"]
-git-tree-sha1 = "364685f5ffde25deb1bbcfd5bb278a5c6b7a9b37"
+git-tree-sha1 = "ec46c5825710fa1a15d468acb2d93cc939a7a5fe"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
-version = "0.5.11"
+version = "0.5.13"
 
     [deps.GeometryBasics.extensions]
     ExtentsExt = "Extents"
@@ -2244,9 +2244,9 @@ version = "1.3.4"
 
 [[deps.Preferences]]
 deps = ["TOML"]
-git-tree-sha1 = "8b770b60760d4451834fe79dd483e318eee709c4"
+git-tree-sha1 = "5005266de4bfe50e53ff44a5cb5c540b6e47a254"
 uuid = "21216c6a-2e73-6563-6e65-726566657250"
-version = "1.5.2"
+version = "1.6.0"
 
 [[deps.PrettyTables]]
 deps = ["Crayons", "LaTeXStrings", "Markdown", "PrecompileTools", "Printf", "REPL", "Reexport", "StringManipulation", "Tables"]
@@ -2309,7 +2309,7 @@ version = "1.0.2"
 deps = ["Artifacts", "DelimitedFiles", "GeometryBasics", "Glossaries", "HalfIntegers", "JuliaFormatter", "KrylovKit", "LinearAlgebra", "Logging", "LoggingExtras", "ModelingToolkit", "Pluto", "PrecompileTools", "Preferences", "Random", "SUNRepresentations", "ScopedValues", "Serialization", "SparseArrays", "Statistics", "Symbolics", "TensorKit", "TensorKitSectors", "TensorKitTensors", "TensorOperations", "TestItems", "Unitful", "VectorInterface"]
 path = "."
 uuid = "4d77d595-865b-4fe8-9046-dbce8046f658"
-version = "0.7.0"
+version = "1.0.0-alpha"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
@@ -2992,10 +2992,10 @@ uuid = "62fd8b95-f654-4bbd-a8a5-9c27f68ccd50"
 version = "0.1.1"
 
 [[deps.TensorKit]]
-deps = ["Adapt", "Dictionaries", "LRUCache", "LinearAlgebra", "MatrixAlgebraKit", "OhMyThreads", "Printf", "Random", "ScopedValues", "Strided", "TensorKitSectors", "TensorOperations", "TupleTools", "VectorInterface"]
-git-tree-sha1 = "cd7e7b7d1137c08ba8b17e393b79fb9c858d610f"
+deps = ["Adapt", "Dictionaries", "LRUCache", "LinearAlgebra", "MatrixAlgebraKit", "OhMyThreads", "PrecompileTools", "Preferences", "Printf", "Random", "ScopedValues", "Strided", "TensorKitSectors", "TensorOperations", "TimerOutputs", "TupleTools", "VectorInterface"]
+git-tree-sha1 = "408fb74ac1b6e2dcbd3f00e3b0f94bf2ec9dde77"
 uuid = "07d1fe3e-3e46-537d-9eac-e9e13d0d4cec"
-version = "0.17.1"
+version = "0.17.2"
 
     [deps.TensorKit.extensions]
     TensorKitAMDGPUExt = "AMDGPU"
@@ -3031,9 +3031,9 @@ version = "0.3.0"
 
 [[deps.TensorOperations]]
 deps = ["LRUCache", "LinearAlgebra", "PackageExtensionCompat", "PrecompileTools", "Preferences", "PtrArrays", "Strided", "StridedViews", "TupleTools", "VectorInterface"]
-git-tree-sha1 = "c6153e90cf75256cb8b0ae451f0f7c0695dadd8d"
+git-tree-sha1 = "3c4d975ecbf072a57aac58c10556acc250b168d3"
 uuid = "6aa20fa7-93e2-5fca-9bc0-fbd0db3c71a2"
-version = "5.6.2"
+version = "5.8.2"
 
     [deps.TensorOperations.extensions]
     TensorOperationsAMDGPUExt = "AMDGPU"
@@ -3041,8 +3041,10 @@ version = "5.6.2"
     TensorOperationsCUDACoreExt = "CUDACore"
     TensorOperationsChainRulesCoreExt = "ChainRulesCore"
     TensorOperationsEnzymeExt = "Enzyme"
+    TensorOperationsGPUArraysExt = "GPUArrays"
     TensorOperationsJLArraysExt = "JLArrays"
     TensorOperationsMooncakeExt = "Mooncake"
+    TensorOperationsTBLISExt = "TBLIS"
     TensorOperationscuTENSORExt = "cuTENSOR"
 
     [deps.TensorOperations.weakdeps]
@@ -3051,8 +3053,10 @@ version = "5.6.2"
     CUDACore = "bd0ed864-bdfe-4181-a5ed-ce625a5fdea2"
     ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
     Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
+    GPUArrays = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
     JLArrays = "27aeb0d3-9eb9-45fb-866b-73c2ecf80fcb"
     Mooncake = "da2b9cff-9c12-43a0-ae48-6db2b0edb7d6"
+    TBLIS = "48530278-0828-4a49-9772-0f3830dfa1e9"
     cuTENSOR = "011b41b2-24ef-40a8-b3eb-fa098493e9e1"
 
 [[deps.TermInterface]]
